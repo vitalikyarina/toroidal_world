@@ -1,10 +1,21 @@
 # Toroidal World
 
-A NeoForge mod that shapes the Minecraft world into a torus: the world has a finite width on both horizontal axes and wraps seamlessly — walk past the +X edge and you arrive from -X, with terrain, structures, mobs and gameplay continuous across the seam.
+A NeoForge mod that makes the Minecraft world a seamless torus: the world has a finite size and no edge — cross the +X border and you arrive from the −X side, with terrain, structures, mobs and gameplay continuous across the seam.
 
-## Status
+The player-facing description (the Modrinth page source) lives in [DESCRIPTION.md](DESCRIPTION.md).
 
-In development. The source import from the private development workspace is in progress — code, build and docs land here incrementally.
+## Versions
 
-- Minecraft 26.2, NeoForge (beta — no stable NeoForge exists for this game version yet)
-- License: MIT (the LICENSE file lands with the source import)
+- Minecraft **26.2**, NeoForge **26.2.0.45-beta+**.
+
+## Building from source
+
+```
+./gradlew build
+```
+
+The jar lands in `build/libs/`. The Gradle wrapper provisions the required JDK itself.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
