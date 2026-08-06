@@ -4,7 +4,7 @@
 
 ## What it does
 
-- Adds a **World Shape** option to the world-creation screen: **Toroidal** (a normal generated world) and **Toroidal Flat** (superflat), with the world size configurable per axis in chunks.
+- Adds a **World Shape** option to the world-creation screen: **Toroidal**, with the world size configurable per axis in chunks.
 - The terrain is genuinely periodic — the noise itself wraps, so terrain, biomes and structures continue across the seam instead of hitting a mirrored wall or a cut-off mountain.
 - The game keeps working across the seam, not just the blocks: mob AI and pathfinding, projectiles and explosions, sounds and particles, compasses and lodestones, villages and raids, distance-based advancements — they all treat the world as round.
 
