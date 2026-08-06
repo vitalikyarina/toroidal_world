@@ -1,0 +1,21 @@
+{
+  "argument.toroidal_world.pos.outside_world": "%s поза межами цього світу — має бути між %s і %s",
+  "toroidal_world.configuration.showRawCoordinatesInF3": "Сирі координати у F3",
+  "toroidal_world.configuration.showRawCoordinatesInF3.tooltip": "Показувати сирі клієнтські координати в дужках поруч з обгорнутими в оверлеї налагодження F3.",
+  "commands.toroidal_world.region.across_seam": "Ця область перетинає шов світу й може означати будь-який його бік — виконай команду окремо для кожного",
+  "gui.toroidal_world.toroidal_settings.effective": "%s чанків = %s блоків",
+  "gui.toroidal_world.toroidal_settings.end_effective": "Енд: %s чанків = %s блоків",
+  "gui.toroidal_world.toroidal_settings.end_hint": "Енд зациклюється на власній ширині, незалежній від розміру світу. Менше за мінімум — і зовнішніх островів не буде: ані міст Енду, ані елітр.",
+  "gui.toroidal_world.toroidal_settings.end_size": "Розмір Енду в чанках (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.hint": "Скільки треба пройти, щоб повернутися туди, звідки вийшов.",
+  "gui.toroidal_world.toroidal_settings.nether_effective": "Незер: %s чанків = %s блоків",
+  "gui.toroidal_world.toroidal_settings.nether_hint": "Наскільки та сама дорога коротша через Незер. Пропонуються лише масштаби, що ділять світ націло.",
+  "gui.toroidal_world.toroidal_settings.nether_scale": "Масштаб Незеру: 1:%s",
+  "gui.toroidal_world.toroidal_settings.size": "Розмір світу в чанках (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.title": "Налаштування тороїдального світу",
+  "gui.toroidal_world.toroidal_settings.too_large": "Забагато — щонайбільше %s чанків.",
+  "gui.toroidal_world.toroidal_settings.too_small": "Замало — щонайменше %s чанків.",
+  "gui.toroidal_world.world_shape": "Форма світу",
+  "gui.toroidal_world.world_shape.normal": "Звичайна",
+  "gui.toroidal_world.world_shape.toroidal": "Тороїдальна"
+}

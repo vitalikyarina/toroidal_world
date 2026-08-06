@@ -1,0 +1,21 @@
+{
+  "argument.toroidal_world.pos.outside_world": "%s is outside this world — it must be between %s and %s",
+  "toroidal_world.configuration.showRawCoordinatesInF3": "Raw F3 coordinates",
+  "toroidal_world.configuration.showRawCoordinatesInF3.tooltip": "Show the raw client coordinates in parentheses next to the wrapped ones in the F3 debug overlay.",
+  "commands.toroidal_world.region.across_seam": "That area crosses the world seam and could mean either side of it — run the command once per side",
+  "gui.toroidal_world.toroidal_settings.effective": "%s chunks = %s blocks",
+  "gui.toroidal_world.toroidal_settings.end_effective": "End: %s chunks = %s blocks",
+  "gui.toroidal_world.toroidal_settings.end_hint": "The End wraps at its own width, untied to the world size. Smaller than the minimum would leave no outer islands — no end cities, no elytra.",
+  "gui.toroidal_world.toroidal_settings.end_size": "End size in chunks (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.hint": "How far you walk before you arrive back where you started.",
+  "gui.toroidal_world.toroidal_settings.nether_effective": "Nether: %s chunks = %s blocks",
+  "gui.toroidal_world.toroidal_settings.nether_hint": "How much shorter the same journey is through the Nether. Only scales that divide the world evenly are offered.",
+  "gui.toroidal_world.toroidal_settings.nether_scale": "Nether scale: 1:%s",
+  "gui.toroidal_world.toroidal_settings.size": "World size in chunks (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.title": "Toroidal World Settings",
+  "gui.toroidal_world.toroidal_settings.too_large": "Too large — at most %s chunks.",
+  "gui.toroidal_world.toroidal_settings.too_small": "Too small — at least %s chunks.",
+  "gui.toroidal_world.world_shape": "World Shape",
+  "gui.toroidal_world.world_shape.normal": "Normal",
+  "gui.toroidal_world.world_shape.toroidal": "Toroidal"
+}
