@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "toroidal_world",
+  "version": "${version}",
+  "name": "Toroidal World",
+  "description": "Toroidal World — the world as a seamless torus: walk in one direction and arrive back where you started. No border wall, no teleport — one continuous wrapping surface.",
+  "authors": [
+    "Anyttng"
+  ],
+  "license": "MIT",
+  "icon": "logo.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.toroidalworld.ToroidalWorldFabric"
+    ],
+    "client": [
+      "com.toroidalworld.client.ToroidalWorldFabricClient"
+    ]
+  },
+  "mixins": [
+    "toroidal_world.mixins.json",
+    "toroidal_world.shape.mixins.json"
+  ],
+  "accessWidener": "toroidal_world.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "fabric-api": "*",
+    "minecraft": "26.2"
+  }
+}

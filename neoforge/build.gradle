@@ -1,0 +1,163 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev'
+    id 'idea'
+}
+
+evaluationDependsOn(':common')
+
+ext {
+    mod_id = 'toroidal_world'
+    mod_name = 'Toroidal World'
+    mod_version = toroidal_world_version
+}
+
+version = mod_version
+group = mod_group_id
+
+def withBuildSuffix = { baseVersion ->
+    def buildSuffix = findProperty("${mod_id}_build")
+    buildSuffix ? "${baseVersion}-${buildSuffix}" : baseVersion
+}
+def modIngameVersion = withBuildSuffix(mod_version)
+def jarVersion = withBuildSuffix("${mod_version}+mc${minecraft_version}")
+
+base {
+    archivesName = mod_id
+}
+
+// The final mod jar: this module's loader glue plus everything from common — classes, mixin configs, assets and the
+// AT, which NeoForge discovers at META-INF/accesstransformer.cfg of the merged jar.
+tasks.named('jar', Jar) {
+    archiveFileName = "${mod_id}-neoforge-${jarVersion}.jar"
+    from(project(':common').sourceSets.main.output)
+}
+
+repositories {
+    // Add here additional repositories if required by some of the dependencies below.
+}
+
+// Mojang ships Java 25 to end users, so mods should target Java 25.
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+neoForge {
+    // Specify the version of NeoForge to use.
+    version = project.neo_version
+
+    // The AT moved to common with the mixins it serves; the dev runs of this module still have to apply it to the game.
+    accessTransformers.from(project(':common').file('src/main/resources/META-INF/accesstransformer.cfg'))
+
+    // Default run configurations.
+    runs {
+        client {
+            client()
+
+            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+        }
+
+        // This run config launches GameTestServer and runs all registered gametests, then exits.
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+        }
+
+        // applies to all the run configs above
+        configureEach {
+            // Recommended logging data for a userdev environment
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        // define mod <-> source bindings
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+            sourceSet(project(':common').sourceSets.main)
+        }
+    }
+
+    // Creates the test source set with the Minecraft classes on its classpath and runs tests through the FML JUnit
+    // launcher, so registries are bootstrapped and the mod's mixins are applied. The suite lives here rather than in
+    // common because part of it reads packets through accessor mixins, which only exist once a loader applies them.
+    unitTest {
+        enable()
+        testedMod = mods.toroidal_world
+    }
+}
+
+dependencies {
+    implementation project(':common')
+    testImplementation platform("org.junit:junit-bom:${junit_version}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Sets up a dependency configuration called 'localRuntime'.
+// This configuration should be used instead of 'runtimeOnly' to declare
+// a dependency that will be present for runtime testing but that is
+// "optional", meaning it will not be pulled by dependents of this mod.
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+// This block of code expands all declared replace properties in the specified resource targets.
+// A missing property will result in an error. Properties are expanded using ${} Groovy notation.
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : modIngameVersion,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+// Include the output of "generateModMetadata" as an input directory for the build
+// this works with both building through Gradle and the IDE.
+sourceSets.main.resources.srcDir generateModMetadata
+// To avoid having to run "generateModMetadata" manually, make it run on every project reload
+neoForge.ideSyncTask generateModMetadata
+
+// Example configuration to allow publishing using the maven-publish plugin
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "file://${rootProject.projectDir}/repo"
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+// IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}

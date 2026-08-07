@@ -1,0 +1,11 @@
+accessWidener v2 official
+
+# Mirror of common/src/main/resources/META-INF/accesstransformer.cfg — keep the two in sync.
+accessible class net/minecraft/server/level/DistanceManager$FixedPlayerDistanceChunkTracker
+accessible class net/minecraft/server/level/DistanceManager$PlayerTicketTracker
+accessible class net/minecraft/server/commands/SpreadPlayersCommand$Position
+extendable class net/minecraft/world/level/levelgen/NoiseBasedChunkGenerator
+extendable method net/minecraft/world/level/levelgen/NoiseBasedChunkGenerator iterateNoiseColumn (Lnet/minecraft/world/level/LevelHeightAccessor;Lnet/minecraft/world/level/levelgen/RandomState;IILorg/apache/commons/lang3/mutable/MutableObject;Ljava/util/function/Predicate;)Ljava/util/OptionalInt;
+accessible class net/minecraft/server/level/ChunkMap$TrackedEntity
+accessible field net/minecraft/server/level/ChunkMap entityMap Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
+accessible field net/minecraft/server/level/ChunkMap$TrackedEntity seenBy Ljava/util/Set;
