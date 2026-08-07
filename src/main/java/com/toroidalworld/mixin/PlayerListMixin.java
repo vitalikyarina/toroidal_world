@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.net.WorldLoopNetwork;
+import com.toroidalworld.net.WrappingBoundsSync;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -67,7 +67,7 @@ public class PlayerListMixin {
     @Inject(method = "placeNewPlayer", at = @At("TAIL"))
     private void toroidal$sendBoundsOnLogin(Connection connection, ServerPlayer player, CommonListenerCookie cookie,
             CallbackInfo ci) {
-        WorldLoopNetwork.sendTo(player);
+        WrappingBoundsSync.sendTo(player);
     }
 
     @WrapOperation(

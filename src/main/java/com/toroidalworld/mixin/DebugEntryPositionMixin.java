@@ -9,8 +9,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-import com.toroidalworld.config.WorldLoopConfig;
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.platform.Platforms;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.client.Minecraft;
@@ -55,7 +55,7 @@ public class DebugEntryPositionMixin {
         BlockPos wrappedFeet = transformer.blocks.wrap(feet);
         ChunkPos rawChunk = ChunkPos.containing(feet);
         ChunkPos wrappedChunk = transformer.chunks.wrap(rawChunk);
-        boolean showRaw = WorldLoopConfig.SHOW_RAW_F3_COORDINATES.get();
+        boolean showRaw = Platforms.get().showRawF3Coordinates();
 
         List<String> wrapped = new ArrayList<>(lines);
         wrapped.set(0, String.format(Locale.ROOT, showRaw

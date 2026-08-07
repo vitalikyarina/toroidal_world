@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.net.ClientAnchorSync;
-import com.toroidalworld.net.WorldLoopNetwork;
+import com.toroidalworld.net.WrappingBoundsSync;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -63,7 +63,7 @@ public class ServerPlayerMixin {
             at = @At("TAIL"))
     private void toroidal$sendBoundsOnDimensionChange(TeleportTransition transition,
             CallbackInfoReturnable<@Nullable ServerPlayer> cir) {
-        WorldLoopNetwork.sendTo((ServerPlayer) (Object) this);
+        WrappingBoundsSync.sendTo((ServerPlayer) (Object) this);
     }
 
     // Each server tick, after the player's own vanilla tick has run: the moment the anchors the client holds — the
