@@ -13,3 +13,6 @@ plugins {
 }
 
 rootProject.name = 'toroidal-world'
+
+include 'common'
+include 'neoforge'

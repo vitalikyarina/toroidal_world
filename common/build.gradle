@@ -1,0 +1,41 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev'
+    id 'idea'
+}
+
+version = toroidal_world_version
+group = mod_group_id
+
+// Mojang ships Java 25 to end users, so mods should target Java 25.
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+// NeoForm mode: plain vanilla (Mojmap) on the classpath, no loader — the compile-time proof that this module is
+// loader-free. The AT in src/main/resources/META-INF is auto-detected and applied to the vanilla artifact.
+neoForge {
+    neoFormVersion = project.neoform_version
+}
+
+sourceSets.main.resources {
+    // Exclude common development only resources from finalized outputs
+    exclude("**/*.bbmodel") // BlockBench project files
+}
+
+// NeoForm brings only vanilla; the mixin annotations the sources carry come from the same artifacts the NeoForge
+// runtime ships (pinned in gradle.properties from the neo_version userdev config). compileOnly — applying them is
+// the loaders' business.
+dependencies {
+    compileOnly "net.fabricmc:sponge-mixin:${mixin_version}"
+    compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
