@@ -20,9 +20,13 @@ public final class NeoForgePlatform implements Platform {
         return FMLEnvironment.getDist() == Dist.CLIENT;
     }
 
+    // hasChannel is the optional-payload guard, mirroring FabricPlatform's canSend: a vanilla client never negotiated
+    // the channel, and NeoForge treats sending to one as an error rather than a no-op.
     @Override
     public void sendWrappingBounds(ServerPlayer player, WorldLoopBounds bounds) {
-        PacketDistributor.sendToPlayer(player, new WrappingSettingsPayload(bounds));
+        if (player.connection.hasChannel(WrappingSettingsPayload.TYPE)) {
+            PacketDistributor.sendToPlayer(player, new WrappingSettingsPayload(bounds));
+        }
     }
 
     @Override
