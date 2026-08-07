@@ -14,7 +14,7 @@
 - [Sodium](https://modrinth.com/mod/sodium) and [Iris Shaders](https://modrinth.com/mod/iris) are supported.
 - LOD mods (**Distant Horizons**) are **not supported** yet.
 - [Lithium](https://modrinth.com/mod/lithium) is **not supported** yet.
-- Map mods work only **partially** for now.
+- Map mods are **partially supported**.
 - Runs on **NeoForge** and **Fabric**.
 
 ## Before you download
