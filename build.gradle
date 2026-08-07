@@ -14,8 +14,19 @@ ext {
 version = mod_version
 group = mod_group_id
 
+def withBuildSuffix = { baseVersion ->
+    def buildSuffix = findProperty("${mod_id}_build")
+    buildSuffix ? "${baseVersion}-${buildSuffix}" : baseVersion
+}
+def modIngameVersion = withBuildSuffix(mod_version)
+def jarVersion = withBuildSuffix("${mod_version}+mc${minecraft_version}")
+
 base {
     archivesName = mod_id
+}
+
+tasks.named('jar', Jar) {
+    archiveFileName = "${mod_id}-neoforge-${jarVersion}.jar"
 }
 
 sourceSets.main.resources {
@@ -106,7 +117,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             mod_id                 : mod_id,
             mod_name               : mod_name,
             mod_license            : mod_license,
-            mod_version            : mod_version,
+            mod_version            : modIngameVersion,
     ]
     inputs.properties replaceProperties
     expand replaceProperties
