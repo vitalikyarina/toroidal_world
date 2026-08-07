@@ -40,10 +40,14 @@ public class ServerExplosionMixin {
         return SeamAim.nearestTo(entity, centre);
     }
 
+    // The method carries a different signature on each loader: vanilla hurts entities from hurtEntities() with no
+    // arguments, NeoForge patches the live path into hurtEntities(List) and keeps a deprecated no-argument delegate
+    // whose body holds no subtract. Both names are listed and require = 1 accepts the one body that has the call.
     @ModifyExpressionValue(
-            method = "hurtEntities(Ljava/util/List;)V",
+            method = { "hurtEntities()V", "hurtEntities(Ljava/util/List;)V" },
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"))
+                    target = "Lnet/minecraft/world/phys/Vec3;subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"),
+            require = 1)
     private Vec3 toroidal$knockbackDirectionThroughSeam(Vec3 delta, @Local Entity entity) {
         return SeamAim.foldDelta(entity, delta);
     }

@@ -57,14 +57,25 @@ public class EntitySectionManagerMixin implements LevelBindable {
     // piston dropping a block it destroyed across the seam, a spawner, worldgen placing a mob.
     //
     // Corrected here rather than in each spawner because this is the one gate they all pass — every server path into
-    // the world funnels through addEntityWithoutEvent: fresh spawns, worldgen, players, and the chunk load, so
-    // re-reading an already-stranded entity repairs it.
+    // the world funnels through it: fresh spawns, worldgen, players, and the chunk load, so re-reading an
+    // already-stranded entity repairs it.
+    //
+    // The gate has a different name on each loader. Vanilla's funnel is addEntity; NeoForge splits an event-firing
+    // addEntity from addEntityWithoutEvent and routes players through the latter only, so both names are listed and
+    // require = 1 accepts whichever the running loader has. On NeoForge both match and addEntity delegates into
+    // addEntityWithoutEvent, so a wrapped entity is read twice — the second pass finds it already in bounds and does
+    // nothing.
     //
     // absSnapTo, not setPos: the old position has to move with it, or the entity spends a tick believing it travelled
     // a whole world. It deliberately does not route through snapTo, so a joining player's client mirror is left alone.
     //
     // A level that does not wrap answers null here; this manager only ever serves server levels.
-    @Inject(method = "addEntityWithoutEvent(Lnet/minecraft/world/level/entity/EntityAccess;Z)Z", at = @At("HEAD"))
+    @Inject(
+            method = {
+                    "addEntity(Lnet/minecraft/world/level/entity/EntityAccess;Z)Z",
+                    "addEntityWithoutEvent(Lnet/minecraft/world/level/entity/EntityAccess;Z)Z" },
+            at = @At("HEAD"),
+            require = 1)
     private void toroidal$wrapJoiningEntity(EntityAccess entity, boolean loaded, CallbackInfoReturnable<Boolean> cir) {
         if (!(entity instanceof Entity actualEntity)) {
             return;

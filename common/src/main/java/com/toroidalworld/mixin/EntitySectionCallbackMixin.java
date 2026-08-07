@@ -1,6 +1,5 @@
 package com.toroidalworld.mixin;
 
-import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -11,6 +10,7 @@ import com.toroidalworld.core.WorldLoopTransformer;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.entity.EntityAccess;
 
 // Where an entity is filed once it moves. The section is keyed off the entity's own coordinate, so one pushed a step
 // past the bounds is filed under a chunk the world never loads — a section born HIDDEN, which stops the entity ticking
@@ -27,20 +27,21 @@ import net.minecraft.world.entity.Entity;
 // is still ticking to reach that tail.
 @Mixin(targets = "net/minecraft/world/level/entity/PersistentEntitySectionManager$Callback")
 public class EntitySectionCallbackMixin {
+    // Vanilla's own field: the holder keeps the entity it files as the manager's type parameter. NeoForge adds an
+    // Entity-typed realEntity beside it but keeps this one, so the one name serves both loaders.
     @Shadow
     @Final
-    private @Nullable Entity realEntity;
+    private EntityAccess entity;
 
     @ModifyExpressionValue(
             method = "onMove",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/SectionPos;asLong(Lnet/minecraft/core/BlockPos;)J"))
     private long toroidal$fileInPhysicalSection(long sectionKey) {
-        Entity entity = this.realEntity;
-        if (entity == null) {
+        if (!(this.entity instanceof Entity actualEntity)) {
             return sectionKey;
         }
 
-        WorldLoopTransformer transformer = ((TransformerSource) entity).toroidal$wrappedTransformer();
+        WorldLoopTransformer transformer = ((TransformerSource) actualEntity).toroidal$wrappedTransformer();
         return transformer == null ? sectionKey : transformer.chunks.wrapSectionNode(sectionKey);
     }
 }
