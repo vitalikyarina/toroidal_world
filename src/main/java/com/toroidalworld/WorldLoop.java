@@ -3,7 +3,6 @@ package com.toroidalworld;
 import com.toroidalworld.config.WorldLoopConfig;
 import com.toroidalworld.gen.WorldLoopGenerators;
 import com.toroidalworld.gen.WorldLoopTicketTypes;
-import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -18,7 +17,6 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 // (@EventBusSubscriber: shape setup, network, sync) are not listed here; they wire themselves.
 public final class WorldLoop {
     public static void init(IEventBus modEventBus, ModContainer modContainer) {
-        WorldLoopAttachments.ATTACHMENT_TYPES.register(modEventBus);
         WorldLoopGenerators.CHUNK_GENERATORS.register(modEventBus);
         WorldLoopTicketTypes.TICKET_TYPES.register(modEventBus);
         modContainer.registerConfig(ModConfig.Type.CLIENT, WorldLoopConfig.SPEC);

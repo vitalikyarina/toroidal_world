@@ -1,36 +1,18 @@
 package com.toroidalworld.storage;
 
-import java.util.function.Supplier;
-
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.accessors.ClientBoundsHolder;
 import com.toroidalworld.accessors.ClientPositionHolder;
 import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.gen.ShapedChunkGenerator;
 import com.toroidalworld.player.ClientPosition;
-import com.toroidalworld.ToroidalWorld;
 
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.attachment.IAttachmentHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 public final class WorldLoopAttachments {
-    private static final String DIMENSION_TRANSFORMER_ID = "dimension_transformer";
-    private static final String CLIENT_BOUNDS_TRANSFORMER_ID = "client_bounds_transformer";
-
-    public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
-            DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, ToroidalWorld.MODID);
-
-    public static final Supplier<AttachmentType<WorldLoopTransformer>> DIMENSION_TRANSFORMER = ATTACHMENT_TYPES.register(
-            DIMENSION_TRANSFORMER_ID,
-            () -> AttachmentType.<WorldLoopTransformer>builder(WorldLoopAttachments::createTransformer).build());
-
-    // A field read off the level, not an attachment lookup: LevelMixin resolves the attachment once per level and
+    // A field read off the level: LevelMixin resolves the transformer once per level from its own chunk generator and
     // keeps it, because this is asked thousands of times per tick from the block-entity and scheduled-tick gates alone.
     public static WorldLoopTransformer transformerOf(Level level) {
         return ((TransformerCache) level).toroidal$transformer();
@@ -42,17 +24,14 @@ public final class WorldLoopAttachments {
         return transformer.isWrapped() ? transformer : null;
     }
 
-    // The bounds the server told this client, held apart from DIMENSION_TRANSFORMER on purpose. That one drives the whole
-    // wrapping engine, and on the client it MUST stay NOOP — the client is told the world is infinite, which is what
-    // keeps rendering and chunk loading working across the seam. So the client's knowledge of the bounds lives here,
-    // where only things that want to *read* the bounds without making the level wrap will look (the debug overlay today).
-    // Server levels never touch it; the default is NOOP, and the client sets it from WrappingSettingsPayload.
-    public static final Supplier<AttachmentType<WorldLoopTransformer>> CLIENT_BOUNDS_TRANSFORMER = ATTACHMENT_TYPES.register(
-            CLIENT_BOUNDS_TRANSFORMER_ID,
-            () -> AttachmentType.<WorldLoopTransformer>builder(holder -> WorldLoopTransformer.NOOP).build());
-
+    // The bounds the server told this client, held apart from the engine's transformer on purpose. That one drives the
+    // whole wrapping engine, and on the client it MUST stay NOOP — the client is told the world is infinite, which is
+    // what keeps rendering and chunk loading working across the seam. So the client's knowledge of the bounds lives in
+    // ClientBoundsHolder on the client level, where only things that want to *read* the bounds without making the level
+    // wrap will look (the debug overlay and the compass today). Server levels never implement it and fall out on the
+    // instanceof; the default is NOOP, and the client sets it from WrappingSettingsPayload.
     private static WorldLoopTransformer clientBoundsTransformerOf(Level level) {
-        return level.getData(CLIENT_BOUNDS_TRANSFORMER);
+        return level instanceof ClientBoundsHolder holder ? holder.toroidal$clientBounds() : WorldLoopTransformer.NOOP;
     }
 
     public static @Nullable WorldLoopTransformer wrappedClientBoundsTransformerOf(Level level) {
@@ -91,22 +70,6 @@ public final class WorldLoopAttachments {
                 transformer.coords.z.wrap(player.getZ()),
                 player.level().dimension(),
                 transformer);
-    }
-
-    // The bounds come from the level's own chunk generator. A looped world is created with the Looped world shape,
-    // which rebuilds the overworld generator as a LoopedChunkGenerator carrying them — and vanilla persists a world's
-    // generators. The shape itself is never stored, so the generator is the one thing that can still answer "does this
-    // level wrap, and how wide" after a restart.
-    private static WorldLoopTransformer createTransformer(IAttachmentHolder holder) {
-        if (!(holder instanceof ServerLevel serverLevel)) {
-            return WorldLoopTransformer.NOOP;
-        }
-
-        if (serverLevel.getChunkSource().getGenerator() instanceof ShapedChunkGenerator shaped) {
-            return shaped.transformer();
-        }
-
-        return WorldLoopTransformer.NOOP;
     }
 
     private WorldLoopAttachments() {

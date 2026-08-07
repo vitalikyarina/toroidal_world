@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.toroidalworld.accessors.RelocatableBlockEntity;
 import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.gen.ShapedChunkGenerator;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.AbortableIterationConsumer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -182,20 +183,34 @@ public class LevelMixin implements TransformerCache {
         return transformer.isWrapped() ? transformer.blocks.wrap(pos) : pos;
     }
 
-    // Every block access in the game funnels through this mixin, and a level's transformer never changes. Deliberately
-    // not volatile: resolution is idempotent — transformerOf hands back the level's one attachment instance — so a race
-    // can only cost a repeated lookup, never a second transformer.
-    @Unique
-    // The one place the attachment map is actually consulted — transformerOf routes every caller in the mod here, so
-    // the lookup runs once per level and everything after it is a field read. The raw getData, not transformerOf:
-    // routing back through it would recurse. Deliberately not volatile — resolution is idempotent, getData hands back
-    // the level's one attachment instance, so a race can only cost a repeated lookup, never a second transformer.
+    // The one place the transformer is actually resolved — transformerOf routes every caller in the mod here, so the
+    // resolve runs once per level and everything after it is a field read. Deliberately not volatile — resolution is
+    // idempotent, the generator hands back the level's one transformer instance, so a race can only cost a repeated
+    // resolve, never a second transformer.
     @Override
     public WorldLoopTransformer toroidal$transformer() {
         if (this.toroidal$transformer == null) {
-            this.toroidal$transformer = ((Level) (Object) this).getData(WorldLoopAttachments.DIMENSION_TRANSFORMER);
+            this.toroidal$transformer = toroidal$resolveTransformer();
         }
 
         return this.toroidal$transformer;
+    }
+
+    // The bounds come from the level's own chunk generator. A looped world is created with the Toroidal world shape,
+    // which rebuilds the overworld generator as a LoopedChunkGenerator carrying them — and vanilla persists a world's
+    // generators. The shape itself is never stored, so the generator is the one thing that can still answer "does this
+    // level wrap, and how wide" after a restart. Client levels have no chunk generator and answer NOOP — the client is
+    // told the world is infinite; the bounds it may know about live in ClientBoundsHolder, apart from the engine.
+    @Unique
+    private WorldLoopTransformer toroidal$resolveTransformer() {
+        if (!((Object) this instanceof ServerLevel serverLevel)) {
+            return WorldLoopTransformer.NOOP;
+        }
+
+        if (serverLevel.getChunkSource().getGenerator() instanceof ShapedChunkGenerator shaped) {
+            return shaped.transformer();
+        }
+
+        return WorldLoopTransformer.NOOP;
     }
 }
