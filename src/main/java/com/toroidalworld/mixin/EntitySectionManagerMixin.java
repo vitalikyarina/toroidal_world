@@ -4,14 +4,19 @@ import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.entity.EntityAccess;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
+import net.minecraft.world.phys.Vec3;
 
 // The entity manager holds two maps keyed by chunk — what each chunk's entities are allowed to do, and whether they
 // have been read off disk — and it answers four questions out of them: canPositionTick for a block and for a chunk,
@@ -43,6 +48,40 @@ public class EntitySectionManagerMixin implements LevelBindable {
     @Override
     public void toroidal$bindLevel(ServerLevel level) {
         this.toroidal$level = level;
+    }
+
+    // The moment an entity enters the world, and the last one at which its position is still only its own. The very
+    // next line files it by that position — SectionPos.asLong(entity.blockPosition()) — and a coordinate past the
+    // bounds names a section of a chunk the world never loads, which is born HIDDEN: never ticked, never tracked,
+    // never found again, and saved to a region file out there. That is the whole of the bug, whatever spawned it: a
+    // piston dropping a block it destroyed across the seam, a spawner, worldgen placing a mob.
+    //
+    // Corrected here rather than in each spawner because this is the one gate they all pass — every server path into
+    // the world funnels through addEntityWithoutEvent: fresh spawns, worldgen, players, and the chunk load, so
+    // re-reading an already-stranded entity repairs it.
+    //
+    // absSnapTo, not setPos: the old position has to move with it, or the entity spends a tick believing it travelled
+    // a whole world. It deliberately does not route through snapTo, so a joining player's client mirror is left alone.
+    //
+    // A level that does not wrap answers null here; this manager only ever serves server levels.
+    @Inject(method = "addEntityWithoutEvent(Lnet/minecraft/world/level/entity/EntityAccess;Z)Z", at = @At("HEAD"))
+    private void toroidal$wrapJoiningEntity(EntityAccess entity, boolean loaded, CallbackInfoReturnable<Boolean> cir) {
+        if (!(entity instanceof Entity actualEntity)) {
+            return;
+        }
+
+        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(actualEntity.level());
+        if (transformer == null) {
+            return;
+        }
+
+        Vec3 position = actualEntity.position();
+        if (!transformer.vectors.isOver(position)) {
+            return;
+        }
+
+        Vec3 wrapped = transformer.vectors.wrap(position);
+        actualEntity.absSnapTo(wrapped.x, wrapped.y, wrapped.z);
     }
 
     // canPositionTick contributes two matches — both overloads answer to the bare name.

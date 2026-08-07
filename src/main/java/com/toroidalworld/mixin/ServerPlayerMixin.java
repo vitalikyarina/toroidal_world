@@ -4,9 +4,14 @@ import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.net.ClientAnchorSync;
+import com.toroidalworld.net.WorldLoopNetwork;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -14,6 +19,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.phys.Vec3;
 
@@ -47,6 +53,28 @@ public class ServerPlayerMixin {
         return respawnData == respawnConfig.respawnData()
                 ? respawnConfig
                 : new ServerPlayer.RespawnConfig(respawnData, respawnConfig.forced());
+    }
+
+    // The second of the two moments the client's space changes and it needs the wrap bounds: arriving in another
+    // dimension (the overworld and the nether wrap at different widths). TAIL lands on the method's last return —
+    // the end of the cross-dimension branch; the same-dimension branch and the two null bail-outs return earlier
+    // and change no space, so they are rightly passed by.
+    @Inject(method = "teleport(Lnet/minecraft/world/level/portal/TeleportTransition;)Lnet/minecraft/server/level/ServerPlayer;",
+            at = @At("TAIL"))
+    private void toroidal$sendBoundsOnDimensionChange(TeleportTransition transition,
+            CallbackInfoReturnable<@Nullable ServerPlayer> cir) {
+        WorldLoopNetwork.sendTo((ServerPlayer) (Object) this);
+    }
+
+    // Each server tick, after the player's own vanilla tick has run: the moment the anchors the client holds — the
+    // world spawn and the border centre — may need re-sending around the mirror's fresh position. Anchored to the
+    // super call rather than doTick's tail so a spectator parked in an unloaded chunk, whose vanilla tick is skipped,
+    // skips the refresh with it.
+    @Inject(method = "doTick",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;tick()V",
+                    shift = At.Shift.AFTER))
+    private void toroidal$refreshClientAnchors(CallbackInfo ci) {
+        ClientAnchorSync.refresh((ServerPlayer) (Object) this);
     }
 
     @WrapMethod(method = "isReachableBedBlock")

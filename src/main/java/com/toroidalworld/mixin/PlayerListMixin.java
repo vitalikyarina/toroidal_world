@@ -7,19 +7,24 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.net.WorldLoopNetwork;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 
+import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -53,6 +58,16 @@ public class PlayerListMixin {
                 player.connection.send(packet);
             }
         }
+    }
+
+    // The first of the two moments the client's space changes and it needs the wrap bounds: joining. The other is
+    // crossing to another dimension (ServerPlayerMixin) — the two wrapped dimensions carry different widths. A
+    // same-dimension respawn keeps the client level, and with it the transformer, so it needs nothing. At the tail,
+    // once the connection is fully placed and flushing again, so the payload follows the whole login sequence.
+    @Inject(method = "placeNewPlayer", at = @At("TAIL"))
+    private void toroidal$sendBoundsOnLogin(Connection connection, ServerPlayer player, CommonListenerCookie cookie,
+            CallbackInfo ci) {
+        WorldLoopNetwork.sendTo(player);
     }
 
     @WrapOperation(

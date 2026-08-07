@@ -3,10 +3,13 @@ package com.toroidalworld.mixin;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.storage.CurrentServer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -36,6 +39,18 @@ import net.minecraft.world.level.storage.ServerLevelData;
 // vanilla's method running and only correct what it asks the world.
 @Mixin(MinecraftServer.class)
 public class MinecraftServerMixin {
+    // runServer is the server thread's whole life: published before initServer loads the first level — so a chunk read
+    // during world load already finds it — and cleared only when the thread unwinds past its own finally.
+    @Inject(method = "runServer", at = @At("HEAD"))
+    private void toroidal$publishCurrentServer(CallbackInfo ci) {
+        CurrentServer.set((MinecraftServer) (Object) this);
+    }
+
+    @Inject(method = "runServer", at = @At("RETURN"))
+    private void toroidal$clearCurrentServer(CallbackInfo ci) {
+        CurrentServer.clear();
+    }
+
     // The sampler has no idea which dimension it serves and no argument to tell it, so the transformer is bound around
     // the call the way every other out-of-step worldgen query binds it. The answer is then folded into the bounds: with
     // periodic noise X=400 in a 512-wide world *is* X=-112, so folding is the correct reading of the result rather than

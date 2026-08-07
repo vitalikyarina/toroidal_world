@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.entity.SeamAim;
+import com.toroidalworld.player.VehicleDismountResync;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -157,6 +158,14 @@ public class EntityMixin implements TransformerSource {
         if ((Object) this instanceof ServerPlayer player) {
             WorldLoopAttachments.rebaseClientPositionOf(player);
         }
+    }
+
+    // At the head, before the detach nulls the vehicle field: the resync has to read which vehicle is being left, and
+    // its send must be deferred past the detach — both handled inside the helper. Vanilla fires no callback here, and
+    // the passenger is the one party that knows the moment.
+    @Inject(method = "removeVehicle", at = @At("HEAD"))
+    private void toroidal$resyncVehicleOnDismount(CallbackInfo ci) {
+        VehicleDismountResync.resyncAfterDismount((Entity) (Object) this);
     }
 
     @Unique

@@ -3,6 +3,7 @@ package com.toroidalworld.map;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.storage.CurrentServer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.resources.ResourceKey;
@@ -10,7 +11,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 // A map computes every canvas position as a delta from its stored center, but its callers do not always hand it a
 // level to ask about the world: banners and frames reloaded from NBT re-add their decorations inside the map's own
@@ -24,7 +24,7 @@ public final class MapSeamFold {
             return WorldLoopAttachments.wrappedTransformerOf(actualLevel);
         }
 
-        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        MinecraftServer server = CurrentServer.get();
         if (server == null) {
             return null;
         }

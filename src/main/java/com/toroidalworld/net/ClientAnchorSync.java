@@ -4,7 +4,6 @@ import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
 import com.toroidalworld.storage.WorldLoopAttachments;
-import com.toroidalworld.ToroidalWorld;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -14,9 +13,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.storage.LevelData;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 // The absolute coordinates the client is given once and then keeps: the world spawn and the border's centre. Vanilla
 // sends each on the way into a level and afterwards only when someone moves it, while the client's own unbounded
@@ -24,20 +20,14 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 // the client goes on using it. The compass points the long way round; the border's wall is drawn, and client-side
 // block breaking and placement gated, a world from where the server measures them.
 //
-// Each tick the copy the client should hold is recomputed around its mirror; the moment one flips, the packet is
-// re-sent and the translator lays it into the fresh copy — which also picks up a value changed server-side without a
-// broadcast reaching this player. Both checks are a handful of ops against the cached transformer, and an actual
-// re-send only happens when the player crosses half a world from the anchor. Standing exactly on that antipode a step
-// back and forth re-sends each tick: it is the one place the two copies are equally near, and the farthest the player
-// can be from what the coordinate names.
-@EventBusSubscriber(modid = ToroidalWorld.MODID)
+// Each tick (driven from ServerPlayerMixin) the copy the client should hold is recomputed around its mirror; the
+// moment one flips, the packet is re-sent and the translator lays it into the fresh copy — which also picks up a value
+// changed server-side without a broadcast reaching this player. Both checks are a handful of ops against the cached
+// transformer, and an actual re-send only happens when the player crosses half a world from the anchor. Standing
+// exactly on that antipode a step back and forth re-sends each tick: it is the one place the two copies are equally
+// near, and the farthest the player can be from what the coordinate names.
 public final class ClientAnchorSync {
-    @SubscribeEvent
-    static void onPlayerTick(PlayerTickEvent.Post event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
-            return;
-        }
-
+    public static void refresh(ServerPlayer player) {
         ServerLevel level = player.level();
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
