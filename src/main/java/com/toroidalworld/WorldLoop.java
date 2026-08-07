@@ -3,6 +3,7 @@ package com.toroidalworld;
 import com.toroidalworld.config.WorldLoopConfig;
 import com.toroidalworld.gen.WorldLoopGenerators;
 import com.toroidalworld.gen.WorldLoopTicketTypes;
+import com.toroidalworld.net.AuxiliaryLightTranslation;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -19,6 +20,7 @@ public final class WorldLoop {
     public static void init(IEventBus modEventBus, ModContainer modContainer) {
         WorldLoopGenerators.CHUNK_GENERATORS.register(modEventBus);
         WorldLoopTicketTypes.TICKET_TYPES.register(modEventBus);
+        AuxiliaryLightTranslation.register();
         modContainer.registerConfig(ModConfig.Type.CLIENT, WorldLoopConfig.SPEC);
 
         // The spec alone only yields the toml; the mod-list Config button needs a screen factory. NeoForge's generic

@@ -1,6 +1,7 @@
 package com.toroidalworld.net;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,7 +21,6 @@ import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
-import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.SectionPos;
@@ -34,6 +34,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
@@ -89,7 +90,6 @@ import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.payload.AuxiliaryLightDataPayload;
 
 // Every packet that carries a position crosses the boundary between the server's wrapped world and the client's
 // unbounded one, so it is rewritten in flight. Packets not in the tables pass through untouched.
@@ -140,6 +140,16 @@ public final class PacketTranslator {
             Map.entry(ClientboundDamageEventPacket.class, rewriter(PacketTranslator::damageEvent)),
             Map.entry(ClientboundMoveMinecartPacket.class, rewriter(PacketTranslator::moveMinecart)),
             Map.entry(ClientboundCustomPayloadPacket.class, rewriter(PacketTranslator::customPayload)));
+
+    // Filled once by the loader glue while the mod initializes — before any server exists — then only read.
+    private static final Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>> PAYLOAD_REWRITERS =
+            new HashMap<>();
+
+    public static <P extends CustomPacketPayload> void registerPayloadRewriter(Class<P> payloadType,
+            BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
+        PAYLOAD_REWRITERS.put(payloadType,
+                (payload, context) -> payloadRewriter.apply(payloadType.cast(payload), context));
+    }
 
     private static final Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> TO_SERVER = Map.ofEntries(
             Map.entry(ServerboundUseItemOnPacket.class, rewriter(PacketTranslator::useItemOn)),
@@ -286,14 +296,18 @@ public final class PacketTranslator {
         return new ClientboundSetChunkCacheCenterPacket(clientPos.x(), clientPos.z());
     }
 
-    // NeoForge's auxiliary light data travels beside the chunk and names the same chunk, so it moves with it.
+    // A custom payload's shape is its owner's business — a loader ships payloads of its own (NeoForge's auxiliary
+    // light data), and their classes are loader API this table must not name. So the packet dispatches to a second,
+    // payload-keyed table that the loader glue fills at init; a payload nobody claimed passes through untouched.
     private static Packet<?> customPayload(ClientboundCustomPayloadPacket packet, TranslationContext context) {
-        if (!(packet.payload() instanceof AuxiliaryLightDataPayload payload)) {
+        BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload> payloadRewriter =
+                PAYLOAD_REWRITERS.get(packet.payload().getClass());
+        if (payloadRewriter == null) {
             return packet;
         }
 
-        return new ClientboundCustomPayloadPacket(new AuxiliaryLightDataPayload(
-                context.toClient(payload.pos()), payload.entries()));
+        CustomPacketPayload rewritten = payloadRewriter.apply(packet.payload(), context);
+        return rewritten == packet.payload() ? packet : new ClientboundCustomPayloadPacket(rewritten);
     }
 
     // The client's own position. A relative move is a delta the client applies to itself, so it already lands in the
@@ -920,14 +934,15 @@ public final class PacketTranslator {
         return codec.decode(target);
     }
 
+    // Unpooled.buffer()'s own default, spelled out because the factory always takes an explicit capacity.
+    private static final int DEFAULT_BUFFER_CAPACITY = 256;
+
     private static RegistryFriendlyByteBuf buffer(TranslationContext context) {
-        return new RegistryFriendlyByteBuf(
-                Unpooled.buffer(), context.registryAccess(), context.connectionType());
+        return context.bufferFactory().apply(DEFAULT_BUFFER_CAPACITY);
     }
 
     private static RegistryFriendlyByteBuf buffer(TranslationContext context, int capacity) {
-        return new RegistryFriendlyByteBuf(
-                Unpooled.buffer(capacity), context.registryAccess(), context.connectionType());
+        return context.bufferFactory().apply(capacity);
     }
 
     @SuppressWarnings("unchecked")

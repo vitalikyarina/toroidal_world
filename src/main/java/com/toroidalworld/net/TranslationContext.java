@@ -16,8 +16,11 @@ import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.mojang.logging.LogUtils;
 
+import io.netty.buffer.Unpooled;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -25,7 +28,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.connection.ConnectionType;
 
 // Everything a packet rewrite reads from the live server, captured as plain values and functions so the rewriters can
 // run without one — a test builds this record by hand where production resolves it from the player.
@@ -35,11 +37,14 @@ import net.neoforged.neoforge.network.connection.ConnectionType;
 // around where the player believes they are — a chunk at the far edge of the world is sent as the chunk just past them,
 // which is where they expect it, and which of the infinitely many copies to show depends on where they stand. Incoming,
 // a coordinate is simply wrapped back into the world: it names exactly one block, whichever copy the player clicked.
+// bufferFactory builds the buffer a rewriter re-encodes a packet through (capacity in bytes), and it has to write the
+// wire format the receiving connection itself would use — a modded and a vanilla client do not share one. Which buffer
+// class that is belongs to the loader, so the resolver below captures it and the rewriters stay loader-free.
 public record TranslationContext(
         WorldLoopTransformer transformer,
         ClientPosition clientPosition,
         RegistryAccess registryAccess,
-        ConnectionType connectionType,
+        IntFunction<RegistryFriendlyByteBuf> bufferFactory,
         ResourceKey<Level> dimension,
         int viewDistance,
         IntPredicate ownVehicle,
@@ -68,7 +73,8 @@ public record TranslationContext(
                 transformer,
                 WorldLoopAttachments.clientPositionOf(player),
                 player.registryAccess(),
-                player.connection.getConnectionType(),
+                capacity -> new RegistryFriendlyByteBuf(
+                        Unpooled.buffer(capacity), player.registryAccess(), player.connection.getConnectionType()),
                 player.level().dimension(),
                 viewDistanceOf(player, transformer),
                 entityId -> isControlledVehicle(player, entityId),
