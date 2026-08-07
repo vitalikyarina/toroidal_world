@@ -26,17 +26,14 @@ import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.WorldDimensions;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 
-// Registers "Toroidal" into the core World Shape row, next to the vanilla World Type.
+// Registers "Toroidal" into the core World Shape row, next to the vanilla World Type. Called by each loader's client
+// setup — the row itself is drawn by the mod's own CreateWorldScreen mixins, so registration is the only loader-bound
+// moment.
 //
 // The size lives here as plain screen state, and that is safe for exactly one reason: it is read once, in applyAtCreation,
 // while the world is being built — never after. Nothing has to survive a restart, because what survives is the generator
 // the shape leaves behind.
-@EventBusSubscriber(modid = ToroidalWorld.MODID, value = Dist.CLIENT)
 public final class WorldLoopShapeSetup {
     private static final int DEFAULT_SIZE_CHUNKS = 32;
     private static final String TOROIDAL_LABEL_KEY = "gui.toroidal_world.world_shape.toroidal";
@@ -57,8 +54,7 @@ public final class WorldLoopShapeSetup {
     // to render, so what the player actually opens on is the closest usable scale.
     private static int netherScale = NetherScales.DEFAULT;
 
-    @SubscribeEvent
-    static void onClientSetup(FMLClientSetupEvent event) {
+    public static void register() {
         WorldShapes.register(WorldShape.of(
                 Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopGenerators.TOROIDAL_ID),
                 Component.translatable(TOROIDAL_LABEL_KEY),

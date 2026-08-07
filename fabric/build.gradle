@@ -1,0 +1,72 @@
+plugins {
+    id 'net.fabricmc.fabric-loom'
+    id 'idea'
+}
+
+ext {
+    mod_id = 'toroidal_world'
+}
+
+version = toroidal_world_version
+group = mod_group_id
+
+def withBuildSuffix = { baseVersion ->
+    def buildSuffix = findProperty("${mod_id}_build")
+    buildSuffix ? "${baseVersion}-${buildSuffix}" : baseVersion
+}
+def modIngameVersion = withBuildSuffix(toroidal_world_version)
+def jarVersion = withBuildSuffix("${toroidal_world_version}+mc${minecraft_version}")
+
+base {
+    archivesName = mod_id
+}
+
+// Mojang ships Java 25 to end users, so mods should target Java 25.
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+// Common's sources compile HERE, not as a project dependency, so the fabric jar carries every class and Loom sees the
+// mixin sources. 26.x Minecraft ships unobfuscated — no mappings line, no remapping, no refmap.
+sourceSets.main.java.srcDir '../common/src/main/java'
+sourceSets.main.resources.srcDir '../common/src/main/resources'
+
+sourceSets.main.resources {
+    // Exclude common development only resources from finalized outputs
+    exclude("**/*.bbmodel") // BlockBench project files
+}
+
+loom {
+    accessWidenerPath = file('src/main/resources/toroidal_world.accesswidener')
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+
+    // Bundled into the jar for production; no annotation processor — with no remapping there is no refmap to generate.
+    include(implementation("io.github.llamalad7:mixinextras-fabric:${mixinextras_version}"))
+}
+
+tasks.named('jar', Jar) {
+    archiveFileName = "${mod_id}-fabric-${jarVersion}.jar"
+}
+
+processResources {
+    inputs.property 'version', modIngameVersion
+    filesMatching('fabric.mod.json') {
+        expand version: modIngameVersion
+    }
+    // The NeoForge AT rides along in common's resources; the fabric jar carries the accesswidener instead.
+    exclude 'META-INF/accesstransformer.cfg'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}

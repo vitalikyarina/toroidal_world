@@ -1,10 +1,15 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
+        maven {
+            name = 'FabricMC'
+            url = 'https://maven.fabricmc.net/'
+        }
     }
 
     plugins {
         id 'net.neoforged.moddev' version '2.0.143'
+        id 'net.fabricmc.fabric-loom' version "${fabric_loom_version}"
     }
 }
 
@@ -16,3 +21,4 @@ rootProject.name = 'toroidal-world'
 
 include 'common'
 include 'neoforge'
+include 'fabric'
