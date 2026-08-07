@@ -15,7 +15,7 @@
 - LOD mods (**Distant Horizons**) are **not supported** yet.
 - [Lithium](https://modrinth.com/mod/lithium) is **not supported** yet.
 - Map mods work only **partially** for now.
-- Runs on **NeoForge 26.2.0.52-beta+** and **Fabric** (Loader 0.19.3+, Fabric API 0.156.0+).
+- Runs on **NeoForge** and **Fabric**.
 
 ## Before you download
 
