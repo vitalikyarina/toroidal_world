@@ -19,7 +19,7 @@ displayName="${mod_name}" #mandatory
 logoFile="logo.png"
 
 # The authors of the mod, displayed in the mod UI.
-authors="Vitalik Yarina"
+authors="Anyttng"
 
 # The description text for the mod (multi line!).
 description='''
