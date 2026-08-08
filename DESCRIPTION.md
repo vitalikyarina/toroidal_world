@@ -11,11 +11,17 @@
 
 ## Compatibility
 
-- [Sodium](https://modrinth.com/mod/sodium) and [Iris Shaders](https://modrinth.com/mod/iris) are supported.
-- LOD mods (**Distant Horizons**) are **not supported** yet.
-- [Lithium](https://modrinth.com/mod/lithium) is **not supported** yet.
-- Map mods are **partially supported**.
-- Runs on **NeoForge** and **Fabric**.
+Runs on **NeoForge** and **Fabric**.
+
+**Supported**
+
+- [Sodium](https://modrinth.com/mod/sodium) and [Iris Shaders](https://modrinth.com/mod/iris).
+- [Lithium](https://modrinth.com/mod/lithium) — two of its optimizations are switched off automatically.
+
+**Partially supported**
+
+- Map mods — maps still draw raw coordinates across the seam.
+- LOD mods (**Distant Horizons**, **Voxy**) — distant terrain is not wrapped across the seam yet.
 
 ## Before you download
 
