@@ -23,6 +23,12 @@
     "toroidal_world.shape.mixins.json"
   ],
   "accessWidener": "toroidal_world.accesswidener",
+  "custom": {
+    "lithium:options": {
+      "mixin.ai.poi": false,
+      "mixin.world.game_events.dispatch": false
+    }
+  },
   "depends": {
     "fabricloader": ">=0.19.3",
     "fabric-api": "*",
