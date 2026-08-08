@@ -3,6 +3,16 @@
 # The license for the mod (mandatory).
 license="${mod_license}"
 
+# Lithium reads this file-level table (ModFileInfo.getConfigElement) and disables the
+# named options itself. mixin.ai.poi overwrites the POI queries our seam folds inject
+# into; the hierarchical key also covers .tasks and .fast_portals, whose redirects
+# bypass any wrap on our side. game_events.dispatch replaces the chunk fetch in
+# GameEventDispatcher.post with a lookup keyed by the raw enumerated coordinate, so a
+# listener past the bounds is never visited.
+["lithium:options"]
+    "mixin.ai.poi" = false
+    "mixin.world.game_events.dispatch" = false
+
 # A list of mods.
 [[mods]] #mandatory
 
@@ -23,7 +33,7 @@ authors="Anyttng"
 
 # The description text for the mod (multi line!).
 description='''
-Toroidal World — the world as a seamless torus: walk in one direction and arrive back where you started. No border wall, no teleport — one continuous wrapping surface.
+Circumnavigate the world — walk, sail or fly past the border and come out on the far side. No walls, no teleports, one seamless world.
 '''
 
 # NeoForge dependency.

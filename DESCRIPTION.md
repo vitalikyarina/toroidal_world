@@ -1,21 +1,27 @@
 # Toroidal World
 
-**The world is a torus.** It has a finite size — and no edge. Walk past the +X border and you arrive from the −X side, with the terrain, mobs and gameplay continuing seamlessly: no barrier, no teleport, no visible seam. Circumnavigate a world on foot, or run an SMP where nobody can outrun anybody forever.
+**Walk around the world.** The world has a finite size and no edge: cross the border on one side and you walk in from the opposite side — no barrier, no teleport, no visible seam. Go around the world on foot, or run an SMP where nobody can outrun anybody forever.
 
 ## What it does
 
-- Adds a **World Shape** option to the world-creation screen: **Toroidal**, with the world size configurable per axis in chunks.
-- The terrain is genuinely periodic — the noise itself wraps, so terrain, biomes and structures continue across the seam instead of hitting a mirrored wall or a cut-off mountain.
+- Adds a **World Shape** option to the world-creation screen: pick **Toroidal** and set the world size per axis, in chunks.
+- Terrain is genuinely periodic — the noise itself wraps, so mountains, biomes and structures continue across the seam instead of hitting a mirrored wall or a cut-off cliff.
 - The game keeps working across the seam, not just the blocks: mob AI and pathfinding, projectiles and explosions, sounds and particles, compasses and lodestones, villages and raids, distance-based advancements — they all treat the world as round.
 - The Nether and the End are toroidal too — the Nether scaled relative to the overworld, the End with its own size.
 
 ## Compatibility
 
-- [Sodium](https://modrinth.com/mod/sodium) and [Iris Shaders](https://modrinth.com/mod/iris) are supported.
-- LOD mods (**Distant Horizons**) are **not supported** yet.
-- [Lithium](https://modrinth.com/mod/lithium) is **not supported** yet.
-- Map mods are **partially supported**.
-- Runs on **NeoForge** and **Fabric**.
+Runs on **NeoForge** and **Fabric**.
+
+**Supported**
+
+- [Sodium](https://modrinth.com/mod/sodium) and [Iris Shaders](https://modrinth.com/mod/iris).
+- [Lithium](https://modrinth.com/mod/lithium) — two of its optimizations are switched off automatically.
+
+**Partially supported**
+
+- Map mods — maps still draw raw coordinates across the seam.
+- LOD mods (**Distant Horizons**, **Voxy**) — distant terrain is not wrapped across the seam yet.
 
 ## Before you download
 

@@ -50,8 +50,9 @@ public final class WorldLoopShapeSetup {
     private static WorldLoopBounds endWrapping = DEFAULT_END_WRAPPING;
 
     // Not necessarily NetherScales.DEFAULT in the end: the scales a world can offer follow from its width, and the
-    // settings screen pulls this to the nearest one that works. At the default size 1:8 would leave a nether too small
-    // to render, so what the player actually opens on is the closest usable scale.
+    // settings screen re-picks with priority on 1:8, falling down the chain when the width disallows it. At the
+    // default size 1:8 would leave a nether too small to render, so what the player actually opens on is the largest
+    // scale the width admits.
     private static int netherScale = NetherScales.DEFAULT;
 
     public static void register() {

@@ -3,7 +3,7 @@
   "id": "toroidal_world",
   "version": "${version}",
   "name": "Toroidal World",
-  "description": "Toroidal World — the world as a seamless torus: walk in one direction and arrive back where you started. No border wall, no teleport — one continuous wrapping surface.",
+  "description": "Circumnavigate the world — walk, sail or fly past the border and come out on the far side. No walls, no teleports, one seamless world.",
   "authors": [
     "Anyttng"
   ],
@@ -23,6 +23,12 @@
     "toroidal_world.shape.mixins.json"
   ],
   "accessWidener": "toroidal_world.accesswidener",
+  "custom": {
+    "lithium:options": {
+      "mixin.ai.poi": false,
+      "mixin.world.game_events.dispatch": false
+    }
+  },
   "depends": {
     "fabricloader": ">=0.19.3",
     "fabric-api": "*",
