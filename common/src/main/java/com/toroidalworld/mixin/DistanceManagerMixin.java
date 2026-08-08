@@ -13,7 +13,6 @@ import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.server.level.DistanceManager;
-import net.minecraft.server.level.LoadingChunkTracker;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.SimulationChunkTracker;
 
@@ -22,10 +21,6 @@ import net.minecraft.server.level.SimulationChunkTracker;
 // the companion-ticket machinery that used to be issued from this pass is gone.
 @Mixin(DistanceManager.class)
 public class DistanceManagerMixin implements LevelBindable {
-    @Shadow
-    @Final
-    private LoadingChunkTracker loadingChunkTracker;
-
     @Shadow
     @Final
     private SimulationChunkTracker simulationChunkTracker;
@@ -41,10 +36,11 @@ public class DistanceManagerMixin implements LevelBindable {
     @Unique
     private @Nullable ServerLevel toroidal$level;
 
+    // The loading tracker is absent here on purpose: its class is package-private, so it registers itself with the
+    // TicketStorage at construction and receives this same bind through TicketStorageMixin.
     @Override
     public void toroidal$bindLevel(ServerLevel level) {
         this.toroidal$level = level;
-        ((LevelBindable) this.loadingChunkTracker).toroidal$bindLevel(level);
         ((LevelBindable) this.simulationChunkTracker).toroidal$bindLevel(level);
         ((LevelBindable) this.naturalSpawnChunkCounter).toroidal$bindLevel(level);
         ((LevelBindable) this.playerTicketManager).toroidal$bindLevel(level);

@@ -84,7 +84,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageType;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PositionMoveRotation;
 import net.minecraft.world.entity.Relative;
 import net.minecraft.world.entity.vehicle.minecart.NewMinecartBehavior;
@@ -96,7 +96,6 @@ import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.BlockEntityTypes;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -223,7 +222,7 @@ class PacketTranslatorTest {
             tag.putInt("Loot", 7);
             RegistryFriendlyByteBuf buf = buffer();
             BlockPos.STREAM_CODEC.encode(buf, SERVER_BLOCK);
-            ByteBufCodecs.registry(Registries.BLOCK_ENTITY_TYPE).encode(buf, BlockEntityTypes.CHEST);
+            ByteBufCodecs.registry(Registries.BLOCK_ENTITY_TYPE).encode(buf, BlockEntityType.CHEST);
             ByteBufCodecs.TRUSTED_COMPOUND_TAG.encode(buf, tag);
             ClientboundBlockEntityDataPacket packet = ClientboundBlockEntityDataPacket.STREAM_CODEC.decode(buf);
 
@@ -231,7 +230,7 @@ class PacketTranslatorTest {
                     (ClientboundBlockEntityDataPacket) PacketTranslator.toClient(packet, context());
 
             assertEquals(CLIENT_BLOCK, translated.getPos());
-            assertSame(BlockEntityTypes.CHEST, translated.getType());
+            assertSame(BlockEntityType.CHEST, translated.getType());
             assertEquals(tag, translated.getTag());
         }
 
@@ -726,7 +725,7 @@ class PacketTranslatorTest {
         void addEntityUnwrapsAroundTheMirror() {
             ClientboundAddEntityPacket translated = (ClientboundAddEntityPacket) PacketTranslator.toClient(
                     new ClientboundAddEntityPacket(11, new UUID(1L, 2L), SERVER_X, 70.0, SERVER_Z,
-                            0.0F, 0.0F, EntityTypes.PIG, 0, Vec3.ZERO, 0.0),
+                            0.0F, 0.0F, EntityType.PIG, 0, Vec3.ZERO, 0.0),
                     context());
 
             assertEquals(CLIENT_X, translated.getX());

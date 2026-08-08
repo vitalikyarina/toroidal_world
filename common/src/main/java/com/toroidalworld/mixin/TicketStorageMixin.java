@@ -6,7 +6,11 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.toroidalworld.accessors.LevelBindable;
+import com.toroidalworld.accessors.LevelBindRegistry;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -22,13 +26,26 @@ import net.minecraft.world.level.TicketStorage;
 //
 // Bound from ChunkMapMixin's constructor tail, the first moment the level exists.
 @Mixin(TicketStorage.class)
-public class TicketStorageMixin implements LevelBindable {
+public class TicketStorageMixin implements LevelBindable, LevelBindRegistry {
     @Unique
     private @Nullable ServerLevel toroidal$level;
+
+    // The loading graph registers itself here at construction (LoadingChunkTrackerMixin) — its class is
+    // package-private, so the bind cannot reach it through a shadowed field the way the public trackers are reached.
+    @Unique
+    private final List<LevelBindable> toroidal$registeredBindables = new ArrayList<>();
+
+    @Override
+    public void toroidal$registerBindable(LevelBindable bindable) {
+        this.toroidal$registeredBindables.add(bindable);
+    }
 
     @Override
     public void toroidal$bindLevel(ServerLevel level) {
         this.toroidal$level = level;
+        for (LevelBindable bindable : this.toroidal$registeredBindables) {
+            bindable.toroidal$bindLevel(level);
+        }
     }
 
     @ModifyVariable(method = "addTicket(JLnet/minecraft/server/level/Ticket;)Z", at = @At("HEAD"), argsOnly = true)

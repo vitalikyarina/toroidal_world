@@ -71,9 +71,9 @@ public class WorldTabMixin {
         }
 
         Minecraft minecraft = Minecraft.getInstance();
-        Screen parent = minecraft.gui.screen();
+        Screen parent = minecraft.screen;
         if (parent != null) {
-            minecraft.gui.setScreen(customizer.createScreen(parent));
+            minecraft.setScreen(customizer.createScreen(parent));
         }
     }
 }

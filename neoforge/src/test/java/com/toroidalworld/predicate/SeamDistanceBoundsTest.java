@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.options.WorldLoopBounds;
 
-import net.minecraft.advancements.predicates.DistancePredicate;
-import net.minecraft.advancements.predicates.MinMaxBounds;
+import net.minecraft.advancements.criterion.DistancePredicate;
+import net.minecraft.advancements.criterion.MinMaxBounds;
 import net.minecraft.world.phys.Vec3;
 
 // What SeamDistanceBounds claims about the pair it folds, checked against DistancePredicate itself: folding one end

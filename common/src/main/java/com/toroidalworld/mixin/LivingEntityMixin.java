@@ -31,9 +31,9 @@ public class LivingEntityMixin {
         return transformer == null ? bedPosition : transformer.blocks.wrap(bedPosition);
     }
     @ModifyArg(
-            method = "dealDefaultKnockback",
+            method = "hurtServer",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/LivingEntity;knockback(DDDLnet/minecraft/world/damagesource/DamageSource;F)V"),
+                    target = "Lnet/minecraft/world/entity/LivingEntity;knockback(DDD)V"),
             index = 1)
     private double toroidal$knockbackDirX(double xd) {
         WorldLoopTransformer transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
@@ -41,9 +41,9 @@ public class LivingEntityMixin {
     }
 
     @ModifyArg(
-            method = "dealDefaultKnockback",
+            method = "hurtServer",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/LivingEntity;knockback(DDDLnet/minecraft/world/damagesource/DamageSource;F)V"),
+                    target = "Lnet/minecraft/world/entity/LivingEntity;knockback(DDD)V"),
             index = 2)
     private double toroidal$knockbackDirZ(double zd) {
         WorldLoopTransformer transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
