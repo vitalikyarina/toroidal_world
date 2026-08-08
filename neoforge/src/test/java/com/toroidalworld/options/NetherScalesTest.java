@@ -64,7 +64,7 @@ class NetherScalesTest {
     @Nested
     class Normalization {
         @Test
-        void returnsTheNearestMemberOfTheAllowedListAndBothOverloadsAgree() {
+        void returnsTheLargestAllowedScaleNotAboveAndBothOverloadsAgree() {
             for (int width : WIDTHS) {
                 List<Integer> allowed = NetherScales.allowedFor(width);
                 for (int scale = 0; scale <= 300; scale++) {
@@ -72,10 +72,12 @@ class NetherScalesTest {
                     assertTrue(allowed.contains(normalized),
                             "width " + width + ": normalize(" + scale + ") = " + normalized + " is not allowed");
                     for (int candidate : allowed) {
-                        assertTrue(Math.abs(normalized - scale) <= Math.abs(candidate - scale),
+                        assertTrue(candidate > scale || candidate <= normalized,
                                 "width " + width + ": normalize(" + scale + ") = " + normalized
-                                        + " is further than " + candidate);
+                                        + " skipped the closer-from-below " + candidate);
                     }
+                    assertTrue(normalized <= scale || normalized == allowed.get(0),
+                            "width " + width + ": normalize(" + scale + ") = " + normalized + " fell upward");
                     assertEquals(normalized, NetherScales.normalize(scale, allowed),
                             "width " + width + ": the list overload disagrees on " + scale);
                 }
@@ -92,9 +94,23 @@ class NetherScalesTest {
         }
 
         @Test
-        void tiesGoToTheLargerScale() {
-            assertEquals(4, NetherScales.normalize(3, 128));
-            assertEquals(8, NetherScales.normalize(6, 128));
+        void theDefaultWinsWheneverTheWidthAdmitsIt() {
+            assertEquals(8, NetherScales.normalize(NetherScales.DEFAULT, 128));
+            assertEquals(8, NetherScales.normalize(NetherScales.DEFAULT, 4096));
+        }
+
+        @Test
+        void theDefaultFallsDownTheChainWhenDisallowed() {
+            assertEquals(2, NetherScales.normalize(NetherScales.DEFAULT, 32));
+            assertEquals(1, NetherScales.normalize(NetherScales.DEFAULT, 16));
+            assertEquals(3, NetherScales.normalize(NetherScales.DEFAULT, 129));
+        }
+
+        @Test
+        void aDisallowedScaleFallsToTheLargestAllowedBelowIt() {
+            assertEquals(2, NetherScales.normalize(3, 128));
+            assertEquals(1, NetherScales.normalize(0, 128));
+            assertEquals(8, NetherScales.normalize(300, 128));
         }
     }
 

@@ -71,6 +71,11 @@ public class WorldLoopSettingsScreen extends Screen {
     // refreshNetherScale, so commit can hand it over as-is.
     private int netherScale;
 
+    // The width the current scale was picked for. A refresh at a different width re-picks from scratch with priority
+    // on 1:8; a refresh at the same width — init runs again on every resize, and the cycle button re-renders through
+    // the same path — keeps the scale the player has, restored or cycled.
+    private int scalePickedForSize;
+
     private EditBox sizeEdit;
     private Button netherScaleButton;
     private EditBox endSizeEdit;
@@ -83,6 +88,7 @@ public class WorldLoopSettingsScreen extends Screen {
         this.onDone = onDone;
         this.sizeText = String.valueOf(current.chunkWidth());
         this.netherScale = currentNetherScale;
+        this.scalePickedForSize = current.chunkWidth();
         this.endSizeText = String.valueOf(currentEnd.chunkWidth());
     }
 
@@ -155,16 +161,21 @@ public class WorldLoopSettingsScreen extends Screen {
         this.refreshNetherScale();
     }
 
-    // The size decides which scales exist, so a size change can leave the chosen one impossible — it is pulled to the
-    // nearest that still works, the same way the size itself is pulled into its range. A world with only one usable
-    // scale has nothing to cycle through, so the button says so by going inactive. Only reached with a non-null
-    // effectiveSize, and the allowed list is fetched once for both the normalize and the button state.
+    // The size decides which scales exist, so a change of size re-picks the scale from scratch: vanilla's 1:8 when the
+    // new width allows it, otherwise the largest scale under it — the previous choice is not carried over, which is
+    // what lets a world shrunk to 1:1 come back to 1:8 when it grows again. A refresh at an unchanged width (resize,
+    // the cycle button) keeps the scale the player has. A world with only one usable scale has nothing to cycle
+    // through, so the button says so by going inactive. Only reached with a non-null effectiveSize, and the allowed
+    // list is fetched once for the pick and the button state both.
     private void refreshNetherScale() {
-        List<Integer> allowed = NetherScales.allowedFor(this.effectiveSize);
-        this.netherScale = NetherScales.normalize(this.netherScale, allowed);
+        int sizeChunks = this.effectiveSize;
+        List<Integer> allowed = NetherScales.allowedFor(sizeChunks);
+        boolean sizeChanged = sizeChunks != this.scalePickedForSize;
+        this.netherScale = NetherScales.normalize(sizeChanged ? NetherScales.DEFAULT : this.netherScale, allowed);
+        this.scalePickedForSize = sizeChunks;
         this.netherScaleButton.active = allowed.size() > 1;
 
-        int netherChunks = NetherScales.netherChunkWidth(this.effectiveSize, this.netherScale);
+        int netherChunks = NetherScales.netherChunkWidth(sizeChunks, this.netherScale);
         this.netherScaleButton.setMessage(Component.translatable(NETHER_SCALE_KEY, this.netherScale));
         this.netherScaleButton.setTooltip(Tooltip.create(
                 Component.translatable(NETHER_EFFECTIVE_KEY, netherChunks, netherChunks * CoordinateConstants.CHUNK_WIDTH)

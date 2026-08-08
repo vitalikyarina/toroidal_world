@@ -44,22 +44,30 @@ public final class NetherScales {
         return scales;
     }
 
-    // Ties go to the larger scale, so a world that grows past a threshold moves toward vanilla's 8:1 rather than away.
+    // A scale still in the list is kept; one that is not falls down to the largest allowed scale below it, or to the
+    // smallest allowed when nothing sits below. Re-picking the scale for a new width is this same operation seeded with
+    // DEFAULT: vanilla's 1:8 whenever the width admits it, otherwise the largest scale under it (4, 2, 1 on
+    // power-of-two widths; the width's own best divisor otherwise). Falling down rather than to the nearest is what
+    // keeps the pick independent of history — the old nearest-to-previous rule left a world shrunk to 1:1 stuck there
+    // after growing back.
     public static int normalize(int scale, int overworldChunkWidth) {
         return normalize(scale, allowedFor(overworldChunkWidth));
     }
 
     // For a caller that already has the width's allowed list — the settings screen fetches it once and derives both the
-    // normalized scale and the cycle button's state from it, rather than rebuilding the divisors twice.
+    // normalized scale and the cycle button's state from it, rather than rebuilding the divisors twice. The list is
+    // ascending, as allowedFor returns it.
     public static int normalize(int scale, List<Integer> allowed) {
-        int nearest = SMALLEST;
+        int fallen = allowed.get(0);
         for (int candidate : allowed) {
-            if (Math.abs(candidate - scale) <= Math.abs(nearest - scale)) {
-                nearest = candidate;
+            if (candidate > scale) {
+                break;
             }
+
+            fallen = candidate;
         }
 
-        return nearest;
+        return fallen;
     }
 
     // The scale handed in is already one of the allowed ones (its only caller cycles a normalized value), so it is found
