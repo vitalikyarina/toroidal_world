@@ -181,7 +181,7 @@
     "TheEndBiomeSourceMixin",
     "TheEndGatewayBlockEntityMixin",
     "ThrownTridentMixin",
-    "TicketStorageMixin",
+    "TickingTrackerMixin",
     "TrackedEntityMixin",
     "TrialSpawnerMixin",
     "TurtleGoHomeGoalMixin",

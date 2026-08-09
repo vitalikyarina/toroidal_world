@@ -1,5 +1,6 @@
 package com.toroidalworld.mixin;
 
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -7,6 +8,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.ChunkResender;
 import com.toroidalworld.accessors.LevelBindable;
@@ -15,6 +17,7 @@ import com.toroidalworld.accessors.SeamDriveScheduler;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.gen.SeamDriveRequest;
+import com.toroidalworld.gen.TicketProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -25,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import net.minecraft.core.SectionPos;
+import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ChunkTrackingView;
@@ -33,7 +37,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StaticCache2D;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.TicketStorage;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.entity.EntityAccess;
 import net.minecraft.world.phys.Vec3;
@@ -181,16 +184,25 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
         return this.level;
     }
 
-    @Shadow
-    @Final
-    private TicketStorage ticketStorage;
-
-    // The ticket graphs and the ticket storage are built without any reference to the level they serve; this is the
-    // first moment both exist.
+    // The ticket graphs are built without any reference to the level they serve; this is the first moment both exist.
+    // The distance manager passes the level on to every graph it owns.
     @Inject(method = "<init>", at = @At("TAIL"))
     private void toroidal$bindLevelToTickets(CallbackInfo ci) {
         ((LevelBindable) this.getDistanceManager()).toroidal$bindLevel(this.level);
-        ((LevelBindable) this.ticketStorage).toroidal$bindLevel(this.level);
+    }
+
+    // Probe. This is the one place a chunk holder comes into existence, and a holder on a key past the bounds is the
+    // phantom the whole fold exists to make impossible — it is read here rather than inferred from the graphs, because
+    // this is the effect the DoD names.
+    @Inject(method = "updateChunkScheduling", at = @At("RETURN"))
+    private void toroidal$probeScheduledHolder(long chunkKey, int newLevel, @Nullable ChunkHolder holder,
+            int oldLevel, CallbackInfoReturnable<ChunkHolder> cir) {
+        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        if (transformer == null) {
+            return;
+        }
+
+        TicketProbe.holderScheduled(this.level, transformer, chunkKey, holder == null && cir.getReturnValue() != null);
     }
 
     // The tracking layer must never be stamped with a raw out-of-bounds position. Mid-tick, an entity that has just

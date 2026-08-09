@@ -3,7 +3,6 @@ package com.toroidalworld;
 import com.toroidalworld.gen.LoopedChunkGenerator;
 import com.toroidalworld.gen.LoopedFlatChunkGenerator;
 import com.toroidalworld.gen.WorldLoopGenerators;
-import com.toroidalworld.gen.WorldLoopTicketTypes;
 import com.toroidalworld.net.WrappingSettingsPayload;
 import com.toroidalworld.platform.FabricPlatform;
 import com.toroidalworld.platform.Platforms;
@@ -29,9 +28,6 @@ public class ToroidalWorldFabric implements ModInitializer {
         Registry.register(BuiltInRegistries.CHUNK_GENERATOR,
                 ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopGenerators.TOROIDAL_FLAT_ID),
                 LoopedFlatChunkGenerator.CODEC);
-        Registry.register(BuiltInRegistries.TICKET_TYPE,
-                ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopTicketTypes.SEAM_GENERATION_ID),
-                WorldLoopTicketTypes.SEAM_GENERATION);
 
         PayloadTypeRegistry.playS2C().register(WrappingSettingsPayload.TYPE, WrappingSettingsPayload.STREAM_CODEC);
     }

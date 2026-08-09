@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.LevelBindable;
+import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -26,7 +27,7 @@ import net.minecraft.server.level.ServerLevel;
 // out-of-bounds key is ever enumerated, so updateChunkScheduling never creates a phantom holder; the generation cache
 // folds its slots to the physical chunks the graph now levels (ChunkGenerationTaskMixin).
 @Mixin(ChunkTracker.class)
-public class ChunkTrackerMixin implements LevelBindable {
+public class ChunkTrackerMixin implements LevelBindable, TransformerCache {
     @Unique
     private @Nullable ServerLevel toroidal$level;
 
@@ -36,6 +37,11 @@ public class ChunkTrackerMixin implements LevelBindable {
     @Override
     public void toroidal$bindLevel(ServerLevel level) {
         this.toroidal$level = level;
+    }
+
+    @Override
+    public @Nullable ServerLevel toroidal$boundLevel() {
+        return this.toroidal$level;
     }
 
     // Both neighbour walks — the spread (checkNeighborsAfterUpdate) and the recompute (getComputedLevel) — enumerate
@@ -58,16 +64,17 @@ public class ChunkTrackerMixin implements LevelBindable {
     // Every graph folds. Cycles through the seam cannot self-sustain for the same reason the plane's own cycles
     // cannot: a level is the shortest distance to a source, and L = L + 2 has no solution — remove the sources and
     // the recompute drives every level past the unload threshold, on the torus exactly as on the plane.
-    @Unique
-    private WorldLoopTransformer toroidal$transformer() {
-        return this.toroidal$resolvedTransformer();
-    }
-
+    //
     // Resolved on first use and kept: a tracker belongs to one level for its whole life, and a level's transformer is
     // decided once by its generator. An unbound tracker answers NOOP without storing it — memoizing that would pin the
     // graph to an unwrapped world for good, which is the same trap as resolving at construction.
-    @Unique
-    private WorldLoopTransformer toroidal$resolvedTransformer() {
+    //
+    // Exposed as TransformerCache because the subclasses that own ticket maps of their own — TickingTracker — have to
+    // fold their keys with the same transformer, and MUST NOT bind a level of their own to get it: LevelBindable is
+    // implemented here, so a subclass implementing it again would override this one, leave toroidal$level unset for
+    // that tracker, and silently unfold its neighbour walk.
+    @Override
+    public WorldLoopTransformer toroidal$transformer() {
         WorldLoopTransformer transformer = this.toroidal$boundTransformer;
         if (transformer != null) {
             return transformer;

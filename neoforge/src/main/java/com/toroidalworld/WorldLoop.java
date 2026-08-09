@@ -4,7 +4,6 @@ import com.toroidalworld.config.WorldLoopConfig;
 import com.toroidalworld.gen.LoopedChunkGenerator;
 import com.toroidalworld.gen.LoopedFlatChunkGenerator;
 import com.toroidalworld.gen.WorldLoopGenerators;
-import com.toroidalworld.gen.WorldLoopTicketTypes;
 import com.toroidalworld.net.AuxiliaryLightTranslation;
 import com.toroidalworld.net.BlockParticleTranslation;
 import com.toroidalworld.platform.NeoForgePlatform;
@@ -12,7 +11,6 @@ import com.toroidalworld.platform.Platforms;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.core.registries.Registries;
-import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -30,18 +28,12 @@ public final class WorldLoop {
     private static final DeferredRegister<MapCodec<? extends ChunkGenerator>> CHUNK_GENERATORS =
             DeferredRegister.create(Registries.CHUNK_GENERATOR, ToroidalWorld.MODID);
 
-    private static final DeferredRegister<TicketType> TICKET_TYPES =
-            DeferredRegister.create(Registries.TICKET_TYPE, ToroidalWorld.MODID);
-
     public static void init(IEventBus modEventBus, ModContainer modContainer) {
         Platforms.set(new NeoForgePlatform());
 
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_ID, () -> LoopedChunkGenerator.CODEC);
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_FLAT_ID, () -> LoopedFlatChunkGenerator.CODEC);
         CHUNK_GENERATORS.register(modEventBus);
-
-        TICKET_TYPES.register(WorldLoopTicketTypes.SEAM_GENERATION_ID, () -> WorldLoopTicketTypes.SEAM_GENERATION);
-        TICKET_TYPES.register(modEventBus);
 
         AuxiliaryLightTranslation.register();
         BlockParticleTranslation.register();

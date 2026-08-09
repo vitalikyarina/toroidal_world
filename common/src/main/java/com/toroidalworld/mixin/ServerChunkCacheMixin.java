@@ -13,7 +13,6 @@ import com.toroidalworld.storage.WorldLoopAttachments;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 
 // Code all over the server asks for a chunk by coordinates that may sit past the world bounds — a mob pathing across
 // the seam, a block update at the edge. Those coordinates name a real chunk on the other side, so they are wrapped.
@@ -28,8 +27,8 @@ public class ServerChunkCacheMixin {
 
     // The synchronous chunk request stores an UNKNOWN ticket under the key it was asked with and immediately re-reads
     // the holder by that same key — "No chunk holder after ticket has been added" if the two ever disagree. With the
-    // ticket key folded at the storage (TicketStorageMixin) a raw out-of-bounds request would trip exactly that, so the
-    // request itself is folded at the entry: the ticket, the graph run and the holder lookup then all name the one
+    // ticket key folded in the graphs (DistanceManagerMixin) a raw out-of-bounds request would trip exactly that, so
+    // the request itself is folded at the entry: the ticket, the graph run and the holder lookup then all name the one
     // chunk that exists.
     @ModifyVariable(method = "getChunkFutureMainThread", at = @At("HEAD"), argsOnly = true, index = 1)
     private int toroidal$wrapRequestedChunkX(int chunkX) {
@@ -39,19 +38,6 @@ public class ServerChunkCacheMixin {
     @ModifyVariable(method = "getChunkFutureMainThread", at = @At("HEAD"), argsOnly = true, index = 2)
     private int toroidal$wrapRequestedChunkZ(int chunkZ) {
         return toroidal$transformer().chunks.z.wrap(chunkZ);
-    }
-
-    // A radius ticket's centre can itself sit past the bounds — an ender pearl files its chunk ticket mid-tick, before
-    // the tick-end wrap has normalised its position. The ticket key itself folds at the storage (TicketStorageMixin),
-    // but addTicketAndLoadWithRadius also re-reads the holder by this local variable, so the pair must agree — folded
-    // in add and remove alike. The square around the centre needs no restating of its own: the folded loading graph
-    // carries the centre ticket through the seam exactly as it carries it inland.
-    @ModifyVariable(
-            method = {"addTicketWithRadius", "removeTicketWithRadius", "addTicketAndLoadWithRadius"},
-            at = @At("HEAD"),
-            argsOnly = true)
-    private ChunkPos toroidal$foldTicketCentre(ChunkPos pos) {
-        return toroidal$transformer().chunks.wrap(pos);
     }
 
     @ModifyVariable(method = "getChunkNow", at = @At("HEAD"), argsOnly = true, index = 1)
