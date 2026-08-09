@@ -8,8 +8,8 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 
-import net.minecraft.advancements.predicates.DistancePredicate;
-import net.minecraft.advancements.triggers.LevitationTrigger;
+import net.minecraft.advancements.critereon.DistancePredicate;
+import net.minecraft.advancements.critereon.LevitationTrigger;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
@@ -21,7 +21,7 @@ public class LevitationBoundsMixin {
     @WrapOperation(
             method = "matches",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/advancements/predicates/DistancePredicate;matches(DDDDDD)Z"))
+                    target = "Lnet/minecraft/advancements/critereon/DistancePredicate;matches(DDDDDD)Z"))
     private boolean toroidal$boundThroughSeam(DistancePredicate bounds,
             double referenceX, double referenceY, double referenceZ,
             double measuredX, double measuredY, double measuredZ,

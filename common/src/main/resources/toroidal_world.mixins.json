@@ -21,6 +21,7 @@
     "BlockCollisionsMixin",
     "BlockEntityMixin",
     "BlockLightEngineMixin",
+    "BlockPositionSourceAccessor",
     "BreakDoorGoalMixin",
     "BreezeMixin",
     "BreezeShootMixin",

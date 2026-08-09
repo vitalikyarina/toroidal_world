@@ -12,6 +12,7 @@ import java.util.function.UnaryOperator;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.mixin.BlockPositionSourceAccessor;
 import com.toroidalworld.mixin.LevelChunkPacketAccessor;
 import com.toroidalworld.mixin.LightUpdatePacketAccessor;
 import com.toroidalworld.mixin.PlayerLookAtPacketAccessor;
@@ -22,12 +23,11 @@ import com.toroidalworld.storage.WorldLoopAttachments;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.SectionPos;
-import net.minecraft.core.particles.ExplosionParticleInfo;
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.TrailParticleOption;
 import net.minecraft.core.particles.VibrationParticleOption;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
@@ -70,10 +70,10 @@ import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.random.Weighted;
-import net.minecraft.util.random.WeightedList;
-import net.minecraft.world.entity.PositionMoveRotation;
-import net.minecraft.world.entity.Relative;
+import net.minecraft.util.Mth;
+import net.minecraft.util.Unit;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.gameevent.BlockPositionSource;
 import net.minecraft.world.level.storage.LevelData;
@@ -99,6 +99,47 @@ public final class PacketTranslator {
                 buffer.writeDouble(center.z());
             },
             buffer -> new BorderCenter(buffer.readDouble(), buffer.readDouble()));
+
+    // A section has no stream codec of its own on this version, but it has always travelled as the packed long its
+    // own accessors read back, so the codec the swap below needs is two lines rather than a reason to rebuild the packet.
+    private static final StreamCodec<FriendlyByteBuf, SectionPos> SECTION_POS_CODEC = StreamCodec.of(
+            (buffer, section) -> buffer.writeLong(section.asLong()),
+            buffer -> SectionPos.of(buffer.readLong()));
+
+    // Three plain doubles — how a position sits on the wire in the packets that offer no way to rebuild them from
+    // values: the entity teleport and the vehicle correction.
+    private static final StreamCodec<FriendlyByteBuf, Vec3> POSITION_CODEC = StreamCodec.of(
+            (buffer, position) -> {
+                buffer.writeDouble(position.x);
+                buffer.writeDouble(position.y);
+                buffer.writeDouble(position.z);
+            },
+            buffer -> new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()));
+
+    // The hit point on an entity travels as three floats, not the doubles a position usually takes.
+    private static final StreamCodec<FriendlyByteBuf, Vec3> HIT_LOCATION_CODEC = StreamCodec.of(
+            (buffer, location) -> {
+                buffer.writeFloat((float) location.x);
+                buffer.writeFloat((float) location.y);
+                buffer.writeFloat((float) location.z);
+            },
+            buffer -> new Vec3(buffer.readFloat(), buffer.readFloat(), buffer.readFloat()));
+
+    // What opens a serverbound interact, in front of the hit point: the entity, then which of the three actions
+    // follows. The entity is the reason this is decoded at all — the packet exposes no getter for it, and the hit
+    // point has to fold around the entity it names.
+    private record InteractHeader(int entityId, int actionType) {
+    }
+
+    private static final StreamCodec<FriendlyByteBuf, InteractHeader> INTERACT_HEADER_CODEC = StreamCodec.of(
+            (buffer, header) -> {
+                buffer.writeVarInt(header.entityId());
+                buffer.writeVarInt(header.actionType());
+            },
+            buffer -> new InteractHeader(buffer.readVarInt(), buffer.readVarInt()));
+
+    // Nothing in front of the position: decodes without touching the buffer, so the prefix comes out zero bytes wide.
+    private static final StreamCodec<FriendlyByteBuf, Unit> NO_PREFIX_CODEC = StreamCodec.unit(Unit.INSTANCE);
 
     private static final Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> TO_CLIENT = Map.ofEntries(
             Map.entry(ClientboundLevelChunkWithLightPacket.class, rewriter(PacketTranslator::levelChunk)),
@@ -340,39 +381,49 @@ public final class PacketTranslator {
             return packet;
         }
 
-        PositionMoveRotation change = packet.change();
-        Vec3 position = change.position();
-
         // A relative delta reaches the client as-is and moves its unbounded coordinate by that much. Folded to its
         // shortest equivalent through the seam it names the same physical arrival, but a lap-sized hop (a relative
         // move of about a world width) stops carrying the client a world over — where every chunk it holds would
         // re-anchor to a different copy and have to be re-sent.
-        boolean relativeX = packet.relatives().contains(Relative.X);
-        boolean relativeZ = packet.relatives().contains(Relative.Z);
-        double foldedX = relativeX ? context.transformer().coords.x.foldDelta(position.x) : 0.0;
-        double foldedZ = relativeZ ? context.transformer().coords.z.foldDelta(position.z) : 0.0;
-        double clientX = relativeX ? clientPosition.x() + foldedX : context.nearestCopyX(position.x);
-        double clientZ = relativeZ ? clientPosition.z() + foldedZ : context.nearestCopyZ(position.z);
+        //
+        // That fold is load-bearing here rather than a nicety. The teleport funnel takes absolute arguments on this
+        // version and subtracts the player's position itself, so a destination the wrap hook pulled back inside the
+        // bounds reaches the wire as a delta a whole world wide. Folding is modulo that width, so it comes back out as
+        // the step the client would have been sent had nothing been wrapped.
+        Set<RelativeMovement> relatives = packet.getRelativeArguments();
+        boolean relativeX = relatives.contains(RelativeMovement.X);
+        boolean relativeZ = relatives.contains(RelativeMovement.Z);
+        double foldedX = relativeX ? context.transformer().coords.x.foldDelta(packet.getX()) : 0.0;
+        double foldedZ = relativeZ ? context.transformer().coords.z.foldDelta(packet.getZ()) : 0.0;
+        double clientX = relativeX ? clientPosition.x() + foldedX : context.nearestCopyX(packet.getX());
+        double clientZ = relativeZ ? clientPosition.z() + foldedZ : context.nearestCopyZ(packet.getZ());
+        PacketProbe.playerPosition(context.dimension(), relativeX, relativeZ,
+                packet.getX(), relativeX ? foldedX : clientX,
+                packet.getZ(), relativeZ ? foldedZ : clientZ,
+                clientPosition.x(), clientPosition.z());
         clientPosition.set(clientX, clientZ);
 
-        Vec3 sentPosition = new Vec3(relativeX ? foldedX : clientX, position.y, relativeZ ? foldedZ : clientZ);
         return new ClientboundPlayerPositionPacket(
-                packet.id(),
-                new PositionMoveRotation(sentPosition, change.deltaMovement(), change.yRot(), change.xRot()),
-                packet.relatives());
+                relativeX ? foldedX : clientX,
+                packet.getY(),
+                relativeZ ? foldedZ : clientZ,
+                packet.getYRot(), packet.getXRot(), relatives, packet.getId());
     }
 
     // Entities are placed by absolute position when they appear or are teleported; their ordinary movement travels as a
     // delta from the last known position and needs no translation.
     private static ClientboundAddEntityPacket addEntity(ClientboundAddEntityPacket packet, TranslationContext context) {
         PacketReach reach = context.trackedReach();
+        double clientX = context.toClientX(packet.getX(), reach);
+        double clientZ = context.toClientZ(packet.getZ(), reach);
+        PacketProbe.addEntity(context.dimension(), packet.getId(), packet.getX(), clientX, packet.getZ(), clientZ);
         return new ClientboundAddEntityPacket(
                 packet.getId(), packet.getUUID(),
-                context.toClientX(packet.getX(), reach),
+                clientX,
                 packet.getY(),
-                context.toClientZ(packet.getZ(), reach),
+                clientZ,
                 packet.getXRot(), packet.getYRot(), packet.getType(), packet.getData(),
-                packet.getMovement(), packet.getYHeadRot());
+                new Vec3(packet.getXa(), packet.getYa(), packet.getZa()), packet.getYHeadRot());
     }
 
     // The rider predicts their own vehicle; a correction only arrives when the server disagrees, which the continuous
@@ -380,32 +431,36 @@ public final class PacketTranslator {
     // told to snap its own boat, resets interpolation and jolts. Dropping it leaves the smooth local prediction alone.
     // Only a vehicle the player actually steers is dropped: a minecart the server drives must keep being sent, or it
     // would freeze on the passenger's screen.
+    //
+    // An entity teleport carries no relative flags on this version — it is always an absolute position — so there is no
+    // axis to leave alone. The packet also offers no constructor to rebuild from values, so the position is swapped on
+    // the wire, behind the entity id that opens it.
     private static Packet<?> teleportEntity(ClientboundTeleportEntityPacket packet, TranslationContext context) {
-        if (context.ownVehicle().test(packet.id())) {
+        if (context.ownVehicle().test(packet.getId())) {
+            PacketProbe.teleportEntityDropped(context.dimension());
             return null;
         }
 
-        return new ClientboundTeleportEntityPacket(
-                packet.id(), toClientChange(context, packet.change(), packet.relatives()), packet.relatives(),
-                packet.onGround());
+        PacketReach reach = context.trackedReach();
+        return rewritePosition(ClientboundTeleportEntityPacket.STREAM_CODEC, ByteBufCodecs.VAR_INT, POSITION_CODEC,
+                packet, context, (entityId, position) -> {
+                    Vec3 clientPosition = context.toClient(position, reach);
+                    PacketProbe.teleportEntity(context.dimension(), entityId, position, clientPosition);
+                    return clientPosition;
+                });
     }
 
     // The correction only ever names the vehicle the recipient is riding, so it arrives from no distance at all; the
-    // tracking reach is a generous bound rather than a tight one, and the tight one would be zero.
+    // tracking reach is a generous bound rather than a tight one, and the tight one would be zero. It cannot be rebuilt
+    // from values either, but here the position opens the packet, so nothing precedes it.
     private static Packet<?> moveVehicle(ClientboundMoveVehiclePacket packet, TranslationContext context) {
-        Vec3 clientPos = context.toClient(packet.position(), context.trackedReach());
-        return new ClientboundMoveVehiclePacket(clientPos, packet.yRot(), packet.xRot());
-    }
-
-    // A relative move is a delta the client applies itself, so it already lands in the right space; an absolute one is a
-    // server coordinate and has to be moved into the client's.
-    private static PositionMoveRotation toClientChange(TranslationContext context, PositionMoveRotation change, Set<Relative> relatives) {
         PacketReach reach = context.trackedReach();
-        Vec3 position = change.position();
-        double clientX = relatives.contains(Relative.X) ? position.x : context.toClientX(position.x, reach);
-        double clientZ = relatives.contains(Relative.Z) ? position.z : context.toClientZ(position.z, reach);
-        return new PositionMoveRotation(
-                new Vec3(clientX, position.y, clientZ), change.deltaMovement(), change.yRot(), change.xRot());
+        return rewritePosition(ClientboundMoveVehiclePacket.STREAM_CODEC, POSITION_CODEC, packet, context,
+                position -> {
+                    Vec3 clientPosition = context.toClient(position, reach);
+                    PacketProbe.moveVehicle(context.dimension(), position, clientPosition);
+                    return clientPosition;
+                });
     }
 
     private static ClientboundBlockUpdatePacket blockUpdate(ClientboundBlockUpdatePacket packet, TranslationContext context) {
@@ -414,7 +469,7 @@ public final class PacketTranslator {
 
     // Several blocks changing in one section travel as a batch, and the section they belong to sits in a private field.
     private static ClientboundSectionBlocksUpdatePacket sectionBlocksUpdate(ClientboundSectionBlocksUpdatePacket packet, TranslationContext context) {
-        return rewritePosition(ClientboundSectionBlocksUpdatePacket.STREAM_CODEC, SectionPos.STREAM_CODEC, packet, context,
+        return rewritePosition(ClientboundSectionBlocksUpdatePacket.STREAM_CODEC, SECTION_POS_CODEC, packet, context,
                 section -> SectionPos.of(context.toClient(section.chunk()), section.y()));
     }
 
@@ -566,48 +621,74 @@ public final class PacketTranslator {
         Vec3 clientOrigin = context.toClient(new Vec3(packet.getX(), packet.getY(), packet.getZ()), reach);
         return new ClientboundLevelParticlesPacket(
                 toClientParticle(context, packet.getParticle(), clientOrigin),
-                packet.isOverrideLimiter(), packet.alwaysShow(),
+                packet.isOverrideLimiter(),
                 clientOrigin.x, clientOrigin.y, clientOrigin.z,
                 packet.getXDist(), packet.getYDist(), packet.getZDist(), packet.getMaxSpeed(), packet.getCount());
     }
 
-    // Both the burst particle and the block particles are spawned around the centre client-side, so the centre is the
-    // anchor for anything they carry inside.
+    // Both particle payloads are spawned around the centre client-side, so the centre is the anchor for anything they
+    // carry inside. The knockback is a velocity the client adds to itself and names no place, so it rides across as it
+    // came — rebuilt from the three floats it was stored as, which is exact in both directions.
     private static ClientboundExplodePacket explode(ClientboundExplodePacket packet, TranslationContext context) {
-        Vec3 clientCenter = context.toClient(packet.center(), PacketReach.EXPLOSION);
+        Vec3 serverCenter = new Vec3(packet.getX(), packet.getY(), packet.getZ());
+        Vec3 clientCenter = context.toClient(serverCenter, PacketReach.EXPLOSION);
+        PacketProbe.explode(context.dimension(), serverCenter, clientCenter, packet.getToBlow().size(),
+                Mth.floor(clientCenter.x) - Mth.floor(serverCenter.x),
+                Mth.floor(clientCenter.z) - Mth.floor(serverCenter.z));
         return new ClientboundExplodePacket(
-                clientCenter, packet.radius(), packet.blockCount(), packet.playerKnockback(),
-                toClientParticle(context, packet.explosionParticle(), clientCenter),
-                packet.explosionSound(),
-                toClientBlockParticles(context, packet.blockParticles(), clientCenter));
+                clientCenter.x, clientCenter.y, clientCenter.z, packet.getPower(),
+                toClientBlown(packet.getToBlow(), serverCenter, clientCenter),
+                new Vec3(packet.getKnockbackX(), packet.getKnockbackY(), packet.getKnockbackZ()),
+                packet.getBlockInteraction(),
+                toClientParticle(context, packet.getSmallExplosionParticles(), clientCenter),
+                toClientParticle(context, packet.getLargeExplosionParticles(), clientCenter),
+                packet.getExplosionSound());
     }
 
-    // Three particle payloads carry a second, absolute position of their own, and the packet coordinate they ride on has
-    // just been moved a whole world; left as they came, the particle is drawn from a translated start toward a raw
-    // server coordinate. Each is folded to the copy nearest that start — a target the client can actually fly to.
+    // The blocks the blast destroyed are absolute positions, but they travel as signed byte deltas from the packet's
+    // own centre and the client rebuilds them by adding those deltas back to the centre it was handed. Moving the
+    // centre and leaving them would make every delta a world wide, which does not fit in a byte: the client would tear
+    // out blocks scattered anywhere but under the explosion. They move by exactly the offset the centre moved, the same
+    // offset for all of them, so every delta keeps the width it already had — a blast reaches a few blocks, so a centre
+    // that folded folded its blocks the same way. The shift is taken between the floored centres because those are the
+    // very numbers the packet writes its deltas against.
+    private static List<BlockPos> toClientBlown(List<BlockPos> blown, Vec3 serverCenter, Vec3 clientCenter) {
+        int shiftX = Mth.floor(clientCenter.x) - Mth.floor(serverCenter.x);
+        int shiftZ = Mth.floor(clientCenter.z) - Mth.floor(serverCenter.z);
+        if (blown.isEmpty() || (shiftX == 0 && shiftZ == 0)) {
+            return blown;
+        }
+
+        List<BlockPos> translated = new ArrayList<>(blown.size());
+        for (BlockPos pos : blown) {
+            translated.add(pos.offset(shiftX, 0, shiftZ));
+        }
+
+        return translated;
+    }
+
+    // A particle payload can carry a second, absolute position of its own, and the packet coordinate it rides on has
+    // just been moved a whole world; left as it came, the particle is drawn from a translated start toward a raw
+    // server coordinate. It is folded to the copy nearest that start — a target the client can actually fly to.
     //
-    // Which fold differs by what the position names. A trail target and a vibration's sensor are loose points a few
-    // blocks from the start and take the plain nearest copy. A block particle's position names a block whose model data
-    // the client looks up, so it takes the chunk-anchored fold: it has to land in the copy of the chunk the client
-    // holds, or the lookup resolves against nothing and falls back to the default sprite.
+    // Which fold differs by what the position names. A vibration's sensor is a loose point a few blocks from the start
+    // and takes the plain nearest copy. A block particle's position names a block whose model data the client looks up,
+    // so it takes the chunk-anchored fold: it has to land in the copy of the chunk the client holds, or the lookup
+    // resolves against nothing and falls back to the default sprite.
     //
     // A vibration travelling to a warden or an allay carries an entity position source, which is an entity id on the
     // wire and resolves to the client's own copy — already in client space, and nothing to move.
     private static ParticleOptions toClientParticle(TranslationContext context, ParticleOptions particle,
             Vec3 clientOrigin) {
         switch (particle) {
-            case TrailParticleOption trail -> {
-                return new TrailParticleOption(
-                        context.transformer().vectors.nearestCopy(clientOrigin, trail.target()),
-                        trail.color(), trail.duration());
-            }
             case VibrationParticleOption vibration -> {
                 if (!(vibration.getDestination() instanceof BlockPositionSource destination)) {
                     return particle;
                 }
 
+                BlockPos serverDestination = ((BlockPositionSourceAccessor) destination).toroidal$getPos();
                 BlockPos clientDestination = context.transformer().blocks.nearestCopy(
-                        BlockPos.containing(clientOrigin), destination.pos());
+                        BlockPos.containing(clientOrigin), serverDestination);
                 return new VibrationParticleOption(
                         new BlockPositionSource(clientDestination), vibration.getArrivalInTicks());
             }
@@ -618,24 +699,6 @@ public final class PacketTranslator {
                 return particleRewriter == null ? particle : particleRewriter.rewrite(particle, context, clientOrigin);
             }
         }
-    }
-
-    // A payload with nothing to move comes back as the instance it went in as, so a list where none of them carried a
-    // position is handed straight back — which is every explosion vanilla itself throws.
-    private static WeightedList<ExplosionParticleInfo> toClientBlockParticles(TranslationContext context,
-            WeightedList<ExplosionParticleInfo> blockParticles, Vec3 clientOrigin) {
-        List<Weighted<ExplosionParticleInfo>> entries = blockParticles.unwrap();
-        List<Weighted<ExplosionParticleInfo>> translated = new ArrayList<>(entries.size());
-        boolean changed = false;
-        for (Weighted<ExplosionParticleInfo> entry : entries) {
-            ExplosionParticleInfo info = entry.value();
-            ParticleOptions particle = toClientParticle(context, info.particle(), clientOrigin);
-            changed |= particle != info.particle();
-            translated.add(particle == info.particle() ? entry
-                    : new Weighted<>(new ExplosionParticleInfo(particle, info.scaling(), info.speed()), entry.weight()));
-        }
-
-        return changed ? WeightedList.of(translated) : blockParticles;
     }
 
     // The compass needle is computed in the client's unbounded space, so the spawn is moved to the copy nearest the
@@ -764,7 +827,7 @@ public final class PacketTranslator {
 
         BlockHitResult wrapped = hit.getType() == HitResult.Type.MISS
                 ? BlockHitResult.miss(location, hit.getDirection(), pos)
-                : new BlockHitResult(location, hit.getDirection(), pos, hit.isInside(), hit.isWorldBorderHit());
+                : new BlockHitResult(location, hit.getDirection(), pos, hit.isInside());
         return new ServerboundUseItemOnPacket(packet.getHand(), wrapped, packet.getSequence());
     }
 
@@ -788,15 +851,51 @@ public final class PacketTranslator {
     // the entity's position. A plain wrap is not enough: for an entity standing on the seam the hit point can fall past
     // the world boundary, and wrapped on its own it lands a whole world from the entity. The location is folded to the
     // copy nearest the entity itself; without the entity (despawned mid-flight) the plain wrap is the best that's left.
+    //
+    // The packet keeps all three of the entity, the hand and the point inside a private action object, and the only
+    // ways in are three factories that want a live Entity. So it is rewritten on the wire instead: the two varints
+    // that open it are copied across and the point behind them re-encoded, which leaves the hand and the action
+    // untouched by construction.
     private static ServerboundInteractPacket interact(ServerboundInteractPacket packet, TranslationContext context) {
-        Vec3 targetPosition = context.entityPosition().apply(packet.entityId());
-        Vec3 location = packet.location();
+        if (!carriesLocation(packet)) {
+            PacketProbe.interactNoLocation(context.dimension());
+            return packet;
+        }
 
+        return rewritePosition(ServerboundInteractPacket.STREAM_CODEC, INTERACT_HEADER_CODEC, HIT_LOCATION_CODEC,
+                packet, context, (header, location) -> toServerHitLocation(context, header.entityId(), location));
+    }
+
+    private static Vec3 toServerHitLocation(TranslationContext context, int entityId, Vec3 location) {
+        Vec3 targetPosition = context.entityPosition().apply(entityId);
         Vec3 serverLocation = targetPosition == null
                 ? context.toServer(location)
                 : context.transformer().vectors.nearestCopy(targetPosition, location);
-        return new ServerboundInteractPacket(
-                packet.entityId(), packet.hand(), serverLocation, packet.usingSecondaryAction());
+        PacketProbe.interact(context.dimension(), entityId, location, serverLocation);
+        return serverLocation;
+    }
+
+    // Whether this interact carries a point at all — only the at-location form does, and an attack or a plain
+    // interaction has a boolean where the point would be, so reading one would be reading the wrong bytes. The packet
+    // is asked through the same dispatch the server itself uses, because the action enum behind it is not public.
+    private static boolean carriesLocation(ServerboundInteractPacket packet) {
+        boolean[] atLocation = new boolean[1];
+        packet.dispatch(new ServerboundInteractPacket.Handler() {
+            @Override
+            public void onInteraction(InteractionHand hand) {
+            }
+
+            @Override
+            public void onInteraction(InteractionHand hand, Vec3 location) {
+                atLocation[0] = true;
+            }
+
+            @Override
+            public void onAttack() {
+            }
+        });
+
+        return atLocation[0];
     }
 
     // A block-entity screen sends back the position it was opened with — a client-frame coordinate, same as SignUpdate.
@@ -823,7 +922,7 @@ public final class PacketTranslator {
         return new ServerboundSetStructureBlockPacket(
                 context.toServer(packet.getPos()), packet.getUpdateType(), packet.getMode(),
                 packet.getName(), packet.getOffset(), packet.getSize(), packet.getMirror(), packet.getRotation(),
-                packet.getData(), packet.isIgnoreEntities(), packet.isStrict(), packet.isShowAir(),
+                packet.getData(), packet.isIgnoreEntities(), packet.isShowAir(),
                 packet.isShowBoundingBox(), packet.getIntegrity(), packet.getSeed());
     }
 
@@ -868,18 +967,35 @@ public final class PacketTranslator {
     }
 
     // A packet whose position sits in a private field can still be moved: the position is the first thing on the wire,
-    // so the packet is re-encoded with a new one in front of its untouched remainder. Both position codecs are
-    // fixed-size packed longs, so the client position re-encodes to the width the server one vacated and the target
-    // holds exactly the source packet — no buffer growth.
+    // so the packet is re-encoded with a new one in front of its untouched remainder.
     private static <T, P> T rewritePosition(StreamCodec<? super RegistryFriendlyByteBuf, T> codec,
             StreamCodec<? super RegistryFriendlyByteBuf, P> positionCodec, T packet, TranslationContext context,
             UnaryOperator<P> toClient) {
+        return rewritePosition(codec, NO_PREFIX_CODEC, positionCodec, packet, context,
+                (noPrefix, serverPosition) -> toClient.apply(serverPosition));
+    }
+
+    // The same swap where the position is not first on the wire — an entity id stands in front of it, or an id and an
+    // action. The prefix is decoded so its width is known and then copied across byte for byte: re-encoding it would
+    // have to reproduce it exactly, and a copy owes nothing to that. Its decoded value is handed to the mapper because
+    // for a serverbound interact those leading bytes are the only place the entity id lives — the packet exposes no
+    // getter for it, and the hit location has to fold around the entity it names.
+    //
+    // Every position codec that comes through here re-encodes to the width the server one vacated — a packed long,
+    // three doubles, three floats — so the target holds exactly the source packet and the buffer never grows.
+    private static <T, R, P> T rewritePosition(StreamCodec<? super RegistryFriendlyByteBuf, T> codec,
+            StreamCodec<? super RegistryFriendlyByteBuf, R> prefixCodec,
+            StreamCodec<? super RegistryFriendlyByteBuf, P> positionCodec, T packet, TranslationContext context,
+            BiFunction<R, P, P> toClient) {
         RegistryFriendlyByteBuf source = buffer(context);
         codec.encode(source, packet);
+        R prefix = prefixCodec.decode(source);
+        int prefixLength = source.readerIndex();
         P serverPosition = positionCodec.decode(source);
 
         RegistryFriendlyByteBuf target = buffer(context, source.readerIndex() + source.readableBytes());
-        positionCodec.encode(target, toClient.apply(serverPosition));
+        target.writeBytes(source, 0, prefixLength);
+        positionCodec.encode(target, toClient.apply(prefix, serverPosition));
         target.writeBytes(source);
         return codec.decode(target);
     }

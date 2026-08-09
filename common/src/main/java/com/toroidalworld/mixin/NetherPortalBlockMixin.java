@@ -14,7 +14,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.NetherPortalBlock;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.dimension.DimensionType;
-import net.minecraft.world.level.portal.TeleportTransition;
+import net.minecraft.world.level.portal.DimensionTransition;
 
 // Where a portal comes out. Vanilla builds that position from DimensionType.coordinateScale — the nether's hardcoded
 // 8 — and then clamps the result to the world border. Both halves are wrong here.
@@ -33,8 +33,8 @@ public class NetherPortalBlockMixin {
             method = "getPortalDestination",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/block/NetherPortalBlock;getExitPortal(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;ZLnet/minecraft/world/level/border/WorldBorder;)Lnet/minecraft/world/level/portal/TeleportTransition;"))
-    private TeleportTransition toroidal$wrappedExitPosition(
+                    target = "Lnet/minecraft/world/level/block/NetherPortalBlock;getExitPortal(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;ZLnet/minecraft/world/level/border/WorldBorder;)Lnet/minecraft/world/level/portal/DimensionTransition;"))
+    private DimensionTransition toroidal$wrappedExitPosition(
             NetherPortalBlock self,
             ServerLevel newLevel,
             Entity entity,
@@ -42,7 +42,7 @@ public class NetherPortalBlockMixin {
             BlockPos approximateExitPos,
             boolean toNether,
             WorldBorder worldBorder,
-            Operation<TeleportTransition> original) {
+            Operation<DimensionTransition> original) {
         WorldLoopTransformer destination = WorldLoopAttachments.wrappedTransformerOf(newLevel);
         WorldLoopTransformer source = WorldLoopAttachments.wrappedTransformerOf(entity.level());
         if (destination == null || source == null) {

@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.net.ClientAnchorSync;
+import com.toroidalworld.net.PacketProbe;
 import com.toroidalworld.net.WrappingBoundsSync;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
@@ -19,7 +20,8 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.portal.TeleportTransition;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.phys.Vec3;
 
@@ -57,13 +59,15 @@ public class ServerPlayerMixin {
 
     // The second of the two moments the client's space changes and it needs the wrap bounds: arriving in another
     // dimension (the overworld and the nether wrap at different widths). TAIL lands on the method's last return —
-    // the end of the cross-dimension branch; the same-dimension branch and the two null bail-outs return earlier
+    // the end of the cross-dimension branch; the same-dimension branch and every null bail-out return earlier
     // and change no space, so they are rightly passed by.
-    @Inject(method = "teleport(Lnet/minecraft/world/level/portal/TeleportTransition;)Lnet/minecraft/server/level/ServerPlayer;",
+    @Inject(method = "changeDimension(Lnet/minecraft/world/level/portal/DimensionTransition;)Lnet/minecraft/world/entity/Entity;",
             at = @At("TAIL"))
-    private void toroidal$sendBoundsOnDimensionChange(TeleportTransition transition,
-            CallbackInfoReturnable<@Nullable ServerPlayer> cir) {
-        WrappingBoundsSync.sendTo((ServerPlayer) (Object) this);
+    private void toroidal$sendBoundsOnDimensionChange(DimensionTransition transition,
+            CallbackInfoReturnable<@Nullable Entity> cir) {
+        ServerPlayer player = (ServerPlayer) (Object) this;
+        PacketProbe.dimensionBounds(player.level().dimension());
+        WrappingBoundsSync.sendTo(player);
     }
 
     // Each server tick, after the player's own vanilla tick has run: the moment the anchors the client holds — the
@@ -74,7 +78,9 @@ public class ServerPlayerMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;tick()V",
                     shift = At.Shift.AFTER))
     private void toroidal$refreshClientAnchors(CallbackInfo ci) {
-        ClientAnchorSync.refresh((ServerPlayer) (Object) this);
+        ServerPlayer player = (ServerPlayer) (Object) this;
+        ClientAnchorSync.refresh(player);
+        PacketProbe.tick(player.serverLevel());
     }
 
     @WrapMethod(method = "isReachableBedBlock")

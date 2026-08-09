@@ -15,8 +15,8 @@ public final class BlockParticleTranslation {
                 return particle;
             }
 
-            return new BlockParticleOption(particle.getType(), particle.getState(),
-                    PacketTranslator.toClientBlock(context, serverPos));
+            return new BlockParticleOption(particle.getType(), particle.getState())
+                    .setPos(PacketTranslator.toClientBlock(context, serverPos));
         });
     }
 
