@@ -49,8 +49,9 @@ public class SpreadPlayersCommandMixin {
     @Final
     private static Dynamic4CommandExceptionType ERROR_FAILED_TO_SPREAD_ENTITIES;
 
-    // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.
-    @WrapMethod(method = "spreadPositions")
+    // Vanilla-body re-implementation — verified against 1.21.1; re-diff on a platform bump.
+    @WrapMethod(method = "spreadPositions(Lnet/minecraft/world/phys/Vec2;DLnet/minecraft/server/level/ServerLevel;"
+            + "Lnet/minecraft/util/RandomSource;DDDDI[Lnet/minecraft/server/commands/SpreadPlayersCommand$Position;Z)V")
     private static void toroidal$spreadPositionsAcrossSeam(Vec2 center, double spreadDist, ServerLevel level,
             RandomSource random, double minX, double minZ, double maxX, double maxZ, int maxHeight,
             SpreadPlayersCommand.Position[] positions, boolean respectTeams, Operation<Void> original)

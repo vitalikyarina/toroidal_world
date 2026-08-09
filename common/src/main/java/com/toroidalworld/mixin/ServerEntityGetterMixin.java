@@ -5,12 +5,13 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.probe.ReshapeProbe;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 
-import net.minecraft.server.level.ServerEntityGetter;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.EntityGetter;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -25,7 +26,7 @@ import net.minecraft.world.phys.Vec3;
 //
 // The box is moved to its copy nearest the player being tested, and vanilla's own containment decides on that. A player
 // on this side leaves the box where it was, so an ordinary scan reads exactly as it read before.
-@Mixin(ServerEntityGetter.class)
+@Mixin(EntityGetter.class)
 public interface ServerEntityGetterMixin {
     @WrapOperation(
             method = "getNearbyPlayers",
@@ -34,9 +35,13 @@ public interface ServerEntityGetterMixin {
             Operation<Boolean> original, @Local(argsOnly = true) LivingEntity source) {
         WorldLoopTransformer transformer = ((TransformerSource) source).toroidal$wrappedTransformer();
         if (transformer == null) {
+            ReshapeProbe.unwrapped(source.level().dimension(), ReshapeProbe.NEARBY_PLAYER);
             return original.call(box, x, y, z);
         }
 
-        return original.call(transformer.foldBoxToward(new Vec3(x, y, z), box), x, y, z);
+        AABB folded = transformer.foldBoxToward(new Vec3(x, y, z), box);
+        ReshapeProbe.fold(source.level().dimension(), ReshapeProbe.NEARBY_PLAYER,
+                box.minX, box.minZ, folded.minX, folded.minZ);
+        return original.call(folded, x, y, z);
     }
 }

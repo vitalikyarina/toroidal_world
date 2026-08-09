@@ -143,7 +143,8 @@ public class WorldBorderMixin implements TransformerHolder {
     //
     // A border at least as wide as the world falls out of this rather than being special-cased: its copies overlap and
     // cover everything, so what is left of the wall is nothing at all.
-    @Inject(method = "getCollisionShape", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getCollisionShape()Lnet/minecraft/world/phys/shapes/VoxelShape;", at = @At("HEAD"),
+            cancellable = true)
     private void toroidal$wallThroughSeam(CallbackInfoReturnable<VoxelShape> cir) {
         WorldLoopTransformer transformer = this.toroidal$transformer;
         if (!transformer.isWrapped()) {

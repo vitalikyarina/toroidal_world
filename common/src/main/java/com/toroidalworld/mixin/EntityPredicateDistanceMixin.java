@@ -10,27 +10,18 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.advancements.critereon.DistancePredicate;
-import net.minecraft.advancements.critereon.DistanceTrigger;
-import net.minecraft.advancements.critereon.FallAfterExplosionTrigger;
+import net.minecraft.advancements.critereon.EntityPredicate;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
-// Two readers of a distance bound, one arithmetic (see SeamDistanceBounds): each hands DistancePredicate two absolute
-// positions and the predicate subtracts them raw. A kill five blocks away through the seam then measures half a world,
-// which awards adventure/sniper_duel and adventure/bullseye to someone standing next to their target; the same reading
-// in the other direction makes the at-most bound of the lightning criteria unreachable.
-//
-// Written on the call rather than on the method it sits in, because both of these read the same position again through
-// a LocationPredicate beforehand — that one asks the world about a place, which already folds, and it stays on the
-// coordinates it was given.
-//
-// The third reader, the `distance` field of every EntityPredicate, is in EntityPredicateDistanceMixin: its matches has
-// a player-flavoured overload that never touches DistancePredicate, so the wrap needs the exact descriptor and cannot
-// share this one's plain method name.
-@Mixin({DistanceTrigger.TriggerInstance.class, FallAfterExplosionTrigger.TriggerInstance.class})
-public class DistanceBoundsMixin {
+// The third reader of a distance bound (see DistanceBoundsMixin): the `distance` field of every EntityPredicate, so it
+// carries the bound of a loot table or a predicate file as well. Kept apart from the trigger pair because matches()
+// has a player-flavoured overload that never touches DistancePredicate — the wrap needs the exact descriptor.
+@Mixin(EntityPredicate.class)
+public class EntityPredicateDistanceMixin {
     @WrapOperation(
-            method = "matches",
+            method = "matches(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;"
+                    + "Lnet/minecraft/world/entity/Entity;)Z",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/advancements/critereon/DistancePredicate;matches(DDDDDD)Z"))
     private boolean toroidal$boundThroughSeam(DistancePredicate bounds,
@@ -40,7 +31,7 @@ public class DistanceBoundsMixin {
         Vec3 folded = SeamDistanceBounds.nearestCopy(level,
                 new Vec3(referenceX, referenceY, referenceZ),
                 new Vec3(measuredX, measuredY, measuredZ));
-        ReshapeProbe.fold(level.dimension(), ReshapeProbe.DISTANCE_BOUND,
+        ReshapeProbe.fold(level.dimension(), ReshapeProbe.ENTITY_PREDICATE_BOUND,
                 measuredX, measuredZ, folded.x, folded.z);
         return original.call(bounds, referenceX, referenceY, referenceZ, folded.x, folded.y, folded.z);
     }

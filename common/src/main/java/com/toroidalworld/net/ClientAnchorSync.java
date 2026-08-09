@@ -3,6 +3,7 @@ package com.toroidalworld.net;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
+import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -11,8 +12,8 @@ import net.minecraft.network.protocol.game.ClientboundSetBorderCenterPacket;
 import net.minecraft.network.protocol.game.ClientboundSetDefaultSpawnPositionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.border.WorldBorder;
-import net.minecraft.world.level.storage.LevelData;
 
 // The absolute coordinates the client is given once and then keeps: the world spawn and the border's centre. Vanilla
 // sends each on the way into a level and afterwards only when someone moves it, while the client's own unbounded
@@ -46,15 +47,15 @@ public final class ClientAnchorSync {
 
     private static void refreshSpawn(ServerPlayer player, ServerLevel level, WorldLoopTransformer transformer,
             ClientPosition clientPosition) {
-        // A spawn in another dimension has no copy in this world's wrap — the packet passes untranslated and there is
-        // nothing to refresh.
-        LevelData.RespawnData respawnData = level.getRespawnData();
-        if (!respawnData.dimension().equals(level.dimension())) {
+        // The world spawn is a single coordinate stored in the overworld's level data; every other dimension reads that
+        // same coordinate back through DerivedLevelData, so it names no place in their wrap and folding it against
+        // their bounds would fold it against the wrong world. There is nothing to refresh outside the overworld.
+        if (!Level.OVERWORLD.equals(level.dimension())) {
             return;
         }
 
         BlockPos held = clientPosition.heldSpawn();
-        BlockPos spawnPos = respawnData.pos();
+        BlockPos spawnPos = level.getSharedSpawnPos();
         int anchorChunkX = SectionPos.blockToSectionCoord(clientPosition.x());
         int anchorChunkZ = SectionPos.blockToSectionCoord(clientPosition.z());
         int wantX = PacketTranslator.nearestCopyBlockX(transformer, anchorChunkX, spawnPos.getX());
@@ -63,7 +64,10 @@ public final class ClientAnchorSync {
             return;
         }
 
-        player.connection.send(new ClientboundSetDefaultSpawnPositionPacket(respawnData));
+        ReshapeProbe.fold(level.dimension(), ReshapeProbe.ANCHOR_SPAWN,
+                spawnPos.getX(), spawnPos.getZ(), wantX, wantZ);
+        player.connection.send(
+                new ClientboundSetDefaultSpawnPositionPacket(spawnPos, level.getSharedSpawnAngle()));
     }
 
     // The border always belongs to the level the player stands in — it is that level's own saved data, and there is no

@@ -4,11 +4,11 @@ import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.CurrentServer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
@@ -21,7 +21,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Climate;
-import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.storage.ServerLevelData;
 
 // The world spawn at both ends: where vanilla chooses it, and where it is written down.
@@ -77,7 +76,7 @@ public class MinecraftServerMixin {
             method = "setInitialSpawn",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/server/level/PlayerSpawnFinder;getSpawnPosInChunk(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/ChunkPos;)Lnet/minecraft/core/BlockPos;"))
+                    target = "Lnet/minecraft/server/level/PlayerRespawnLogic;getSpawnPosInChunk(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/ChunkPos;)Lnet/minecraft/core/BlockPos;"))
     private static @Nullable BlockPos toroidal$searchWrappedChunk(ServerLevel level, ChunkPos chunkPos,
             Operation<@Nullable BlockPos> original) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
@@ -88,29 +87,20 @@ public class MinecraftServerMixin {
         return original.call(level, transformer.chunks.wrap(chunkPos));
     }
 
-    // The world spawn a new world starts with never passes setRespawnData below: setInitialSpawn writes it into the
-    // level data directly, four times over as the search narrows, and the last write is the one that survives. So the
-    // bounds are settled here, at the write itself — not on the two searches above, which are wrapped so that the search
-    // reads real ground rather than to keep a coordinate in the world, and which are not the only way one can arrive.
-    // ServerLevelData.setSpawn is the true sink underneath all four, but it is handed neither a server nor a level and
-    // so cannot tell which dimension's bounds it is holding; this is the innermost point that still knows.
+    // The world spawn a new world starts with never passes ServerLevel.setDefaultSpawnPos: setInitialSpawn writes it
+    // into the level data directly, three times over as the search narrows, and the last write is the one that
+    // survives. So the bounds are settled here, at the write itself — not on the two searches above, which are wrapped
+    // so that the search reads real ground rather than to keep a coordinate in the world, and which are not the only
+    // way one can arrive. ServerLevelData.setSpawn is the true sink underneath all three, but it is handed neither a
+    // server nor a level and so cannot tell which dimension's bounds it is holding; this is the innermost point that
+    // still knows.
     @WrapOperation(
             method = "setInitialSpawn",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/storage/ServerLevelData;setSpawn(Lnet/minecraft/world/level/storage/LevelData$RespawnData;)V"))
-    private static void toroidal$storeInitialSpawnInsideBounds(ServerLevelData levelData,
-            LevelData.RespawnData respawnData, Operation<Void> original, @Local(argsOnly = true) ServerLevel level) {
-        original.call(levelData, SeamRespawnData.insideBounds(level.getServer(), respawnData));
-    }
-
-    // The one server-side sink for the world spawn: /setworldspawn goes through ServerLevel, a gametest through its own
-    // level, and both end here, in front of level.dat and the packet that tells every client where the compass points.
-    // Settled here rather than in the command, because the coordinate that reaches the command is not the only way in —
-    // /setworldspawn without an argument reads the sender's position off the command source, so a sender standing past
-    // the bounds after an /execute positioned would slip by a guard placed on the argument.
-    @ModifyVariable(method = "setRespawnData", at = @At("HEAD"), argsOnly = true)
-    private LevelData.RespawnData toroidal$storeWorldSpawnInsideBounds(LevelData.RespawnData respawnData) {
-        return SeamRespawnData.insideBounds((MinecraftServer) (Object) this, respawnData);
+                    target = "Lnet/minecraft/world/level/storage/ServerLevelData;setSpawn(Lnet/minecraft/core/BlockPos;F)V"))
+    private static void toroidal$storeInitialSpawnInsideBounds(ServerLevelData levelData, BlockPos spawnPos,
+            float spawnAngle, Operation<Void> original, @Local(argsOnly = true) ServerLevel level) {
+        original.call(levelData, SeamRespawnData.insideBounds(level, ReshapeProbe.INITIAL_SPAWN, spawnPos), spawnAngle);
     }
 }

@@ -17,6 +17,8 @@ import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.net.PacketReach;
 import com.toroidalworld.player.SeamSnap;
+import com.toroidalworld.probe.ReshapeProbe;
+import com.toroidalworld.storage.SeamRespawnData;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -153,6 +155,19 @@ public class ServerLevelMixin {
         }
 
         return ChunkPos.asLong(transformer.chunks.x.wrap(chunkX), transformer.chunks.z.wrap(chunkZ));
+    }
+
+    // The one server-side sink for the world spawn: /setworldspawn goes through here, a gametest through its own level,
+    // and both end in front of level.dat and the packet that tells every client where the compass points. Settled here
+    // rather than in the command, because the coordinate that reaches the command is not the only way in —
+    // /setworldspawn without an argument reads the sender's position off the command source, so a sender standing past
+    // the bounds after an /execute positioned would slip by a guard placed on the argument.
+    //
+    // Ahead of vanilla's own "did it change" comparison rather than behind it: the stored point is what the comparison
+    // should be made against, or a spawn already at the folded coordinate would broadcast a packet saying nothing.
+    @ModifyVariable(method = "setDefaultSpawnPos(Lnet/minecraft/core/BlockPos;F)V", at = @At("HEAD"), argsOnly = true)
+    private BlockPos toroidal$storeWorldSpawnInsideBounds(BlockPos spawnPos) {
+        return SeamRespawnData.insideBounds((ServerLevel) (Object) this, ReshapeProbe.WORLD_SPAWN, spawnPos);
     }
 
     // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.

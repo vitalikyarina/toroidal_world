@@ -18,10 +18,10 @@ import com.toroidalworld.mixin.LightUpdatePacketAccessor;
 import com.toroidalworld.mixin.PlayerLookAtPacketAccessor;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
+import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.GlobalPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.VibrationParticleOption;
@@ -75,8 +75,8 @@ import net.minecraft.util.Unit;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.BlockPositionSource;
-import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -702,20 +702,19 @@ public final class PacketTranslator {
     }
 
     // The compass needle is computed in the client's unbounded space, so the spawn is moved to the copy nearest the
-    // player — a directional hint that may legitimately sit far beyond the view, like a global event. The packet carries a
-    // GlobalPos that may name another dimension's spawn; a foreign coordinate has nothing to do with this world's wrap
-    // and passes as-is.
+    // player — a directional hint that may legitimately sit far beyond the view, like a global event. The world spawn
+    // lives in the overworld's level data and every other dimension is handed that same coordinate back through
+    // DerivedLevelData; it names no place in their wrap, so outside the overworld it passes as-is.
     private static Packet<?> setDefaultSpawnPosition(ClientboundSetDefaultSpawnPositionPacket packet, TranslationContext context) {
-        LevelData.RespawnData respawnData = packet.respawnData();
-        if (!respawnData.dimension().equals(context.dimension())) {
+        if (!Level.OVERWORLD.equals(context.dimension())) {
             return packet;
         }
 
-        BlockPos clientPos = nearestCopyBlock(context, respawnData.pos());
+        BlockPos serverPos = packet.getPos();
+        BlockPos clientPos = nearestCopyBlock(context, serverPos);
         context.clientPosition().setHeldSpawn(clientPos);
-        return new ClientboundSetDefaultSpawnPositionPacket(new LevelData.RespawnData(
-                GlobalPos.of(respawnData.dimension(), clientPos),
-                respawnData.yaw(), respawnData.pitch()));
+        ReshapeProbe.fold(context.dimension(), ReshapeProbe.PACKET_SPAWN, serverPos, clientPos);
+        return new ClientboundSetDefaultSpawnPositionPacket(clientPos, packet.getAngle());
     }
 
     // The world border's centre is the second absolute coordinate the client keeps for good, and vanilla is as sparing

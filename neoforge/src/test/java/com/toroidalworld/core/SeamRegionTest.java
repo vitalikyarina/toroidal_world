@@ -363,8 +363,8 @@ class SeamRegionTest {
 
                     assertEquals(wrapped, transformer.chunks.wrap(unwrapped),
                             () -> "Chunk.wrap(unwrap(" + ref + ", " + wrapped + ")) " + in(transformer));
-                    checkUnwrappedAxis(transformer.chunks.x, ref.x(), wrapped.x(), unwrapped.x(), "chunk X", transformer);
-                    checkUnwrappedAxis(transformer.chunks.z, ref.z(), wrapped.z(), unwrapped.z(), "chunk Z", transformer);
+                    checkUnwrappedAxis(transformer.chunks.x, ref.x, wrapped.x, unwrapped.x, "chunk X", transformer);
+                    checkUnwrappedAxis(transformer.chunks.z, ref.z, wrapped.z, unwrapped.z, "chunk Z", transformer);
                 }
             }
         }

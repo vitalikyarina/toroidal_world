@@ -1,15 +1,18 @@
 package com.toroidalworld.mixin;
 
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.toroidalworld.entity.SeamAim;
+import com.toroidalworld.probe.ReshapeProbe;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.ServerExplosion;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.phys.Vec3;
 
 // A blast reaches an entity across the seam already: the search box is cut at the bounds (LevelMixin) and the range gate
@@ -25,30 +28,49 @@ import net.minecraft.world.phys.Vec3;
 //
 // Knockback direction is the difference itself, and it points away from the wrong side even once exposure is restored.
 //
-// Both are the same absent fact — where the centre is, seen from this entity — asked once of the exposure primitive,
-// which holds the entity it is measuring and can therefore answer for any caller, and once of the difference. An
-// explosion that does not cross the seam folds to what it already was, so ordinary blast damage and knockback, and the
-// exact number of blocks the rays walk, are unchanged.
-@Mixin(ServerExplosion.class)
+// On this game version the two are asked in different shapes. Exposure still has a primitive to wrap — the entity is
+// handed to it, so it can answer for any caller. The direction has none: vanilla builds it from three separate
+// subtractions of the centre's fields, inline in explode(), and assembles a Vec3 only after the result has been
+// normalized and scaled. There is nothing shared to wrap, so the two horizontal reads are corrected where they are
+// made, each restated as the centre plus the short way to the entity — which is what the subtraction below it was
+// always meant to produce. An explosion that does not cross the seam folds to what it already was.
+@Mixin(Explosion.class)
 public class ServerExplosionMixin {
+    @Shadow
+    @Final
+    private double x;
+
+    @Shadow
+    @Final
+    private double z;
+
     // Folded once on entry rather than at each sample point: the samples all sit on the one body, and there are up to a
     // few hundred of them.
     @ModifyVariable(
             method = "getSeenPercent(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/Entity;)F",
             at = @At("HEAD"), argsOnly = true)
     private static Vec3 toroidal$exposureCentreThroughSeam(Vec3 centre, @Local(argsOnly = true) Entity entity) {
-        return SeamAim.nearestTo(entity, centre);
+        Vec3 folded = SeamAim.nearestTo(entity, centre);
+        ReshapeProbe.fold(entity.level().dimension(), ReshapeProbe.EXPLOSION_EXPOSURE,
+                centre.x, centre.z, folded.x, folded.z);
+        return folded;
     }
 
-    // The method carries a different signature on each loader: vanilla hurts entities from hurtEntities() with no
-    // arguments, NeoForge patches the live path into hurtEntities(List) and keeps a deprecated no-argument delegate
-    // whose body holds no subtract. Both names are listed and require = 1 accepts the one body that has the call.
     @ModifyExpressionValue(
-            method = { "hurtEntities()V", "hurtEntities(Ljava/util/List;)V" },
-            at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"),
-            require = 1)
-    private Vec3 toroidal$knockbackDirectionThroughSeam(Vec3 delta, @Local Entity entity) {
-        return SeamAim.foldDelta(entity, delta);
+            method = "explode",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getX()D"))
+    private double toroidal$knockbackOriginX(double entityX, @Local Entity entity) {
+        double folded = this.x + SeamAim.foldX(entity, entityX - this.x);
+        ReshapeProbe.foldAxis(entity.level().dimension(), ReshapeProbe.EXPLOSION_KNOCKBACK, "x", entityX, folded);
+        return folded;
+    }
+
+    @ModifyExpressionValue(
+            method = "explode",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getZ()D"))
+    private double toroidal$knockbackOriginZ(double entityZ, @Local Entity entity) {
+        double folded = this.z + SeamAim.foldZ(entity, entityZ - this.z);
+        ReshapeProbe.foldAxis(entity.level().dimension(), ReshapeProbe.EXPLOSION_KNOCKBACK, "z", entityZ, folded);
+        return folded;
     }
 }

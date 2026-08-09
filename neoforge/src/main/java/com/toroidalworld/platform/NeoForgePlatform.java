@@ -17,7 +17,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public final class NeoForgePlatform implements Platform {
     @Override
     public boolean isClient() {
-        return FMLEnvironment.getDist() == Dist.CLIENT;
+        return FMLEnvironment.dist == Dist.CLIENT;
     }
 
     // hasChannel is the optional-payload guard, mirroring FabricPlatform's canSend: a vanilla client never negotiated

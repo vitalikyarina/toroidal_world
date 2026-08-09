@@ -18,6 +18,7 @@ import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.gen.SeamDriveRequest;
 import com.toroidalworld.gen.TicketProbe;
+import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -36,10 +37,10 @@ import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StaticCache2D;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.entity.EntityAccess;
-import net.minecraft.world.phys.Vec3;
 
 @Mixin(ChunkMap.class)
 public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveScheduler {
@@ -283,39 +284,24 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
     }
 
     // Mob spawning asks how far a chunk is from a player; across the seam the plain distance is a whole world wide, so
-    // a chunk right behind the player would never spawn anything.
+    // a chunk right behind the player would never spawn anything. The player arrives as the entity rather than as a
+    // position on this game version, which changes only where the two coordinates are read from.
     @WrapOperation(
             method = "playerIsCloseEnoughForSpawning",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ChunkMap;euclideanDistanceSquared(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/phys/Vec3;)D"))
-    private double toroidal$wrappedSpawnDistance(ChunkPos chunkPos, Vec3 pos, Operation<Double> original) {
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ChunkMap;euclideanDistanceSquared(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/entity/Entity;)D"))
+    private double toroidal$wrappedSpawnDistance(ChunkPos chunkPos, Entity player, Operation<Double> original) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
-            return original.call(chunkPos, pos);
+            ReshapeProbe.unwrapped(this.level.dimension(), ReshapeProbe.SPAWN_CHUNK_DISTANCE);
+            return original.call(chunkPos, player);
         }
 
         double chunkCenterX = SectionPos.sectionToBlockCoord(chunkPos.x, 8);
         double chunkCenterZ = SectionPos.sectionToBlockCoord(chunkPos.z, 8);
-        return transformer.coords.sqrDistToBounds(pos.x, 0.0, pos.z, chunkCenterX, 0.0, chunkCenterZ);
-    }
-
-    // "Is any player near this block" — the same question as the one above, asked about a point rather than a chunk, and
-    // seam-blind for the same reason. A block one step across the seam reads a whole world away, so every rule that
-    // switches itself off far from players switches off there: the fire spread radius is the one that shows, and a fire
-    // lit past the bounds then re-arms its tick forever without ever ageing, burning out or spreading — the tick runs,
-    // and the first thing it does is decide there is nobody around to run for.
-    //
-    // Folded here rather than at canSpreadFireAround, because this is the shared primitive every caller of
-    // anyPlayerCloseEnoughTo arrives at. Squared throughout and rooted once at the end: the caller compares against a
-    // plain radius, and matching vanilla's comparison exactly is worth one sqrt on a path walked once per fire tick.
-    @WrapOperation(
-            method = "playerIsCloseEnoughTo",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
-    private double toroidal$wrappedPlayerDistance(Vec3 playerPos, Vec3 pos, Operation<Double> original) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
-        if (transformer == null) {
-            return original.call(playerPos, pos);
-        }
-
-        return Math.sqrt(transformer.coords.sqrDistToBounds(playerPos.x, playerPos.y, playerPos.z, pos.x, pos.y, pos.z));
+        double vanilla = original.call(chunkPos, player);
+        double folded = transformer.coords.sqrDistToBounds(
+                player.getX(), 0.0, player.getZ(), chunkCenterX, 0.0, chunkCenterZ);
+        ReshapeProbe.foldAxis(this.level.dimension(), ReshapeProbe.SPAWN_CHUNK_DISTANCE, "sqr", vanilla, folded);
+        return folded;
     }
 }

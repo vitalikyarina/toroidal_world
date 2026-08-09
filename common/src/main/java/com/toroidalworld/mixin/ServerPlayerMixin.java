@@ -13,16 +13,21 @@ import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.net.ClientAnchorSync;
 import com.toroidalworld.net.PacketProbe;
 import com.toroidalworld.net.WrappingBoundsSync;
+import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.portal.DimensionTransition;
-import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.phys.Vec3;
 
 // Reaching a bed is a distance test, and across the seam the plain distance is a whole world: the far half of a bed laid
@@ -43,18 +48,26 @@ public class ServerPlayerMixin {
     //
     // Ahead of NeoForge's spawn-set event rather than behind it: a listener asked where the spawn is going should be
     // shown the point that will actually be stored.
-    @ModifyVariable(method = "setRespawnPosition", at = @At("HEAD"), argsOnly = true)
-    private ServerPlayer.@Nullable RespawnConfig toroidal$storeRespawnInsideBounds(
-            ServerPlayer.@Nullable RespawnConfig respawnConfig) {
-        if (respawnConfig == null) {
+    //
+    // The bounds come from the dimension the point names, which is a separate argument here and need not be the level
+    // the player stands in — a bed slept in before a nether trip is still an overworld coordinate, and it is the
+    // overworld's width it has to be folded into.
+    @ModifyVariable(method = "setRespawnPosition(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/BlockPos;FZZ)V",
+            at = @At("HEAD"), argsOnly = true)
+    private @Nullable BlockPos toroidal$storeRespawnInsideBounds(@Nullable BlockPos respawnPos,
+            @Local(argsOnly = true) ResourceKey<Level> respawnDimension) {
+        if (respawnPos == null) {
             return null;
         }
 
-        LevelData.RespawnData respawnData = SeamRespawnData.insideBounds(
-                ((ServerPlayer) (Object) this).level().getServer(), respawnConfig.respawnData());
-        return respawnData == respawnConfig.respawnData()
-                ? respawnConfig
-                : new ServerPlayer.RespawnConfig(respawnData, respawnConfig.forced());
+        MinecraftServer server = ((ServerPlayer) (Object) this).getServer();
+        ServerLevel level = server == null ? null : server.getLevel(respawnDimension);
+        if (level == null) {
+            ReshapeProbe.noLevel(ReshapeProbe.PLAYER_RESPAWN);
+            return respawnPos;
+        }
+
+        return SeamRespawnData.insideBounds(level, ReshapeProbe.PLAYER_RESPAWN, respawnPos);
     }
 
     // The second of the two moments the client's space changes and it needs the wrap bounds: arriving in another
@@ -81,6 +94,7 @@ public class ServerPlayerMixin {
         ServerPlayer player = (ServerPlayer) (Object) this;
         ClientAnchorSync.refresh(player);
         PacketProbe.tick(player.serverLevel());
+        ReshapeProbe.tick(player.serverLevel());
     }
 
     @WrapMethod(method = "isReachableBedBlock")

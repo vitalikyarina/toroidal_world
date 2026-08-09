@@ -172,13 +172,13 @@ class SeamDistanceTest {
                             sampleChunk(random, transformer.chunks.x),
                             sampleChunk(random, transformer.chunks.z));
 
-                    int wrappedX = transformer.chunks.x.wrap(to.x());
-                    int wrappedZ = transformer.chunks.z.wrap(to.z());
+                    int wrappedX = transformer.chunks.x.wrap(to.x);
+                    int wrappedZ = transformer.chunks.z.wrap(to.z);
                     int expected = Integer.MAX_VALUE;
                     for (int xLaps = -1; xLaps <= 1; xLaps++) {
                         for (int zLaps = -1; zLaps <= 1; zLaps++) {
-                            int dx = Math.abs(wrappedX + xLaps * transformer.chunks.x.domainLength - from.x());
-                            int dz = Math.abs(wrappedZ + zLaps * transformer.chunks.z.domainLength - from.z());
+                            int dx = Math.abs(wrappedX + xLaps * transformer.chunks.x.domainLength - from.x);
+                            int dz = Math.abs(wrappedZ + zLaps * transformer.chunks.z.domainLength - from.z);
                             expected = Math.min(expected, Math.max(dx, dz));
                         }
                     }
@@ -441,8 +441,8 @@ class SeamDistanceTest {
 
                 ChunkPos from = new ChunkPos(random.nextInt(2_001) - 1_000, random.nextInt(2_001) - 1_000);
                 ChunkPos to = new ChunkPos(random.nextInt(2_001) - 1_000, random.nextInt(2_001) - 1_000);
-                long flatDx = to.x() - from.x();
-                long flatDz = to.z() - from.z();
+                long flatDx = to.x - from.x;
+                long flatDz = to.z - from.z;
                 assertEquals(flatDx * flatDx + flatDz * flatDz, disabled.chunks.sqrDistToBounds(from, to));
                 assertEquals(from.getChessboardDistance(to), disabled.chunks.chessboardDistance(from, to));
 

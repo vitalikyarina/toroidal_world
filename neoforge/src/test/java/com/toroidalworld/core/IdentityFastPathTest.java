@@ -75,7 +75,7 @@ class IdentityFastPathTest {
         forEachTransformer((transformer, random) -> {
             ChunkPos pos = sampleChunkPos(random, transformer);
             ChunkPos reference = new ChunkPos(
-                    transformer.chunks.x.wrap(pos.x()), transformer.chunks.z.wrap(pos.z()));
+                    transformer.chunks.x.wrap(pos.x), transformer.chunks.z.wrap(pos.z));
             ChunkPos wrapped = transformer.chunks.wrap(pos);
 
             assertEquals(reference, wrapped, () -> "chunks.wrap(" + pos + ") " + in(transformer));
@@ -91,8 +91,8 @@ class IdentityFastPathTest {
             ChunkPos anchor = sampleChunkPos(random, transformer);
             ChunkPos wrapped = insideChunkPos(random, transformer);
             ChunkPos reference = new ChunkPos(
-                    transformer.chunks.x.unwrap(anchor.x(), wrapped.x()),
-                    transformer.chunks.z.unwrap(anchor.z(), wrapped.z()));
+                    transformer.chunks.x.unwrap(anchor.x, wrapped.x),
+                    transformer.chunks.z.unwrap(anchor.z, wrapped.z));
             ChunkPos unwrapped = transformer.chunks.unwrap(anchor, wrapped);
 
             assertEquals(reference, unwrapped,
