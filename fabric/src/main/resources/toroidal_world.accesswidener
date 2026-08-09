@@ -8,4 +8,5 @@ extendable class net/minecraft/world/level/levelgen/NoiseBasedChunkGenerator
 extendable method net/minecraft/world/level/levelgen/NoiseBasedChunkGenerator iterateNoiseColumn (Lnet/minecraft/world/level/LevelHeightAccessor;Lnet/minecraft/world/level/levelgen/RandomState;IILorg/apache/commons/lang3/mutable/MutableObject;Ljava/util/function/Predicate;)Ljava/util/OptionalInt;
 accessible class net/minecraft/server/level/ChunkMap$TrackedEntity
 accessible field net/minecraft/server/level/ChunkMap entityMap Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
+accessible method net/minecraft/server/level/ChunkMap getUpdatingChunkIfPresent (J)Lnet/minecraft/server/level/ChunkHolder;
 accessible field net/minecraft/server/level/ChunkMap$TrackedEntity seenBy Ljava/util/Set;

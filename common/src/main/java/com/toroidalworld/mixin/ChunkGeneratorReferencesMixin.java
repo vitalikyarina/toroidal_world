@@ -51,8 +51,8 @@ public class ChunkGeneratorReferencesMixin {
         }
 
         ChunkPos centerPos = centerChunk.getPos();
-        int centerChunkX = centerPos.x();
-        int centerChunkZ = centerPos.z();
+        int centerChunkX = centerPos.x;
+        int centerChunkZ = centerPos.z;
         int centerBlockX = centerPos.getMinBlockX();
         int centerBlockZ = centerPos.getMinBlockZ();
         SectionPos centerSection = SectionPos.bottomOf(centerChunk);
@@ -75,9 +75,9 @@ public class ChunkGeneratorReferencesMixin {
 
                 // Everything downstream is stated in the frame of the chunk the cache actually handed back: the shift is
                 // zero and the key is the raw one whenever the slot was not folded, so an unfolded slot stays vanilla.
-                int foldedCenterBlockX = centerBlockX - (sourceX - sourcePos.x()) * CoordinateConstants.CHUNK_WIDTH;
-                int foldedCenterBlockZ = centerBlockZ - (sourceZ - sourcePos.z()) * CoordinateConstants.CHUNK_WIDTH;
-                long referenceKey = sourcePos.pack();
+                int foldedCenterBlockX = centerBlockX - (sourceX - sourcePos.x) * CoordinateConstants.CHUNK_WIDTH;
+                int foldedCenterBlockZ = centerBlockZ - (sourceZ - sourcePos.z) * CoordinateConstants.CHUNK_WIDTH;
+                long referenceKey = sourcePos.toLong();
 
                 for (StructureStart start : sourceChunk.getAllStarts().values()) {
                     if (start.isValid() && start.getBoundingBox().intersects(

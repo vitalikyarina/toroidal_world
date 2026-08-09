@@ -11,7 +11,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
-import net.minecraft.world.entity.animal.dolphin.Dolphin;
+import net.minecraft.world.entity.animal.Dolphin;
 
 // Fed a fish, a dolphin leads the way to the nearest buried treasure and stops once it is four blocks from it. The
 // structure it found sits at its own coordinates in the world and the dolphin is wrapped, so a treasure across the seam
@@ -20,7 +20,7 @@ import net.minecraft.world.entity.animal.dolphin.Dolphin;
 //
 // Only the horizontal gap is asked — the comparison is built at the dolphin's own height — and folding leaves that as
 // it was; the seam has no vertical direction to fold.
-@Mixin(targets = "net.minecraft.world.entity.animal.dolphin.Dolphin$DolphinSwimToTreasureGoal")
+@Mixin(targets = "net.minecraft.world.entity.animal.Dolphin$DolphinSwimToTreasureGoal")
 public class DolphinSwimToTreasureGoalMixin {
     @Shadow
     @Final

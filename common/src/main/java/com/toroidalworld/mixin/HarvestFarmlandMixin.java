@@ -11,7 +11,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
 import net.minecraft.world.entity.ai.behavior.HarvestFarmland;
-import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.Villager;
 
 // The plot is chosen from the block cube around the farmer, so at the moment it is picked the two positions share one
 // frame and no seam can lie between them. What separates them is time: the plot is remembered across a whole working
@@ -24,7 +24,7 @@ import net.minecraft.world.entity.npc.villager.Villager;
 public class HarvestFarmlandMixin {
     @WrapOperation(
             method = "tick(Lnet/minecraft/server/level/ServerLevel;"
-                    + "Lnet/minecraft/world/entity/npc/villager/Villager;J)V",
+                    + "Lnet/minecraft/world/entity/npc/Villager;J)V",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
     private boolean toroidal$farmlandReachThroughSeam(BlockPos farmlandPos, Position bodyPosition, double distance,

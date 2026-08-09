@@ -10,7 +10,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.world.entity.ai.goal.LlamaFollowCaravanGoal;
-import net.minecraft.world.entity.animal.equine.Llama;
+import net.minecraft.world.entity.animal.horse.Llama;
 import net.minecraft.world.phys.Vec3;
 
 // A caravan llama walks the difference to the llama ahead of it, scaled to close the gap to two blocks. The gap comes

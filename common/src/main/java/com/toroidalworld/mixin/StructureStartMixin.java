@@ -41,7 +41,7 @@ public class StructureStartMixin implements FramedStructureStart {
         }
 
         Map<Long, StructureStart> framed = this.toroidal$cache();
-        long frame = ChunkPos.pack(deltaChunkX, deltaChunkZ);
+        long frame = ChunkPos.asLong(deltaChunkX, deltaChunkZ);
         StructureStart known = framed.get(frame);
         if (known != null) {
             return known;

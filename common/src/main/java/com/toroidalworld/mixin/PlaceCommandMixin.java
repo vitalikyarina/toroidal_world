@@ -61,15 +61,13 @@ public class PlaceCommandMixin {
         Structure structure = structureHolder.value();
         ChunkGenerator generator = level.getChunkSource().getGenerator();
         StructureStart start = structure.generate(
-                structureHolder,
-                level.dimension(),
                 source.registryAccess(),
                 generator,
                 generator.getBiomeSource(),
                 level.getChunkSource().randomState(),
                 level.getStructureManager(),
                 level.getSeed(),
-                ChunkPos.containing(pos),
+                new ChunkPos(pos),
                 0,
                 level,
                 b -> true);
@@ -86,13 +84,13 @@ public class PlaceCommandMixin {
         checkLoaded(level, chunkMin, chunkMax);
 
         FramedStructureStart framable = (FramedStructureStart) (Object) start;
-        for (int chunkX = chunkMin.x(); chunkX <= chunkMax.x(); chunkX++) {
-            for (int chunkZ = chunkMin.z(); chunkZ <= chunkMax.z(); chunkZ++) {
+        for (int chunkX = chunkMin.x; chunkX <= chunkMax.x; chunkX++) {
+            for (int chunkZ = chunkMin.z; chunkZ <= chunkMax.z; chunkZ++) {
                 ChunkPos wrapped = transformer.chunks.wrap(new ChunkPos(chunkX, chunkZ));
 
                 // The slice belongs in the real chunk, so the start is moved into that chunk's frame first; an in-bounds
                 // chunk has a zero shift and gets the start itself, byte-for-byte vanilla.
-                StructureStart framed = framable.toroidal$framedBy(level, wrapped.x() - chunkX, wrapped.z() - chunkZ);
+                StructureStart framed = framable.toroidal$framedBy(level, wrapped.x - chunkX, wrapped.z - chunkZ);
                 if (framed == null) {
                     continue;
                 }
@@ -104,16 +102,16 @@ public class PlaceCommandMixin {
                         level.getRandom(),
                         new BoundingBox(
                                 wrapped.getMinBlockX(),
-                                level.getMinY(),
+                                level.getMinBuildHeight(),
                                 wrapped.getMinBlockZ(),
                                 wrapped.getMaxBlockX(),
-                                level.getMaxY() + 1,
+                                level.getMaxBuildHeight(),
                                 wrapped.getMaxBlockZ()),
                         wrapped);
             }
         }
 
-        String id = structureHolder.key().identifier().toString();
+        String id = structureHolder.key().location().toString();
         source.sendSuccess(
                 () -> Component.translatable("commands.place.structure.success", id, pos.getX(), pos.getY(), pos.getZ()),
                 true);

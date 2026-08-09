@@ -11,7 +11,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.ai.behavior.GiveGiftToHero;
-import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.Villager;
 
 // Everything up to the throw measures the hero as an entity and so already reads through the seam: the villager sees
 // them, walks to them, turns to face them. Only the last question — are we within five blocks — is asked of two block

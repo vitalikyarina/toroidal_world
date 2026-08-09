@@ -152,7 +152,7 @@ public class ServerLevelMixin {
             return chunkPos;
         }
 
-        return ChunkPos.pack(transformer.chunks.x.wrap(chunkX), transformer.chunks.z.wrap(chunkZ));
+        return ChunkPos.asLong(transformer.chunks.x.wrap(chunkX), transformer.chunks.z.wrap(chunkZ));
     }
 
     // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.

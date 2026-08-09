@@ -85,7 +85,7 @@ public class ChunkGeneratorStructurePlacementMixin {
         ChunkPos startPos = start.getChunkPos();
         return ((FramedStructureStart) (Object) start).toroidal$framedBy(
                 level,
-                transformer.chunks.x.unwrap(centerPos.x(), startPos.x()) - startPos.x(),
-                transformer.chunks.z.unwrap(centerPos.z(), startPos.z()) - startPos.z());
+                transformer.chunks.x.unwrap(centerPos.x, startPos.x) - startPos.x,
+                transformer.chunks.z.unwrap(centerPos.z, startPos.z) - startPos.z);
     }
 }

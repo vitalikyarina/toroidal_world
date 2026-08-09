@@ -56,6 +56,6 @@ public class TicketStorageMixin implements LevelBindable {
         int chunkZ = ChunkPos.getZ(key);
         int wrappedX = transformer.chunks.x.wrap(chunkX);
         int wrappedZ = transformer.chunks.z.wrap(chunkZ);
-        return wrappedX == chunkX && wrappedZ == chunkZ ? key : ChunkPos.pack(wrappedX, wrappedZ);
+        return wrappedX == chunkX && wrappedZ == chunkZ ? key : ChunkPos.asLong(wrappedX, wrappedZ);
     }
 }

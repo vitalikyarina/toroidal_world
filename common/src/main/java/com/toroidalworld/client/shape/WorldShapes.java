@@ -8,7 +8,7 @@ import com.toroidalworld.ToroidalWorld;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.WorldDimensions;
 
 // The shapes offered by the World Shape row, and which one is currently picked.
@@ -19,7 +19,7 @@ public final class WorldShapes {
     // Vanilla's shape: an endless world. It leaves the dimensions exactly as the chosen world type built them, so with
     // no mod registering anything the World Shape row is a single entry that changes nothing.
     public static final WorldShape NORMAL = WorldShape.of(
-            Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, NORMAL_ID),
+            ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, NORMAL_ID),
             Component.translatable(NORMAL_LABEL_KEY),
             null,
             (registries, dimensions) -> dimensions);

@@ -7,12 +7,12 @@ import com.toroidalworld.entity.SeamAim;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.animal.golem.SnowGolem;
+import net.minecraft.world.entity.animal.SnowGolem;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.monster.Witch;
-import net.minecraft.world.entity.monster.illager.Illusioner;
-import net.minecraft.world.entity.monster.skeleton.AbstractSkeleton;
-import net.minecraft.world.entity.monster.zombie.Drowned;
+import net.minecraft.world.entity.monster.Illusioner;
+import net.minecraft.world.entity.monster.AbstractSkeleton;
+import net.minecraft.world.entity.monster.Drowned;
 
 // Six shooters, one arithmetic: read the target's absolute position, subtract the shooter's own, derive the flight
 // time's worth of lift from the horizontal gap between them. Written out once per shooter because vanilla has no

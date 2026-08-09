@@ -202,7 +202,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             return null;
         }
 
-        return (ChunkResender) (Object) this.player.level().getChunkSource().chunkMap;
+        return (ChunkResender) (Object) this.player.serverLevel().getChunkSource().chunkMap;
     }
 
     @Shadow
@@ -274,7 +274,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
     }
 
     // The step above lets the player walk out of the world by up to one move; here they are brought back to the other
-    // side. absSnapTo also resets the old position, so nothing interpolates across the whole world, and the movement
+    // side. absMoveTo also resets the old position, so nothing interpolates across the whole world, and the movement
     // bounds have to follow — they are the reference the next packet's distance checks measure against.
     @Inject(method = "handleMovePlayer", at = @At("RETURN"))
     private void toroidal$wrapIntoBounds(ServerboundMovePlayerPacket packet, CallbackInfo ci) {
@@ -284,12 +284,12 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         }
 
         Vec3 wrapped = transformer.vectors.wrap(this.player.position());
-        this.player.absSnapTo(wrapped.x, wrapped.y, wrapped.z, this.player.getYRot(), this.player.getXRot());
+        this.player.absMoveTo(wrapped.x, wrapped.y, wrapped.z, this.player.getYRot(), this.player.getXRot());
         this.firstGoodX = wrapped.x;
         this.firstGoodZ = wrapped.z;
         this.lastGoodX = wrapped.x;
         this.lastGoodZ = wrapped.z;
-        this.player.level().getChunkSource().move(this.player);
+        this.player.serverLevel().getChunkSource().move(this.player);
     }
 
     // A ridden vehicle moves the same way, but through its own packet, and the reference to keep the movement continuous

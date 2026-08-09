@@ -260,8 +260,8 @@ public final class PacketTranslator {
         ChunkPos clientPos = context.toClient(new ChunkPos(packet.getX(), packet.getZ()));
 
         LevelChunkPacketAccessor accessor = (LevelChunkPacketAccessor) packet;
-        accessor.toroidal$setX(clientPos.x());
-        accessor.toroidal$setZ(clientPos.z());
+        accessor.toroidal$setX(clientPos.x);
+        accessor.toroidal$setZ(clientPos.z);
         return packet;
     }
 
@@ -269,8 +269,8 @@ public final class PacketTranslator {
         ChunkPos clientPos = context.toClient(new ChunkPos(packet.getX(), packet.getZ()));
 
         LightUpdatePacketAccessor accessor = (LightUpdatePacketAccessor) packet;
-        accessor.toroidal$setX(clientPos.x());
-        accessor.toroidal$setZ(clientPos.z());
+        accessor.toroidal$setX(clientPos.x);
+        accessor.toroidal$setZ(clientPos.z);
         return packet;
     }
 
@@ -295,7 +295,7 @@ public final class PacketTranslator {
 
     private static ClientboundSetChunkCacheCenterPacket chunkCacheCenter(ClientboundSetChunkCacheCenterPacket packet, TranslationContext context) {
         ChunkPos clientPos = context.toClient(new ChunkPos(packet.getX(), packet.getZ()));
-        return new ClientboundSetChunkCacheCenterPacket(clientPos.x(), clientPos.z());
+        return new ClientboundSetChunkCacheCenterPacket(clientPos.x, clientPos.z);
     }
 
     // A custom payload's shape is its owner's business — a loader ships payloads of its own (NeoForge's auxiliary
@@ -830,7 +830,7 @@ public final class PacketTranslator {
     // A block update has to land on the copy of the chunk the client is actually holding, which is the one it was sent
     // under — not the one this position would map to now that the player has moved.
     static BlockPos toClientBlock(TranslationContext context, BlockPos pos) {
-        return blockInChunkCopy(context.toClient(ChunkPos.containing(pos)), pos);
+        return blockInChunkCopy(context.toClient(new ChunkPos(pos)), pos);
     }
 
     // A global event, a world spawn, a look-at target: a directional hint, not a block in a held chunk — so it is
@@ -844,9 +844,9 @@ public final class PacketTranslator {
     // the tick-side check reads them directly and builds nothing on its steady-state path.
     static BlockPos nearestCopyBlock(WorldLoopTransformer transformer, ChunkPos anchor, BlockPos pos) {
         return new BlockPos(
-                nearestCopyBlockX(transformer, anchor.x(), pos.getX()),
+                nearestCopyBlockX(transformer, anchor.x, pos.getX()),
                 pos.getY(),
-                nearestCopyBlockZ(transformer, anchor.z(), pos.getZ()));
+                nearestCopyBlockZ(transformer, anchor.z, pos.getZ()));
     }
 
     static int nearestCopyBlockX(WorldLoopTransformer transformer, int anchorChunkX, int blockX) {

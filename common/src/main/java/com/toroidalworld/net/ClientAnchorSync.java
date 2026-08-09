@@ -28,7 +28,7 @@ import net.minecraft.world.level.storage.LevelData;
 // near, and the farthest the player can be from what the coordinate names.
 public final class ClientAnchorSync {
     public static void refresh(ServerPlayer player) {
-        ServerLevel level = player.level();
+        ServerLevel level = player.serverLevel();
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return;

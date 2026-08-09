@@ -36,7 +36,7 @@ public class PlayerChunkSenderMixin {
             return original;
         }
 
-        long packedPlayerPos = playerPos.pack();
+        long packedPlayerPos = playerPos.toLong();
         return Comparator.comparingInt(pending -> transformer.chunks.sqrDistToBounds(packedPlayerPos, pending));
     }
 

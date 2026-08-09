@@ -40,7 +40,9 @@ public final class SeamCommandErrors {
             return;
         }
 
-        requireInsideWorld(domain, coordinate.value());
+        // get() adds the origin only for a relative coordinate, and the branch above has already returned on those, so
+        // it hands back the typed value itself. 1.21.1 keeps the field private and offers no other way to read it.
+        requireInsideWorld(domain, coordinate.get(0.0));
     }
 
     // The same rule where the coordinate has already lost its parsed form — a selector's x=/y=/z=, which is as typed

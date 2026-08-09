@@ -140,7 +140,7 @@ public final class ClientPosition {
             return;
         }
 
-        Object where = space == null ? "unseeded space" : space.identifier();
+        Object where = space == null ? "unseeded space" : space.location();
         LOGGER.warn("Half-world step invariant violated in {}: mirror {} stepped from {} to {} without a rebase",
                 where, axis, from, to);
     }

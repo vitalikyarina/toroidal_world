@@ -11,7 +11,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.ai.behavior.SetWalkTargetFromBlockMemory;
-import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.Villager;
 
 // The behaviour that walks a villager to the places it keeps — its bed, its job site, the meeting point. Each of them
 // is a remembered position inside the world, so one lying ten blocks past the seam reads a whole world away, and every

@@ -138,7 +138,7 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
     // range meant all along — the same statement already made for the ticket graphs and the generation cache.
     @WrapOperation(
             method = "getChunkRangeFuture",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ChunkPos;pack(II)J"))
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ChunkPos;asLong(II)J"))
     private long toroidal$rangeOverPhysicalChunks(int chunkX, int chunkZ, Operation<Long> original) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
@@ -281,8 +281,8 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
             return original.call(chunkPos, pos);
         }
 
-        double chunkCenterX = SectionPos.sectionToBlockCoord(chunkPos.x(), 8);
-        double chunkCenterZ = SectionPos.sectionToBlockCoord(chunkPos.z(), 8);
+        double chunkCenterX = SectionPos.sectionToBlockCoord(chunkPos.x, 8);
+        double chunkCenterZ = SectionPos.sectionToBlockCoord(chunkPos.z, 8);
         return transformer.coords.sqrDistToBounds(pos.x, 0.0, pos.z, chunkCenterX, 0.0, chunkCenterZ);
     }
 

@@ -154,7 +154,7 @@ class SeamDistanceTest {
                     ChunkPos to = new ChunkPos(xTo, zTo);
                     assertEquals(actual, transformer.chunks.sqrDistToBounds(from, to),
                             () -> "Chunk.sqrDistToBounds(ChunkPos) " + in(transformer));
-                    assertEquals(actual, transformer.chunks.sqrDistToBounds(ChunkPos.pack(xFrom, zFrom), ChunkPos.pack(xTo, zTo)),
+                    assertEquals(actual, transformer.chunks.sqrDistToBounds(ChunkPos.asLong(xFrom, zFrom), ChunkPos.asLong(xTo, zTo)),
                             () -> "Chunk.sqrDistToBounds(packed) " + in(transformer));
                 }
             }

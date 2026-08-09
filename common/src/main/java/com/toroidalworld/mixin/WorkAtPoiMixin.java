@@ -11,7 +11,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
 import net.minecraft.world.entity.ai.behavior.WorkAtPoi;
-import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.Villager;
 
 // Working is gated on standing at the workstation — 1.73 blocks, the diagonal of one block, which is as good as "on
 // it". The job site is remembered as the position it occupies in the world and the villager is wrapped, so across the
@@ -26,9 +26,9 @@ public class WorkAtPoiMixin {
     @WrapOperation(
             method = {
                     "checkExtraStartConditions(Lnet/minecraft/server/level/ServerLevel;"
-                            + "Lnet/minecraft/world/entity/npc/villager/Villager;)Z",
+                            + "Lnet/minecraft/world/entity/npc/Villager;)Z",
                     "canStillUse(Lnet/minecraft/server/level/ServerLevel;"
-                            + "Lnet/minecraft/world/entity/npc/villager/Villager;J)Z" },
+                            + "Lnet/minecraft/world/entity/npc/Villager;J)Z" },
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
     private boolean toroidal$workstationReachThroughSeam(BlockPos jobSitePos, Position bodyPosition, double distance,

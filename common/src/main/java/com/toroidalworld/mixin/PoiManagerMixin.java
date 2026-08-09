@@ -58,7 +58,7 @@ public class PoiManagerMixin {
         PoiManager self = (PoiManager) (Object) this;
         int chunkRadius = Math.floorDiv(radius, CoordinateConstants.CHUNK_WIDTH) + 1;
 
-        return toroidal$chunksAround(ChunkPos.containing(center), chunkRadius, transformer)
+        return toroidal$chunksAround(new ChunkPos(center), chunkRadius, transformer)
                 .flatMap(chunkPos -> self.getInChunk(predicate, chunkPos, occupancy))
                 .filter(record -> {
                     BlockPos pos = record.getPos();
@@ -185,7 +185,7 @@ public class PoiManagerMixin {
         }
 
         LongSet seen = new LongOpenHashSet();
-        return wrapped.filter(chunkPos -> seen.add(chunkPos.pack()));
+        return wrapped.filter(chunkPos -> seen.add(chunkPos.toLong()));
     }
 
     // Asked of each axis on its own: the square is scanned over itself as soon as it runs through more chunks than one

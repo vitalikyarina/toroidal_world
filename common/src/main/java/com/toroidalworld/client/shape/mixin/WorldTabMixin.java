@@ -44,8 +44,9 @@ public class WorldTabMixin {
                     target = "Lnet/minecraft/client/gui/layouts/CommonLayouts;labeledElement(Lnet/minecraft/client/gui/Font;Lnet/minecraft/client/gui/layouts/LayoutElement;Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/gui/layouts/Layout;",
                     ordinal = 0))
     private void toroidal$addWorldShapeRow(CallbackInfo ci, @Local GridLayout.RowHelper helper) {
-        helper.addChild(CycleButton.builder(WorldShape::label, WorldShapes.selected())
+        helper.addChild(CycleButton.builder(WorldShape::label)
                 .withValues(WorldShapes.shapes())
+                .withInitialValue(WorldShapes.selected())
                 .create(0, 0, toroidal$SHAPE_BUTTON_WIDTH, toroidal$SHAPE_BUTTON_HEIGHT, toroidal$SHAPE_LABEL,
                         (button, shape) -> {
                             WorldShapes.select(shape);
@@ -71,9 +72,9 @@ public class WorldTabMixin {
         }
 
         Minecraft minecraft = Minecraft.getInstance();
-        Screen parent = minecraft.gui.screen();
+        Screen parent = minecraft.screen;
         if (parent != null) {
-            minecraft.gui.setScreen(customizer.createScreen(parent));
+            minecraft.setScreen(customizer.createScreen(parent));
         }
     }
 }

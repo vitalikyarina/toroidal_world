@@ -19,7 +19,7 @@ import com.toroidalworld.ToroidalWorld;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.dimension.LevelStem;
@@ -57,7 +57,7 @@ public final class WorldLoopShapeSetup {
 
     public static void register() {
         WorldShapes.register(WorldShape.of(
-                Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopGenerators.TOROIDAL_ID),
+                ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopGenerators.TOROIDAL_ID),
                 Component.translatable(TOROIDAL_LABEL_KEY),
                 parent -> new WorldLoopSettingsScreen(parent, wrapping, netherScale, endWrapping,
                         (chosen, chosenScale, chosenEnd) -> {

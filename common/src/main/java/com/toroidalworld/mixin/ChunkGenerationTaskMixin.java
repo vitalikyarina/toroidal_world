@@ -56,7 +56,7 @@ public class ChunkGenerationTaskMixin {
             return original.call(centerX, centerZ, range, initializer);
         }
 
-        String levelName = level.dimension().identifier().toString();
+        String levelName = level.dimension().location().toString();
         StaticCache2D.Initializer<GenerationChunkHolder> folding = (slotX, slotZ) -> toroidal$slotFor(
                 map, transformer, levelName, initializer, centerX, centerZ, slotX, slotZ);
         return original.call(centerX, centerZ, range, folding);
@@ -93,7 +93,7 @@ public class ChunkGenerationTaskMixin {
         // hop) guarantees the physical chunk a live holder wherever a task exists to ask for it. A miss here is that
         // invariant broken, not a state to fall back from: acquireGeneration will NPE on the raw slot right after this
         // line, and the WARN is what turns that crash into a diagnosis.
-        if (map.getUpdatingChunkIfPresent(ChunkPos.pack(wrappedX, wrappedZ)) == null) {
+        if (map.getUpdatingChunkIfPresent(ChunkPos.asLong(wrappedX, wrappedZ)) == null) {
             toroidal$LOGGER.warn(
                     "missing_folded_holder level={} slot_x={} slot_z={} wrapped_x={} wrapped_z={} center_x={} center_z={}",
                     levelName, slotX, slotZ, wrappedX, wrappedZ, centerX, centerZ);

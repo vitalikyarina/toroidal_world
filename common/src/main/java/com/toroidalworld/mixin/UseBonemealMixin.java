@@ -11,7 +11,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
 import net.minecraft.world.entity.ai.behavior.UseBonemeal;
-import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.Villager;
 
 // The same shape as the harvest: the crop is picked from the cube around the farmer and then remembered for the eighty
 // ticks the bonemealing lasts, so the seam only gets between them when the farmer crosses it mid-session. After that
@@ -20,7 +20,7 @@ import net.minecraft.world.entity.npc.villager.Villager;
 public class UseBonemealMixin {
     @WrapOperation(
             method = "tick(Lnet/minecraft/server/level/ServerLevel;"
-                    + "Lnet/minecraft/world/entity/npc/villager/Villager;J)V",
+                    + "Lnet/minecraft/world/entity/npc/Villager;J)V",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
     private boolean toroidal$cropReachThroughSeam(BlockPos cropPos, Position bodyPosition, double distance,

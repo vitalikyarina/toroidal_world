@@ -137,7 +137,7 @@ public class WorldLoopSettingsScreen extends Screen {
 
     @Override
     public void onClose() {
-        Minecraft.getInstance().gui.setScreen(this.parent);
+        Minecraft.getInstance().setScreen(this.parent);
     }
 
     // An empty or half-typed field names no world at all — that is the only case with nothing to build, and the only

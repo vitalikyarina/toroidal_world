@@ -11,7 +11,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
 import net.minecraft.world.entity.ai.behavior.AssignProfessionFromJobSite;
-import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.Villager;
 
 // The moment a villager takes a trade: it has claimed a workstation, walked to it, and touching it turns the claim into
 // a profession. Two blocks is the whole of the test, and it is a raw difference against the claimed position.

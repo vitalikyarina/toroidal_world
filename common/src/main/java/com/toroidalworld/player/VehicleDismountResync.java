@@ -29,7 +29,7 @@ public final class VehicleDismountResync {
         }
 
         MinecraftServer server = player.level().getServer();
-        server.schedule(new TickTask(server.getTickCount(), () -> {
+        server.tell(new TickTask(server.getTickCount(), () -> {
             if (vehicle.isAlive() && player.getControlledVehicle() != vehicle) {
                 player.connection.send(new ClientboundTeleportEntityPacket(vehicle));
             }

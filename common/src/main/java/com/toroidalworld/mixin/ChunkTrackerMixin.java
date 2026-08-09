@@ -44,7 +44,7 @@ public class ChunkTrackerMixin implements LevelBindable {
     // sentinel, the known parent is skipped, and the level is read from where it is actually stored.
     @WrapOperation(
             method = {"checkNeighborsAfterUpdate", "getComputedLevel"},
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ChunkPos;pack(II)J"),
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ChunkPos;asLong(II)J"),
             expect = 2)
     private long toroidal$physicalNeighborKey(int chunkX, int chunkZ, Operation<Long> original) {
         WorldLoopTransformer transformer = this.toroidal$transformer();

@@ -66,7 +66,7 @@ public class EntitySectionManagerMixin implements LevelBindable {
     // addEntityWithoutEvent, so a wrapped entity is read twice — the second pass finds it already in bounds and does
     // nothing.
     //
-    // absSnapTo, not setPos: the old position has to move with it, or the entity spends a tick believing it travelled
+    // absMoveTo, not setPos: the old position has to move with it, or the entity spends a tick believing it travelled
     // a whole world. It deliberately does not route through snapTo, so a joining player's client mirror is left alone.
     //
     // A level that does not wrap answers null here; this manager only ever serves server levels.
@@ -92,7 +92,7 @@ public class EntitySectionManagerMixin implements LevelBindable {
         }
 
         Vec3 wrapped = transformer.vectors.wrap(position);
-        actualEntity.absSnapTo(wrapped.x, wrapped.y, wrapped.z);
+        actualEntity.absMoveTo(wrapped.x, wrapped.y, wrapped.z);
     }
 
     // canPositionTick contributes two matches — both overloads answer to the bare name.

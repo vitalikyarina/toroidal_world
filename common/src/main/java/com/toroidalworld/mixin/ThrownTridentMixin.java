@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.toroidalworld.entity.SeamAim;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
-import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
+import net.minecraft.world.entity.projectile.ThrownTrident;
 import net.minecraft.world.phys.Vec3;
 
 // Loyalty steers the trident home by the raw difference between the owner's eyes and where the trident is. Across the

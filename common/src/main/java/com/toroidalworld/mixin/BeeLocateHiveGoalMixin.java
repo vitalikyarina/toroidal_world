@@ -14,7 +14,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.animal.bee.Bee;
+import net.minecraft.world.entity.animal.Bee;
 
 // Choosing a hive, rather than returning to one: the search itself already reaches across the seam, so a hive on the
 // far side does come back as a candidate — but the candidates are then ranked by a raw distance, which puts a hive
@@ -22,7 +22,7 @@ import net.minecraft.world.entity.animal.bee.Bee;
 //
 // The comparator is replaced whole rather than the distance inside it: the ranking expression is a lambda, which
 // compiles to a method of its own that an injector scoped to this method would not see at all.
-@Mixin(targets = "net.minecraft.world.entity.animal.bee.Bee$BeeLocateHiveGoal")
+@Mixin(targets = "net.minecraft.world.entity.animal.Bee$BeeLocateHiveGoal")
 public class BeeLocateHiveGoalMixin {
     @Shadow(aliases = "this$0")
     @Final

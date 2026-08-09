@@ -49,7 +49,7 @@ public abstract class GenerationChunkHolderMixin {
             @Local(argsOnly = true) StaticCache2D<GenerationChunkHolder> cache,
             @Local(argsOnly = true) GeneratingChunkMap chunkMap) {
         ChunkPos pos = this.getPos();
-        if (cache.contains(pos.x(), pos.z())) {
+        if (cache.contains(pos.x, pos.z)) {
             return original.call(holder, status);
         }
 

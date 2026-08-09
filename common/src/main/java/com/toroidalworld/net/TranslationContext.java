@@ -110,7 +110,7 @@ public record TranslationContext(
         ChunkPos anchor = clientPosition.chunk();
         ChunkPos clientPos = transformer.chunks.unwrap(anchor, chunkPos);
         int viewReach = viewReach();
-        if (Math.abs(clientPos.x() - anchor.x()) > viewReach || Math.abs(clientPos.z() - anchor.z()) > viewReach) {
+        if (Math.abs(clientPos.x - anchor.x) > viewReach || Math.abs(clientPos.z - anchor.z) > viewReach) {
             warnChunkFarFromAnchor(chunkPos, clientPos, anchor, viewReach);
         }
         return clientPos;
@@ -125,8 +125,8 @@ public record TranslationContext(
         ChunkPos anchor = clientPosition.chunk();
         ChunkPos nearest = transformer.chunks.unwrap(anchor, chunkPos);
         int ambiguityReach = copyAmbiguityReach();
-        int[] xCandidates = axisCandidates(transformer.chunks.x, nearest.x(), nearest.x() - anchor.x(), ambiguityReach);
-        int[] zCandidates = axisCandidates(transformer.chunks.z, nearest.z(), nearest.z() - anchor.z(), ambiguityReach);
+        int[] xCandidates = axisCandidates(transformer.chunks.x, nearest.x, nearest.x - anchor.x, ambiguityReach);
+        int[] zCandidates = axisCandidates(transformer.chunks.z, nearest.z, nearest.z - anchor.z, ambiguityReach);
 
         List<ChunkPos> candidates = new ArrayList<>(xCandidates.length * zCandidates.length);
         for (int xCandidate : xCandidates) {
@@ -216,7 +216,7 @@ public record TranslationContext(
 
         LOGGER.warn("A chunk lands farther from the client anchor than the view reaches in {}:"
                         + " server {} translated to client {} around anchor {}, view reach {} chunks",
-                dimension.identifier(), serverPos, clientPos, anchor, viewReach);
+                dimension.location(), serverPos, clientPos, anchor, viewReach);
     }
 
     private void warnCoordFarFromAnchor(PacketReach reach, String axis,
@@ -227,7 +227,7 @@ public record TranslationContext(
 
         LOGGER.warn("A {} packet's {} lands farther from the client anchor than it can reach in {}:"
                         + " server {} translated to client {} around anchor {}, reach {} blocks",
-                reach.kind(), axis, dimension.identifier(), serverValue, clientValue, anchor, reach.blocks());
+                reach.kind(), axis, dimension.location(), serverValue, clientValue, anchor, reach.blocks());
     }
 
     public Vec3 toClient(Vec3 position, PacketReach reach) {

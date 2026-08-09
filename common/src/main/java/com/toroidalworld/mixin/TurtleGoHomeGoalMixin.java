@@ -11,7 +11,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
-import net.minecraft.world.entity.animal.turtle.Turtle;
+import net.minecraft.world.entity.animal.Turtle;
 
 // The whole journey home, gated three times over on the same raw difference: sixty-four blocks decides whether to set
 // off at all, seven decides when the turtle has arrived and the goal may end, and sixteen counts the ticks it has been
@@ -24,7 +24,7 @@ import net.minecraft.world.entity.animal.turtle.Turtle;
 //
 // Where it swims to is already folded — the destination is handed to the random-position family — so these three
 // readings are the whole of what is left.
-@Mixin(targets = "net.minecraft.world.entity.animal.turtle.Turtle$TurtleGoHomeGoal")
+@Mixin(targets = "net.minecraft.world.entity.animal.Turtle$TurtleGoHomeGoal")
 public class TurtleGoHomeGoalMixin {
     @Shadow
     @Final

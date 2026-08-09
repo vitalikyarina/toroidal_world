@@ -88,8 +88,8 @@ public class StructureManagerMixin {
         ChunkPos startPos = start.getChunkPos();
         return ((FramedStructureStart) (Object) start).toroidal$framedBy(
                 region,
-                transformer.chunks.x.unwrap(centerPos.x(), startPos.x()) - startPos.x(),
-                transformer.chunks.z.unwrap(centerPos.z(), startPos.z()) - startPos.z());
+                transformer.chunks.x.unwrap(centerPos.x, startPos.x) - startPos.x,
+                transformer.chunks.z.unwrap(centerPos.z, startPos.z) - startPos.z);
     }
 
     @WrapOperation(
@@ -111,8 +111,8 @@ public class StructureManagerMixin {
         ChunkPos center = region.getCenter();
         return original.call(
                 level,
-                transformer.chunks.x.unwrap(center.x(), chunkX),
-                transformer.chunks.z.unwrap(center.z(), chunkZ),
+                transformer.chunks.x.unwrap(center.x, chunkX),
+                transformer.chunks.z.unwrap(center.z, chunkZ),
                 status);
     }
 }

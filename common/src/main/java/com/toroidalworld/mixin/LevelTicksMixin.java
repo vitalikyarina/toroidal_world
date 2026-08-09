@@ -27,7 +27,7 @@ import net.minecraft.world.ticks.ScheduledTick;
 // file its far half where nothing will ever drain it: a cloned clock that never wakes.
 //
 // What copyAreaFrom *reads* is not covered, deliberately. It gathers the ticks to copy through
-// allContainers.get(ChunkPos.pack(x, z)) on the raw source region, and a key past the bounds is never in that map, so
+// allContainers.get(ChunkPos.asLong(x, z)) on the raw source region, and a key past the bounds is never in that map, so
 // a source crossing the seam offers up only the sliver of itself that falls inside its own numeric range. An ordinary
 // /clone loses nothing to that: blocks land with UPDATE_CLIENTS alone, onPlace runs, and whatever wanted a pending
 // tick arms a fresh one. Only /clone … strict does, which places with UPDATE_SKIP_ALL_SIDEEFFECTS precisely so that

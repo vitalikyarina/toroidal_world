@@ -51,11 +51,11 @@ public abstract class ChunkTrackingViewPositionedMixin implements TransformerHol
         ChunkPos center = ((ChunkTrackingView.Positioned) (Object) this).center();
         int viewDistance = ((ChunkTrackingView.Positioned) (Object) this).viewDistance();
 
-        int unwrappedX = this.toroidal$transformer.chunks.x.unwrap(center.x(), chunkX);
-        int unwrappedZ = this.toroidal$transformer.chunks.z.unwrap(center.z(), chunkZ);
+        int unwrappedX = this.toroidal$transformer.chunks.x.unwrap(center.x, chunkX);
+        int unwrappedZ = this.toroidal$transformer.chunks.z.unwrap(center.z, chunkZ);
 
         cir.setReturnValue(ChunkTrackingView.isWithinDistance(
-                center.x(), center.z(), viewDistance, unwrappedX, unwrappedZ, includeNeighbors));
+                center.x, center.z, viewDistance, unwrappedX, unwrappedZ, includeNeighbors));
     }
 
     // The square is walked in unwrapped space and each position wrapped back, because everything downstream (chunk
@@ -73,9 +73,9 @@ public abstract class ChunkTrackingViewPositionedMixin implements TransformerHol
         int viewDistance = view.viewDistance();
         int radius = viewDistance + 1;
 
-        for (int x = center.x() - radius; x <= center.x() + radius; x++) {
-            for (int z = center.z() - radius; z <= center.z() + radius; z++) {
-                if (ChunkTrackingView.isWithinDistance(center.x(), center.z(), viewDistance, x, z, true)) {
+        for (int x = center.x - radius; x <= center.x + radius; x++) {
+            for (int z = center.z - radius; z <= center.z + radius; z++) {
+                if (ChunkTrackingView.isWithinDistance(center.x, center.z, viewDistance, x, z, true)) {
                     consumer.accept(new ChunkPos(
                             this.toroidal$transformer.chunks.x.wrap(x),
                             this.toroidal$transformer.chunks.z.wrap(z)));

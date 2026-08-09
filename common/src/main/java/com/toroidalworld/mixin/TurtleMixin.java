@@ -9,7 +9,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
-import net.minecraft.world.entity.animal.turtle.Turtle;
+import net.minecraft.world.entity.animal.Turtle;
 
 // A turtle sinks while it swims, unless it is heading home and already close to the beach — that is what keeps it near
 // the surface for the last twenty blocks instead of scraping along the sea floor. The home is written down where it

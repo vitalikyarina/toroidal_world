@@ -17,7 +17,7 @@ import net.minecraft.world.entity.LivingEntity;
 // Only the angle is at stake here, and a difference is measured the short way without needing to know where either end
 // is — which is what this asks for, because the goal reaches its evoker through the enclosing instance and has no
 // reference position to hand. The spell's own range gate is unaffected: it goes through Entity.distanceToSqr.
-@Mixin(targets = "net.minecraft.world.entity.monster.illager.Evoker$EvokerAttackSpellGoal")
+@Mixin(targets = "net.minecraft.world.entity.monster.Evoker$EvokerAttackSpellGoal")
 public class EvokerFangsAimMixin {
     @WrapOperation(
             method = "performSpellCasting",

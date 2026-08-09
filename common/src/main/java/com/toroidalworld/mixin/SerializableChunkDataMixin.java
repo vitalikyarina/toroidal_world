@@ -1,7 +1,6 @@
 package com.toroidalworld.mixin;
 
 import java.util.Map;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,10 +22,10 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.chunk.storage.SerializableChunkData;
+import net.minecraft.world.level.chunk.storage.ChunkSerializer;
 import net.minecraft.world.level.levelgen.structure.Structure;
 
 // A chunk read back from disk has every structure reference sitting further than the scan radius thrown away as
@@ -36,7 +35,7 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 //
 // Restated rather than filtered afterwards: by the time the original returns, the discarded entries are gone. The
 // threshold stays vanilla's, only the metric is folded — a reference genuinely too far is still corrupt and still goes.
-@Mixin(SerializableChunkData.class)
+@Mixin(ChunkSerializer.class)
 public class SerializableChunkDataMixin {
     @Unique
     private static final Logger toroidal$LOGGER = LogUtils.getLogger();
@@ -49,13 +48,13 @@ public class SerializableChunkDataMixin {
     @Unique
     private static final String toroidal$REFERENCES_KEY = "References";
 
-    // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.
+    // Vanilla-body re-implementation — verified against 1.21.1; re-diff on a platform bump.
     @WrapOperation(
             method = "read",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/chunk/storage/SerializableChunkData;unpackStructureReferences(Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/nbt/CompoundTag;)Ljava/util/Map;"))
-    private Map<Structure, LongSet> toroidal$keepReferencesAcrossTheSeam(
+                    target = "Lnet/minecraft/world/level/chunk/storage/ChunkSerializer;unpackStructureReferences(Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/nbt/CompoundTag;)Ljava/util/Map;"))
+    private static Map<Structure, LongSet> toroidal$keepReferencesAcrossTheSeam(
             RegistryAccess registryAccess,
             ChunkPos pos,
             CompoundTag tag,
@@ -67,23 +66,24 @@ public class SerializableChunkDataMixin {
         }
 
         Map<Structure, LongSet> references = Maps.newHashMap();
-        Registry<Structure> structures = registryAccess.lookupOrThrow(Registries.STRUCTURE);
-        tag.getCompoundOrEmpty(toroidal$REFERENCES_KEY).forEach((key, entry) -> {
-            Identifier structureId = Identifier.tryParse(key);
-            Structure structure = structures.getValue(structureId);
+        Registry<Structure> structures = registryAccess.registryOrThrow(Registries.STRUCTURE);
+        CompoundTag stored = tag.getCompound(toroidal$REFERENCES_KEY);
+        for (String key : stored.getAllKeys()) {
+            ResourceLocation structureId = ResourceLocation.tryParse(key);
+            Structure structure = structures.get(structureId);
             if (structure == null) {
                 toroidal$LOGGER.warn("Found reference to unknown structure '{}' in chunk {}, discarding", structureId, pos);
-                return;
+                continue;
             }
 
-            Optional<long[]> stored = entry.asLongArray();
-            if (stored.isEmpty()) {
-                return;
+            long[] referenceKeys = stored.getLongArray(key);
+            if (referenceKeys.length == 0) {
+                continue;
             }
 
             LongSet kept = new LongOpenHashSet();
-            for (long referenceKey : stored.get()) {
-                ChunkPos referencePos = ChunkPos.unpack(referenceKey);
+            for (long referenceKey : referenceKeys) {
+                ChunkPos referencePos = new ChunkPos(referenceKey);
                 if (transformer.chunks.chessboardDistance(pos, referencePos) > toroidal$MAX_REFERENCE_DISTANCE) {
                     toroidal$LOGGER.warn(
                             "Found invalid structure reference [ {} @ {} ] for chunk {}.", structureId, referencePos, pos);
@@ -94,7 +94,7 @@ public class SerializableChunkDataMixin {
             }
 
             references.put(structure, kept);
-        });
+        }
 
         return references;
     }

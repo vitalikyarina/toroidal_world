@@ -7,7 +7,7 @@ import com.toroidalworld.entity.SeamAim;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.animal.equine.Llama;
+import net.minecraft.world.entity.animal.horse.Llama;
 
 // The llama's performRangedAttack hands the work straight to a private spit, so the shot arithmetic — and with it the
 // fold — sits one method deeper than the family it belongs to.

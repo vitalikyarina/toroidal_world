@@ -43,10 +43,10 @@ public interface ChunkTrackingViewMixin {
         ChunkPos nextCenter = transformer.chunks.unwrap(previousCenter, next.center());
 
         int radius = Math.max(previous.viewDistance(), next.viewDistance()) + 1;
-        int minX = Math.min(previousCenter.x(), nextCenter.x()) - radius;
-        int minZ = Math.min(previousCenter.z(), nextCenter.z()) - radius;
-        int maxX = Math.max(previousCenter.x(), nextCenter.x()) + radius;
-        int maxZ = Math.max(previousCenter.z(), nextCenter.z()) + radius;
+        int minX = Math.min(previousCenter.x, nextCenter.x) - radius;
+        int minZ = Math.min(previousCenter.z, nextCenter.z) - radius;
+        int maxX = Math.max(previousCenter.x, nextCenter.x) + radius;
+        int maxZ = Math.max(previousCenter.z, nextCenter.z) + radius;
 
         // Membership is asked of the chunk itself, never of the coordinate it happens to be walked at: in a wrapped
         // world one chunk has several representations, and the same chunk can look far away as +15 while being right
@@ -57,12 +57,12 @@ public interface ChunkTrackingViewMixin {
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
                 ChunkPos pos = new ChunkPos(transformer.chunks.x.wrap(x), transformer.chunks.z.wrap(z));
-                if (!visited.add(pos.pack())) {
+                if (!visited.add(pos.toLong())) {
                     continue;
                 }
 
-                boolean saw = previous.contains(pos.x(), pos.z());
-                boolean sees = next.contains(pos.x(), pos.z());
+                boolean saw = previous.contains(pos.x, pos.z);
+                boolean sees = next.contains(pos.x, pos.z);
                 if (saw == sees) {
                     continue;
                 }

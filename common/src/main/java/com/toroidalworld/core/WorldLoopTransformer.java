@@ -118,11 +118,11 @@ public class WorldLoopTransformer {
         }
 
         public ChunkPos wrap(ChunkPos chunkPos) {
-            if (!x.isOver(chunkPos.x()) && !z.isOver(chunkPos.z())) {
+            if (!x.isOver(chunkPos.x) && !z.isOver(chunkPos.z)) {
                 return chunkPos;
             }
 
-            return new ChunkPos(x.wrap(chunkPos.x()), z.wrap(chunkPos.z()));
+            return new ChunkPos(x.wrap(chunkPos.x), z.wrap(chunkPos.z));
         }
 
         // Sections stand on the chunk grid horizontally, so the chunk domains answer for them; Y stacks vertically,
@@ -156,13 +156,13 @@ public class WorldLoopTransformer {
                 return chunkKey;
             }
 
-            return ChunkPos.pack(x.wrap(chunkX), z.wrap(chunkZ));
+            return ChunkPos.asLong(x.wrap(chunkX), z.wrap(chunkZ));
         }
 
         public ChunkPos unwrap(ChunkPos anchor, ChunkPos wrapped) {
-            int unwrappedX = x.unwrap(anchor.x(), wrapped.x());
-            int unwrappedZ = z.unwrap(anchor.z(), wrapped.z());
-            if (unwrappedX == wrapped.x() && unwrappedZ == wrapped.z()) {
+            int unwrappedX = x.unwrap(anchor.x, wrapped.x);
+            int unwrappedZ = z.unwrap(anchor.z, wrapped.z);
+            if (unwrappedX == wrapped.x && unwrappedZ == wrapped.z) {
                 return wrapped;
             }
 
@@ -170,7 +170,7 @@ public class WorldLoopTransformer {
         }
 
         public boolean isOver(ChunkPos chunkPos) {
-            return x.isOver(chunkPos.x()) || z.isOver(chunkPos.z());
+            return x.isOver(chunkPos.x) || z.isOver(chunkPos.z);
         }
 
         // How far apart two chunks really are, measured through the seam. Vanilla asks this wherever it decides whether
@@ -181,8 +181,8 @@ public class WorldLoopTransformer {
         // from elsewhere may be several laps out.
         public int chessboardDistance(ChunkPos fromChunkPos, ChunkPos toChunkPos) {
             return fromChunkPos.getChessboardDistance(
-                    x.unwrap(fromChunkPos.x(), x.wrap(toChunkPos.x())),
-                    z.unwrap(fromChunkPos.z(), z.wrap(toChunkPos.z())));
+                    x.unwrap(fromChunkPos.x, x.wrap(toChunkPos.x)),
+                    z.unwrap(fromChunkPos.z, z.wrap(toChunkPos.z)));
         }
 
         // How far past the world a chunk lies, chessboard-wise — the same metric the generation pyramid measures its
@@ -200,7 +200,7 @@ public class WorldLoopTransformer {
         }
 
         public int sqrDistToBounds(ChunkPos from, ChunkPos to) {
-            return sqrDistToBounds(from.x(), from.z(), to.x(), to.z());
+            return sqrDistToBounds(from.x, from.z, to.x, to.z);
         }
     }
 

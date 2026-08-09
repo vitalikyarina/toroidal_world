@@ -52,15 +52,15 @@ public abstract class WorldGenRegionMixin implements LevelHolder {
     @Unique
     private BlockPos toroidal$keyIn(ChunkAccess chunk, BlockPos pos) {
         ChunkPos chunkPos = chunk.getPos();
-        if (chunkPos.x() == SectionPos.blockToSectionCoord(pos.getX())
-                && chunkPos.z() == SectionPos.blockToSectionCoord(pos.getZ())) {
+        if (chunkPos.x == SectionPos.blockToSectionCoord(pos.getX())
+                && chunkPos.z == SectionPos.blockToSectionCoord(pos.getZ())) {
             return pos;
         }
 
         BlockPos key = new BlockPos(
-                SectionPos.sectionToBlockCoord(chunkPos.x(), SectionPos.sectionRelative(pos.getX())),
+                SectionPos.sectionToBlockCoord(chunkPos.x, SectionPos.sectionRelative(pos.getX())),
                 pos.getY(),
-                SectionPos.sectionToBlockCoord(chunkPos.z(), SectionPos.sectionRelative(pos.getZ())));
+                SectionPos.sectionToBlockCoord(chunkPos.z, SectionPos.sectionRelative(pos.getZ())));
 
         return key;
     }

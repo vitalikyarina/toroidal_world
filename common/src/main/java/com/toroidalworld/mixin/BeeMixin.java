@@ -11,7 +11,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.animal.bee.Bee;
+import net.minecraft.world.entity.animal.Bee;
 
 // A bee measures everything it remembers — its hive, its flower — as a plain distance between two block positions, and
 // both of those positions are stored inside the world. Across the seam that reads about a world apart, and the readings
