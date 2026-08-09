@@ -26,7 +26,7 @@ public interface DensityFunctionsShiftNoiseMixin {
             return;
         }
 
-        try (Context.ScaleScope _ = generation.withScale(NoiseConstants.SHIFT_SCALE)) {
+        try (Context.ScaleScope scope = generation.withScale(NoiseConstants.SHIFT_SCALE)) {
             cir.setReturnValue(this.offsetNoise().getValue(localX, localY * NoiseConstants.SHIFT_SCALE, localZ) * 4.0);
         }
     }

@@ -28,7 +28,7 @@ public class NoiseBasedStateProviderMixin {
             return original.call(pos, scale);
         }
 
-        try (Context.ScaleScope _ = generation.withScale(scale)) {
+        try (Context.ScaleScope scope = generation.withScale(scale)) {
             return this.noise.getValue(pos.getX(), pos.getY() * scale, pos.getZ());
         }
     }

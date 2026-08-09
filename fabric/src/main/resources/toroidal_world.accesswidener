@@ -1,4 +1,4 @@
-accessWidener v2 official
+accessWidener v2 named
 
 # Mirror of common/src/main/resources/META-INF/accesstransformer.cfg — keep the two in sync.
 accessible class net/minecraft/server/level/DistanceManager$FixedPlayerDistanceChunkTracker

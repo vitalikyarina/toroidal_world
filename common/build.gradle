@@ -7,8 +7,8 @@ plugins {
 version = toroidal_world_version
 group = mod_group_id
 
-// Mojang ships Java 25 to end users, so mods should target Java 25.
-java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+// 1.21.1 runs on Java 21 — that is what NeoForge 21.1.x and its Fabric contemporaries are built against.
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 // NeoForm mode: plain vanilla (Mojmap) on the classpath, no loader — the compile-time proof that this module is
 // loader-free. The AT in src/main/resources/META-INF is auto-detected and applied to the vanilla artifact.
@@ -27,6 +27,7 @@ sourceSets.main.resources {
 dependencies {
     compileOnly "net.fabricmc:sponge-mixin:${mixin_version}"
     compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
+    compileOnly "org.jspecify:jspecify:${jspecify_version}"
 }
 
 tasks.withType(JavaCompile).configureEach {

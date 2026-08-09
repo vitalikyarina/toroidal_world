@@ -41,7 +41,7 @@ public class NormalNoiseMixin {
 
         double firstValue = this.first.getValue(x, y, z);
         double detunedScale = generation.horizontalScale() * NoiseConstants.SECOND_LAYER_DETUNE;
-        try (Context.ScaleScope _ = generation.withScale(detunedScale)) {
+        try (Context.ScaleScope scope = generation.withScale(detunedScale)) {
             double detunedY = y * NoiseConstants.SECOND_LAYER_DETUNE;
             return (firstValue + this.second.getValue(x, detunedY, z)) * this.valueFactor;
         }

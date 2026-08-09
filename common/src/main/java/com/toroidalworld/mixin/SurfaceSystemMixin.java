@@ -47,7 +47,7 @@ public class SurfaceSystemMixin {
             return original.call(noise, x, y, z);
         }
 
-        try (Context.ScaleScope _ = generation.withScale(scale)) {
+        try (Context.ScaleScope scope = generation.withScale(scale)) {
             return original.call(noise, x / scale, y, z / scale);
         }
     }

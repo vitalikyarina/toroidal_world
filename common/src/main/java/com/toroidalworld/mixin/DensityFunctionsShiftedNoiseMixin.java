@@ -40,7 +40,7 @@ public class DensityFunctionsShiftedNoiseMixin {
 
         double y = context.blockY() * this.yScale + this.shiftY.compute(context);
 
-        try (Context.ScaleScope _ = generation.withScale(this.xzScale)) {
+        try (Context.ScaleScope scope = generation.withScale(this.xzScale)) {
             return this.noise.getValue(context.blockX(), y, context.blockZ());
         }
     }

@@ -30,7 +30,7 @@ public class DualNoiseProviderMixin {
             return original.call(pos);
         }
 
-        try (Context.ScaleScope _ = generation.withScale(this.slowScale)) {
+        try (Context.ScaleScope scope = generation.withScale(this.slowScale)) {
             return this.slowNoise.getValue(pos.getX(), pos.getY() * this.slowScale, pos.getZ());
         }
     }

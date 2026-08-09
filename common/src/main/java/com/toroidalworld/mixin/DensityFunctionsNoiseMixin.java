@@ -34,7 +34,7 @@ public class DensityFunctionsNoiseMixin {
             return original.call(context);
         }
 
-        try (Context.ScaleScope _ = generation.withScale(this.xzScale)) {
+        try (Context.ScaleScope scope = generation.withScale(this.xzScale)) {
             return this.noise.getValue(context.blockX(), context.blockY() * this.yScale, context.blockZ());
         }
     }

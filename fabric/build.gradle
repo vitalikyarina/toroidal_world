@@ -1,5 +1,5 @@
 plugins {
-    id 'net.fabricmc.fabric-loom'
+    id 'net.fabricmc.fabric-loom-remap'
     id 'idea'
 }
 
@@ -21,11 +21,11 @@ base {
     archivesName = mod_id
 }
 
-// Mojang ships Java 25 to end users, so mods should target Java 25.
-java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+// 1.21.1 runs on Java 21 — that is what NeoForge 21.1.x and its Fabric contemporaries are built against.
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 // Common's sources compile HERE, not as a project dependency, so the fabric jar carries every class and Loom sees the
-// mixin sources. 26.x Minecraft ships unobfuscated — no mappings line, no remapping, no refmap.
+// mixin sources. 1.21.x Minecraft is obfuscated, so unlike the 26.x line this needs mappings and a remapped jar.
 sourceSets.main.java.srcDir '../common/src/main/java'
 sourceSets.main.resources.srcDir '../common/src/main/resources'
 
@@ -40,10 +40,18 @@ loom {
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
-    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    // Mojmap on both sides: the mixins and the accesswidener are written against the same names NeoForge uses,
+    // so common's sources compile unchanged for either loader.
+    mappings loom.officialMojangMappings()
+    // modImplementation, not implementation: only the mod configurations run through Loom's dependency provider, which
+    // remaps these jars off intermediary and applies the loader's fabric-installer.json (mixin, asm). Plain
+    // implementation was equivalent on the unobfuscated 26.x line and silently drops both here.
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    compileOnly "org.jspecify:jspecify:${jspecify_version}"
 
-    // Bundled into the jar for production; no annotation processor — with no remapping there is no refmap to generate.
+    // Bundled into the jar for production. No annotation processor and no refmap: Loom 1.17 defaults
+    // useLegacyMixinAp to false and remaps the mixin annotations inside remapJar instead.
     include(implementation("io.github.llamalad7:mixinextras-fabric:${mixinextras_version}"))
 }
 
