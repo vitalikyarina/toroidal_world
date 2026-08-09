@@ -116,12 +116,6 @@ public record TranslationContext(
         return clientPos;
     }
 
-    // The plain nearest-copy unwrap, outside the view-reach backstop — for packets that name a chunk as a directional
-    // hint (a far player's waypoint) rather than a chunk the client holds.
-    public ChunkPos nearestCopy(ChunkPos chunkPos) {
-        return transformer.chunks.unwrap(clientPosition.chunk(), chunkPos);
-    }
-
     // The copies of a forgotten chunk the client might be holding. Within the view's reach the nearest copy is the
     // held one. Past it the anchor has outrun the coordinate — a multi-chunk view jump — and nothing in the packet
     // says which side the client holds, so both copies of each overrun axis are returned; forgetting the unheld one
@@ -196,8 +190,8 @@ public record TranslationContext(
         }
     }
 
-    // The plain nearest-copy fold, outside the guard above — the loose-coordinate twin of nearestCopy(ChunkPos) and of
-    // PacketTranslator's nearestCopyBlock. It is the door for a coordinate that reaches the client for a reason other
+    // The plain nearest-copy fold, outside the guard above — the loose-coordinate twin of PacketTranslator's
+    // nearestCopyBlock. It is the door for a coordinate that reaches the client for a reason other
     // than the player's nearness — a teleport target, the point a look turns toward, a border centre — and so has no
     // radius to be held to at all.
     //

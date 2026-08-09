@@ -12,11 +12,9 @@ import java.util.function.UnaryOperator;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.mixin.ChunkWaypointAccessor;
 import com.toroidalworld.mixin.LevelChunkPacketAccessor;
 import com.toroidalworld.mixin.LightUpdatePacketAccessor;
 import com.toroidalworld.mixin.PlayerLookAtPacketAccessor;
-import com.toroidalworld.mixin.Vec3iWaypointAccessor;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -43,7 +41,6 @@ import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundBundlePacket;
 import net.minecraft.network.protocol.game.ClientboundChunksBiomesPacket;
 import net.minecraft.network.protocol.game.ClientboundDamageEventPacket;
-import net.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacket;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
 import net.minecraft.network.protocol.game.ClientboundForgetLevelChunkPacket;
 import net.minecraft.network.protocol.game.ClientboundInitializeBorderPacket;
@@ -51,7 +48,6 @@ import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelEventPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 import net.minecraft.network.protocol.game.ClientboundLightUpdatePacket;
-import net.minecraft.network.protocol.game.ClientboundMoveMinecartPacket;
 import net.minecraft.network.protocol.game.ClientboundMoveVehiclePacket;
 import net.minecraft.network.protocol.game.ClientboundOpenSignEditorPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerLookAtPacket;
@@ -63,18 +59,14 @@ import net.minecraft.network.protocol.game.ClientboundSetDefaultSpawnPositionPac
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
-import net.minecraft.network.protocol.game.ClientboundTrackedWaypointPacket;
 import net.minecraft.network.protocol.game.ServerboundBlockEntityTagQueryPacket;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundJigsawGeneratePacket;
-import net.minecraft.network.protocol.game.ServerboundPickItemFromBlockPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSetCommandBlockPacket;
 import net.minecraft.network.protocol.game.ServerboundSetJigsawBlockPacket;
 import net.minecraft.network.protocol.game.ServerboundSetStructureBlockPacket;
-import net.minecraft.network.protocol.game.ServerboundSetTestBlockPacket;
 import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket;
-import net.minecraft.network.protocol.game.ServerboundTestInstanceBlockActionPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
@@ -82,7 +74,6 @@ import net.minecraft.util.random.Weighted;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.entity.PositionMoveRotation;
 import net.minecraft.world.entity.Relative;
-import net.minecraft.world.entity.vehicle.minecart.NewMinecartBehavior;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.gameevent.BlockPositionSource;
 import net.minecraft.world.level.storage.LevelData;
@@ -123,7 +114,6 @@ public final class PacketTranslator {
             Map.entry(ClientboundSetEntityDataPacket.class, rewriter(PacketTranslator::setEntityData)),
             Map.entry(ClientboundAddEntityPacket.class, rewriter(PacketTranslator::addEntity)),
             Map.entry(ClientboundTeleportEntityPacket.class, rewriter(PacketTranslator::teleportEntity)),
-            Map.entry(ClientboundEntityPositionSyncPacket.class, rewriter(PacketTranslator::entityPositionSync)),
             Map.entry(ClientboundMoveVehiclePacket.class, rewriter(PacketTranslator::moveVehicle)),
             Map.entry(ClientboundBlockEventPacket.class, rewriter(PacketTranslator::blockEvent)),
             Map.entry(ClientboundOpenSignEditorPacket.class, rewriter(PacketTranslator::openSignEditor)),
@@ -131,13 +121,11 @@ public final class PacketTranslator {
             Map.entry(ClientboundSoundPacket.class, rewriter(PacketTranslator::sound)),
             Map.entry(ClientboundLevelParticlesPacket.class, rewriter(PacketTranslator::levelParticles)),
             Map.entry(ClientboundExplodePacket.class, rewriter(PacketTranslator::explode)),
-            Map.entry(ClientboundTrackedWaypointPacket.class, rewriter(PacketTranslator::trackedWaypoint)),
             Map.entry(ClientboundSetDefaultSpawnPositionPacket.class, rewriter(PacketTranslator::setDefaultSpawnPosition)),
             Map.entry(ClientboundInitializeBorderPacket.class, rewriter(PacketTranslator::initializeBorder)),
             Map.entry(ClientboundSetBorderCenterPacket.class, rewriter(PacketTranslator::setBorderCenter)),
             Map.entry(ClientboundPlayerLookAtPacket.class, rewriter(PacketTranslator::playerLookAt)),
             Map.entry(ClientboundDamageEventPacket.class, rewriter(PacketTranslator::damageEvent)),
-            Map.entry(ClientboundMoveMinecartPacket.class, rewriter(PacketTranslator::moveMinecart)),
             Map.entry(ClientboundCustomPayloadPacket.class, rewriter(PacketTranslator::customPayload)));
 
     // Filled once by the loader glue while the mod initializes — before any server exists — then only read.
@@ -171,16 +159,13 @@ public final class PacketTranslator {
     private static final Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> TO_SERVER = Map.ofEntries(
             Map.entry(ServerboundUseItemOnPacket.class, rewriter(PacketTranslator::useItemOn)),
             Map.entry(ServerboundPlayerActionPacket.class, rewriter(PacketTranslator::playerAction)),
-            Map.entry(ServerboundPickItemFromBlockPacket.class, rewriter(PacketTranslator::pickItemFromBlock)),
             Map.entry(ServerboundSignUpdatePacket.class, rewriter(PacketTranslator::signUpdate)),
             Map.entry(ServerboundBlockEntityTagQueryPacket.class, rewriter(PacketTranslator::blockEntityTagQuery)),
             Map.entry(ServerboundInteractPacket.class, rewriter(PacketTranslator::interact)),
             Map.entry(ServerboundJigsawGeneratePacket.class, rewriter(PacketTranslator::jigsawGenerate)),
             Map.entry(ServerboundSetCommandBlockPacket.class, rewriter(PacketTranslator::setCommandBlock)),
             Map.entry(ServerboundSetJigsawBlockPacket.class, rewriter(PacketTranslator::setJigsawBlock)),
-            Map.entry(ServerboundSetStructureBlockPacket.class, rewriter(PacketTranslator::setStructureBlock)),
-            Map.entry(ServerboundSetTestBlockPacket.class, rewriter(PacketTranslator::setTestBlock)),
-            Map.entry(ServerboundTestInstanceBlockActionPacket.class, rewriter(PacketTranslator::testInstanceBlockAction)));
+            Map.entry(ServerboundSetStructureBlockPacket.class, rewriter(PacketTranslator::setStructureBlock)));
 
     // The context costs a record plus three player-capturing lambdas, and most traffic (entity moves, keepalives)
     // never hits the dispatch map — so the map is consulted first and the context built only for a packet that will
@@ -405,15 +390,6 @@ public final class PacketTranslator {
                 packet.onGround());
     }
 
-    private static Packet<?> entityPositionSync(ClientboundEntityPositionSyncPacket packet, TranslationContext context) {
-        if (context.ownVehicle().test(packet.id())) {
-            return null;
-        }
-
-        return new ClientboundEntityPositionSyncPacket(
-                packet.id(), toClientChange(context, packet.values(), Set.of()), packet.onGround());
-    }
-
     // The correction only ever names the vehicle the recipient is riding, so it arrives from no distance at all; the
     // tracking reach is a generous bound rather than a tight one, and the tight one would be zero.
     private static Packet<?> moveVehicle(ClientboundMoveVehiclePacket packet, TranslationContext context) {
@@ -452,9 +428,17 @@ public final class PacketTranslator {
                 packet.getId(), toClientBlock(context, packet.getPos()), packet.getProgress());
     }
 
+    // An ordinary level event happens in a chunk the listener holds, so it takes the chunk-anchored fold. A global one
+    // — a wither waking, a dragon dying, the end portal opening — goes to everyone in the world at its true position,
+    // and the client keeps only the direction to it (it plays the sound two blocks from its own camera along that
+    // line). So it names a place the client does not hold, like a look-at target, and takes the plain nearest-copy
+    // fold, outside the view-reach backstop that would otherwise call a legitimate packet a break.
     private static ClientboundLevelEventPacket levelEvent(ClientboundLevelEventPacket packet, TranslationContext context) {
+        BlockPos clientPos = packet.isGlobalEvent()
+                ? nearestCopyBlock(context, packet.getPos())
+                : toClientBlock(context, packet.getPos());
         return new ClientboundLevelEventPacket(
-                packet.getType(), toClientBlock(context, packet.getPos()), packet.getData(), packet.isGlobalEvent());
+                packet.getType(), clientPos, packet.getData(), packet.isGlobalEvent());
     }
 
     // Entity data carries positions with their type erased — the bed a player is sleeping in travels as an anonymous
@@ -654,25 +638,8 @@ public final class PacketTranslator {
         return changed ? WeightedList.of(translated) : blockParticles;
     }
 
-    // The locator bar's waypoints carry the source position in server coordinates; the client computes the arrow's
-    // angle in its own unbounded space, so the position is moved to the copy the client holds — the same copy its
-    // entities live in, which is also what lets the client anchor the waypoint to the visible player. A waypoint may
-    // legitimately name a chunk far beyond the view — it is a directional hint, not a chunk the client holds — so it
-    // takes the plain nearest-copy unwrap, outside the view-reach backstop. The waypoint is translated in place
-    // rather than rebuilt: vanilla creates a fresh instance for every send, and a rebuild would have to name the
-    // packet's private Operation enum. Azimuth and empty waypoints carry no coordinate and pass as-is.
-    private static ClientboundTrackedWaypointPacket trackedWaypoint(ClientboundTrackedWaypointPacket packet, TranslationContext context) {
-        if (packet.waypoint() instanceof Vec3iWaypointAccessor waypoint) {
-            waypoint.toroidal$setVector(nearestCopyBlock(context, new BlockPos(waypoint.toroidal$getVector())));
-        } else if (packet.waypoint() instanceof ChunkWaypointAccessor waypoint) {
-            waypoint.toroidal$setChunkPos(context.nearestCopy(waypoint.toroidal$getChunkPos()));
-        }
-
-        return packet;
-    }
-
     // The compass needle is computed in the client's unbounded space, so the spawn is moved to the copy nearest the
-    // player — a directional hint that may legitimately sit far beyond the view, like a waypoint. The packet carries a
+    // player — a directional hint that may legitimately sit far beyond the view, like a global event. The packet carries a
     // GlobalPos that may name another dimension's spawn; a foreign coordinate has nothing to do with this world's wrap
     // and passes as-is.
     private static Packet<?> setDefaultSpawnPosition(ClientboundSetDefaultSpawnPositionPacket packet, TranslationContext context) {
@@ -752,8 +719,8 @@ public final class PacketTranslator {
     // with no rebuild path, so the packet is moved in place — vanilla creates a fresh instance for every send.
     //
     // A turn is aimed at whatever point the command named, so the target may sit anywhere in the world — a directional
-    // hint like a waypoint, not a coordinate the player's nearness put on the wire. It takes the plain nearest-copy
-    // fold for the same reason a waypoint does.
+    // hint like a global event, not a coordinate the player's nearness put on the wire. It takes the plain nearest-copy
+    // fold for the same reason a global event does.
     private static ClientboundPlayerLookAtPacket playerLookAt(ClientboundPlayerLookAtPacket packet, TranslationContext context) {
         PlayerLookAtPacketAccessor accessor = (PlayerLookAtPacketAccessor) packet;
         accessor.toroidal$setX(context.nearestCopyX(accessor.toroidal$getX()));
@@ -775,20 +742,6 @@ public final class PacketTranslator {
         return new ClientboundDamageEventPacket(
                 packet.entityId(), packet.sourceType(), packet.sourceCauseId(), packet.sourceDirectId(),
                 packet.sourcePosition().map(position -> context.toClient(position, reach)));
-    }
-
-    // The minecart-improvements cart travels as a list of absolute lerp steps; each position is moved to the copy the
-    // client holds, while the movement deltas and rotations ride along unchanged. Consecutive steps sit a fraction of
-    // a block apart, so unwrapping each around the player keeps the chain continuous across the seam.
-    private static ClientboundMoveMinecartPacket moveMinecart(ClientboundMoveMinecartPacket packet, TranslationContext context) {
-        PacketReach reach = context.trackedReach();
-        List<NewMinecartBehavior.MinecartStep> translated = new ArrayList<>(packet.lerpSteps().size());
-        for (NewMinecartBehavior.MinecartStep step : packet.lerpSteps()) {
-            translated.add(new NewMinecartBehavior.MinecartStep(
-                    context.toClient(step.position(), reach), step.movement(), step.yRot(), step.xRot(), step.weight()));
-        }
-
-        return new ClientboundMoveMinecartPacket(packet.entityId(), translated);
     }
 
     private static ClientboundChunksBiomesPacket chunkBiomes(ClientboundChunksBiomesPacket packet, TranslationContext context) {
@@ -818,11 +771,6 @@ public final class PacketTranslator {
     private static ServerboundPlayerActionPacket playerAction(ServerboundPlayerActionPacket packet, TranslationContext context) {
         return new ServerboundPlayerActionPacket(packet.getAction(), context.toServer(packet.getPos()),
                 packet.getDirection(), packet.getSequence());
-    }
-
-    private static ServerboundPickItemFromBlockPacket pickItemFromBlock(ServerboundPickItemFromBlockPacket packet, TranslationContext context) {
-        return new ServerboundPickItemFromBlockPacket(
-                context.toServer(packet.pos()), packet.includeData());
     }
 
     private static ServerboundSignUpdatePacket signUpdate(ServerboundSignUpdatePacket packet, TranslationContext context) {
@@ -879,24 +827,14 @@ public final class PacketTranslator {
                 packet.isShowBoundingBox(), packet.getIntegrity(), packet.getSeed());
     }
 
-    private static ServerboundSetTestBlockPacket setTestBlock(ServerboundSetTestBlockPacket packet, TranslationContext context) {
-        return new ServerboundSetTestBlockPacket(
-                context.toServer(packet.position()), packet.mode(), packet.message());
-    }
-
-    private static ServerboundTestInstanceBlockActionPacket testInstanceBlockAction(ServerboundTestInstanceBlockActionPacket packet, TranslationContext context) {
-        return new ServerboundTestInstanceBlockActionPacket(
-                context.toServer(packet.pos()), packet.action(), packet.data());
-    }
-
     // A block update has to land on the copy of the chunk the client is actually holding, which is the one it was sent
     // under — not the one this position would map to now that the player has moved.
     static BlockPos toClientBlock(TranslationContext context, BlockPos pos) {
         return blockInChunkCopy(context.toClient(ChunkPos.containing(pos)), pos);
     }
 
-    // A far block waypoint is a directional hint, not a block in a held chunk — translated outside the view-reach
-    // backstop, same as its chunk-shaped sibling.
+    // A global event, a world spawn, a look-at target: a directional hint, not a block in a held chunk — so it is
+    // translated outside the view-reach backstop, which only bounds traffic the client's own nearness put on the wire.
     private static BlockPos nearestCopyBlock(TranslationContext context, BlockPos pos) {
         return nearestCopyBlock(context.transformer(), context.clientPosition().chunk(), pos);
     }

@@ -20,9 +20,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.mixin.ChunkWaypointAccessor;
 import com.toroidalworld.mixin.PlayerLookAtPacketAccessor;
-import com.toroidalworld.mixin.Vec3iWaypointAccessor;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
@@ -54,14 +52,12 @@ import net.minecraft.network.protocol.game.ClientboundBlockEventPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundBundlePacket;
 import net.minecraft.network.protocol.game.ClientboundDamageEventPacket;
-import net.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacket;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
 import net.minecraft.network.protocol.game.ClientboundForgetLevelChunkPacket;
 import net.minecraft.network.protocol.game.ClientboundInitializeBorderPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 import net.minecraft.network.protocol.game.ClientboundLightUpdatePacket;
-import net.minecraft.network.protocol.game.ClientboundMoveMinecartPacket;
 import net.minecraft.network.protocol.game.ClientboundMoveVehiclePacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerLookAtPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
@@ -71,10 +67,8 @@ import net.minecraft.network.protocol.game.ClientboundSetChunkCacheCenterPacket;
 import net.minecraft.network.protocol.game.ClientboundSetDefaultSpawnPositionPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
-import net.minecraft.network.protocol.game.ClientboundTrackedWaypointPacket;
 import net.minecraft.network.protocol.game.ServerboundBlockEntityTagQueryPacket;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
-import net.minecraft.network.protocol.game.ServerboundPickItemFromBlockPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
@@ -87,7 +81,6 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.PositionMoveRotation;
 import net.minecraft.world.entity.Relative;
-import net.minecraft.world.entity.vehicle.minecart.NewMinecartBehavior;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.BlockPositionSource;
@@ -100,7 +93,6 @@ import net.minecraft.world.level.block.entity.BlockEntityTypes;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.waypoints.Waypoint;
 
 // The rewriters run against a hand-built TranslationContext — the same shape production resolves from the player, with
 // the live pieces (own vehicle, entity lookup, rebase) stubbed. One fixed world of 64×64 chunks and one mirror parked a
@@ -360,35 +352,6 @@ class PacketTranslatorTest {
         }
     }
 
-    @Nested
-    class WaypointPackets {
-        @Test
-        void blockWaypointMovesToTheHeldCopy() {
-            ClientboundTrackedWaypointPacket translated = (ClientboundTrackedWaypointPacket) PacketTranslator.toClient(
-                    ClientboundTrackedWaypointPacket.addWaypointPosition(new UUID(1L, 2L), new Waypoint.Icon(), SERVER_BLOCK),
-                    context());
-
-            assertEquals(CLIENT_BLOCK, new BlockPos(((Vec3iWaypointAccessor) translated.waypoint()).toroidal$getVector()));
-        }
-
-        @Test
-        void chunkWaypointFollowsTheHeldCopy() {
-            ClientboundTrackedWaypointPacket translated = (ClientboundTrackedWaypointPacket) PacketTranslator.toClient(
-                    ClientboundTrackedWaypointPacket.addWaypointChunk(new UUID(1L, 2L), new Waypoint.Icon(), SERVER_CHUNK),
-                    context());
-
-            assertEquals(CLIENT_CHUNK, ((ChunkWaypointAccessor) translated.waypoint()).toroidal$getChunkPos());
-        }
-
-        @Test
-        void azimuthWaypointPassesThrough() {
-            ClientboundTrackedWaypointPacket packet =
-                    ClientboundTrackedWaypointPacket.addWaypointAzimuth(new UUID(1L, 2L), new Waypoint.Icon(), 1.5F);
-
-            assertSame(packet, PacketTranslator.toClient(packet, context()));
-        }
-    }
-
     // Both border packets keep their centre in private fields and are only ever built from a live WorldBorder, so they
     // are decoded from a buffer laid out the way vanilla's own write() lays it — and rebuilt the same way, by swapping
     // the two doubles in front of a tail nobody decoded. The tail is what these cases are really about: the initialize
@@ -532,22 +495,6 @@ class PacketTranslatorTest {
             assertSame(packet, PacketTranslator.toClient(packet, context()));
         }
 
-        @Test
-        void minecartLerpStepsMoveToTheHeldCopy() {
-            NewMinecartBehavior.MinecartStep step = new NewMinecartBehavior.MinecartStep(
-                    new Vec3(SERVER_X, 70.0, SERVER_Z), new Vec3(0.1, 0.0, 0.2), 30.0F, 10.0F, 1.0F);
-
-            ClientboundMoveMinecartPacket translated = (ClientboundMoveMinecartPacket) PacketTranslator.toClient(
-                    new ClientboundMoveMinecartPacket(9, List.of(step)), context());
-
-            NewMinecartBehavior.MinecartStep translatedStep = translated.lerpSteps().getFirst();
-            assertEquals(new Vec3(CLIENT_X, 70.0, CLIENT_Z), translatedStep.position());
-            assertEquals(new Vec3(0.1, 0.0, 0.2), translatedStep.movement());
-            assertEquals(30.0F, translatedStep.yRot());
-            assertEquals(10.0F, translatedStep.xRot());
-            assertEquals(1.0F, translatedStep.weight());
-            assertEquals(9, translated.entityId());
-        }
     }
 
     // A particle payload may carry a second, absolute position of its own. The packet coordinate it rides on has just
@@ -759,17 +706,6 @@ class PacketTranslatorTest {
         }
 
         @Test
-        void entityPositionSyncTranslatesTheAbsolutePosition() {
-            ClientboundEntityPositionSyncPacket packet = new ClientboundEntityPositionSyncPacket(
-                    7, new PositionMoveRotation(new Vec3(SERVER_X, 70.0, SERVER_Z), Vec3.ZERO, 0.0F, 0.0F), false);
-
-            ClientboundEntityPositionSyncPacket translated =
-                    (ClientboundEntityPositionSyncPacket) PacketTranslator.toClient(packet, context());
-
-            assertEquals(new Vec3(CLIENT_X, 70.0, CLIENT_Z), translated.values().position());
-        }
-
-        @Test
         void moveVehicleTranslatesThePosition() {
             ClientboundMoveVehiclePacket translated = (ClientboundMoveVehiclePacket) PacketTranslator.toClient(
                     new ClientboundMoveVehiclePacket(new Vec3(SERVER_X, 70.0, SERVER_Z), 30.0F, 10.0F), context());
@@ -900,14 +836,6 @@ class PacketTranslatorTest {
             assertEquals(expected.y, translatedHit.getLocation().y, 1.0e-9);
             assertEquals(expected.z, translatedHit.getLocation().z, 1.0e-9);
             assertEquals(Direction.SOUTH, translatedHit.getDirection());
-        }
-
-        @Test
-        void pickItemFromBlockReturnsToTheServerFrame() {
-            ServerboundPickItemFromBlockPacket translated = (ServerboundPickItemFromBlockPacket) PacketTranslator.toServer(
-                    new ServerboundPickItemFromBlockPacket(CLIENT_BLOCK, true), context());
-
-            assertEquals(SERVER_BLOCK, translated.pos());
         }
 
         @Test

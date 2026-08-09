@@ -25,7 +25,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
-import net.minecraft.network.protocol.game.ClientboundLevelEventPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -33,7 +32,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
-import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.phys.Vec3;
 
 // Deciding who is close enough to see or hear something is a distance test, and in a looped world the plain distance
@@ -48,9 +46,6 @@ public class ServerLevelMixin {
 
     @Unique
     private static final double OVERRIDDEN_PARTICLE_RANGE = PacketReach.FORCED_PARTICLE.blocks();
-
-    @Unique
-    private static final double GLOBAL_EVENT_RANGE = 32.0;
 
     @Unique
     private static final double BLOCK_DESTRUCTION_RANGE = 32.0;
@@ -182,53 +177,6 @@ public class ServerLevelMixin {
 
         player.connection.send(packet);
         return true;
-    }
-
-    // A global event — a wither waking, a dragon dying, the end portal opening — is heard by every player in the world,
-    // aimed at each of them separately instead of through PlayerList.broadcast. Vanilla gives the listener the event
-    // where it happened while it is within 32 blocks, and past that pins it 32 blocks away along the direction to it, so
-    // that a thousand-block-distant event still arrives from the right side. Both readings are taken in raw coordinates:
-    // across the seam the event is a whole world away, so the near case can never win, and the direction the sound is
-    // pinned along runs the long way round — which is the exact opposite side of the listener.
-    //
-    // The event is folded to the copy of itself nearest the listener before either reading is taken, so the distance is
-    // the walk that exists and the direction points where the event really is. Vanilla's 32 blocks stand: the clamp is
-    // what keeps the position within the listener's own reach, and sending the event's true coordinates instead would
-    // hand the packet translation a point thousands of blocks past anything the client holds.
-    //
-    // The whole method is restated rather than injected into because vanilla does this work inside a lambda, whose
-    // synthetic name is not something a mixin should be pinned to. With the game rule off, or on a world that does not
-    // loop, nothing here applies and vanilla runs untouched — its own else-branch broadcasts through the seam-aware
-    // PlayerList.broadcast already.
-    //
-    // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.
-    @WrapMethod(method = "globalLevelEvent")
-    private void toroidal$globalEventThroughSeam(int type, BlockPos pos, int data, Operation<Void> original) {
-        ServerLevel level = (ServerLevel) (Object) this;
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        if (transformer == null || !level.getGameRules().get(GameRules.GLOBAL_SOUND_EVENTS)) {
-            original.call(type, pos, data);
-            return;
-        }
-
-        Vec3 rawEventPos = Vec3.atCenterOf(pos);
-        for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
-            Vec3 listenerPos = player.position();
-            Vec3 soundPos;
-            if (player.level() == level) {
-                Vec3 eventPos = transformer.vectors.nearestCopy(listenerPos, rawEventPos);
-                if (player.distanceToSqr(eventPos) < GLOBAL_EVENT_RANGE * GLOBAL_EVENT_RANGE) {
-                    soundPos = eventPos;
-                } else {
-                    Vec3 directionToEvent = eventPos.subtract(listenerPos).normalize();
-                    soundPos = listenerPos.add(directionToEvent.scale(GLOBAL_EVENT_RANGE));
-                }
-            } else {
-                soundPos = listenerPos;
-            }
-
-            player.connection.send(new ClientboundLevelEventPacket(type, BlockPos.containing(soundPos), data, true));
-        }
     }
 
     // The crack overlay a breaker draws on a block is offered to everyone within 32 blocks of it, and like the global
