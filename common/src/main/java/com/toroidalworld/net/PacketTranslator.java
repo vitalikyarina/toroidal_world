@@ -18,6 +18,7 @@ import com.toroidalworld.mixin.LightUpdatePacketAccessor;
 import com.toroidalworld.mixin.PlayerLookAtPacketAccessor;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
+import com.toroidalworld.player.MirrorWriter;
 import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -298,7 +299,7 @@ public final class PacketTranslator {
     // both packets are built fresh for every recipient: the chunk packet in PlayerChunkSender.sendChunk, the light
     // packet per player via ChunkHolderMixin splitting vanilla's shared broadcast.
     private static ClientboundLevelChunkWithLightPacket levelChunk(ClientboundLevelChunkWithLightPacket packet, TranslationContext context) {
-        ChunkPos clientPos = context.toClient(new ChunkPos(packet.getX(), packet.getZ()));
+        ChunkPos clientPos = context.toClient(new ChunkPos(packet.getX(), packet.getZ()), ChunkTraffic.CHUNK_DATA);
 
         LevelChunkPacketAccessor accessor = (LevelChunkPacketAccessor) packet;
         accessor.toroidal$setX(clientPos.x);
@@ -307,7 +308,7 @@ public final class PacketTranslator {
     }
 
     private static ClientboundLightUpdatePacket lightUpdate(ClientboundLightUpdatePacket packet, TranslationContext context) {
-        ChunkPos clientPos = context.toClient(new ChunkPos(packet.getX(), packet.getZ()));
+        ChunkPos clientPos = context.toClient(new ChunkPos(packet.getX(), packet.getZ()), ChunkTraffic.LIGHT_UPDATE);
 
         LightUpdatePacketAccessor accessor = (LightUpdatePacketAccessor) packet;
         accessor.toroidal$setX(clientPos.x);
@@ -335,7 +336,7 @@ public final class PacketTranslator {
     }
 
     private static ClientboundSetChunkCacheCenterPacket chunkCacheCenter(ClientboundSetChunkCacheCenterPacket packet, TranslationContext context) {
-        ChunkPos clientPos = context.toClient(new ChunkPos(packet.getX(), packet.getZ()));
+        ChunkPos clientPos = context.toClient(new ChunkPos(packet.getX(), packet.getZ()), ChunkTraffic.CACHE_CENTER);
         return new ClientboundSetChunkCacheCenterPacket(clientPos.x, clientPos.z);
     }
 
@@ -401,7 +402,7 @@ public final class PacketTranslator {
                 packet.getX(), relativeX ? foldedX : clientX,
                 packet.getZ(), relativeZ ? foldedZ : clientZ,
                 clientPosition.x(), clientPosition.z());
-        clientPosition.set(clientX, clientZ);
+        clientPosition.set(clientX, clientZ, MirrorWriter.POSITION_PACKET);
 
         return new ClientboundPlayerPositionPacket(
                 relativeX ? foldedX : clientX,
@@ -464,23 +465,25 @@ public final class PacketTranslator {
     }
 
     private static ClientboundBlockUpdatePacket blockUpdate(ClientboundBlockUpdatePacket packet, TranslationContext context) {
-        return new ClientboundBlockUpdatePacket(toClientBlock(context, packet.getPos()), packet.getBlockState());
+        return new ClientboundBlockUpdatePacket(
+                toClientBlock(context, packet.getPos(), ChunkTraffic.BLOCK_UPDATE), packet.getBlockState());
     }
 
     // Several blocks changing in one section travel as a batch, and the section they belong to sits in a private field.
     private static ClientboundSectionBlocksUpdatePacket sectionBlocksUpdate(ClientboundSectionBlocksUpdatePacket packet, TranslationContext context) {
         return rewritePosition(ClientboundSectionBlocksUpdatePacket.STREAM_CODEC, SECTION_POS_CODEC, packet, context,
-                section -> SectionPos.of(context.toClient(section.chunk()), section.y()));
+                section -> SectionPos.of(context.toClient(section.chunk(), ChunkTraffic.SECTION_BLOCKS), section.y()));
     }
 
     private static ClientboundBlockEntityDataPacket blockEntityData(ClientboundBlockEntityDataPacket packet, TranslationContext context) {
         return rewritePosition(ClientboundBlockEntityDataPacket.STREAM_CODEC, BlockPos.STREAM_CODEC, packet, context,
-                pos -> toClientBlock(context, pos));
+                pos -> toClientBlock(context, pos, ChunkTraffic.BLOCK_ENTITY));
     }
 
     private static ClientboundBlockDestructionPacket blockDestruction(ClientboundBlockDestructionPacket packet, TranslationContext context) {
         return new ClientboundBlockDestructionPacket(
-                packet.getId(), toClientBlock(context, packet.getPos()), packet.getProgress());
+                packet.getId(), toClientBlock(context, packet.getPos(), ChunkTraffic.BLOCK_DESTRUCTION),
+                packet.getProgress());
     }
 
     // An ordinary level event happens in a chunk the listener holds, so it takes the chunk-anchored fold. A global one
@@ -491,7 +494,7 @@ public final class PacketTranslator {
     private static ClientboundLevelEventPacket levelEvent(ClientboundLevelEventPacket packet, TranslationContext context) {
         BlockPos clientPos = packet.isGlobalEvent()
                 ? nearestCopyBlock(context, packet.getPos())
-                : toClientBlock(context, packet.getPos());
+                : toClientBlock(context, packet.getPos(), ChunkTraffic.LEVEL_EVENT);
         return new ClientboundLevelEventPacket(
                 packet.getType(), clientPos, packet.getData(), packet.isGlobalEvent());
     }
@@ -558,11 +561,13 @@ public final class PacketTranslator {
     private static SynchedEntityData.DataValue<?> toClientData(SynchedEntityData.DataValue<?> item,
             @Nullable Vec3 anchor, TranslationContext context) {
         if (item.value() instanceof BlockPos pos) {
-            return new SynchedEntityData.DataValue(item.id(), item.serializer(), toClientBlock(context, pos));
+            return new SynchedEntityData.DataValue(item.id(), item.serializer(),
+                    toClientBlock(context, pos, ChunkTraffic.ENTITY_DATA));
         }
 
         if (item.value() instanceof Optional<?> optional && optional.orElse(null) instanceof BlockPos pos) {
-            return new SynchedEntityData.DataValue(item.id(), item.serializer(), Optional.of(toClientBlock(context, pos)));
+            return new SynchedEntityData.DataValue(item.id(), item.serializer(),
+                    Optional.of(toClientBlock(context, pos, ChunkTraffic.ENTITY_DATA)));
         }
 
         if (anchor != null && item.value() instanceof ParticleOptions particle) {
@@ -589,13 +594,15 @@ public final class PacketTranslator {
 
     private static ClientboundBlockEventPacket blockEvent(ClientboundBlockEventPacket packet, TranslationContext context) {
         return new ClientboundBlockEventPacket(
-                toClientBlock(context, packet.getPos()), packet.getBlock(), packet.getB0(), packet.getB1());
+                toClientBlock(context, packet.getPos(), ChunkTraffic.BLOCK_EVENT),
+                packet.getBlock(), packet.getB0(), packet.getB1());
     }
 
     // The editor the client opens must name the sign in its own space, or the text it sends back would name a block a
     // world away from the one it is showing.
     private static ClientboundOpenSignEditorPacket openSignEditor(ClientboundOpenSignEditorPacket packet, TranslationContext context) {
-        return new ClientboundOpenSignEditorPacket(toClientBlock(context, packet.getPos()), packet.isFrontText());
+        return new ClientboundOpenSignEditorPacket(
+                toClientBlock(context, packet.getPos(), ChunkTraffic.SIGN_EDITOR), packet.isFrontText());
     }
 
     // Sounds, particles and explosions are not anchored to a chunk, so they are unwrapped around the player: of all the
@@ -809,7 +816,7 @@ public final class PacketTranslator {
     private static ClientboundChunksBiomesPacket chunkBiomes(ClientboundChunksBiomesPacket packet, TranslationContext context) {
         return new ClientboundChunksBiomesPacket(packet.chunkBiomeData().stream()
                 .map(data -> new ClientboundChunksBiomesPacket.ChunkBiomeData(
-                        context.toClient(data.pos()), data.buffer()))
+                        context.toClient(data.pos(), ChunkTraffic.CHUNK_BIOMES), data.buffer()))
                 .toList());
     }
 
@@ -927,8 +934,8 @@ public final class PacketTranslator {
 
     // A block update has to land on the copy of the chunk the client is actually holding, which is the one it was sent
     // under — not the one this position would map to now that the player has moved.
-    static BlockPos toClientBlock(TranslationContext context, BlockPos pos) {
-        return blockInChunkCopy(context.toClient(new ChunkPos(pos)), pos);
+    static BlockPos toClientBlock(TranslationContext context, BlockPos pos, ChunkTraffic traffic) {
+        return blockInChunkCopy(context.toClient(new ChunkPos(pos), traffic), pos);
     }
 
     // A global event, a world spawn, a look-at target: a directional hint, not a block in a held chunk — so it is

@@ -14,6 +14,7 @@ import com.toroidalworld.accessors.ClientPositionHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.net.PacketProbe;
 import com.toroidalworld.player.ClientPosition;
+import com.toroidalworld.player.MirrorWriter;
 import com.toroidalworld.player.SeamSnap;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -246,7 +247,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         // The mirror lives on this very listener — this.player.connection is this — so the move path reads the field
         // instead of routing through the holder cast, once per axis per packet.
         ClientPosition mirror = this.toroidal$clientPosition;
-        mirror.setX(clamped);
+        mirror.setX(clamped, MirrorWriter.PLAYER_MOVE);
         double unwrapped = transformer.coords.x.unwrapAround(this.player.getX(), clamped);
 
         // The movement check measures targetX - firstGoodX, a distance taken in raw coordinates, and the bounds it
@@ -276,7 +277,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         }
 
         ClientPosition mirror = this.toroidal$clientPosition;
-        mirror.setZ(clamped);
+        mirror.setZ(clamped, MirrorWriter.PLAYER_MOVE);
         double unwrapped = transformer.coords.z.unwrapAround(this.player.getZ(), clamped);
 
         // Same fold as X: the reference the check measures from must name the copy the player is actually standing in.
@@ -321,7 +322,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             return clamped;
         }
 
-        WorldLoopAttachments.clientPositionOf(this.player).setX(clamped);
+        WorldLoopAttachments.clientPositionOf(this.player).setX(clamped, MirrorWriter.VEHICLE_MOVE);
         return transformer.coords.x.unwrapAround(this.player.getRootVehicle().getX(), clamped);
     }
 
@@ -338,7 +339,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             return clamped;
         }
 
-        WorldLoopAttachments.clientPositionOf(this.player).setZ(clamped);
+        WorldLoopAttachments.clientPositionOf(this.player).setZ(clamped, MirrorWriter.VEHICLE_MOVE);
         return transformer.coords.z.unwrapAround(this.player.getRootVehicle().getZ(), clamped);
     }
 

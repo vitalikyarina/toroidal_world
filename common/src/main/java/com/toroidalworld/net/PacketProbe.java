@@ -11,6 +11,7 @@ import com.mojang.logging.LogUtils;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -53,9 +54,13 @@ public final class PacketProbe {
     private static final String TELEPORT_WRAP_Z_MOVED = "teleport_wrap_z_moved";
     private static final String DIMENSION_BOUNDS = "dimension_bounds";
 
+    private static final String CHUNK_TRANSLATE = "chunk_translate";
+    private static final String OOB_SUFFIX = "_oob";
+    private static final String FAR_SUFFIX = "_far";
+
     // Seeded rather than created on first use, so a path that never ran prints a zero instead of vanishing from the
     // line — "it did not happen" and "I forgot to look" have to read differently.
-    private static final String[] COUNTERS = {
+    private static final String[] REWRITE_COUNTERS = {
             TELEPORT_ENTITY, TELEPORT_ENTITY_MOVED, TELEPORT_ENTITY_DROPPED,
             MOVE_VEHICLE, MOVE_VEHICLE_MOVED,
             INTERACT, INTERACT_MOVED, INTERACT_NO_LOCATION,
@@ -65,6 +70,24 @@ public final class PacketProbe {
             TELEPORT_WRAP_X, TELEPORT_WRAP_Z, TELEPORT_WRAP_X_MOVED, TELEPORT_WRAP_Z_MOVED,
             DIMENSION_BOUNDS};
 
+    // Three per door, on their own dump line rather than folded into the rewrites line: how often the door ran, how
+    // often it was handed a key outside the world, and how often the translated key landed past the view's reach. The
+    // plain call count is what tells a door that ran clean apart from one that never ran — with only the two failure
+    // counts both read as zero.
+    private static final String[] CHUNK_DOOR_COUNTERS = chunkDoorCounters();
+
+    private static String[] chunkDoorCounters() {
+        ChunkTraffic[] doors = ChunkTraffic.values();
+        String[] counters = new String[doors.length * 3];
+        int index = 0;
+        for (ChunkTraffic door : doors) {
+            counters[index++] = door.key();
+            counters[index++] = door.key() + OOB_SUFFIX;
+            counters[index++] = door.key() + FAR_SUFFIX;
+        }
+        return counters;
+    }
+
     private static final Map<ResourceKey<Level>, DimensionCounters> BY_DIMENSION = new ConcurrentHashMap<>();
 
     private static final class DimensionCounters {
@@ -73,7 +96,10 @@ public final class PacketProbe {
         private final AtomicLong lastDumpedGameTime = new AtomicLong(-1L);
 
         private DimensionCounters() {
-            for (String counter : COUNTERS) {
+            for (String counter : REWRITE_COUNTERS) {
+                counters.put(counter, new AtomicLong());
+            }
+            for (String counter : CHUNK_DOOR_COUNTERS) {
                 counters.put(counter, new AtomicLong());
             }
         }
@@ -214,6 +240,44 @@ public final class PacketProbe {
         LOGGER.info("{} dimension_bounds level={}", TAG, dimension.location());
     }
 
+    // Every chunk coordinate that reaches the client passes here, whichever door carried it. Two things are wrong and
+    // they are counted apart: a key handed in from outside the world at all (overshoot), and a translated key landing
+    // farther from the anchor than the traffic could reach (far). The detail line is emitted once per door per
+    // dimension, the first time that door does either — which is the line that names the producer.
+    //
+    // At WARN because a line here is a break, and in key=value form so the log tools read it as values. The forget
+    // door answers to a wider bound of its own and never reports far, so its far counter stays at zero by meaning.
+    public static void chunkTranslate(ResourceKey<Level> dimension, ChunkTraffic traffic,
+            ChunkPos server, ChunkPos client, ChunkPos anchor,
+            int overshootXChunks, int overshootZChunks, int distanceXChunks, int distanceZChunks, int viewReachChunks,
+            double mirrorXBlocks, double mirrorZBlocks, boolean far) {
+        count(dimension, traffic.key());
+
+        boolean outOfBounds = overshootXChunks != 0 || overshootZChunks != 0;
+        if (outOfBounds) {
+            count(dimension, traffic.key() + OOB_SUFFIX);
+        }
+
+        if (far) {
+            count(dimension, traffic.key() + FAR_SUFFIX);
+        }
+
+        if (!outOfBounds && !far) {
+            return;
+        }
+
+        if (!firstDetail(dimension, CHUNK_TRANSLATE + '_' + traffic.key())) {
+            return;
+        }
+
+        LOGGER.warn("{} chunk_translate level={} traffic={} server_cx={} server_cz={} client_cx={} client_cz={}"
+                        + " anchor_cx={} anchor_cz={} dist_cx_chunks={} dist_cz_chunks={} view_reach_chunks={}"
+                        + " overshoot_x_chunks={} overshoot_z_chunks={} mirror_x_blocks={} mirror_z_blocks={}",
+                TAG, dimension.location(), traffic.key(), server.x, server.z, client.x, client.z,
+                anchor.x, anchor.z, distanceXChunks, distanceZChunks, viewReachChunks,
+                overshootXChunks, overshootZChunks, mirrorXBlocks, mirrorZBlocks);
+    }
+
     // Gated on the level's own clock rather than on how often this is called: the caller runs once per player per
     // tick, so a call counter would fire once per player and read as several dumps of one interval.
     public static void tick(ServerLevel level) {
@@ -232,13 +296,18 @@ public final class PacketProbe {
             return;
         }
 
+        LOGGER.info(dumpLine(level, "rewrites", REWRITE_COUNTERS, counters));
+        LOGGER.info(dumpLine(level, "chunk_doors", CHUNK_DOOR_COUNTERS, counters));
+    }
+
+    private static String dumpLine(ServerLevel level, String name, String[] names, DimensionCounters counters) {
         StringBuilder line = new StringBuilder(TAG)
-                .append(" rewrites level=").append(level.dimension().location());
-        for (String counter : COUNTERS) {
+                .append(' ').append(name).append(" level=").append(level.dimension().location());
+        for (String counter : names) {
             line.append(' ').append(counter).append('=').append(counters.counters.get(counter).get());
         }
 
-        LOGGER.info(line.toString());
+        return line.toString();
     }
 
     private PacketProbe() {

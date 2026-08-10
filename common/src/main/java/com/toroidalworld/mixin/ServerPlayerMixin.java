@@ -13,6 +13,7 @@ import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.net.ClientAnchorSync;
 import com.toroidalworld.net.PacketProbe;
 import com.toroidalworld.net.WrappingBoundsSync;
+import com.toroidalworld.player.MirrorProbe;
 import com.toroidalworld.probe.ReseatProbe;
 import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -95,6 +96,7 @@ public class ServerPlayerMixin {
         ServerPlayer player = (ServerPlayer) (Object) this;
         ClientAnchorSync.refresh(player);
         PacketProbe.tick(player.serverLevel());
+        MirrorProbe.tick(player.serverLevel());
         ReshapeProbe.tick(player.serverLevel());
         ReseatProbe.tick(player.serverLevel());
     }

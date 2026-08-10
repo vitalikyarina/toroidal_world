@@ -106,14 +106,27 @@ public record TranslationContext(
     // circumnavigation with a drift probe that never fired, guarded at the source by ClientPosition's own step check,
     // and backstopped here: a chunk farther from the anchor than the view could reach cannot come from view traffic,
     // so it is warned about instead of corrupting the client's cache in silence. No per-chunk memory is needed.
-    public ChunkPos toClient(ChunkPos chunkPos) {
+    public ChunkPos toClient(ChunkPos chunkPos, ChunkTraffic traffic) {
         ChunkPos anchor = clientPosition.chunk();
         ChunkPos clientPos = transformer.chunks.unwrap(anchor, chunkPos);
         int viewReach = viewReach();
-        if (Math.abs(clientPos.x - anchor.x) > viewReach || Math.abs(clientPos.z - anchor.z) > viewReach) {
-            warnChunkFarFromAnchor(chunkPos, clientPos, anchor, viewReach);
+        int distanceX = Math.abs(clientPos.x - anchor.x);
+        int distanceZ = Math.abs(clientPos.z - anchor.z);
+        boolean far = distanceX > viewReach || distanceZ > viewReach;
+        probeChunk(traffic, chunkPos, clientPos, anchor, distanceX, distanceZ, viewReach, far);
+        if (far) {
+            warnChunkFarFromAnchor(traffic, chunkPos, clientPos, anchor, viewReach);
         }
         return clientPos;
+    }
+
+    // Every door reports, not only the ones that broke: a door that ran clean and a door that never ran are different
+    // answers to "who produced this key", and only the call count tells them apart.
+    private void probeChunk(ChunkTraffic traffic, ChunkPos serverPos, ChunkPos clientPos, ChunkPos anchor,
+            int distanceX, int distanceZ, int viewReach, boolean far) {
+        PacketProbe.chunkTranslate(dimension, traffic, serverPos, clientPos, anchor,
+                transformer.chunks.x.overshoot(serverPos.x), transformer.chunks.z.overshoot(serverPos.z),
+                distanceX, distanceZ, viewReach, clientPosition.x(), clientPosition.z(), far);
     }
 
     // The copies of a forgotten chunk the client might be holding. Within the view's reach the nearest copy is the
@@ -125,6 +138,8 @@ public record TranslationContext(
         ChunkPos anchor = clientPosition.chunk();
         ChunkPos nearest = transformer.chunks.unwrap(anchor, chunkPos);
         int ambiguityReach = copyAmbiguityReach();
+        probeChunk(ChunkTraffic.FORGET, chunkPos, nearest, anchor,
+                Math.abs(nearest.x - anchor.x), Math.abs(nearest.z - anchor.z), ambiguityReach, false);
         int[] xCandidates = axisCandidates(transformer.chunks.x, nearest.x, nearest.x - anchor.x, ambiguityReach);
         int[] zCandidates = axisCandidates(transformer.chunks.z, nearest.z, nearest.z - anchor.z, ambiguityReach);
 
@@ -209,14 +224,15 @@ public record TranslationContext(
     // Distinct from ClientPosition's step guard in wording as well as in question: that one measures a move and can
     // catch a real break, these two say a translated coordinate came out farther from the anchor than the traffic
     // carrying it could possibly have reached — which is a break, not a suspicion, and names the radius it broke.
-    private void warnChunkFarFromAnchor(ChunkPos serverPos, ChunkPos clientPos, ChunkPos anchor, int viewReach) {
+    private void warnChunkFarFromAnchor(ChunkTraffic traffic, ChunkPos serverPos, ChunkPos clientPos,
+            ChunkPos anchor, int viewReach) {
         if (!WARN_GATE.tryPass()) {
             return;
         }
 
-        LOGGER.warn("A chunk lands farther from the client anchor than the view reaches in {}:"
+        LOGGER.warn("A {} chunk lands farther from the client anchor than the view reaches in {}:"
                         + " server {} translated to client {} around anchor {}, view reach {} chunks",
-                dimension.location(), serverPos, clientPos, anchor, viewReach);
+                traffic.key(), dimension.location(), serverPos, clientPos, anchor, viewReach);
     }
 
     private void warnCoordFarFromAnchor(PacketReach reach, String axis,

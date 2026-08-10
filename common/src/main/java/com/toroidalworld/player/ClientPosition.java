@@ -74,22 +74,22 @@ public final class ClientPosition {
     // X and Z arrive through two separate vanilla clamp sites, so a mover writes them as two stores. A reader between
     // the stores sees the new X with the previous Z — coordinates one movement step apart, in the same space, which the
     // unwrap anchor tolerates. Only the dimension must never tear, and neither store touches it.
-    public void setX(double x) {
+    public void setX(double x, MirrorWriter writer) {
         Mirror currMirror = this.mirror;
-        warnOnHalfWorldStep("x", currMirror.transformer().coords.x, currMirror.x(), x, currMirror.space());
+        checkStep(writer, "x", currMirror.transformer().coords.x, currMirror.x(), x, currMirror.space());
         this.mirror = new Mirror(x, currMirror.z(), currMirror.space(), currMirror.transformer());
     }
 
-    public void setZ(double z) {
+    public void setZ(double z, MirrorWriter writer) {
         Mirror currMirror = this.mirror;
-        warnOnHalfWorldStep("z", currMirror.transformer().coords.z, currMirror.z(), z, currMirror.space());
+        checkStep(writer, "z", currMirror.transformer().coords.z, currMirror.z(), z, currMirror.space());
         this.mirror = new Mirror(currMirror.x(), z, currMirror.space(), currMirror.transformer());
     }
 
-    public void set(double x, double z) {
+    public void set(double x, double z, MirrorWriter writer) {
         Mirror currMirror = this.mirror;
-        warnOnHalfWorldStep("x", currMirror.transformer().coords.x, currMirror.x(), x, currMirror.space());
-        warnOnHalfWorldStep("z", currMirror.transformer().coords.z, currMirror.z(), z, currMirror.space());
+        checkStep(writer, "x", currMirror.transformer().coords.x, currMirror.x(), x, currMirror.space());
+        checkStep(writer, "z", currMirror.transformer().coords.z, currMirror.z(), z, currMirror.space());
         this.mirror = new Mirror(x, z, currMirror.space(), currMirror.transformer());
     }
 
@@ -100,6 +100,7 @@ public final class ClientPosition {
     }
 
     public void rebase(double x, double z, ResourceKey<Level> dimension, WorldLoopTransformer transformer) {
+        MirrorProbe.rebase(dimension);
         this.mirror = new Mirror(x, z, dimension, transformer);
         // A new space makes the stored copies meaningless; null makes the refresher send fresh ones.
         this.heldSpawn = null;
@@ -134,14 +135,16 @@ public final class ClientPosition {
     // world flips which copy of a held chunk lies nearest the client, and nothing downstream can tell anymore. The
     // move is still applied — the guard only makes the break loud. Before the first rebase the transformer is NOOP,
     // whose every step fits in half by meaning.
-    private void warnOnHalfWorldStep(String axis, WrapDomain domain, double from, double to,
+    private void checkStep(MirrorWriter writer, String axis, WrapDomain domain, double from, double to,
             @Nullable ResourceKey<Level> space) {
-        if (domain.fitsInHalf(Math.abs(to - from)) || !warnGate.tryPass()) {
+        boolean jumped = !domain.fitsInHalf(Math.abs(to - from));
+        MirrorProbe.write(space, writer, axis, domain, from, to, jumped);
+        if (!jumped || !warnGate.tryPass()) {
             return;
         }
 
         Object where = space == null ? "unseeded space" : space.location();
-        LOGGER.warn("Half-world step invariant violated in {}: mirror {} stepped from {} to {} without a rebase",
-                where, axis, from, to);
+        LOGGER.warn("Half-world step invariant violated in {} by {}: mirror {} stepped from {} to {} without a rebase",
+                where, writer.key(), axis, from, to);
     }
 }
