@@ -29,7 +29,8 @@ import net.minecraft.world.entity.npc.Villager;
 @Mixin(SetWalkTargetFromBlockMemory.class)
 public class SetWalkTargetFromBlockMemoryMixin {
     @WrapOperation(
-            method = "lambda$create$0",
+            method = "*",
+            require = 3,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;distManhattan(Lnet/minecraft/core/Vec3i;)I"))
     private static int toroidal$memoryDistanceThroughSeam(BlockPos from, Vec3i to, Operation<Integer> original,
             @Local(argsOnly = true) Villager body) {

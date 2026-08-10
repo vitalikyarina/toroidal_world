@@ -21,7 +21,8 @@ import net.minecraft.world.entity.ai.behavior.SetHiddenState;
 @Mixin(SetHiddenState.class)
 public class SetHiddenStateMixin {
     @WrapOperation(
-            method = "lambda$create$0",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;closerThan(Lnet/minecraft/core/Vec3i;D)Z"))
     private static boolean toroidal$hidingReachThroughSeam(BlockPos hidePos, Vec3i bodyPos, double distance,
             Operation<Boolean> original, @Local(argsOnly = true) LivingEntity body) {

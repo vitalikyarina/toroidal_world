@@ -21,7 +21,8 @@ import net.minecraft.world.entity.ai.behavior.SocializeAtBell;
 @Mixin(SocializeAtBell.class)
 public class SocializeAtBellMixin {
     @WrapOperation(
-            method = "lambda$create$3",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
     private static boolean toroidal$meetingPointReachThroughSeam(BlockPos meetingPos, Position bodyPosition,

@@ -24,7 +24,8 @@ import net.minecraft.world.phys.Vec3;
 @Mixin(MobEffectUtil.class)
 public class MobEffectUtilMixin {
     @WrapOperation(
-            method = "lambda$addEffectToPlayersAround$0",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/phys/Vec3;closerThan(Lnet/minecraft/core/Position;D)Z"))
     private static boolean toroidal$effectRadiusThroughSeam(Vec3 origin, Position playerPosition, double radius,

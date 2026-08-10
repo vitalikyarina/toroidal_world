@@ -20,7 +20,8 @@ import net.minecraft.world.entity.ai.behavior.GoToTargetLocation;
 @Mixin(GoToTargetLocation.class)
 public class GoToTargetLocationMixin {
     @WrapOperation(
-            method = "lambda$create$0",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;closerThan(Lnet/minecraft/core/Vec3i;D)Z"))
     private static boolean toroidal$arrivalThroughSeam(BlockPos location, Vec3i bodyPos, double distance,
             Operation<Boolean> original, @Local(argsOnly = true) Mob body) {

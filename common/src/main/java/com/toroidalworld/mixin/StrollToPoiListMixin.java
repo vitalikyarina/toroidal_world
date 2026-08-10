@@ -20,7 +20,8 @@ import net.minecraft.world.entity.npc.Villager;
 @Mixin(StrollToPoiList.class)
 public class StrollToPoiListMixin {
     @WrapOperation(
-            method = "lambda$create$0",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
     private static boolean toroidal$anchorTetherThroughSeam(BlockPos anchorPos, Position bodyPosition, double distance,

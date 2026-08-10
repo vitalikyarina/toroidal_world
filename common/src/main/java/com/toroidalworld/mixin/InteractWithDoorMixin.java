@@ -30,7 +30,8 @@ import net.minecraft.world.entity.ai.behavior.InteractWithDoor;
 @Mixin(InteractWithDoor.class)
 public class InteractWithDoorMixin {
     @WrapOperation(
-            method = { "isDoorTooFarAway", "lambda$areOtherMobsComingThroughDoor$8" },
+            method = "*",
+            require = 2,
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"),
             expect = 2)
@@ -68,7 +69,8 @@ public class InteractWithDoorMixin {
     // The whole of what the call does with the door is compare it to those two nodes, so it is handed the door in the
     // frame the nodes are in — the copy nearest the mob whose path is being read.
     @WrapOperation(
-            method = "lambda$areOtherMobsComingThroughDoor$9",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/ai/behavior/InteractWithDoor;"
                             + "isMobComingThroughDoor(Lnet/minecraft/world/entity/ai/Brain;Lnet/minecraft/core/BlockPos;)Z"))

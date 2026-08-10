@@ -24,7 +24,8 @@ import net.minecraft.world.entity.ai.behavior.ValidateNearbyPoi;
 @Mixin(ValidateNearbyPoi.class)
 public class ValidateNearbyPoiMixin {
     @WrapOperation(
-            method = "lambda$create$0",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
     private static boolean toroidal$poiInRangeThroughSeam(BlockPos poiPos, Position bodyPosition, double distance,

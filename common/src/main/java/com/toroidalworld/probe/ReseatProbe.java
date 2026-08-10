@@ -72,12 +72,21 @@ public final class ReseatProbe {
     public static final String POI_IN_RANGE = "poi_in_range";
     public static final String WARNING_RANGE = "warning_range";
 
+    // The folds whose sugar was re-seated: their level or their named locals moved between 26.x and 1.21.1, so what
+    // needs proving here is not that the anchor resolves but that the sugar hands them the quantity they think it does.
+    public static final String RAID_HORN = "raid_horn";
+    public static final String RAIDER_DISTANCE = "raider_distance";
+    public static final String VILLAGE_SECTIONS = "village_sections";
+    public static final String NEAREST_VILLAGE = "nearest_village";
+    public static final String RING_SEARCH = "ring_search";
+
     private static final String[] FOLDS = {
             TURTLE_HOME, ENTITY_CHUNK_KEY, BORDER_CLAMP, KNOCKBACK_DIR, GHAST_AIM, LEASH_ELASTIC, BOAT_LEASH,
             POI_CLAIM, JOB_SITE_REACH, BELL_RAIDER_RANGE, ARRIVAL_GATE, DOOR_REACH, DOOR_OTHER_MOB,
             HIDING_PLACE_REACH, DETECTOR_RANGE, BELL_REACH, HOME_DISTANCE, HIDDEN_STATE_REACH,
             AVOID_REACH, AVOID_HEADING, MEMORY_DISTANCE, MEETING_POINT_REACH, FOLLOW_REACH,
-            POI_TETHER_AROUND, ANCHOR_TETHER, POI_TETHER, POI_IN_RANGE, WARNING_RANGE};
+            POI_TETHER_AROUND, ANCHOR_TETHER, POI_TETHER, POI_IN_RANGE, WARNING_RANGE,
+            RAID_HORN, RAIDER_DISTANCE, VILLAGE_SECTIONS, NEAREST_VILLAGE, RING_SEARCH};
 
     private static final String CALLS = "_calls";
     private static final String MOVED = "_moved";

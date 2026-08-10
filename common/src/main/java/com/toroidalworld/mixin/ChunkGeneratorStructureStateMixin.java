@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
@@ -42,6 +43,21 @@ public abstract class ChunkGeneratorStructureStateMixin implements TransformerHo
     // centre +/- 7 chunks. A centre further out of bounds than this cannot be pulled back in by any answer.
     @Unique
     private static final int toroidal$BIOME_SEARCH_REACH_CHUNKS = 7;
+
+    // The three locals the ring search reads, named by the slot they occupy in generateRingPositions rather than by
+    // their source name. A local's name is a property of the decompiler, not of the bytecode that gets loaded: the jar
+    // this compiles against calls them j1/k1/l1, and both shipping jars — NeoForge's srg and Fabric's intermediary —
+    // call them $$12/$$14/$$15, so a name lookup resolves in dev and fails at apply time in a real game. Slots survive
+    // that, and unlike an ordinal they cannot quietly slide onto the neighbouring int when one more comes into scope:
+    // eight are live at this instruction, and reading the wrong one is silent.
+    @Unique
+    private static final int toroidal$RING_POSITION_SLOT = 14;
+
+    @Unique
+    private static final int toroidal$RING_CHUNK_X_SLOT = 17;
+
+    @Unique
+    private static final int toroidal$RING_CHUNK_Z_SLOT = 18;
 
     @Unique
     private WorldLoopTransformer toroidal$transformer = WorldLoopTransformer.NOOP;
@@ -75,8 +91,7 @@ public abstract class ChunkGeneratorStructureStateMixin implements TransformerHo
     // The first position is never skipped. It seeds the last resort of theWorldsShare — on a world narrower than the
     // first ring nothing survives the filter, and that one wrapped position is the world's only stronghold. Skipping it
     // would hand the fold a raw ring point instead of a searched one, which is exactly the land bias this search exists
-    // for. The locals are captured by name rather than ordinal: eight ints are in scope here, and a shifted ordinal
-    // would read the wrong one silently, where a missing name fails at apply time.
+    // for.
     @ModifyArg(
             method = "generateRingPositions",
             at = @At(
@@ -84,12 +99,13 @@ public abstract class ChunkGeneratorStructureStateMixin implements TransformerHo
                     target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"),
             index = 0)
     private Supplier<ChunkPos> toroidal$searchOnThisWorldsNoise(Supplier<ChunkPos> search,
-            @Local(name = "i") int ringIndex,
-            @Local(name = "initialX") int ringChunkX,
-            @Local(name = "initialZ") int ringChunkZ) {
+            @Local(index = toroidal$RING_POSITION_SLOT) int ringIndex,
+            @Local(index = toroidal$RING_CHUNK_X_SLOT) int ringChunkX,
+            @Local(index = toroidal$RING_CHUNK_Z_SLOT) int ringChunkZ) {
         WorldLoopTransformer transformer = this.toroidal$transformer;
-        if (ringIndex > 0
-                && transformer.chunks.overshoot(ringChunkX, ringChunkZ) > toroidal$BIOME_SEARCH_REACH_CHUNKS) {
+        boolean beyondSearchReach = ringIndex > 0
+                && transformer.chunks.overshoot(ringChunkX, ringChunkZ) > toroidal$BIOME_SEARCH_REACH_CHUNKS;
+        if (ReseatProbe.decided(null, ReseatProbe.RING_SEARCH, false, beyondSearchReach)) {
             ChunkPos beyondTheWorld = new ChunkPos(ringChunkX, ringChunkZ);
             return () -> beyondTheWorld;
         }

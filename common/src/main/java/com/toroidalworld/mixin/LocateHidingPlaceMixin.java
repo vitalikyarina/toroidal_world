@@ -24,7 +24,8 @@ import net.minecraft.world.entity.ai.behavior.LocateHidingPlace;
 @Mixin(LocateHidingPlace.class)
 public class LocateHidingPlaceMixin {
     @WrapOperation(
-            method = { "lambda$create$2", "lambda$create$7" },
+            method = "*",
+            require = 2,
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"),
             expect = 2)

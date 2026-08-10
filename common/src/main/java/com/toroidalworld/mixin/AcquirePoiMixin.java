@@ -25,7 +25,8 @@ import net.minecraft.world.entity.ai.behavior.AcquirePoi;
 @Mixin(AcquirePoi.class)
 public class AcquirePoiMixin {
     @ModifyExpressionValue(
-            method = "lambda$create$6",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/pathfinder/Path;getTarget()Lnet/minecraft/core/BlockPos;"))
     private static @Nullable BlockPos toroidal$wrapClaimedPoi(@Nullable BlockPos target,
             @Local(argsOnly = true) ServerLevel level) {

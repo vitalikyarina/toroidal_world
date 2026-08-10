@@ -24,23 +24,16 @@ import net.minecraft.world.level.block.entity.BellBlockEntity;
 // outlined; and the particle count is scaled by a tally that comes back zero.
 @Mixin(BellBlockEntity.class)
 public class BellBlockEntityMixin {
+    // The bell asks one question in four places — who hears it, may it resonate, who is outlined by it, how dense the
+    // particles are — and each holds the entity it measures, so one handler answers all four. The handler is static
+    // because three of the four targets are; a @WrapOperation handler may serve an instance target from a static
+    // method, only the reverse is refused.
     @WrapOperation(
-            method = "updateEntities",
+            method = "*",
+            require = 4,
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
-    private boolean toroidal$hearingRangeThroughSeam(BlockPos bellPos, Position bodyPosition, double distance,
-            Operation<Boolean> original, @Local LivingEntity body) {
-        return SeamRange.closerToCenterThan(body, bellPos, bodyPosition, distance);
-    }
-
-    // The raider readings are one question asked in three places — may the bell resonate, who is outlined by it, how
-    // dense the particles are — and each holds the entity it measures, so one handler answers all three.
-    @WrapOperation(
-            method = { "areRaidersNearby", "isRaiderWithinRange", "lambda$showBellParticles$1" },
-            at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"),
-            expect = 3)
-    private static boolean toroidal$raiderRangeThroughSeam(BlockPos bellPos, Position bodyPosition, double distance,
+    private static boolean toroidal$bellRangeThroughSeam(BlockPos bellPos, Position bodyPosition, double distance,
             Operation<Boolean> original, @Local LivingEntity body) {
         return ReseatProbe.decided(body.level(), ReseatProbe.BELL_RAIDER_RANGE,
                 original.call(bellPos, bodyPosition, distance),

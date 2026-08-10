@@ -23,7 +23,8 @@ import net.minecraft.world.entity.ai.behavior.StrollAroundPoi;
 @Mixin(StrollAroundPoi.class)
 public class StrollAroundPoiMixin {
     @WrapOperation(
-            method = "lambda$create$1",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
     private static boolean toroidal$poiTetherThroughSeam(BlockPos poiPos, Position bodyPosition, double distance,

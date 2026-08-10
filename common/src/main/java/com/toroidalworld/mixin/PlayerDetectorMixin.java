@@ -26,13 +26,15 @@ import net.minecraft.world.phys.Vec3;
 // their way to a chunk, as they do for every other sight line. A same-side player is untouched.
 //
 // The range check lives inside the detector constants' predicate lambdas — there is no named method around it — so the
-// two player predicates are targeted as the synthetic lambda$static$0/$3 (javap-verified for this vanilla build; a
-// recompile that shifts them fails loudly at mixin apply). The SHEEP detector needs no range fold: its AABB entity
-// query is already split at the seam by LevelMixin.
+// target is named by the injection point instead of by the lambda: the wrapped call occurs in exactly the two player
+// predicates and nowhere else in the class, and require pins that. A lambda's name is not something the loaded class
+// carries — intermediary renames it to method_NNNNN — so naming one is an anchor Fabric cannot resolve. The SHEEP
+// detector needs no range fold: its AABB entity query is already split at the seam by LevelMixin.
 @Mixin(PlayerDetector.class)
 public interface PlayerDetectorMixin {
     @WrapOperation(
-            method = {"lambda$static$0", "lambda$static$3"},
+            method = "*",
+            require = 2,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;closerThan(Lnet/minecraft/core/Vec3i;D)Z"))
     private static boolean toroidal$detectionRangeThroughSeam(BlockPos playerPos, Vec3i spawnerPos, double range,
             Operation<Boolean> original, @Local(argsOnly = true) Player player) {

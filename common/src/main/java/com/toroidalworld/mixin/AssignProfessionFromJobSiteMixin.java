@@ -22,7 +22,8 @@ import net.minecraft.world.entity.npc.Villager;
 @Mixin(AssignProfessionFromJobSite.class)
 public class AssignProfessionFromJobSiteMixin {
     @WrapOperation(
-            method = "lambda$create$4",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
     private static boolean toroidal$jobSiteReachThroughSeam(BlockPos jobSitePos, Position bodyPosition, double distance,

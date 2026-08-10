@@ -21,7 +21,8 @@ import net.minecraft.world.entity.ai.behavior.SetClosestHomeAsWalkTarget;
 @Mixin(SetClosestHomeAsWalkTarget.class)
 public class SetClosestHomeAsWalkTargetMixin {
     @WrapOperation(
-            method = "lambda$create$4",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;distSqr(Lnet/minecraft/core/Vec3i;)D"))
     private static double toroidal$homeDistanceThroughSeam(BlockPos homePos, Vec3i bodyPos, Operation<Double> original,
             @Local(argsOnly = true) PathfinderMob body) {

@@ -18,9 +18,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.CollisionGetter;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 // Block collision walks the cells the entity's box overlaps and reads each from the level. Past the seam those cells are
@@ -37,9 +37,9 @@ public abstract class BlockCollisionsMixin {
     private @Nullable WorldLoopTransformer toroidal$transformer;
 
     @Inject(
-            method = "<init>(Lnet/minecraft/world/level/CollisionGetter;Lnet/minecraft/world/phys/shapes/CollisionContext;Lnet/minecraft/world/phys/AABB;ZLjava/util/function/BiFunction;)V",
+            method = "<init>(Lnet/minecraft/world/level/CollisionGetter;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;ZLjava/util/function/BiFunction;)V",
             at = @At("RETURN"))
-    private void toroidal$resolveTransformer(CollisionGetter collisionGetter, CollisionContext context, AABB box,
+    private void toroidal$resolveTransformer(CollisionGetter collisionGetter, Entity entity, AABB box,
             boolean onlySuffocatingBlocks, BiFunction<BlockPos.MutableBlockPos, VoxelShape, ?> resultProvider,
             CallbackInfo ci) {
         this.toroidal$transformer = collisionGetter instanceof ServerLevel level

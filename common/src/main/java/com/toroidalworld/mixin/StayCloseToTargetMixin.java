@@ -21,7 +21,8 @@ import net.minecraft.world.phys.Vec3;
 @Mixin(StayCloseToTarget.class)
 public class StayCloseToTargetMixin {
     @WrapOperation(
-            method = "lambda$create$0",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;closerThan(Lnet/minecraft/core/Position;D)Z"))
     private static boolean toroidal$followReachThroughSeam(Vec3 bodyPosition, Position targetPosition, double distance,
             Operation<Boolean> original, @Local(argsOnly = true) LivingEntity body) {

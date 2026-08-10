@@ -22,7 +22,8 @@ import net.minecraft.world.phys.Vec3;
 @Mixin(SetWalkTargetAwayFrom.class)
 public class SetWalkTargetAwayFromMixin {
     @WrapOperation(
-            method = "lambda$create$0",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;closerThan(Lnet/minecraft/core/Position;D)Z"))
     private static boolean toroidal$avoidReachThroughSeam(Vec3 bodyPosition, Position avoidPosition, double distance,
             Operation<Boolean> original, @Local(argsOnly = true) PathfinderMob body) {
@@ -37,7 +38,8 @@ public class SetWalkTargetAwayFromMixin {
     // accident, until only one of the two crosses the boundary and the mob then abandons a good escape or keeps a
     // useless one. Each difference is folded where it is taken; the dot vanilla computes from them is untouched.
     @WrapOperation(
-            method = "lambda$create$0",
+            method = "*",
+            require = 2,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"))
     private static Vec3 toroidal$avoidHeadingThroughSeam(Vec3 from, Vec3 to, Operation<Vec3> original,
             @Local(argsOnly = true) PathfinderMob body) {

@@ -17,13 +17,14 @@ import net.minecraft.world.phys.Vec3;
 // of away from the warden, and the trail is drawn half a world long, which is also several hundred particle packets
 // sent for one roar. The reach test above it is already folded, so the boom does fire; only its direction was raw.
 //
-// The boom is written inside a lambda, which compiles to a method of its own — so unlike every other fold in this
-// family, this one names a synthetic method and will stop matching if vanilla's lambda ordering shifts. That failure
-// is loud: mixin refuses to apply and the game says so at startup.
+// The boom is written inside a lambda, which compiles to a method of its own — so the target is named by the injection
+// point rather than by the lambda, whose name is neither stable across a vanilla recompile nor present at all in the
+// jar Fabric loads. The wrapped call occurs once in the class, and require pins it there.
 @Mixin(SonicBoom.class)
 public class SonicBoomAimMixin {
     @ModifyExpressionValue(
-            method = "lambda$tick$2",
+            method = "*",
+            require = 1,
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/LivingEntity;getEyePosition()Lnet/minecraft/world/phys/Vec3;"))

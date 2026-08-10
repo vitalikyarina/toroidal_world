@@ -25,7 +25,8 @@ import net.minecraft.world.phys.Vec3;
 @Mixin(WardenSpawnTracker.class)
 public class WardenSpawnTrackerMixin {
     @WrapOperation(
-            method = "lambda$getNearbyPlayers$8",
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/phys/Vec3;closerThan(Lnet/minecraft/core/Position;D)Z"))
     private static boolean toroidal$warningRangeThroughSeam(Vec3 playerPosition, Position shriekerOrigin,

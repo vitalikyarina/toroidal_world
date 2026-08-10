@@ -1,8 +1,10 @@
 package com.toroidalworld.mixin;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Stream;
 
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -10,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.entity.SeamRange;
+import com.toroidalworld.probe.ReseatProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -33,6 +36,12 @@ public class RaidMixin {
     @Shadow
     private BlockPos center;
 
+    // 1.21.1 keeps the raid's level in a field — the methods folded below take no arguments at all, so the level has to
+    // be shadowed rather than sugared out of the call.
+    @Shadow
+    @Final
+    private ServerLevel level;
+
     // The horn is the one raid sound the raid aims itself instead of handing to PlayerList.broadcast, so the seam-aware
     // distance that covers every other sound never touches it. Both of its readings are taken in raw coordinates: the
     // 64-block gate that decides who hears it at all, and the 13 blocks the horn is pinned to from the listener along the
@@ -49,22 +58,22 @@ public class RaidMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/phys/Vec3;atCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"))
-    private Vec3 toroidal$raidHornThroughSeam(Vec3 raidLoc, @Local(argsOnly = true) ServerLevel level,
-            @Local ServerPlayer listener) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        if (transformer == null) {
-            return raidLoc;
-        }
+    private Vec3 toroidal$raidHornThroughSeam(Vec3 raidLoc, @Local ServerPlayer listener) {
+        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        Vec3 folded = transformer == null
+                ? raidLoc
+                : transformer.vectors.nearestCopy(listener.position(), raidLoc);
 
-        return transformer.vectors.nearestCopy(listener.position(), raidLoc);
+        return ReseatProbe.decided(this.level, ReseatProbe.RAID_HORN, raidLoc, folded);
     }
 
     @WrapOperation(
             method = "updateRaiders",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;distSqr(Lnet/minecraft/core/Vec3i;)D"))
-    private double toroidal$raiderDistanceThroughSeam(BlockPos raidCenter, Vec3i raiderPos, Operation<Double> original,
-            @Local(argsOnly = true) ServerLevel level) {
-        return SeamRange.sqr(level, raidCenter, raiderPos);
+    private double toroidal$raiderDistanceThroughSeam(BlockPos raidCenter, Vec3i raiderPos,
+            Operation<Double> original) {
+        return ReseatProbe.decided(this.level, ReseatProbe.RAIDER_DISTANCE, "blocks_sqr",
+                original.call(raidCenter, raiderPos), SeamRange.sqr(this.level, raidCenter, raiderPos));
     }
 
     // The candidate cube is walked in raw section coordinates, and the village-distance tracker only ever holds
@@ -76,14 +85,15 @@ public class RaidMixin {
                     value = "INVOKE",
                     target = "Lnet/minecraft/core/SectionPos;cube(Lnet/minecraft/core/SectionPos;I)Ljava/util/stream/Stream;"))
     private Stream<SectionPos> toroidal$villageSectionsThroughSeam(SectionPos cubeCenter, int radius,
-            Operation<Stream<SectionPos>> original, @Local(argsOnly = true) ServerLevel level) {
-        Stream<SectionPos> sections = original.call(cubeCenter, radius);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        if (transformer == null) {
-            return sections;
-        }
+            Operation<Stream<SectionPos>> original) {
+        List<SectionPos> raw = original.call(cubeCenter, radius).toList();
+        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        List<SectionPos> folded = transformer == null
+                ? raw
+                : raw.stream().map(transformer.chunks::wrapSection).distinct().toList();
 
-        return sections.map(transformer.chunks::wrapSection).distinct();
+        ReseatProbe.decided(this.level, ReseatProbe.VILLAGE_SECTIONS, "sections", raw.size(), folded.size());
+        return folded.stream();
     }
 
     // With the candidates canonical, the winner must be picked by the distance the world actually walks: a section
@@ -92,14 +102,17 @@ public class RaidMixin {
             method = "moveRaidCenterToNearbyVillageSection",
             at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;min(Ljava/util/Comparator;)Ljava/util/Optional;"),
             index = 0)
-    private Comparator<BlockPos> toroidal$nearestVillageSectionThroughSeam(Comparator<BlockPos> original,
-            @Local(argsOnly = true) ServerLevel level) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+    private Comparator<BlockPos> toroidal$nearestVillageSectionThroughSeam(Comparator<BlockPos> original) {
+        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
             return original;
         }
 
+        ServerLevel raidLevel = this.level;
         BlockPos raidCenter = this.center;
-        return Comparator.comparingDouble(pos -> SeamRange.sqr(level, raidCenter, pos));
+        // Vanilla's own key, recomputed rather than read through the comparator it arrives in: a Comparator answers an
+        // ordering, and the probe needs the two distances that ordering was decided on.
+        return Comparator.comparingDouble(pos -> ReseatProbe.decided(raidLevel, ReseatProbe.NEAREST_VILLAGE,
+                "blocks_sqr", pos.distSqr(raidCenter), SeamRange.sqr(raidLevel, raidCenter, pos)));
     }
 }
