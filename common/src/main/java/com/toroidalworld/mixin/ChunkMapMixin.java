@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ChunkHolder;
+import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ChunkTrackingView;
@@ -195,7 +196,12 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
     // Probe. This is the one place a chunk holder comes into existence, and a holder on a key past the bounds is the
     // phantom the whole fold exists to make impossible — it is read here rather than inferred from the graphs, because
     // this is the effect the DoD names.
-    @Inject(method = "updateChunkScheduling", at = @At("RETURN"))
+    //
+    // Read at HEAD, not at RETURN: the holder is a parameter vanilla assigns to on the very branch that creates one, so
+    // by RETURN the slot Mixin reads holds the new holder and "was there none before" can never come out true. At HEAD
+    // the parameter is still the caller's, and creation is decided by restating vanilla's own condition for entering
+    // that branch — a loaded destination level with no holder yet, which also covers the revival out of pendingUnloads.
+    @Inject(method = "updateChunkScheduling", at = @At("HEAD"))
     private void toroidal$probeScheduledHolder(long chunkKey, int newLevel, @Nullable ChunkHolder holder,
             int oldLevel, CallbackInfoReturnable<ChunkHolder> cir) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
@@ -203,7 +209,8 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
             return;
         }
 
-        TicketProbe.holderScheduled(this.level, transformer, chunkKey, holder == null && cir.getReturnValue() != null);
+        TicketProbe.holderScheduled(this.level, transformer, chunkKey,
+                holder == null && ChunkLevel.isLoaded(newLevel));
     }
 
     // The tracking layer must never be stamped with a raw out-of-bounds position. Mid-tick, an entity that has just

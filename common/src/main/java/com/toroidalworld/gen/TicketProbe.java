@@ -43,6 +43,7 @@ public final class TicketProbe {
 
     private static final String OOB_SUFFIX = "_oob";
     private static final String POST_FOLD_OOB = "post_fold_oob";
+    private static final String HOLDER_ANSWERED = "holder_answered";
     private static final String HOLDER_SCHEDULED = "holder_scheduled";
     private static final String HOLDER_SCHEDULED_OOB = "holder_scheduled_oob";
 
@@ -51,7 +52,7 @@ public final class TicketProbe {
     private static final String[] COUNTERS = {
             "dm_add", "dm_add_oob", "dm_remove", "dm_remove_oob",
             "tt_add", "tt_add_oob", "tt_remove", "tt_remove_oob",
-            POST_FOLD_OOB, HOLDER_SCHEDULED, HOLDER_SCHEDULED_OOB};
+            POST_FOLD_OOB, HOLDER_ANSWERED, HOLDER_SCHEDULED, HOLDER_SCHEDULED_OOB};
 
     private static final Map<ResourceKey<Level>, DimensionCounters> BY_DIMENSION = new ConcurrentHashMap<>();
 
@@ -105,12 +106,18 @@ public final class TicketProbe {
     // "A chunk past the bounds never gets a holder" is the DoD clause this counts. Every key the scheduler answers for
     // is counted; the out-of-bounds share must stay zero, because with both graphs folded no such key is ever
     // enumerated in the first place.
+    //
+    // The plain call count is what separates "no holder was ever created past the bounds" from "this never ran": the
+    // first reading of the clause was taken at the RETURN of updateChunkScheduling, where vanilla has already
+    // reassigned the holder parameter it was testing for null, so the created count could not leave zero and a whole
+    // session read as a pass it had not earned.
     public static void holderScheduled(ServerLevel level, WorldLoopTransformer transformer, long key, boolean created) {
+        ResourceKey<Level> dimension = level.dimension();
+        count(dimension, HOLDER_ANSWERED);
         if (!created) {
             return;
         }
 
-        ResourceKey<Level> dimension = level.dimension();
         count(dimension, HOLDER_SCHEDULED);
         if (!isOutOfBounds(transformer, key)) {
             return;
