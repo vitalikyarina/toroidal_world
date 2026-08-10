@@ -17,6 +17,7 @@ import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.MirrorWriter;
 import com.toroidalworld.player.SeamSnap;
 import com.toroidalworld.storage.WorldLoopAttachments;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -72,6 +74,21 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
     private void toroidal$seedMirror(MinecraftServer server, Connection connection, ServerPlayer player,
             CommonListenerCookie cookie, CallbackInfo ci) {
         WorldLoopAttachments.rebaseClientPositionOf(player);
+    }
+
+    // The use-on ack names the clicked block's neighbour, and vanilla steps to it with a plain BlockPos.relative. The
+    // clicked block itself arrives wrapped — the inbound rewriter saw to that — so the step lands outside the world
+    // exactly when the block is the last one on its axis and the hit face points outward, which is the face reachable
+    // only from across the seam. Wrapped here, at the step that produces it, rather than where it is read: the same
+    // coordinate feeds the packet the client is sent, and a server truth outside the bounds has no other owner.
+    @ModifyExpressionValue(
+            method = "handleUseItemOn",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/core/BlockPos;relative(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;"))
+    private BlockPos toroidal$wrapAckedNeighbour(BlockPos neighbour) {
+        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
+        return transformer == null ? neighbour : transformer.blocks.wrap(neighbour);
     }
 
     // Every player teleport funnels through here, so this is also where the server's own truth is kept inside the
