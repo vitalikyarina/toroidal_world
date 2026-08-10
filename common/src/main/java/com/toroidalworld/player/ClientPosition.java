@@ -100,7 +100,6 @@ public final class ClientPosition {
     }
 
     public void rebase(double x, double z, ResourceKey<Level> dimension, WorldLoopTransformer transformer) {
-        MirrorProbe.rebase(dimension);
         this.mirror = new Mirror(x, z, dimension, transformer);
         // A new space makes the stored copies meaningless; null makes the refresher send fresh ones.
         this.heldSpawn = null;
@@ -137,9 +136,7 @@ public final class ClientPosition {
     // whose every step fits in half by meaning.
     private void checkStep(MirrorWriter writer, String axis, WrapDomain domain, double from, double to,
             @Nullable ResourceKey<Level> space) {
-        boolean jumped = !domain.fitsInHalf(Math.abs(to - from));
-        MirrorProbe.write(space, writer, axis, domain, from, to, jumped);
-        if (!jumped || !warnGate.tryPass()) {
+        if (domain.fitsInHalf(Math.abs(to - from)) || !warnGate.tryPass()) {
             return;
         }
 

@@ -369,7 +369,7 @@ public final class PacketTranslator {
     //
     // It does not cover a move the server makes without changing dimension: a respawn lands in the same world, so the
     // mirror still describes it and the branch below does not fire. That case is caught at the placement itself, in
-    // EntityMixin's snapTo hook — the two together are what make every change of space seed the mirror.
+    // PlayerListMixin's respawn hook — the two together are what make every change of space seed the mirror.
     private static ClientboundPlayerPositionPacket playerPosition(ClientboundPlayerPositionPacket packet, TranslationContext context) {
         ClientPosition clientPosition = context.clientPosition();
 

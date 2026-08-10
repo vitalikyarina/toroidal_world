@@ -16,22 +16,16 @@ import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-// Two things an entity does that the seam changes.
-//
-// The first is distance. In a looped world there is no other kind: the way between two points is the shortest one, and
-// it may run through the seam. Every question the game asks about how far something is — a mob deciding whether to
-// despawn, a chicken following seeds, anything hunting a target — comes down to these five methods, each carrying its
-// own copy of the same arithmetic. Fixing the notion itself is what keeps us from chasing the same bug through the
-// whole of vanilla's AI.
-//
-// The second is being placed somewhere unrelated to where you were, which for a player means the client's mirror has to
-// start again — see toroidal$rebaseMirrorOnPlacement at the bottom.
+// What the seam changes about an entity is distance. In a looped world there is no other kind: the way between two
+// points is the shortest one, and it may run through the seam. Every question the game asks about how far something is
+// — a mob deciding whether to despawn, a chicken following seeds, anything hunting a target — comes down to these five
+// methods, each carrying its own copy of the same arithmetic. Fixing the notion itself is what keeps us from chasing
+// the same bug through the whole of vanilla's AI.
 @Mixin(Entity.class)
 public class EntityMixin implements TransformerSource {
     @WrapMethod(method = "distanceTo")
@@ -122,20 +116,6 @@ public class EntityMixin implements TransformerSource {
     private double toroidal$pushDeltaZ(double deltaZ) {
         WorldLoopTransformer transformer = toroidal$wrappedTransformer();
         return transformer == null ? deltaZ : transformer.coords.z.foldDelta(deltaZ);
-    }
-
-    // The mirror the client's coordinates are unwrapped around has to be right *before the first packet describing the
-    // new state*, not merely before the position packet — on respawn the chunk-cache centre goes out first, and a mirror
-    // still holding the pre-death coordinate centres the client a whole world from the chunks it is then sent.
-    //
-    // snapTo is where the server places a player somewhere unrelated to where they were: respawn, and the initial
-    // placement. Ordinary mid-play corrections do not come through here — they go through teleportSetPosition, and
-    // rebasing on those would be the very "fling the client a world back" this whole layer exists to avoid.
-    @Inject(method = "absMoveTo(DDDFF)V", at = @At("TAIL"))
-    private void toroidal$rebaseMirrorOnPlacement(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
-        if ((Object) this instanceof ServerPlayer player) {
-            WorldLoopAttachments.rebaseClientPositionOf(player);
-        }
     }
 
     // At the head, before the detach nulls the vehicle field: the resync has to read which vehicle is being left, and

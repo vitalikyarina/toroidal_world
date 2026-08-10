@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.net.WrappingBoundsSync;
@@ -26,6 +27,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.players.PlayerList;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
@@ -68,6 +70,23 @@ public class PlayerListMixin {
     private void toroidal$sendBoundsOnLogin(Connection connection, ServerPlayer player, CommonListenerCookie cookie,
             CallbackInfo ci) {
         WrappingBoundsSync.sendTo(player);
+    }
+
+    // A death gives the client a brand new player of its own, so the coordinate it was carrying is gone and the mirror
+    // has to start again from where the body was placed. Anchored on the placement itself rather than on the position
+    // packet that follows: the chunk-cache centre and the chunks are translated around the mirror, and a mirror still
+    // holding the pre-death coordinate centres the client a whole world from the chunks it is then sent.
+    //
+    // The new player is the local, not the argument — the argument is the body that just died, and the listener's own
+    // field still points at it until this method returns. Reading the local is also what keeps this off the packet
+    // layer, where only the dead player is reachable.
+    @Inject(method = "respawn",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;moveTo(DDDFF)V",
+                    shift = At.Shift.AFTER))
+    private void toroidal$rebaseMirrorOnRespawn(ServerPlayer player, boolean keepEverything,
+            Entity.RemovalReason reason, CallbackInfoReturnable<ServerPlayer> cir,
+            @Local(ordinal = 1) ServerPlayer respawned) {
+        WorldLoopAttachments.rebaseClientPositionOf(respawned);
     }
 
     @WrapOperation(

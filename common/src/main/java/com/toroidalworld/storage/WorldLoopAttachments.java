@@ -50,8 +50,10 @@ public final class WorldLoopAttachments {
     }
 
     // The one formula for pointing the mirror at where the player now is. Three places need it — the connection being
-    // opened, the server placing a player, and an arrival in another dimension — and they must agree: a mirror seeded a
-    // lap away from the others sends the client's chunk cache a world from the chunks it is given.
+    // opened, a respawn, and an arrival in another dimension — and they must agree: a mirror seeded a lap away from the
+    // others sends the client's chunk cache a world from the chunks it is given. Those three are the whole list because
+    // they are where the client builds a fresh player of its own and forgets the coordinate it was carrying; anywhere
+    // else the client keeps counting, and so must the mirror.
     //
     // Onto the wrapped position, not the raw one. The client is starting a fresh space here, and starting it aligned
     // with the server's own truth is what keeps its coordinate meaningful. On a level that does not wrap the transformer
