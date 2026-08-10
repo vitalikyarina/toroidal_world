@@ -13,6 +13,7 @@ import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.net.ClientAnchorSync;
 import com.toroidalworld.net.PacketProbe;
 import com.toroidalworld.net.WrappingBoundsSync;
+import com.toroidalworld.probe.ReseatProbe;
 import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
@@ -95,6 +96,7 @@ public class ServerPlayerMixin {
         ClientAnchorSync.refresh(player);
         PacketProbe.tick(player.serverLevel());
         ReshapeProbe.tick(player.serverLevel());
+        ReseatProbe.tick(player.serverLevel());
     }
 
     @WrapMethod(method = "isReachableBedBlock")

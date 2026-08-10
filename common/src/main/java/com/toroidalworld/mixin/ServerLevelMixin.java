@@ -1,7 +1,5 @@
 package com.toroidalworld.mixin;
 
-import java.util.stream.Stream;
-
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -10,10 +8,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.LevelBindable;
-import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.net.PacketReach;
 import com.toroidalworld.player.SeamSnap;
@@ -22,7 +18,6 @@ import com.toroidalworld.storage.SeamRespawnData;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.Packet;
@@ -32,7 +27,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import net.minecraft.world.phys.Vec3;
 
@@ -68,22 +62,6 @@ public class ServerLevelMixin {
         ((LevelBindable) this.entityManager).toroidal$bindLevel(level);
     }
 
-    // The border is per-level saved data and never learns which level owns it — it is handed two bare doubles for a
-    // centre and measures everything against them. This is the one place the two are in the same room, so the level's
-    // shape is stamped on here, and WorldBorderMixin folds its measurements against it.
-    //
-    // At the return rather than at a creation hook: the border is computed lazily out of the data storage, so there is
-    // no construction to inject into. The identity check makes every call after the first a single reference compare,
-    // and a level that does not wrap never writes at all — its transformer is the same NOOP the field starts on.
-    @Inject(method = "getWorldBorder", at = @At("RETURN"))
-    private void toroidal$bindBorderToLevelShape(CallbackInfoReturnable<WorldBorder> cir) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.transformerOf((ServerLevel) (Object) this);
-        TransformerHolder border = (TransformerHolder) cir.getReturnValue();
-        if (border.toroidal$transformer() != transformer) {
-            border.toroidal$setTransformer(transformer);
-        }
-    }
-
     // Whatever moved an entity, at the end of its tick it is back inside the world — the same guarantee the player gets,
     // and for the same reason: a step past the boundary lands in a chunk that was never generated, and the entity is
     // simply lost. A lone on-foot player is left out on purpose: their own wrap also realigns the movement bounds vanilla
@@ -110,30 +88,6 @@ public class ServerLevelMixin {
             Vec3 wrapped = transformer.vectors.wrap(entity.position());
             SeamSnap.withPassengers(entity, wrapped.subtract(entity.position()));
         }
-    }
-
-    // Spawning a player blocks the server thread until every chunk of a square around the spawn has its entities loaded.
-    // The square is walked in raw coordinates, so a spawn near the bounds waits on chunks past them — and a chunk past
-    // the bounds holds nothing and never will. It used to pass only because the phantom halo reached FULL there, which
-    // is the cost this card removes: the wait was being paid for by chunks nobody could ever stand in.
-    //
-    // Entities live in the physical chunk, so that is what the wait must name. The square is restated in the frame of
-    // the chunks that hold them, and folds to fewer positions in a world narrower than itself.
-    @WrapOperation(
-            method = "waitForEntities",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/ChunkPos;rangeClosed(Lnet/minecraft/world/level/ChunkPos;I)Ljava/util/stream/Stream;"))
-    private Stream<ChunkPos> toroidal$waitOnPhysicalChunks(
-            ChunkPos center, int radius, Operation<Stream<ChunkPos>> original) {
-        Stream<ChunkPos> square = original.call(center, radius);
-        ServerLevel level = (ServerLevel) (Object) this;
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        if (transformer == null) {
-            return square;
-        }
-
-        return square.map(transformer.chunks::wrap).distinct();
     }
 
     // "Does this chunk tick?" is asked of coordinates the asker walked to, and a neighbourhood walked around a chunk at

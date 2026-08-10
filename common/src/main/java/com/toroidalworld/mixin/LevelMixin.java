@@ -7,9 +7,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.RelocatableBlockEntity;
 import com.toroidalworld.accessors.TransformerCache;
+import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.gen.ShapedChunkGenerator;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -27,6 +29,7 @@ import net.minecraft.util.AbortableIterationConsumer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -181,6 +184,26 @@ public class LevelMixin implements TransformerCache {
     private BlockPos toroidal$wrap(BlockPos pos) {
         WorldLoopTransformer transformer = toroidal$transformer();
         return transformer.isWrapped() ? transformer.blocks.wrap(pos) : pos;
+    }
+
+    // The border is per-level state and never learns which level owns it — it is handed two bare doubles for a centre
+    // and measures everything against them. This is the one place the two are in the same room, so the level's shape is
+    // stamped on here, and WorldBorderMixin folds its measurements against it.
+    //
+    // At the return rather than at a creation hook: the transformer is resolved off the level's chunk generator, and a
+    // constructor has none to read yet. The identity check makes every call after the first a single reference compare.
+    //
+    // On Level rather than on ServerLevel, because that is where the game version declares getWorldBorder and an
+    // injector reaches only what its target class declares itself. No server check is needed with it: a client level
+    // resolves to the very NOOP instance the border's field already holds, so the compare fails and nothing is written
+    // — which is the requirement, the client being told the world is infinite.
+    @Inject(method = "getWorldBorder", at = @At("RETURN"))
+    private void toroidal$bindBorderToLevelShape(CallbackInfoReturnable<WorldBorder> cir) {
+        WorldLoopTransformer transformer = toroidal$transformer();
+        TransformerHolder border = (TransformerHolder) cir.getReturnValue();
+        if (border.toroidal$transformer() != transformer) {
+            border.toroidal$setTransformer(transformer);
+        }
     }
 
     // The one place the transformer is actually resolved — transformerOf routes every caller in the mod here, so the

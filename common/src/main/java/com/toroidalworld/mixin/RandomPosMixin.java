@@ -23,7 +23,7 @@ public class RandomPosMixin {
     @ModifyExpressionValue(
             method = "generateRandomPosTowardDirection",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/PathfinderMob;getHomePosition()Lnet/minecraft/core/BlockPos;"))
+                    target = "Lnet/minecraft/world/entity/PathfinderMob;getRestrictCenter()Lnet/minecraft/core/BlockPos;"))
     private static BlockPos toroidal$homeBiasThroughSeam(BlockPos center, @Local(argsOnly = true) PathfinderMob mob) {
         return SeamSteering.nearestCopy(mob, center);
     }

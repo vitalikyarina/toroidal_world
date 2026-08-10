@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.probe.ReseatProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.server.level.ServerLevel;
@@ -19,11 +20,11 @@ import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import net.minecraft.world.phys.Vec3;
 
 // The entity manager holds two maps keyed by chunk — what each chunk's entities are allowed to do, and whether they
-// have been read off disk — and it answers four questions out of them: canPositionTick for a block and for a chunk,
-// isTicking, and areEntitiesLoaded. Each one is asked with a coordinate its caller walked to, and every one of them
-// ends in the same lookup, so the whole class shares a single defect: a key past the bounds names a chunk the manager
-// has never held, both maps answer with their default (HIDDEN, FRESH), and the caller is told a flat no about ground
-// that is plainly ticking a few steps away on the other side.
+// have been read off disk — and it answers three questions out of them: canPositionTick for a block and for a chunk,
+// and areEntitiesLoaded. Each one is asked with a coordinate its caller walked to, and every one of them ends in the
+// same lookup, so the whole class shares a single defect: a key past the bounds names a chunk the manager has never
+// held, both maps answer with their default (HIDDEN, FRESH), and the caller is told a flat no about ground that is
+// plainly ticking a few steps away on the other side.
 //
 // The four callers it costs are worth naming, because they are what the no is felt as: a raid gates every candidate
 // spawn position on canPositionTick and so can only ever raise waves on the in-world side of a village near the seam;
@@ -97,16 +98,17 @@ public class EntitySectionManagerMixin implements LevelBindable {
 
     // canPositionTick contributes two matches — both overloads answer to the bare name.
     @ModifyArg(
-            method = {"isTicking", "canPositionTick", "areEntitiesLoaded"},
+            method = {"canPositionTick", "areEntitiesLoaded"},
             at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;get(J)Ljava/lang/Object;"),
             index = 0,
-            expect = 4)
+            expect = 3)
     private long toroidal$askThePhysicalChunk(long chunkKey) {
         if (this.toroidal$level == null) {
             return chunkKey;
         }
 
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
-        return transformer == null ? chunkKey : transformer.chunks.wrapChunkKey(chunkKey);
+        return ReseatProbe.decidedChunkKey(this.toroidal$level, ReseatProbe.ENTITY_CHUNK_KEY, chunkKey,
+                transformer == null ? chunkKey : transformer.chunks.wrapChunkKey(chunkKey));
     }
 }

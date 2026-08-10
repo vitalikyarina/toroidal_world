@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.probe.ReseatProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -24,7 +25,7 @@ import net.minecraft.world.entity.ai.behavior.AcquirePoi;
 @Mixin(AcquirePoi.class)
 public class AcquirePoiMixin {
     @ModifyExpressionValue(
-            method = "lambda$create$3",
+            method = "lambda$create$6",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/pathfinder/Path;getTarget()Lnet/minecraft/core/BlockPos;"))
     private static @Nullable BlockPos toroidal$wrapClaimedPoi(@Nullable BlockPos target,
             @Local(argsOnly = true) ServerLevel level) {
@@ -32,6 +33,7 @@ public class AcquirePoiMixin {
             return null;
         }
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        return transformer == null ? target : transformer.blocks.wrap(target);
+        return ReseatProbe.decided(level, ReseatProbe.POI_CLAIM, target,
+                transformer == null ? target : transformer.blocks.wrap(target));
     }
 }

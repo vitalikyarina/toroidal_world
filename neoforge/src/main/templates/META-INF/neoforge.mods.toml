@@ -1,5 +1,12 @@
 # NeoForge mod metadata. Placeholders are expanded from gradle.properties at build time.
 
+# Mandatory on this game version and dropped again later, which is why the 26.x file carries neither: FML 4 refuses a
+# file without them, and the refusal names the mod's first folder rather than this file — "build/classes/java/main is
+# not a valid mod file" is what a missing modLoader looks like from the outside. The range is the loader's own major,
+# the one NeoForge 21.1.x ships.
+modLoader="javafml"
+loaderVersion="[4,)"
+
 # The license for the mod (mandatory).
 license="${mod_license}"
 

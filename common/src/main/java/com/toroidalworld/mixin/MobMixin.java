@@ -14,7 +14,6 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 // A mob turning towards a target does not go through its look control at all: this is a second copy of the same
 // arithmetic, on a plain difference. A skeleton uses it — and since strafing moves it relative to where it faces, one
@@ -62,28 +61,18 @@ public class MobMixin {
     // on a rope plants itself at the seam and will not follow.
     //
     // The centre becomes its copy nearest the position being asked about, and vanilla's own comparison runs on that.
-    // Folding the centre rather than the distance keeps the two overloads honest about where each measures from — one
-    // from the block's corner, one from its middle — and leaves the radius test exactly as it was. A home on this side
-    // comes back untouched.
+    // Folding the centre rather than the distance leaves the radius test exactly as it was, and keeps the reading
+    // honest about where it measures from. A home on this side comes back untouched.
     //
     // Wrapped before it is unwrapped, as SeamSteering does: a home is written down rather than measured, and what was
     // written may sit any number of laps out.
     @ModifyExpressionValue(
-            method = "isWithinHome(Lnet/minecraft/core/BlockPos;)Z",
+            method = "isWithinRestriction(Lnet/minecraft/core/BlockPos;)Z",
             at = @At(value = "FIELD",
-                    target = "Lnet/minecraft/world/entity/Mob;homePosition:Lnet/minecraft/core/BlockPos;",
+                    target = "Lnet/minecraft/world/entity/Mob;restrictCenter:Lnet/minecraft/core/BlockPos;",
                     opcode = Opcodes.GETFIELD))
     private BlockPos toroidal$homeThroughSeam(BlockPos home, @Local(argsOnly = true) BlockPos pos) {
         return toroidal$nearestHome(home, pos);
-    }
-
-    @ModifyExpressionValue(
-            method = "isWithinHome(Lnet/minecraft/world/phys/Vec3;)Z",
-            at = @At(value = "FIELD",
-                    target = "Lnet/minecraft/world/entity/Mob;homePosition:Lnet/minecraft/core/BlockPos;",
-                    opcode = Opcodes.GETFIELD))
-    private BlockPos toroidal$homeVecThroughSeam(BlockPos home, @Local(argsOnly = true) Vec3 pos) {
-        return toroidal$nearestHome(home, BlockPos.containing(pos));
     }
 
     // The anchor only picks which copy of the home is meant, so rounding the queried point to its block loses nothing:

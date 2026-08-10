@@ -4,6 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamRange;
+import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
@@ -18,11 +19,14 @@ import net.minecraft.world.entity.animal.Turtle;
 @Mixin(Turtle.class)
 public class TurtleMixin {
     @WrapOperation(
-            method = "travelInWater",
+            method = "travel",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
     private boolean toroidal$homeApproachThroughSeam(BlockPos homePos, Position bodyPosition, double distance,
             Operation<Boolean> original) {
-        return SeamRange.closerToCenterThan((Turtle) (Object) this, homePos, bodyPosition, distance);
+        Turtle turtle = (Turtle) (Object) this;
+        return ReseatProbe.decided(turtle.level(), ReseatProbe.TURTLE_HOME,
+                original.call(homePos, bodyPosition, distance),
+                SeamRange.closerToCenterThan(turtle, homePos, bodyPosition, distance));
     }
 }

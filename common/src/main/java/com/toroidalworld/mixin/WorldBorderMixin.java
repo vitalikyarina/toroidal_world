@@ -12,10 +12,11 @@ import org.jspecify.annotations.Nullable;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.core.WrapDomain;
+import com.toroidalworld.probe.ReseatProbe;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.border.WorldBorder;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -28,9 +29,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 // So the measurement is folded rather than the square moved: the distance from the centre to a point is taken the short
 // way round, which is the same thing as measuring to whichever copy of the square lies nearest. Every reading vanilla
 // takes funnels into four methods and they are all here — the six isWithinBounds overloads meet in one private
-// primitive, the entity form of getDistanceToBorder meets the loose one, the whole clampToBounds family meets
-// clampVec3ToBound, and the wall itself is one shape. isInsideCloseToBorder is built out of the first two and needs
-// nothing of its own.
+// primitive, the entity form of getDistanceToBorder meets the loose one, the clampToBounds family meets its
+// triple-double overload, and the wall itself is one shape. isInsideCloseToBorder is built out of the first two and
+// needs nothing of its own.
 //
 // The transformer is stamped on by ServerLevelMixin, which is the only place a border and its level are ever in the
 // same room: the border is per-level saved data and holds no reference back. A client's border is never stamped, and
@@ -118,17 +119,23 @@ public class WorldBorderMixin implements TransformerHolder {
     // measured against, so it is the one it is pushed back into. The result is folded home afterwards: a coordinate
     // naming a copy is a coordinate the rest of the server would have to wrap anyway, and both callers — a portal being
     // placed, a ray stopped at the wall — turn it straight into a position in the world.
-    @Inject(method = "clampVec3ToBound(DDD)Lnet/minecraft/world/phys/Vec3;", at = @At("HEAD"), cancellable = true)
-    private void toroidal$clampThroughSeam(double x, double y, double z, CallbackInfoReturnable<Vec3> cir) {
+    //
+    // The whole clampToBounds family meets in this one triple-double overload, and it is the one that rounds: vanilla
+    // hands back a BlockPos, so the fold is stated in doubles and containing() is left to make the block, exactly as
+    // vanilla does.
+    @Inject(method = "clampToBounds(DDD)Lnet/minecraft/core/BlockPos;", at = @At("HEAD"), cancellable = true)
+    private void toroidal$clampThroughSeam(double x, double y, double z, CallbackInfoReturnable<BlockPos> cir) {
         WorldLoopTransformer transformer = this.toroidal$transformer;
         if (!transformer.isWrapped()) {
             return;
         }
 
-        cir.setReturnValue(new Vec3(
+        BlockPos vanilla = BlockPos.containing(
+                Mth.clamp(x, getMinX(), getMaxX() - 1.0), y, Mth.clamp(z, getMinZ(), getMaxZ() - 1.0));
+        cir.setReturnValue(ReseatProbe.decided(null, ReseatProbe.BORDER_CLAMP, vanilla, BlockPos.containing(
                 transformer.coords.x.wrap(toroidal$clampToAxis(transformer.coords.x, getMinX(), getMaxX(), x)),
                 y,
-                transformer.coords.z.wrap(toroidal$clampToAxis(transformer.coords.z, getMinZ(), getMaxZ(), z))));
+                transformer.coords.z.wrap(toroidal$clampToAxis(transformer.coords.z, getMinZ(), getMaxZ(), z)))));
     }
 
     // The wall vanilla builds is everything outside its one square, and it is handed to the caller with no anchor to
@@ -226,6 +233,6 @@ public class WorldBorderMixin implements TransformerHolder {
 
         double nearestCentre = domain.unwrapAround(coord, (min + max) / 2.0);
         double half = (max - min) / 2.0;
-        return Mth.clamp(coord, nearestCentre - half, nearestCentre + half - 1.0E-5F);
+        return Mth.clamp(coord, nearestCentre - half, nearestCentre + half - 1.0);
     }
 }

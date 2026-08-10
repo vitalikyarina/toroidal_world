@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.entity.SeamRange;
+import com.toroidalworld.probe.ReseatProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -25,17 +26,19 @@ import net.minecraft.world.phys.Vec3;
 // their way to a chunk, as they do for every other sight line. A same-side player is untouched.
 //
 // The range check lives inside the detector constants' predicate lambdas — there is no named method around it — so the
-// two player predicates are targeted as the synthetic lambda$static$1/$4 (javap-verified for this vanilla build; a
+// two player predicates are targeted as the synthetic lambda$static$0/$3 (javap-verified for this vanilla build; a
 // recompile that shifts them fails loudly at mixin apply). The SHEEP detector needs no range fold: its AABB entity
 // query is already split at the seam by LevelMixin.
 @Mixin(PlayerDetector.class)
 public interface PlayerDetectorMixin {
     @WrapOperation(
-            method = {"lambda$static$1", "lambda$static$4"},
+            method = {"lambda$static$0", "lambda$static$3"},
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;closerThan(Lnet/minecraft/core/Vec3i;D)Z"))
     private static boolean toroidal$detectionRangeThroughSeam(BlockPos playerPos, Vec3i spawnerPos, double range,
             Operation<Boolean> original, @Local(argsOnly = true) Player player) {
-        return SeamRange.closerThan(player.level(), playerPos, spawnerPos, range);
+        return ReseatProbe.decided(player.level(), ReseatProbe.DETECTOR_RANGE,
+                original.call(playerPos, spawnerPos, range),
+                SeamRange.closerThan(player.level(), playerPos, spawnerPos, range));
     }
 
     @WrapMethod(method = "inLineOfSight")

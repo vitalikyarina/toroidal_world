@@ -55,7 +55,15 @@ dependencies {
     include(implementation("io.github.llamalad7:mixinextras-fabric:${mixinextras_version}"))
 }
 
+// Two jars on this game version, and only the second one ships. Minecraft is obfuscated here, so Loom compiles into a
+// dev jar under build/devlibs and remaps that into build/libs — naming jar alone leaves the shipped artifact on Loom's
+// default name, which is neither the loader nor the game version, and a deploy that matches on the name then picks up
+// whatever older build still lies beside it. On the 26.x line there was no remap step and jar was the artifact.
 tasks.named('jar', Jar) {
+    archiveFileName = "${mod_id}-fabric-${jarVersion}-dev.jar"
+}
+
+tasks.named('remapJar', AbstractArchiveTask) {
     archiveFileName = "${mod_id}-fabric-${jarVersion}.jar"
 }
 

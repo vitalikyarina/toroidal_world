@@ -26,7 +26,7 @@ public class GoalUtilsMixin {
     @ModifyExpressionValue(
             method = "mobRestricted",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/PathfinderMob;getHomePosition()Lnet/minecraft/core/BlockPos;"))
+                    target = "Lnet/minecraft/world/entity/PathfinderMob;getRestrictCenter()Lnet/minecraft/core/BlockPos;"))
     private static BlockPos toroidal$homeFilterThroughSeam(BlockPos home, @Local(argsOnly = true) PathfinderMob mob) {
         return SeamSteering.nearestCopy(mob, home);
     }

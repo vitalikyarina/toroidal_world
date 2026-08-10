@@ -4,6 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamRange;
+import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -35,12 +36,14 @@ public class BellBlockEntityMixin {
     // The raider readings are one question asked in three places — may the bell resonate, who is outlined by it, how
     // dense the particles are — and each holds the entity it measures, so one handler answers all three.
     @WrapOperation(
-            method = { "areRaidersNearby", "isRaiderWithinRange", "lambda$showBellParticles$0" },
+            method = { "areRaidersNearby", "isRaiderWithinRange", "lambda$showBellParticles$1" },
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"),
             expect = 3)
     private static boolean toroidal$raiderRangeThroughSeam(BlockPos bellPos, Position bodyPosition, double distance,
             Operation<Boolean> original, @Local LivingEntity body) {
-        return SeamRange.closerToCenterThan(body, bellPos, bodyPosition, distance);
+        return ReseatProbe.decided(body.level(), ReseatProbe.BELL_RAIDER_RANGE,
+                original.call(bellPos, bodyPosition, distance),
+                SeamRange.closerToCenterThan(body, bellPos, bodyPosition, distance));
     }
 }

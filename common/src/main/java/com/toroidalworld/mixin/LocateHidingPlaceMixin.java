@@ -4,6 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamRange;
+import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -23,12 +24,14 @@ import net.minecraft.world.entity.ai.behavior.LocateHidingPlace;
 @Mixin(LocateHidingPlace.class)
 public class LocateHidingPlaceMixin {
     @WrapOperation(
-            method = { "lambda$create$5", "lambda$create$10" },
+            method = { "lambda$create$2", "lambda$create$7" },
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"),
             expect = 2)
     private static boolean toroidal$hidingPlaceReachThroughSeam(BlockPos hidingPos, Position bodyPosition,
             double distance, Operation<Boolean> original, @Local(argsOnly = true) LivingEntity body) {
-        return SeamRange.closerToCenterThan(body, hidingPos, bodyPosition, distance);
+        return ReseatProbe.decided(body.level(), ReseatProbe.HIDING_PLACE_REACH,
+                original.call(hidingPos, bodyPosition, distance),
+                SeamRange.closerToCenterThan(body, hidingPos, bodyPosition, distance));
     }
 }

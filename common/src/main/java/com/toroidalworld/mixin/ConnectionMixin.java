@@ -11,9 +11,9 @@ import com.toroidalworld.net.PacketTranslator;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
-import io.netty.channel.ChannelFutureListener;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketListener;
+import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -26,8 +26,8 @@ public class ConnectionMixin {
         throw new AssertionError();
     }
 
-    @WrapMethod(method = "send(Lnet/minecraft/network/protocol/Packet;Lio/netty/channel/ChannelFutureListener;Z)V")
-    private void toroidal$translateOutgoing(Packet<?> packet, @Nullable ChannelFutureListener listener, boolean flush,
+    @WrapMethod(method = "send(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketSendListener;Z)V")
+    private void toroidal$translateOutgoing(Packet<?> packet, @Nullable PacketSendListener listener, boolean flush,
             Operation<Void> original) {
         ServerPlayer player = toroidal$playerOf(this.getPacketListener());
         if (player == null) {

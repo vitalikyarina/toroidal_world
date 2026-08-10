@@ -5,7 +5,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -125,27 +124,6 @@ public class EntityMixin implements TransformerSource {
         return transformer == null ? deltaZ : transformer.coords.z.foldDelta(deltaZ);
     }
 
-    // The seam wrap relocates an entity without recording movement, so the bridge segment applyEffectsFromBlocks
-    // synthesizes from the last recorded position to the current one spans the whole world — and the block sweep walks
-    // its first 16 blocks, handing any portal within reach of the far boundary a phantom trigger: the spurious portal
-    // teleport while merely crossing the seam. Folding the bridge start around the current position makes the segment
-    // cover exactly the ground actually traversed through the seam; an ordinary bridge folds to itself.
-    @ModifyArg(
-            method = "applyEffectsFromBlocks()V",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/Entity$Movement;<init>(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)V"),
-            index = 0)
-    private Vec3 toroidal$foldBridgeThroughSeam(Vec3 from) {
-        WorldLoopTransformer transformer = toroidal$wrappedTransformer();
-        if (transformer == null) {
-            return from;
-        }
-
-        Vec3 position = ((Entity) (Object) this).position();
-        return transformer.vectors.nearestCopy(position, from);
-    }
-
     // The mirror the client's coordinates are unwrapped around has to be right *before the first packet describing the
     // new state*, not merely before the position packet — on respawn the chunk-cache centre goes out first, and a mirror
     // still holding the pre-death coordinate centres the client a whole world from the chunks it is then sent.
@@ -153,7 +131,7 @@ public class EntityMixin implements TransformerSource {
     // snapTo is where the server places a player somewhere unrelated to where they were: respawn, and the initial
     // placement. Ordinary mid-play corrections do not come through here — they go through teleportSetPosition, and
     // rebasing on those would be the very "fling the client a world back" this whole layer exists to avoid.
-    @Inject(method = "snapTo(DDDFF)V", at = @At("TAIL"))
+    @Inject(method = "absMoveTo(DDDFF)V", at = @At("TAIL"))
     private void toroidal$rebaseMirrorOnPlacement(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
         if ((Object) this instanceof ServerPlayer player) {
             WorldLoopAttachments.rebaseClientPositionOf(player);
