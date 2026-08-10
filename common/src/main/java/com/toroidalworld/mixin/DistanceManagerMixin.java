@@ -119,12 +119,16 @@ public class DistanceManagerMixin implements LevelBindable {
             return;
         }
 
-        int maxChunkX = transformer.chunks.x.upperBound;
+        // The bounds are half-open, so the last chunk the world actually holds is one short of the upper bound; the
+        // lower bound is included and names a real chunk as it stands. Sampling the bound itself asks for a chunk the
+        // mod's own fold guarantees has no holder, and the sentinel that comes back reads as an abandoned seam.
+        int maxChunkX = transformer.chunks.x.upperBound - 1;
         int minChunkX = transformer.chunks.x.lowerBound;
         for (ServerPlayer player : this.toroidal$level.players()) {
-            int chunkZ = player.chunkPosition().z;
+            ChunkPos playerChunk = player.chunkPosition();
+            int chunkZ = playerChunk.z;
             TicketProbe.seamLevels(
-                    this.toroidal$level, player.getName().getString(), chunkZ, maxChunkX, minChunkX,
+                    this.toroidal$level, player.getName().getString(), playerChunk.x, chunkZ, maxChunkX, minChunkX,
                     this.toroidal$ticketLevel(maxChunkX, chunkZ),
                     this.toroidal$ticketLevel(minChunkX, chunkZ),
                     this.tickingTicketsTracker.getLevel(new ChunkPos(maxChunkX, chunkZ)),

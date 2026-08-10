@@ -134,11 +134,17 @@ public final class TicketProbe {
     // bounds, so nothing folds on the way in and the two levels are read exactly as the graphs stored them. A ticket
     // level that spread across the seam reads within one step on the two sides; an unfolded graph leaves the far side
     // at its unloaded sentinel while the near side is loaded.
-    public static void seamLevels(ServerLevel level, String player, int chunkZ, int maxChunkX, int minChunkX,
-            int ticketMax, int ticketMin, int tickingMax, int tickingMin) {
-        LOGGER.info("{} seam_level level={} player={} chunk_z={} seam_max_chunk_x={} seam_min_chunk_x={}"
+    //
+    // The player's own chunk is on the line because an unloaded sentinel has two causes and the levels alone cannot
+    // tell them apart: the graph never reached across the seam, or the player simply stands too far from it for either
+    // end to be loaded at all. Without the distance the reader has to guess, and a round spent far from the seam reads
+    // exactly like a failure.
+    public static void seamLevels(ServerLevel level, String player, int playerChunkX, int playerChunkZ,
+            int maxChunkX, int minChunkX, int ticketMax, int ticketMin, int tickingMax, int tickingMin) {
+        LOGGER.info("{} seam_level level={} player={} player_chunk_x={} player_chunk_z={}"
+                        + " seam_max_chunk_x={} seam_min_chunk_x={}"
                         + " ticket_level_max={} ticket_level_min={} ticking_level_max={} ticking_level_min={}",
-                TAG, level.dimension().location(), player, chunkZ, maxChunkX, minChunkX,
+                TAG, level.dimension().location(), player, playerChunkX, playerChunkZ, maxChunkX, minChunkX,
                 ticketMax, ticketMin, tickingMax, tickingMin);
     }
 
