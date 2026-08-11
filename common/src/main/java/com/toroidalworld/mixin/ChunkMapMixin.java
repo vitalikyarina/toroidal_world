@@ -12,6 +12,7 @@ import com.toroidalworld.accessors.ChunkResender;
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.accessors.LevelHolder;
 import com.toroidalworld.accessors.SeamDriveScheduler;
+import com.toroidalworld.accessors.TrackedEntityRefresher;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.gen.SeamDriveRequest;
@@ -38,7 +39,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.entity.EntityAccess;
 
 @Mixin(ChunkMap.class)
-public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveScheduler {
+public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveScheduler, TrackedEntityRefresher {
     @Shadow
     @Final
     private ServerLevel level;
@@ -91,6 +92,24 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
     public void toroidal$resendChunks(ServerPlayer player, List<ChunkPos> chunks) {
         for (ChunkPos chunkPos : chunks) {
             this.markChunkPendingToSend(player, chunkPos);
+        }
+    }
+
+    // Vanilla's own decision, re-asked for one player — the first half of ChunkMap.move, which the teleport path never
+    // reaches. The self case needs no branch: updatePlayer returns immediately for the player's own tracked entity, and
+    // who is shown THAT entity is already refreshed before it broadcasts, in ChunkMap.tick's section-changed arm.
+    //
+    // Unwrapped dimensions keep vanilla's timing byte-for-byte: there the client and the server share one space, so a
+    // tick of stale tracking costs nothing but an entity update drawn where it belongs.
+    @Override
+    public void toroidal$refreshTrackedEntities(ServerPlayer player) {
+        if (WorldLoopAttachments.wrappedTransformerOf(this.level) == null) {
+            return;
+        }
+
+        ChunkMap chunkMap = (ChunkMap) (Object) this;
+        for (ChunkMap.TrackedEntity tracked : chunkMap.entityMap.values()) {
+            tracked.updatePlayer(player);
         }
     }
 
