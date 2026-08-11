@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.ChunkResender;
 import com.toroidalworld.accessors.ClientPositionHolder;
+import com.toroidalworld.accessors.TrackedEntityRefresher;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.SeamSnap;
@@ -153,13 +154,26 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
 
         if (stormWholeView.get()) {
             resender.toroidal$resendTrackedChunks(this.player);
-            return;
+        } else {
+            List<ChunkPos> flipped = flippedChunks.get();
+            if (flipped != null && !flipped.isEmpty()) {
+                resender.toroidal$resendChunks(this.player, flipped);
+            }
         }
 
-        List<ChunkPos> flipped = flippedChunks.get();
-        if (flipped != null && !flipped.isEmpty()) {
-            resender.toroidal$resendChunks(this.player, flipped);
-        }
+        toroidal$refreshTrackedEntities();
+    }
+
+    // The entity half of the same obligation, and it belongs after the mirror has moved rather than straddling it: an
+    // entity the player has left behind leaves through a packet that carries no coordinates, while one the destination
+    // brings into view is placed by an absolute position that has to be folded around the mirror it will be drawn
+    // beside. Vanilla refreshes this decision on every ordinary move and never on a teleport, so without this the
+    // tracker spends one tick shipping updates it decided around a position the mirror has already left.
+    @Unique
+    private void toroidal$refreshTrackedEntities() {
+        TrackedEntityRefresher refresher =
+                (TrackedEntityRefresher) (Object) this.player.level().getChunkSource().chunkMap;
+        refresher.toroidal$refreshTrackedEntities(this.player);
     }
 
     // Which held chunks the mirror's jump moves to a different client-space copy. The predicted landing uses the
