@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.toroidalworld.accessors.TrackedEntityRefresher;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.net.ClientAnchorSync;
 import com.toroidalworld.net.WrappingBoundsSync;
@@ -16,8 +17,11 @@ import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.sugar.Share;
+import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.level.storage.LevelData;
@@ -75,6 +79,36 @@ public class ServerPlayerMixin {
                     shift = At.Shift.AFTER))
     private void toroidal$refreshClientAnchors(CallbackInfo ci) {
         ClientAnchorSync.refresh((ServerPlayer) (Object) this);
+    }
+
+    @Inject(method = "updateOptions", at = @At("HEAD"))
+    private void toroidal$captureRequestedViewDistance(ClientInformation information, CallbackInfo ci,
+            @Share("oldViewDistance") LocalIntRef oldViewDistance) {
+        oldViewDistance.set(((ServerPlayer) (Object) this).requestedViewDistance());
+    }
+
+    // The client's render distance is the outer bound the tracker gates entity visibility on, and vanilla's writer
+    // touches nothing else: the radius every translated coordinate is judged against follows it on the very next
+    // packet, while the tracker's standing decision still stands on the radius before it. Re-taking that decision here
+    // is what keeps the two from ever naming different numbers.
+    @Inject(method = "updateOptions", at = @At("TAIL"))
+    private void toroidal$refreshTrackingOnViewChange(ClientInformation information, CallbackInfo ci,
+            @Share("oldViewDistance") LocalIntRef oldViewDistance) {
+        ServerPlayer player = (ServerPlayer) (Object) this;
+        // The constructor writes the options too, before the player has a connection and before anything is tracked
+        // for them; there is no standing decision to re-take, and pairing one would send to a connection that is null.
+        if (player.connection == null || oldViewDistance.get() == player.requestedViewDistance()) {
+            return;
+        }
+
+        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
+        if (transformer == null) {
+            return;
+        }
+
+        TrackedEntityRefresher refresher =
+                (TrackedEntityRefresher) (Object) player.level().getChunkSource().chunkMap;
+        refresher.toroidal$refreshTrackedEntities(player);
     }
 
     @WrapMethod(method = "isReachableBedBlock")
