@@ -113,6 +113,22 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
         }
     }
 
+    // The other writer of the radius the tracker gates entity visibility on. Vanilla re-applies the chunk view for
+    // every player here and leaves the entity decision standing on the distance that has just been replaced, so the
+    // traffic those pairs keep producing is measured against a bound they were never gated on. Taking the decision
+    // again in the same loop iteration is what keeps the two from ever naming different radii; the loop itself sits
+    // inside vanilla's own "the distance really moved" branch, so an unchanged setting costs nothing.
+    @Inject(
+            method = "setServerViewDistance",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/server/level/ChunkMap;updateChunkTracking(Lnet/minecraft/server/level/ServerPlayer;)V",
+                    shift = At.Shift.AFTER))
+    private void toroidal$refreshTrackingOnServerViewChange(int newViewDistance, CallbackInfo ci,
+            @Local ServerPlayer player) {
+        this.toroidal$refreshTrackedEntities(player);
+    }
+
     @Shadow
     public DistanceManager getDistanceManager() {
         throw new AssertionError();
