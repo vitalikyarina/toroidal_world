@@ -50,6 +50,12 @@ public final class ClientPosition {
     // watches this against the copy the client should hold now.
     private volatile @Nullable BorderCenter heldBorderCenter;
 
+    // The chunk-cache centre most recently sent to the client, in client space — where the client's own chunk cache
+    // actually stands, as opposed to the mirror, which runs ahead of it for the tick between a teleport and the
+    // tracking view re-centring. Every chunk packet is folded and judged around this, so it is written by the
+    // cache-centre rewriter and read by the chunk door, both on the connection's own thread and in packet order.
+    private volatile @Nullable ChunkPos heldCacheCenter;
+
     private final LogRateGate warnGate = new LogRateGate();
 
     public double x() {
@@ -104,6 +110,7 @@ public final class ClientPosition {
         // A new space makes the stored copies meaningless; null makes the refresher send fresh ones.
         this.heldSpawn = null;
         this.heldBorderCenter = null;
+        this.heldCacheCenter = null;
     }
 
     public @Nullable BlockPos heldSpawn() {
@@ -120,6 +127,14 @@ public final class ClientPosition {
 
     public void setHeldBorderCenter(BorderCenter heldBorderCenter) {
         this.heldBorderCenter = heldBorderCenter;
+    }
+
+    public @Nullable ChunkPos heldCacheCenter() {
+        return this.heldCacheCenter;
+    }
+
+    public void setHeldCacheCenter(ChunkPos heldCacheCenter) {
+        this.heldCacheCenter = heldCacheCenter;
     }
 
     public ChunkPos chunk() {

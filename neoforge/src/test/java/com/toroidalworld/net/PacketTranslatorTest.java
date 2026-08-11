@@ -360,6 +360,93 @@ class PacketTranslatorTest {
         }
     }
 
+    // Which copy a chunk packet lands in is decided by where the client's cache stands, not by where the player is.
+    // The two are the same coordinate except for the tick between a teleport and the tracking view re-centring, which
+    // is the window every case here stages: the mirror parked at chunk 36 while the cache centre is still back at 8.
+    @Nested
+    class ChunkAnchor {
+        // The mirror's own chunk, from MIRROR_X / MIRROR_Z.
+        private static final ChunkPos MIRROR_CHUNK = new ChunkPos(36, -44);
+
+        private static final ChunkPos HELD_CENTER = new ChunkPos(8, -44);
+
+        // A chunk the two anchors disagree about: 28 chunks from the cache centre, so its copy sits where the cache
+        // does, while the mirror's nearest copy of it is a whole world further on.
+        private static final ChunkPos DISPUTED_CHUNK = new ChunkPos(0, -44);
+        private static final BlockPos DISPUTED_BLOCK = new BlockPos(5, 64, -700);
+        private static final BlockPos MIRROR_ANCHORED_BLOCK = new BlockPos(1029, 64, -700);
+
+        private static TranslationContext contextWith(ChunkPos heldCacheCenter) {
+            ClientPosition mirror = new ClientPosition();
+            mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, TRANSFORMER);
+            if (heldCacheCenter != null) {
+                mirror.setHeldCacheCenter(heldCacheCenter);
+            }
+
+            return new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS, Level.OVERWORLD,
+                    VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
+        }
+
+        @Test
+        void chunkTrafficFollowsTheHeldCacheCenter() {
+            ClientboundBlockUpdatePacket translated = (ClientboundBlockUpdatePacket) PacketTranslator.toClient(
+                    new ClientboundBlockUpdatePacket(DISPUTED_BLOCK, Blocks.STONE.defaultBlockState()),
+                    contextWith(HELD_CENTER));
+
+            assertEquals(DISPUTED_BLOCK, translated.getPos());
+        }
+
+        // Before the client has ever been told where its cache stands there is no cache to stand anywhere: the first
+        // chunks of a login are built around the player, so the mirror is the anchor and the same key folds elsewhere.
+        @Test
+        void chunkTrafficFallsBackToTheMirrorBeforeTheFirstCacheCenter() {
+            ClientboundBlockUpdatePacket translated = (ClientboundBlockUpdatePacket) PacketTranslator.toClient(
+                    new ClientboundBlockUpdatePacket(DISPUTED_BLOCK, Blocks.STONE.defaultBlockState()),
+                    contextWith(null));
+
+            assertEquals(MIRROR_ANCHORED_BLOCK, translated.getPos());
+        }
+
+        // The centre packet is what moves the anchor, so it is read out of the packet stream itself: the traffic behind
+        // it folds around the centre the client has just been given.
+        @Test
+        void theCacheCenterPacketMovesTheAnchorForWhatFollows() {
+            TranslationContext context = contextWith(null);
+            PacketTranslator.toClient(
+                    new ClientboundSetChunkCacheCenterPacket(HELD_CENTER.x(), HELD_CENTER.z()), context);
+
+            ClientboundBlockUpdatePacket translated = (ClientboundBlockUpdatePacket) PacketTranslator.toClient(
+                    new ClientboundBlockUpdatePacket(DISPUTED_BLOCK, Blocks.STONE.defaultBlockState()), context);
+
+            assertEquals(DISPUTED_BLOCK, translated.getPos());
+        }
+
+        // The centre packet does not ride on the anchor it delivers: a stale centre must not fold it, or the client
+        // would be sent a cache centre in a copy it is on its way out of.
+        @Test
+        void theCacheCenterPacketFoldsAroundTheMirrorNotTheStaleCenter() {
+            ClientboundSetChunkCacheCenterPacket translated =
+                    (ClientboundSetChunkCacheCenterPacket) PacketTranslator.toClient(
+                            new ClientboundSetChunkCacheCenterPacket(-20, MIRROR_CHUNK.z()),
+                            contextWith(DISPUTED_CHUNK));
+
+            assertEquals(44, translated.getX());
+            assertEquals(MIRROR_CHUNK.z(), translated.getZ());
+        }
+
+        // A new space makes the stored centre meaningless — it names a chunk in a different world.
+        @Test
+        void rebaseClearsTheHeldCacheCenter() {
+            ClientPosition mirror = new ClientPosition();
+            mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, TRANSFORMER);
+            mirror.setHeldCacheCenter(HELD_CENTER);
+
+            mirror.rebase(MIRROR_X, MIRROR_Z, Level.NETHER, TRANSFORMER);
+
+            assertNull(mirror.heldCacheCenter());
+        }
+    }
+
     @Nested
     class WaypointPackets {
         @Test

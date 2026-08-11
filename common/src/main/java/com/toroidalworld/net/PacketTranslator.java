@@ -308,8 +308,10 @@ public final class PacketTranslator {
         return new ClientboundBundlePacket(forgets);
     }
 
+    // The one packet that moves the anchor every other chunk packet is folded and judged against, so it takes the
+    // door's own entry point: folded around the mirror and outside the view-reach check.
     private static ClientboundSetChunkCacheCenterPacket chunkCacheCenter(ClientboundSetChunkCacheCenterPacket packet, TranslationContext context) {
-        ChunkPos clientPos = context.toClient(new ChunkPos(packet.getX(), packet.getZ()));
+        ChunkPos clientPos = context.toClientCacheCenter(new ChunkPos(packet.getX(), packet.getZ()));
         return new ClientboundSetChunkCacheCenterPacket(clientPos.x(), clientPos.z());
     }
 
