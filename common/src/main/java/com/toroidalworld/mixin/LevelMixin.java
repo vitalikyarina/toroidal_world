@@ -14,6 +14,9 @@ import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.gen.ShapedChunkGenerator;
+import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.storage.WorldLoopAttachments;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
@@ -28,6 +31,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.AbortableIterationConsumer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -235,5 +239,27 @@ public class LevelMixin implements TransformerCache {
         }
 
         return WorldLoopTransformer.NOOP;
+    }
+
+    // Whether it rains or snows on a block is the same temperature field the ice is placed from, asked outside any
+    // generation step — so the transformer has to be bound here too, or the sky disagrees with the ground at the seam.
+    // On a client level this binds NOOP, which is correct twice over: the client's engine transformer is NOOP by
+    // design, and a bound NOOP shields the call from a leftover binding on the same thread.
+    @WrapMethod(method = "precipitationAt")
+    private Biome.Precipitation toroidal$bindPrecipitationTransformer(
+            BlockPos pos, Operation<Biome.Precipitation> original) {
+        return GenerationTransformerContext.withTransformer(
+                toroidal$precipitationTransformer(), () -> original.call(pos));
+    }
+
+    // A client level's own transformer is NOOP by design, so binding it here would leave the client reading the
+    // unfolded temperature field — and disagreeing with the server about the same block, worst of all near the seam
+    // where client coordinates may sit a whole world width away. What the client does know is the bounds the server
+    // told it, which is the same source ClientLevel.getPrecipitationAt binds.
+    @Unique
+    private WorldLoopTransformer toroidal$precipitationTransformer() {
+        WorldLoopTransformer clientBounds =
+                WorldLoopAttachments.wrappedClientBoundsTransformerOf((Level) (Object) this);
+        return clientBounds != null ? clientBounds : toroidal$transformer();
     }
 }

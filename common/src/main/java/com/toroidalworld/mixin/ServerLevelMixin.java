@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.net.PacketReach;
+import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.player.SeamSnap;
 import com.toroidalworld.storage.SeamRespawnData;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -181,5 +182,22 @@ public class ServerLevelMixin {
 
             player.connection.send(new ClientboundBlockDestructionPacket(id, blockPos, progress));
         }
+    }
+
+    // The level's own precipitation work, bound as a whole. Ice and snow do not stop being written once a chunk is
+    // generated: tickChunk asks this of a random column on every loaded chunk, roughly once every 16 ticks at the
+    // default random-tick speed, and the freeze branch is not even gated on the weather.
+    //
+    // Two of the three questions in vanilla's body go through Biome.shouldFreeze and shouldSnow, which bind for
+    // themselves from the level they are handed. The third asks getPrecipitationAt straight off the biome — and that
+    // one is handed no level at all, so nothing below this point has anything to bind from. A boundary binding and a
+    // primitive binding are layers, not copies: this one says the level is doing precipitation work, the primitive
+    // says it was asked. Drop this and the block that handles the precipitation — a cauldron filling at the seam —
+    // silently reads the unfolded field again.
+    @WrapMethod(method = "tickPrecipitation")
+    private void toroidal$bindPrecipitationTransformer(BlockPos pos, Operation<Void> original) {
+        ServerLevel level = (ServerLevel) (Object) this;
+        GenerationTransformerContext.runWithTransformer(
+                WorldLoopAttachments.transformerOf(level), () -> original.call(pos));
     }
 }

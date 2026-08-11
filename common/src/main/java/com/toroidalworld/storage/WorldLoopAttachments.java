@@ -10,6 +10,8 @@ import com.toroidalworld.player.ClientPosition;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevelAccessor;
 
 public final class WorldLoopAttachments {
     // A field read off the level: LevelMixin resolves the transformer once per level from its own chunk generator and
@@ -37,6 +39,26 @@ public final class WorldLoopAttachments {
     public static @Nullable WorldLoopTransformer wrappedClientBoundsTransformerOf(Level level) {
         WorldLoopTransformer transformer = clientBoundsTransformerOf(level);
         return transformer.isWrapped() ? transformer : null;
+    }
+
+    // Which transformer the shared noise fields should fold by for a reader that is not necessarily a Level: the
+    // temperature question is asked through a LevelReader, which on the generation side is a WorldGenRegion holding
+    // the level rather than being one. Client bounds come first for the same reason they do everywhere else — a client
+    // level's own transformer is NOOP by design, and folding by it would leave the client reading the unfolded field.
+    //
+    // Null, not NOOP, when the reader names no level: a binder that cannot answer must leave whatever is already bound
+    // on this thread alone. Binding NOOP there would shield the call from the generation step's own valid binding.
+    public static @Nullable WorldLoopTransformer noiseTransformerOf(LevelReader reader) {
+        if (reader instanceof Level level) {
+            WorldLoopTransformer clientBounds = wrappedClientBoundsTransformerOf(level);
+            return clientBounds != null ? clientBounds : transformerOf(level);
+        }
+
+        if (reader instanceof ServerLevelAccessor accessor) {
+            return transformerOf(accessor.getLevel());
+        }
+
+        return null;
     }
 
     // Held by the connection, not the player: death replaces the ServerPlayer, and PlayerList.respawn assigns the new
