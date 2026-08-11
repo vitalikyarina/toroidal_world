@@ -8,7 +8,6 @@ import java.util.function.IntPredicate;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
-import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.LogRateGate;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.core.WrapDomain;
@@ -55,11 +54,6 @@ public record TranslationContext(
     // How far past the capped view distance legitimate chunk traffic still reaches: one chunk of lighting border
     // vanilla tracks beyond the view, and one more where it forgets what fell out.
     private static final int VIEW_REACH_SLACK = 2;
-
-    // The mirror is written from the client's own movement packets, while the radius a packet was gated on was
-    // measured against the player's server position a moment earlier. A chunk of blocks covers the gap, so a fast
-    // mover is never accused of standing outside a bound they are inside.
-    private static final double COORD_REACH_SLACK = CoordinateConstants.CHUNK_WIDTH;
 
     // Vanilla's own floor for a client's requested view distance, below which ChunkMap will not go.
     private static final int MIN_VIEW_DISTANCE = 2;
@@ -216,13 +210,19 @@ public record TranslationContext(
     }
 
     private void guardReach(PacketReach reach, String axis, double serverValue, double clientValue, double anchor) {
-        if (Math.abs(clientValue - anchor) > reach.blocks() + COORD_REACH_SLACK) {
+        if (!withinReach(clientValue, anchor, reach)) {
             warnCoordFarFromAnchor(reach, axis, serverValue, clientValue, anchor);
         }
     }
 
-    // The plain nearest-copy fold, outside the guard above — the loose-coordinate twin of PacketTranslator's
-    // nearestCopyBlock. It is the door for a coordinate that reaches the client for a reason other
+    // The verdict on its own, so the bound can be asserted against the terms each family's slack was derived from
+    // rather than read back off the numbers that state it.
+    static boolean withinReach(double clientValue, double anchor, PacketReach reach) {
+        return Math.abs(clientValue - anchor) <= reach.blocks() + reach.slackBlocks();
+    }
+
+    // The plain nearest-copy fold, outside the guard above — the loose-coordinate twin of nearestCopy(ChunkPos) and of
+    // PacketTranslator's nearestCopyBlock. It is the door for a coordinate that reaches the client for a reason other
     // than the player's nearness — a teleport target, the point a look turns toward, a border centre — and so has no
     // radius to be held to at all.
     //
@@ -258,8 +258,9 @@ public record TranslationContext(
         }
 
         LOGGER.warn("A {} packet's {} lands farther from the client anchor than it can reach in {}:"
-                        + " server {} translated to client {} around anchor {}, reach {} blocks",
-                reach.kind(), axis, dimension.location(), serverValue, clientValue, anchor, reach.blocks());
+                        + " server {} translated to client {} around anchor {}, reach {} blocks, slack {} blocks",
+                reach.kind(), axis, dimension.location(), serverValue, clientValue, anchor,
+                reach.blocks(), reach.slackBlocks());
     }
 
     public Vec3 toClient(Vec3 position, PacketReach reach) {
