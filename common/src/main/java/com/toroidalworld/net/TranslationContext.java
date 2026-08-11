@@ -20,6 +20,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ChunkTrackingView;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -44,7 +45,8 @@ public record TranslationContext(
         RegistryAccess registryAccess,
         IntFunction<RegistryFriendlyByteBuf> bufferFactory,
         ResourceKey<Level> dimension,
-        int viewDistance,
+        int trackedViewDistance,
+        int heldViewDistance,
         IntPredicate ownVehicle,
         IntFunction<@Nullable Vec3> entityPosition,
         Runnable rebase) {
@@ -62,25 +64,45 @@ public record TranslationContext(
     private static final LogRateGate WARN_GATE = new LogRateGate();
 
     public static TranslationContext of(ServerPlayer player, WorldLoopTransformer transformer) {
+        int trackedViewDistance = trackedViewDistanceOf(player, transformer);
         return new TranslationContext(
                 transformer,
                 WorldLoopAttachments.clientPositionOf(player),
                 player.registryAccess(),
                 Platforms.get().packetBuffers(player),
                 player.level().dimension(),
-                viewDistanceOf(player, transformer),
+                trackedViewDistance,
+                heldViewDistanceOf(player, trackedViewDistance),
                 entityId -> isControlledVehicle(player, entityId),
                 entityId -> positionOf(player, entityId),
                 () -> WorldLoopAttachments.rebaseClientPositionOf(player));
     }
 
-    // What the client can actually see, resolved the way ChunkMap resolves it: the client's own request, held to the
-    // server's setting and then to the world's ceiling. Not the ceiling on its own — that is half the world by
-    // construction, which is exactly the distance a fold can never exceed, so a guard standing on it can never fire.
-    private static int viewDistanceOf(ServerPlayer player, WorldLoopTransformer transformer) {
+    // What the entity tracker measures with, resolved the way it resolves it: TrackedEntity.updatePlayer re-reads
+    // ChunkMap.getPlayerViewDistance on every pass, so this number is the live one by construction — the client's own
+    // request, held to the server's setting and then to the world's ceiling. Not the ceiling on its own — that is half
+    // the world, which is exactly the distance a fold can never exceed, so a guard standing on it can never fire.
+    private static int trackedViewDistanceOf(ServerPlayer player, WorldLoopTransformer transformer) {
         int serverViewDistance = player.level().getServer().getPlayerList().getViewDistance();
         return transformer.limitViewDistance(
                 Mth.clamp(player.requestedViewDistance(), MIN_VIEW_DISTANCE, serverViewDistance));
+    }
+
+    // What the chunk gate measures with, which is not the same question. ChunkMap.isChunkTracked admits chunk traffic
+    // through player.getChunkTrackingView(), and that view is a standing decision — re-applied in ChunkMap.tick, in
+    // ChunkMap.move and in setServerViewDistance, never at the moment the client's setting changes. Deriving a second
+    // radius from the setting therefore names a different number for as long as the two are out of step, and the
+    // shrinking direction is the one that bites: the traffic is still gated on the wide view while the derivation has
+    // already narrowed. Reading the radius off the view is what makes gate and guard agree by construction — including
+    // this world's own ceiling, which ChunkMapMixin already folds into getPlayerViewDistance.
+    //
+    // EMPTY is the view between a player leaving the tracker and their first tracking pass — updatePlayerStatus sets it
+    // and calls updateChunkTracking in the next statement. Nothing is gated through it, so the derived radius is both
+    // the only number there is and one that costs nothing.
+    private static int heldViewDistanceOf(ServerPlayer player, int trackedViewDistance) {
+        return player.getChunkTrackingView() instanceof ChunkTrackingView.Positioned view
+                ? view.viewDistance()
+                : trackedViewDistance;
     }
 
     private static boolean isControlledVehicle(ServerPlayer player, int entityId) {
@@ -172,9 +194,11 @@ public record TranslationContext(
         return other == nearest ? new int[] {nearest} : new int[] {nearest, other};
     }
 
-    // How far a chunk the client is holding may sit from the anchor: as far as its view reaches, and no further.
+    // How far a chunk the client is holding may sit from the anchor: as far as the view it was admitted through
+    // reaches, and no further. ChunkTrackingView.Positioned.contains puts that bound at viewDistance + 1 chunks on an
+    // axis; the slack above carries the one more this door owes.
     private int viewReach() {
-        return viewDistance + VIEW_REACH_SLACK;
+        return heldViewDistance + VIEW_REACH_SLACK;
     }
 
     // A different question, which the same number used to answer. Which copy of a chunk lies nearest the anchor stops
@@ -206,7 +230,7 @@ public record TranslationContext(
     // steps, a damage source, the anchor a particle payload hangs on. All of them ride on a tracked entity, and the
     // tracker never shows one past the client's own view.
     public PacketReach trackedReach() {
-        return PacketReach.tracked(viewDistance);
+        return PacketReach.tracked(trackedViewDistance);
     }
 
     private void guardReach(PacketReach reach, String axis, double serverValue, double clientValue, double anchor) {
