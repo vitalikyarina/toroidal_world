@@ -16,6 +16,7 @@
     "BeeWanderGoalMixin",
     "BehaviorUtilsMixin",
     "BellBlockEntityMixin",
+    "BiomeMixin",
     "BlazeAimMixin",
     "BlendedNoiseMixin",
     "BlockCollisionsMixin",
@@ -126,6 +127,7 @@
     "PathNavigationMixin",
     "PathNavigationRegionMixin",
     "PerlinNoiseMixin",
+    "PerlinSimplexNoiseMixin",
     "PhantomMoveControlMixin",
     "PhantomMoveTargetGoalMixin",
     "PlaceCommandMixin",
@@ -166,6 +168,7 @@
     "SetWalkTargetFromBlockMemoryMixin",
     "SetWorldSpawnCommandMixin",
     "ShulkerBulletMixin",
+    "SimplexNoiseAccessor",
     "SkyLightEngineMixin",
     "SleepInBedMixin",
     "SocializeAtBellMixin",
@@ -212,6 +215,7 @@
     "WorldGenRegionMixin"
   ],
   "client": [
+    "BiomePrecipitationMixin",
     "ClientLevelMixin",
     "CompassAngleStateMixin",
     "DebugEntryPositionMixin"

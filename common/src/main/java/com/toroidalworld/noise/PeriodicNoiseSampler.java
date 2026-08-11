@@ -24,8 +24,9 @@ import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 // bit-for-bit vanilla, which on a power-of-two world covers every octave except the lowest-frequency ones.
 public final class PeriodicNoiseSampler {
     // Copy of SimplexNoise.GRADIENT (protected there): the 12 cube-edge vectors plus 4 repeats vanilla Perlin hashes
-    // into. Copied rather than access-widened so the sampler stays callable from plain unit tests.
-    private static final int[][] GRADIENT = {
+    // into. Copied rather than access-widened so the sampler stays callable from plain unit tests. Shared with
+    // PeriodicSimplexSampler, which hashes into the same table — vanilla's simplex and Perlin both read this one.
+    static final int[][] GRADIENT = {
             {1, 1, 0},
             {-1, 1, 0},
             {1, -1, 0},
