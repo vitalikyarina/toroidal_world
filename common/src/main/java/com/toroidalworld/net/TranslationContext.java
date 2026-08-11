@@ -107,7 +107,7 @@ public record TranslationContext(
     // and backstopped here: a chunk farther from the anchor than the view could reach cannot come from view traffic,
     // so it is warned about instead of corrupting the client's cache in silence. No per-chunk memory is needed.
     public ChunkPos toClient(ChunkPos chunkPos, ChunkTraffic traffic) {
-        ChunkPos anchor = clientPosition.chunk();
+        ChunkPos anchor = chunkAnchor();
         ChunkPos clientPos = transformer.chunks.unwrap(anchor, chunkPos);
         int viewReach = viewReach();
         int distanceX = Math.abs(clientPos.x - anchor.x);
@@ -116,6 +116,35 @@ public record TranslationContext(
             warnChunkFarFromAnchor(traffic, chunkPos, clientPos, anchor, viewReach);
         }
         return clientPos;
+    }
+
+    // Where the client's chunk cache stands, which is not always where the player does. Vanilla gates chunk traffic on
+    // the tracking view and announces that view's centre with the cache-centre packet, so the centre the client last
+    // received is both the copy its cache is built around and the point the traffic was measured from. The mirror is a
+    // different thing: it follows the player, and a teleport moves it a tick before the view re-centres — a window this
+    // door used to fold and judge traffic in, from a point the client's cache had not reached. Reading the centre out
+    // of the packet stream keeps the two in step by construction: the anchor changes exactly where the client's own
+    // cache changes, in the same order, because both are that one packet. Before it has ever arrived — the first
+    // chunks of a login or a dimension change — the mirror is the only anchor there is, and it is right, because the
+    // client's cache is empty and about to be built around the player.
+    private ChunkPos chunkAnchor() {
+        ChunkPos heldCacheCenter = clientPosition.heldCacheCenter();
+        return heldCacheCenter == null ? clientPosition.chunk() : heldCacheCenter;
+    }
+
+    // The cache-centre packet sets the anchor rather than riding on it, so it takes its own door. It folds around the
+    // mirror — the centre vanilla computed is the player's own chunk, and the client is about to move its cache there —
+    // and it is not held to the view reach, which measures traffic against a centre this packet is still delivering.
+    public ChunkPos toClientCacheCenter(ChunkPos chunkPos) {
+        ChunkPos clientPos = transformer.chunks.unwrap(clientPosition.chunk(), chunkPos);
+        clientPosition.setHeldCacheCenter(clientPos);
+        return clientPos;
+    }
+
+    // The plain nearest-copy unwrap, outside the view-reach backstop — for packets that name a chunk as a directional
+    // hint (a far player's waypoint) rather than a chunk the client holds.
+    public ChunkPos nearestCopy(ChunkPos chunkPos) {
+        return transformer.chunks.unwrap(clientPosition.chunk(), chunkPos);
     }
 
     // The copies of a forgotten chunk the client might be holding. Within the view's reach the nearest copy is the
