@@ -19,7 +19,6 @@ import com.toroidalworld.mixin.PlayerLookAtPacketAccessor;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
 import com.toroidalworld.player.MirrorWriter;
-import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -398,10 +397,6 @@ public final class PacketTranslator {
         double foldedZ = relativeZ ? context.transformer().coords.z.foldDelta(packet.getZ()) : 0.0;
         double clientX = relativeX ? clientPosition.x() + foldedX : context.nearestCopyX(packet.getX());
         double clientZ = relativeZ ? clientPosition.z() + foldedZ : context.nearestCopyZ(packet.getZ());
-        PacketProbe.playerPosition(context.dimension(), relativeX, relativeZ,
-                packet.getX(), relativeX ? foldedX : clientX,
-                packet.getZ(), relativeZ ? foldedZ : clientZ,
-                clientPosition.x(), clientPosition.z());
         clientPosition.set(clientX, clientZ, MirrorWriter.POSITION_PACKET);
 
         return new ClientboundPlayerPositionPacket(
@@ -417,7 +412,6 @@ public final class PacketTranslator {
         PacketReach reach = context.trackedReach();
         double clientX = context.toClientX(packet.getX(), reach);
         double clientZ = context.toClientZ(packet.getZ(), reach);
-        PacketProbe.addEntity(context.dimension(), packet.getId(), packet.getX(), clientX, packet.getZ(), clientZ);
         return new ClientboundAddEntityPacket(
                 packet.getId(), packet.getUUID(),
                 clientX,
@@ -438,17 +432,12 @@ public final class PacketTranslator {
     // the wire, behind the entity id that opens it.
     private static Packet<?> teleportEntity(ClientboundTeleportEntityPacket packet, TranslationContext context) {
         if (context.ownVehicle().test(packet.getId())) {
-            PacketProbe.teleportEntityDropped(context.dimension());
             return null;
         }
 
         PacketReach reach = context.trackedReach();
         return rewritePosition(ClientboundTeleportEntityPacket.STREAM_CODEC, ByteBufCodecs.VAR_INT, POSITION_CODEC,
-                packet, context, (entityId, position) -> {
-                    Vec3 clientPosition = context.toClient(position, reach);
-                    PacketProbe.teleportEntity(context.dimension(), entityId, position, clientPosition);
-                    return clientPosition;
-                });
+                packet, context, (entityId, position) -> context.toClient(position, reach));
     }
 
     // The correction only ever names the vehicle the recipient is riding, so it arrives from no distance at all; the
@@ -457,11 +446,7 @@ public final class PacketTranslator {
     private static Packet<?> moveVehicle(ClientboundMoveVehiclePacket packet, TranslationContext context) {
         PacketReach reach = context.trackedReach();
         return rewritePosition(ClientboundMoveVehiclePacket.STREAM_CODEC, POSITION_CODEC, packet, context,
-                position -> {
-                    Vec3 clientPosition = context.toClient(position, reach);
-                    PacketProbe.moveVehicle(context.dimension(), position, clientPosition);
-                    return clientPosition;
-                });
+                position -> context.toClient(position, reach));
     }
 
     private static ClientboundBlockUpdatePacket blockUpdate(ClientboundBlockUpdatePacket packet, TranslationContext context) {
@@ -639,9 +624,6 @@ public final class PacketTranslator {
     private static ClientboundExplodePacket explode(ClientboundExplodePacket packet, TranslationContext context) {
         Vec3 serverCenter = new Vec3(packet.getX(), packet.getY(), packet.getZ());
         Vec3 clientCenter = context.toClient(serverCenter, PacketReach.EXPLOSION);
-        PacketProbe.explode(context.dimension(), serverCenter, clientCenter, packet.getToBlow().size(),
-                Mth.floor(clientCenter.x) - Mth.floor(serverCenter.x),
-                Mth.floor(clientCenter.z) - Mth.floor(serverCenter.z));
         return new ClientboundExplodePacket(
                 clientCenter.x, clientCenter.y, clientCenter.z, packet.getPower(),
                 toClientBlown(packet.getToBlow(), serverCenter, clientCenter),
@@ -720,7 +702,6 @@ public final class PacketTranslator {
         BlockPos serverPos = packet.getPos();
         BlockPos clientPos = nearestCopyBlock(context, serverPos);
         context.clientPosition().setHeldSpawn(clientPos);
-        ReshapeProbe.fold(context.dimension(), ReshapeProbe.PACKET_SPAWN, serverPos, clientPos);
         return new ClientboundSetDefaultSpawnPositionPacket(clientPos, packet.getAngle());
     }
 
@@ -864,7 +845,6 @@ public final class PacketTranslator {
     // untouched by construction.
     private static ServerboundInteractPacket interact(ServerboundInteractPacket packet, TranslationContext context) {
         if (!carriesLocation(packet)) {
-            PacketProbe.interactNoLocation(context.dimension());
             return packet;
         }
 
@@ -874,11 +854,9 @@ public final class PacketTranslator {
 
     private static Vec3 toServerHitLocation(TranslationContext context, int entityId, Vec3 location) {
         Vec3 targetPosition = context.entityPosition().apply(entityId);
-        Vec3 serverLocation = targetPosition == null
+        return targetPosition == null
                 ? context.toServer(location)
                 : context.transformer().vectors.nearestCopy(targetPosition, location);
-        PacketProbe.interact(context.dimension(), entityId, location, serverLocation);
-        return serverLocation;
     }
 
     // Whether this interact carries a point at all — only the at-location form does, and an attack or a plain

@@ -6,7 +6,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamAim;
-import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
 import net.minecraft.world.entity.monster.Ghast;
@@ -28,15 +27,13 @@ public class GhastFacingAimMixin {
             method = "tick",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getX()D"))
     private double toroidal$aimTargetX(double targetX) {
-        return ReseatProbe.decided(this.ghast.level(), ReseatProbe.GHAST_AIM, "blocks", targetX,
-                SeamAim.nearX(this.ghast, targetX));
+        return SeamAim.nearX(this.ghast, targetX);
     }
 
     @ModifyExpressionValue(
             method = "tick",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getZ()D"))
     private double toroidal$aimTargetZ(double targetZ) {
-        return ReseatProbe.decided(this.ghast.level(), ReseatProbe.GHAST_AIM, "blocks", targetZ,
-                SeamAim.nearZ(this.ghast, targetZ));
+        return SeamAim.nearZ(this.ghast, targetZ);
     }
 }

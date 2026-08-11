@@ -4,7 +4,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamRange;
-import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -27,8 +26,6 @@ public class RingBellMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;closerThan(Lnet/minecraft/core/Vec3i;D)Z"))
     private static boolean toroidal$bellReachThroughSeam(BlockPos bellPos, Vec3i bodyPos, double distance,
             Operation<Boolean> original, @Local(argsOnly = true) LivingEntity body) {
-        return ReseatProbe.decided(body.level(), ReseatProbe.BELL_REACH,
-                original.call(bellPos, bodyPos, distance),
-                SeamRange.closerThan(body, bellPos, bodyPos, distance));
+        return SeamRange.closerThan(body, bellPos, bodyPos, distance);
     }
 }

@@ -5,7 +5,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.probe.ReseatProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -34,7 +33,6 @@ public class AcquirePoiMixin {
             return null;
         }
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        return ReseatProbe.decided(level, ReseatProbe.POI_CLAIM, target,
-                transformer == null ? target : transformer.blocks.wrap(target));
+        return transformer == null ? target : transformer.blocks.wrap(target);
     }
 }

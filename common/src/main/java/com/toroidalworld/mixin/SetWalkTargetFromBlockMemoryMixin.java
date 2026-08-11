@@ -4,7 +4,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamRange;
-import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -34,8 +33,6 @@ public class SetWalkTargetFromBlockMemoryMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;distManhattan(Lnet/minecraft/core/Vec3i;)I"))
     private static int toroidal$memoryDistanceThroughSeam(BlockPos from, Vec3i to, Operation<Integer> original,
             @Local(argsOnly = true) Villager body) {
-        return ReseatProbe.decided(body.level(), ReseatProbe.MEMORY_DISTANCE, "blocks",
-                original.call(from, to),
-                SeamRange.manhattan(body, from, to));
+        return SeamRange.manhattan(body, from, to);
     }
 }

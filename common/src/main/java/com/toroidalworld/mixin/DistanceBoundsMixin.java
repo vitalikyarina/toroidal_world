@@ -4,7 +4,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.predicate.SeamDistanceBounds;
-import com.toroidalworld.probe.ReshapeProbe;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -40,8 +39,6 @@ public class DistanceBoundsMixin {
         Vec3 folded = SeamDistanceBounds.nearestCopy(level,
                 new Vec3(referenceX, referenceY, referenceZ),
                 new Vec3(measuredX, measuredY, measuredZ));
-        ReshapeProbe.fold(level.dimension(), ReshapeProbe.DISTANCE_BOUND,
-                measuredX, measuredZ, folded.x, folded.z);
         return original.call(bounds, referenceX, referenceY, referenceZ, folded.x, folded.y, folded.z);
     }
 }

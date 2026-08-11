@@ -4,7 +4,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamRange;
-import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -31,8 +30,6 @@ public class LocateHidingPlaceMixin {
             expect = 2)
     private static boolean toroidal$hidingPlaceReachThroughSeam(BlockPos hidingPos, Position bodyPosition,
             double distance, Operation<Boolean> original, @Local(argsOnly = true) LivingEntity body) {
-        return ReseatProbe.decided(body.level(), ReseatProbe.HIDING_PLACE_REACH,
-                original.call(hidingPos, bodyPosition, distance),
-                SeamRange.closerToCenterThan(body, hidingPos, bodyPosition, distance));
+        return SeamRange.closerToCenterThan(body, hidingPos, bodyPosition, distance);
     }
 }

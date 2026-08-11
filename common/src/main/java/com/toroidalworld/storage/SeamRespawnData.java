@@ -1,7 +1,6 @@
 package com.toroidalworld.storage;
 
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.probe.ReshapeProbe;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -20,18 +19,9 @@ import net.minecraft.server.level.ServerLevel;
 // bounds keeps the exact position vanilla built — which is also what vanilla's own "did anything change" comparisons
 // are made against.
 public final class SeamRespawnData {
-    // The fold name is here for the probe rather than for the arithmetic: every one of the five ways a spawn is stored
-    // arrives at this one method, so the counters can only tell them apart if the caller says which it is.
-    public static BlockPos insideBounds(ServerLevel level, String fold, BlockPos pos) {
+    public static BlockPos insideBounds(ServerLevel level, BlockPos pos) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        if (transformer == null) {
-            ReshapeProbe.unwrapped(level.dimension(), fold);
-            return pos;
-        }
-
-        BlockPos stored = transformer.blocks.wrap(pos);
-        ReshapeProbe.fold(level.dimension(), fold, pos, stored);
-        return stored;
+        return transformer == null ? pos : transformer.blocks.wrap(pos);
     }
 
     private SeamRespawnData() {

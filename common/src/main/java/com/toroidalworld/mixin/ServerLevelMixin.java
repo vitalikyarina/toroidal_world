@@ -13,7 +13,6 @@ import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.net.PacketReach;
 import com.toroidalworld.player.SeamSnap;
-import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.SeamRespawnData;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -121,7 +120,7 @@ public class ServerLevelMixin {
     // should be made against, or a spawn already at the folded coordinate would broadcast a packet saying nothing.
     @ModifyVariable(method = "setDefaultSpawnPos(Lnet/minecraft/core/BlockPos;F)V", at = @At("HEAD"), argsOnly = true)
     private BlockPos toroidal$storeWorldSpawnInsideBounds(BlockPos spawnPos) {
-        return SeamRespawnData.insideBounds((ServerLevel) (Object) this, ReshapeProbe.WORLD_SPAWN, spawnPos);
+        return SeamRespawnData.insideBounds((ServerLevel) (Object) this, spawnPos);
     }
 
     // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.

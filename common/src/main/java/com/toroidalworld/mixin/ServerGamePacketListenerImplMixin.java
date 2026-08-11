@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.toroidalworld.accessors.ChunkResender;
 import com.toroidalworld.accessors.ClientPositionHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.net.PacketProbe;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.MirrorWriter;
 import com.toroidalworld.player.SeamSnap;
@@ -114,9 +113,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             return x;
         }
 
-        double wrapped = transformer.coords.x.wrap(x);
-        PacketProbe.teleportWrap(this.player.level().dimension(), "x", x, wrapped);
-        return wrapped;
+        return transformer.coords.x.wrap(x);
     }
 
     @ModifyVariable(method = "teleport(DDDFFLjava/util/Set;)V", at = @At("HEAD"), argsOnly = true, ordinal = 2)
@@ -126,9 +123,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             return z;
         }
 
-        double wrapped = transformer.coords.z.wrap(z);
-        PacketProbe.teleportWrap(this.player.level().dimension(), "z", z, wrapped);
-        return wrapped;
+        return transformer.coords.z.wrap(z);
     }
 
     // Every player teleport funnels through here (commands, pearls, portals resolve to this), and it jumps the mirror
@@ -157,13 +152,11 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         ClientPosition mirror = WorldLoopAttachments.clientPositionOf(this.player);
         if (!mirror.describes(this.player.level().dimension())) {
             stormWholeView.set(true);
-            PacketProbe.teleportChunks(this.player.level().dimension(), true, 0);
             resender.toroidal$dropTrackedChunks(this.player);
             return;
         }
 
         List<ChunkPos> flipped = toroidal$flippedChunks(x, z, mirror);
-        PacketProbe.teleportChunks(this.player.level().dimension(), false, flipped.size());
         flippedChunks.set(flipped);
         if (!flipped.isEmpty()) {
             resender.toroidal$dropChunks(this.player, flipped);

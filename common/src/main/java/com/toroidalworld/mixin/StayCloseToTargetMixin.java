@@ -4,7 +4,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamRange;
-import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -26,8 +25,6 @@ public class StayCloseToTargetMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;closerThan(Lnet/minecraft/core/Position;D)Z"))
     private static boolean toroidal$followReachThroughSeam(Vec3 bodyPosition, Position targetPosition, double distance,
             Operation<Boolean> original, @Local(argsOnly = true) LivingEntity body) {
-        return ReseatProbe.decided(body.level(), ReseatProbe.FOLLOW_REACH,
-                original.call(bodyPosition, targetPosition, distance),
-                SeamRange.closerThan(body, bodyPosition, targetPosition, distance));
+        return SeamRange.closerThan(body, bodyPosition, targetPosition, distance);
     }
 }

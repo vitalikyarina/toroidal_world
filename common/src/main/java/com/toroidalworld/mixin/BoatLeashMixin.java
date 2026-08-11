@@ -4,7 +4,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamSteering;
-import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
 import net.minecraft.world.entity.vehicle.Boat;
@@ -24,7 +23,6 @@ public class BoatLeashMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;position()Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$holderPositionThroughSeam(Vec3 holderPosition) {
         Boat boat = (Boat) (Object) this;
-        return ReseatProbe.decided(boat.level(), ReseatProbe.BOAT_LEASH, holderPosition,
-                SeamSteering.nearestCopy(boat, holderPosition));
+        return SeamSteering.nearestCopy(boat, holderPosition);
     }
 }

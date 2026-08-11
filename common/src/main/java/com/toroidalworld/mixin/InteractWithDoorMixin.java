@@ -7,7 +7,6 @@ import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.entity.SeamRange;
 import com.toroidalworld.entity.SeamSteering;
-import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -37,9 +36,7 @@ public class InteractWithDoorMixin {
             expect = 2)
     private static boolean toroidal$doorReachThroughSeam(BlockPos doorPos, Position bodyPosition, double distance,
             Operation<Boolean> original, @Local(argsOnly = true) LivingEntity body) {
-        return ReseatProbe.decided(body.level(), ReseatProbe.DOOR_REACH,
-                original.call(doorPos, bodyPosition, distance),
-                SeamRange.closerToCenterThan(body, doorPos, bodyPosition, distance));
+        return SeamRange.closerToCenterThan(body, doorPos, bodyPosition, distance);
     }
 
     // A door is not closed while the mob is standing in it, and standing in it is asked as an equality between the
@@ -76,8 +73,7 @@ public class InteractWithDoorMixin {
                             + "isMobComingThroughDoor(Lnet/minecraft/world/entity/ai/Brain;Lnet/minecraft/core/BlockPos;)Z"))
     private static boolean toroidal$otherMobsDoorwayThroughSeam(Brain<?> otherBrain, BlockPos doorPos,
             Operation<Boolean> original, @Local(argsOnly = true) LivingEntity otherMob) {
-        BlockPos nearest = ReseatProbe.decided(otherMob.level(), ReseatProbe.DOOR_OTHER_MOB, doorPos,
-                SeamSteering.nearestCopy(otherMob, doorPos));
+        BlockPos nearest = SeamSteering.nearestCopy(otherMob, doorPos);
         return original.call(otherBrain, nearest);
     }
 }

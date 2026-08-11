@@ -6,7 +6,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -56,14 +55,11 @@ public class CompassAngleStateMixin {
         // target folded against bounds the check does not use would be folded against the wrong world.
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(owner.level());
         if (transformer == null) {
-            ReshapeProbe.unwrapped(owner.level().dimension(), ReshapeProbe.COMPASS_TARGET);
             return target;
         }
 
         BlockPos stored = target.pos();
         BlockPos nearest = transformer.blocks.nearestCopy(BlockPos.containing(owner.position()), stored);
-        ReshapeProbe.fold(owner.level().dimension(), ReshapeProbe.COMPASS_TARGET,
-                stored.getX(), stored.getZ(), nearest.getX(), nearest.getZ());
         return nearest == stored ? target : GlobalPos.of(target.dimension(), nearest);
     }
 }

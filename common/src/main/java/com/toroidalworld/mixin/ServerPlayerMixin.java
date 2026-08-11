@@ -11,10 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.net.ClientAnchorSync;
-import com.toroidalworld.net.PacketProbe;
 import com.toroidalworld.net.WrappingBoundsSync;
-import com.toroidalworld.probe.ReseatProbe;
-import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -64,11 +61,10 @@ public class ServerPlayerMixin {
         MinecraftServer server = ((ServerPlayer) (Object) this).getServer();
         ServerLevel level = server == null ? null : server.getLevel(respawnDimension);
         if (level == null) {
-            ReshapeProbe.noLevel(ReshapeProbe.PLAYER_RESPAWN);
             return respawnPos;
         }
 
-        return SeamRespawnData.insideBounds(level, ReshapeProbe.PLAYER_RESPAWN, respawnPos);
+        return SeamRespawnData.insideBounds(level, respawnPos);
     }
 
     // The second of the two moments the client's space changes and it needs the wrap bounds: arriving in another
@@ -80,7 +76,6 @@ public class ServerPlayerMixin {
     private void toroidal$sendBoundsOnDimensionChange(DimensionTransition transition,
             CallbackInfoReturnable<@Nullable Entity> cir) {
         ServerPlayer player = (ServerPlayer) (Object) this;
-        PacketProbe.dimensionBounds(player.level().dimension());
         WrappingBoundsSync.sendTo(player);
     }
 
@@ -94,9 +89,6 @@ public class ServerPlayerMixin {
     private void toroidal$refreshClientAnchors(CallbackInfo ci) {
         ServerPlayer player = (ServerPlayer) (Object) this;
         ClientAnchorSync.refresh(player);
-        PacketProbe.tick(player.serverLevel());
-        ReshapeProbe.tick(player.serverLevel());
-        ReseatProbe.tick(player.serverLevel());
     }
 
     @WrapMethod(method = "isReachableBedBlock")

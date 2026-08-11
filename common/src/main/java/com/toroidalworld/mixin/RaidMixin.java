@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.entity.SeamRange;
-import com.toroidalworld.probe.ReseatProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -64,7 +63,7 @@ public class RaidMixin {
                 ? raidLoc
                 : transformer.vectors.nearestCopy(listener.position(), raidLoc);
 
-        return ReseatProbe.decided(this.level, ReseatProbe.RAID_HORN, raidLoc, folded);
+        return folded;
     }
 
     @WrapOperation(
@@ -72,8 +71,7 @@ public class RaidMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;distSqr(Lnet/minecraft/core/Vec3i;)D"))
     private double toroidal$raiderDistanceThroughSeam(BlockPos raidCenter, Vec3i raiderPos,
             Operation<Double> original) {
-        return ReseatProbe.decided(this.level, ReseatProbe.RAIDER_DISTANCE, "blocks_sqr",
-                original.call(raidCenter, raiderPos), SeamRange.sqr(this.level, raidCenter, raiderPos));
+        return SeamRange.sqr(this.level, raidCenter, raiderPos);
     }
 
     // The candidate cube is walked in raw section coordinates, and the village-distance tracker only ever holds
@@ -92,7 +90,6 @@ public class RaidMixin {
                 ? raw
                 : raw.stream().map(transformer.chunks::wrapSection).distinct().toList();
 
-        ReseatProbe.decided(this.level, ReseatProbe.VILLAGE_SECTIONS, "sections", raw.size(), folded.size());
         return folded.stream();
     }
 
@@ -110,9 +107,6 @@ public class RaidMixin {
 
         ServerLevel raidLevel = this.level;
         BlockPos raidCenter = this.center;
-        // Vanilla's own key, recomputed rather than read through the comparator it arrives in: a Comparator answers an
-        // ordering, and the probe needs the two distances that ordering was decided on.
-        return Comparator.comparingDouble(pos -> ReseatProbe.decided(raidLevel, ReseatProbe.NEAREST_VILLAGE,
-                "blocks_sqr", pos.distSqr(raidCenter), SeamRange.sqr(raidLevel, raidCenter, pos)));
+        return Comparator.comparingDouble(pos -> SeamRange.sqr(raidLevel, raidCenter, pos));
     }
 }

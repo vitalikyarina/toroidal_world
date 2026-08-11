@@ -9,7 +9,6 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.toroidalworld.entity.SeamAim;
-import com.toroidalworld.probe.ReshapeProbe;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Explosion;
@@ -51,8 +50,6 @@ public class ServerExplosionMixin {
             at = @At("HEAD"), argsOnly = true)
     private static Vec3 toroidal$exposureCentreThroughSeam(Vec3 centre, @Local(argsOnly = true) Entity entity) {
         Vec3 folded = SeamAim.nearestTo(entity, centre);
-        ReshapeProbe.fold(entity.level().dimension(), ReshapeProbe.EXPLOSION_EXPOSURE,
-                centre.x, centre.z, folded.x, folded.z);
         return folded;
     }
 
@@ -61,7 +58,6 @@ public class ServerExplosionMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getX()D"))
     private double toroidal$knockbackOriginX(double entityX, @Local Entity entity) {
         double folded = this.x + SeamAim.foldX(entity, entityX - this.x);
-        ReshapeProbe.foldAxis(entity.level().dimension(), ReshapeProbe.EXPLOSION_KNOCKBACK, "x", entityX, folded);
         return folded;
     }
 
@@ -70,7 +66,6 @@ public class ServerExplosionMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getZ()D"))
     private double toroidal$knockbackOriginZ(double entityZ, @Local Entity entity) {
         double folded = this.z + SeamAim.foldZ(entity, entityZ - this.z);
-        ReshapeProbe.foldAxis(entity.level().dimension(), ReshapeProbe.EXPLOSION_KNOCKBACK, "z", entityZ, folded);
         return folded;
     }
 }

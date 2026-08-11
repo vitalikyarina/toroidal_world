@@ -12,7 +12,6 @@ import org.jspecify.annotations.Nullable;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.core.WrapDomain;
-import com.toroidalworld.probe.ReseatProbe;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
@@ -132,10 +131,10 @@ public class WorldBorderMixin implements TransformerHolder {
 
         BlockPos vanilla = BlockPos.containing(
                 Mth.clamp(x, getMinX(), getMaxX() - 1.0), y, Mth.clamp(z, getMinZ(), getMaxZ() - 1.0));
-        cir.setReturnValue(ReseatProbe.decided(null, ReseatProbe.BORDER_CLAMP, vanilla, BlockPos.containing(
+        cir.setReturnValue(BlockPos.containing(
                 transformer.coords.x.wrap(toroidal$clampToAxis(transformer.coords.x, getMinX(), getMaxX(), x)),
                 y,
-                transformer.coords.z.wrap(toroidal$clampToAxis(transformer.coords.z, getMinZ(), getMaxZ(), z)))));
+                transformer.coords.z.wrap(toroidal$clampToAxis(transformer.coords.z, getMinZ(), getMaxZ(), z))));
     }
 
     // The wall vanilla builds is everything outside its one square, and it is handed to the caller with no anchor to

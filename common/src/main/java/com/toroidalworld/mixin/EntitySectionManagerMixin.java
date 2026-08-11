@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.probe.ReseatProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.server.level.ServerLevel;
@@ -108,7 +107,6 @@ public class EntitySectionManagerMixin implements LevelBindable {
         }
 
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
-        return ReseatProbe.decidedChunkKey(this.toroidal$level, ReseatProbe.ENTITY_CHUNK_KEY, chunkKey,
-                transformer == null ? chunkKey : transformer.chunks.wrapChunkKey(chunkKey));
+        return transformer == null ? chunkKey : transformer.chunks.wrapChunkKey(chunkKey);
     }
 }

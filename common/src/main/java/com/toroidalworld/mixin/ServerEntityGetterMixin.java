@@ -5,7 +5,6 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.probe.ReshapeProbe;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -35,13 +34,10 @@ public interface ServerEntityGetterMixin {
             Operation<Boolean> original, @Local(argsOnly = true) LivingEntity source) {
         WorldLoopTransformer transformer = ((TransformerSource) source).toroidal$wrappedTransformer();
         if (transformer == null) {
-            ReshapeProbe.unwrapped(source.level().dimension(), ReshapeProbe.NEARBY_PLAYER);
             return original.call(box, x, y, z);
         }
 
         AABB folded = transformer.foldBoxToward(new Vec3(x, y, z), box);
-        ReshapeProbe.fold(source.level().dimension(), ReshapeProbe.NEARBY_PLAYER,
-                box.minX, box.minZ, folded.minX, folded.minZ);
         return original.call(folded, x, y, z);
     }
 }

@@ -7,7 +7,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -45,14 +44,11 @@ public class EyeOfEnderMixin {
         EyeOfEnder self = (EyeOfEnder) (Object) this;
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(self.level());
         if (transformer == null) {
-            ReshapeProbe.unwrapped(self.level().dimension(), ReshapeProbe.EYE_SIGNAL);
             original.call(target);
             return;
         }
 
         BlockPos nearest = transformer.blocks.nearestCopy(self.blockPosition(), target);
-        ReshapeProbe.fold(self.level().dimension(), ReshapeProbe.EYE_SIGNAL,
-                target.getX(), target.getZ(), nearest.getX(), nearest.getZ());
         original.call(nearest);
     }
 
@@ -66,7 +62,6 @@ public class EyeOfEnderMixin {
 
         double nearestX = transformer.coords.x.unwrapAround(self.getX(), this.tx);
         double nearestZ = transformer.coords.z.unwrapAround(self.getZ(), this.tz);
-        ReshapeProbe.fold(self.level().dimension(), ReshapeProbe.EYE_STEER, this.tx, this.tz, nearestX, nearestZ);
         this.tx = nearestX;
         this.tz = nearestZ;
     }

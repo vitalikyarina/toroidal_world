@@ -112,21 +112,10 @@ public record TranslationContext(
         int viewReach = viewReach();
         int distanceX = Math.abs(clientPos.x - anchor.x);
         int distanceZ = Math.abs(clientPos.z - anchor.z);
-        boolean far = distanceX > viewReach || distanceZ > viewReach;
-        probeChunk(traffic, chunkPos, clientPos, anchor, distanceX, distanceZ, viewReach, far);
-        if (far) {
+        if (distanceX > viewReach || distanceZ > viewReach) {
             warnChunkFarFromAnchor(traffic, chunkPos, clientPos, anchor, viewReach);
         }
         return clientPos;
-    }
-
-    // Every door reports, not only the ones that broke: a door that ran clean and a door that never ran are different
-    // answers to "who produced this key", and only the call count tells them apart.
-    private void probeChunk(ChunkTraffic traffic, ChunkPos serverPos, ChunkPos clientPos, ChunkPos anchor,
-            int distanceX, int distanceZ, int viewReach, boolean far) {
-        PacketProbe.chunkTranslate(dimension, traffic, serverPos, clientPos, anchor,
-                transformer.chunks.x.overshoot(serverPos.x), transformer.chunks.z.overshoot(serverPos.z),
-                distanceX, distanceZ, viewReach, clientPosition.x(), clientPosition.z(), far);
     }
 
     // The copies of a forgotten chunk the client might be holding. Within the view's reach the nearest copy is the
@@ -138,8 +127,6 @@ public record TranslationContext(
         ChunkPos anchor = clientPosition.chunk();
         ChunkPos nearest = transformer.chunks.unwrap(anchor, chunkPos);
         int ambiguityReach = copyAmbiguityReach();
-        probeChunk(ChunkTraffic.FORGET, chunkPos, nearest, anchor,
-                Math.abs(nearest.x - anchor.x), Math.abs(nearest.z - anchor.z), ambiguityReach, false);
         int[] xCandidates = axisCandidates(transformer.chunks.x, nearest.x, nearest.x - anchor.x, ambiguityReach);
         int[] zCandidates = axisCandidates(transformer.chunks.z, nearest.z, nearest.z - anchor.z, ambiguityReach);
 

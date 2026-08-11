@@ -4,7 +4,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamRange;
-import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -25,8 +24,6 @@ public class GoToTargetLocationMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;closerThan(Lnet/minecraft/core/Vec3i;D)Z"))
     private static boolean toroidal$arrivalThroughSeam(BlockPos location, Vec3i bodyPos, double distance,
             Operation<Boolean> original, @Local(argsOnly = true) Mob body) {
-        return ReseatProbe.decided(body.level(), ReseatProbe.ARRIVAL_GATE,
-                original.call(location, bodyPos, distance),
-                SeamRange.closerThan(body, location, bodyPos, distance));
+        return SeamRange.closerThan(body, location, bodyPos, distance);
     }
 }

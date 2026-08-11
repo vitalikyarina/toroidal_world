@@ -5,7 +5,6 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.entity.SeamRange;
-import com.toroidalworld.probe.ReseatProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -38,9 +37,7 @@ public interface PlayerDetectorMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;closerThan(Lnet/minecraft/core/Vec3i;D)Z"))
     private static boolean toroidal$detectionRangeThroughSeam(BlockPos playerPos, Vec3i spawnerPos, double range,
             Operation<Boolean> original, @Local(argsOnly = true) Player player) {
-        return ReseatProbe.decided(player.level(), ReseatProbe.DETECTOR_RANGE,
-                original.call(playerPos, spawnerPos, range),
-                SeamRange.closerThan(player.level(), playerPos, spawnerPos, range));
+        return SeamRange.closerThan(player.level(), playerPos, spawnerPos, range);
     }
 
     @WrapMethod(method = "inLineOfSight")

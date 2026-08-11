@@ -6,7 +6,6 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.probe.ReseatProbe;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
@@ -40,15 +39,13 @@ public class LivingEntityMixin {
     @ModifyVariable(method = "knockback(DDD)V", at = @At("HEAD"), argsOnly = true, ordinal = 1)
     private double toroidal$knockbackDirX(double xd) {
         WorldLoopTransformer transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return ReseatProbe.decided(((LivingEntity) (Object) this).level(), ReseatProbe.KNOCKBACK_DIR, "blocks", xd,
-                transformer == null ? xd : transformer.coords.x.foldDelta(xd));
+        return transformer == null ? xd : transformer.coords.x.foldDelta(xd);
     }
 
     @ModifyVariable(method = "knockback(DDD)V", at = @At("HEAD"), argsOnly = true, ordinal = 2)
     private double toroidal$knockbackDirZ(double zd) {
         WorldLoopTransformer transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return ReseatProbe.decided(((LivingEntity) (Object) this).level(), ReseatProbe.KNOCKBACK_DIR, "blocks", zd,
-                transformer == null ? zd : transformer.coords.z.foldDelta(zd));
+        return transformer == null ? zd : transformer.coords.z.foldDelta(zd);
     }
 
     // Seeing something is drawn as a line from the eye to it, refused outright past 128 blocks and then clipped against

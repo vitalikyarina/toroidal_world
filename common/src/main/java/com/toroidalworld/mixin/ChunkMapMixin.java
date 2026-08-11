@@ -1,6 +1,5 @@
 package com.toroidalworld.mixin;
 
-import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -8,7 +7,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.ChunkResender;
 import com.toroidalworld.accessors.LevelBindable;
@@ -17,8 +15,6 @@ import com.toroidalworld.accessors.SeamDriveScheduler;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.gen.SeamDriveRequest;
-import com.toroidalworld.gen.TicketProbe;
-import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -29,8 +25,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import net.minecraft.core.SectionPos;
-import net.minecraft.server.level.ChunkHolder;
-import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ChunkTrackingView;
@@ -193,26 +187,6 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
         ((LevelBindable) this.getDistanceManager()).toroidal$bindLevel(this.level);
     }
 
-    // Probe. This is the one place a chunk holder comes into existence, and a holder on a key past the bounds is the
-    // phantom the whole fold exists to make impossible — it is read here rather than inferred from the graphs, because
-    // this is the effect the DoD names.
-    //
-    // Read at HEAD, not at RETURN: the holder is a parameter vanilla assigns to on the very branch that creates one, so
-    // by RETURN the slot Mixin reads holds the new holder and "was there none before" can never come out true. At HEAD
-    // the parameter is still the caller's, and creation is decided by restating vanilla's own condition for entering
-    // that branch — a loaded destination level with no holder yet, which also covers the revival out of pendingUnloads.
-    @Inject(method = "updateChunkScheduling", at = @At("HEAD"))
-    private void toroidal$probeScheduledHolder(long chunkKey, int newLevel, @Nullable ChunkHolder holder,
-            int oldLevel, CallbackInfoReturnable<ChunkHolder> cir) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
-        if (transformer == null) {
-            return;
-        }
-
-        TicketProbe.holderScheduled(this.level, transformer, chunkKey,
-                holder == null && ChunkLevel.isLoaded(newLevel));
-    }
-
     // The tracking layer must never be stamped with a raw out-of-bounds position. Mid-tick, an entity that has just
     // crossed the seam still sits at its pre-wrap coordinate (the wrap runs at tick end), and a section or view centre
     // taken from it seeds tickets, the section memory and the view in the phantom frame — on the next move the whole
@@ -299,7 +273,6 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
     private double toroidal$wrappedSpawnDistance(ChunkPos chunkPos, Entity player, Operation<Double> original) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
-            ReshapeProbe.unwrapped(this.level.dimension(), ReshapeProbe.SPAWN_CHUNK_DISTANCE);
             return original.call(chunkPos, player);
         }
 
@@ -308,7 +281,6 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
         double vanilla = original.call(chunkPos, player);
         double folded = transformer.coords.sqrDistToBounds(
                 player.getX(), 0.0, player.getZ(), chunkCenterX, 0.0, chunkCenterZ);
-        ReshapeProbe.foldAxis(this.level.dimension(), ReshapeProbe.SPAWN_CHUNK_DISTANCE, "sqr", vanilla, folded);
         return folded;
     }
 }

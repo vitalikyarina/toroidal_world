@@ -4,7 +4,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamRange;
-import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
@@ -25,8 +24,6 @@ public class TurtleMixin {
     private boolean toroidal$homeApproachThroughSeam(BlockPos homePos, Position bodyPosition, double distance,
             Operation<Boolean> original) {
         Turtle turtle = (Turtle) (Object) this;
-        return ReseatProbe.decided(turtle.level(), ReseatProbe.TURTLE_HOME,
-                original.call(homePos, bodyPosition, distance),
-                SeamRange.closerToCenterThan(turtle, homePos, bodyPosition, distance));
+        return SeamRange.closerToCenterThan(turtle, homePos, bodyPosition, distance);
     }
 }

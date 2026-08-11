@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
@@ -105,7 +104,7 @@ public abstract class ChunkGeneratorStructureStateMixin implements TransformerHo
         WorldLoopTransformer transformer = this.toroidal$transformer;
         boolean beyondSearchReach = ringIndex > 0
                 && transformer.chunks.overshoot(ringChunkX, ringChunkZ) > toroidal$BIOME_SEARCH_REACH_CHUNKS;
-        if (ReseatProbe.decided(null, ReseatProbe.RING_SEARCH, false, beyondSearchReach)) {
+        if (beyondSearchReach) {
             ChunkPos beyondTheWorld = new ChunkPos(ringChunkX, ringChunkZ);
             return () -> beyondTheWorld;
         }

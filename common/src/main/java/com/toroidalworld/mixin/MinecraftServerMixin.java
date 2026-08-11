@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.CurrentServer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
@@ -101,6 +100,6 @@ public class MinecraftServerMixin {
                     target = "Lnet/minecraft/world/level/storage/ServerLevelData;setSpawn(Lnet/minecraft/core/BlockPos;F)V"))
     private static void toroidal$storeInitialSpawnInsideBounds(ServerLevelData levelData, BlockPos spawnPos,
             float spawnAngle, Operation<Void> original, @Local(argsOnly = true) ServerLevel level) {
-        original.call(levelData, SeamRespawnData.insideBounds(level, ReshapeProbe.INITIAL_SPAWN, spawnPos), spawnAngle);
+        original.call(levelData, SeamRespawnData.insideBounds(level, spawnPos), spawnAngle);
     }
 }

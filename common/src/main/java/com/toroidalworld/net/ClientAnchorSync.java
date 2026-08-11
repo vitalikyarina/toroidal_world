@@ -3,7 +3,6 @@ package com.toroidalworld.net;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
-import com.toroidalworld.probe.ReshapeProbe;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -64,8 +63,6 @@ public final class ClientAnchorSync {
             return;
         }
 
-        ReshapeProbe.fold(level.dimension(), ReshapeProbe.ANCHOR_SPAWN,
-                spawnPos.getX(), spawnPos.getZ(), wantX, wantZ);
         player.connection.send(
                 new ClientboundSetDefaultSpawnPositionPacket(spawnPos, level.getSharedSpawnAngle()));
     }

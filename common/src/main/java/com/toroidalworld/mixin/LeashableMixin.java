@@ -4,7 +4,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamAim;
-import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
@@ -27,8 +26,7 @@ public interface LeashableMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getX()D", ordinal = 0))
     private static double toroidal$holderXThroughSeam(double holderX,
             @Local(argsOnly = true, ordinal = 0) Entity leashed) {
-        return ReseatProbe.decided(leashed.level(), ReseatProbe.LEASH_ELASTIC, "blocks", holderX,
-                SeamAim.nearX(leashed, holderX));
+        return SeamAim.nearX(leashed, holderX);
     }
 
     @ModifyExpressionValue(
@@ -36,7 +34,6 @@ public interface LeashableMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getZ()D", ordinal = 0))
     private static double toroidal$holderZThroughSeam(double holderZ,
             @Local(argsOnly = true, ordinal = 0) Entity leashed) {
-        return ReseatProbe.decided(leashed.level(), ReseatProbe.LEASH_ELASTIC, "blocks", holderZ,
-                SeamAim.nearZ(leashed, holderZ));
+        return SeamAim.nearZ(leashed, holderZ);
     }
 }

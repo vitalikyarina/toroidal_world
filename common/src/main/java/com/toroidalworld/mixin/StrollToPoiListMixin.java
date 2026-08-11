@@ -4,7 +4,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamRange;
-import com.toroidalworld.probe.ReseatProbe;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -26,8 +25,6 @@ public class StrollToPoiListMixin {
                     target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
     private static boolean toroidal$anchorTetherThroughSeam(BlockPos anchorPos, Position bodyPosition, double distance,
             Operation<Boolean> original, @Local(argsOnly = true) Villager body) {
-        return ReseatProbe.decided(body.level(), ReseatProbe.ANCHOR_TETHER,
-                original.call(anchorPos, bodyPosition, distance),
-                SeamRange.closerToCenterThan(body, anchorPos, bodyPosition, distance));
+        return SeamRange.closerToCenterThan(body, anchorPos, bodyPosition, distance);
     }
 }
