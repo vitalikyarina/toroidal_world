@@ -218,7 +218,8 @@
     "BiomePrecipitationMixin",
     "ClientLevelMixin",
     "CompassAngleStateMixin",
-    "DebugEntryPositionMixin"
+    "DebugEntryPositionMixin",
+    "WeatherEffectRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
