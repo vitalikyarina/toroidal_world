@@ -9,6 +9,10 @@
 - The game keeps working across the seam, not just the blocks: mob AI and pathfinding, projectiles and explosions, sounds and particles, compasses and lodestones, villages and raids, distance-based advancements — they all treat the world as round.
 - The Nether and the End are toroidal too — the Nether scaled relative to the overworld, the End with its own size.
 
+## Dedicated servers
+
+One line in `server.properties` creates a toroidal world: `level-type=toroidal_world:medium`, with five sizes — `tiny`, `small`, `medium`, `large`, `huge`. Custom sizes and the full walkthrough are in the [dedicated server guide](https://github.com/vitalikyarina/toroidal_world/blob/main/docs/dedicated-server.md).
+
 ## Compatibility
 
 Runs on **NeoForge** and **Fabric**.
