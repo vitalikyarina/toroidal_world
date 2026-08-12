@@ -1,0 +1,30 @@
+{
+  "argument.toroidal_world.pos.outside_world": "%s은(는) 이 세계 밖에 있습니다 — %s와(과) %s 사이여야 합니다",
+  "commands.toroidal_world.region.across_seam": "이 영역은 세계의 이음새를 가로질러 어느 쪽이든 의미할 수 있습니다 — 양쪽에서 명령을 한 번씩 실행하세요",
+
+  "gui.toroidal_world.world_shape": "세계 형태",
+  "gui.toroidal_world.world_shape.normal": "일반",
+  "gui.toroidal_world.world_shape.toroidal": "토로이드형",
+
+  "gui.toroidal_world.toroidal_settings.title": "토로이드형 세계 설정",
+  "gui.toroidal_world.toroidal_settings.preset.tiny": "아주 작음",
+  "gui.toroidal_world.toroidal_settings.preset.small": "작음",
+  "gui.toroidal_world.toroidal_settings.preset.medium": "중간",
+  "gui.toroidal_world.toroidal_settings.preset.large": "큼",
+  "gui.toroidal_world.toroidal_settings.preset.huge": "아주 큼",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_scarce": "마을 생성 격자보다 작아 구조물이 드물게 생성됩니다.",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_villages": "마을이 들어설 공간이 있습니다. 삼림 대저택은 드뭅니다.",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_common": "일반적인 구조물이 모두 들어섭니다. 요새는 평소보다 가까이 나타납니다.",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_all": "모든 구조물이 평소 거리에서 생성됩니다.",
+  "gui.toroidal_world.toroidal_settings.size": "청크 단위 세계 크기 (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.hint": "출발한 곳으로 돌아오기까지 걷는 거리입니다.",
+  "gui.toroidal_world.toroidal_settings.effective": "%s 청크 = %s 블록",
+  "gui.toroidal_world.toroidal_settings.nether_scale": "네더 배율: 1:%s",
+  "gui.toroidal_world.toroidal_settings.nether_hint": "같은 여정이 네더를 거치면 얼마나 짧아지는지입니다. 세계를 나누어떨어지게 하는 배율만 제공됩니다.",
+  "gui.toroidal_world.toroidal_settings.nether_effective": "네더: %s 청크 = %s 블록",
+  "gui.toroidal_world.toroidal_settings.end_size": "청크 단위 엔드 크기 (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.end_hint": "엔드는 세계 크기와 무관하게 자체 너비로 순환합니다. 최솟값보다 작으면 바깥 섬이 없어 엔드 시티도 겉날개도 없습니다.",
+  "gui.toroidal_world.toroidal_settings.end_effective": "엔드: %s 청크 = %s 블록",
+  "gui.toroidal_world.toroidal_settings.too_small": "너무 작습니다 — 최소 %s 청크.",
+  "gui.toroidal_world.toroidal_settings.too_large": "너무 큽니다 — 최대 %s 청크."
+}

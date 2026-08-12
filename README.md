@@ -4,6 +4,8 @@ A NeoForge mod that makes the Minecraft world a seamless torus: the world has a 
 
 The player-facing description (the Modrinth page source) lives in [DESCRIPTION.md](DESCRIPTION.md).
 
+Running a server? [docs/dedicated-server.md](docs/dedicated-server.md) — one `level-type` line turns a dedicated server into a toroidal world.
+
 ## Versions
 
 - Minecraft **26.2**, NeoForge **26.2.0.45-beta+**.

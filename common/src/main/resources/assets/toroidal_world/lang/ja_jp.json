@@ -1,0 +1,30 @@
+{
+  "argument.toroidal_world.pos.outside_world": "%s はこのワールドの外にあります — %s と %s の間でなければなりません",
+  "commands.toroidal_world.region.across_seam": "この範囲はワールドの継ぎ目をまたいでおり、どちら側とも解釈できます — 片側ずつコマンドを実行してください",
+
+  "gui.toroidal_world.world_shape": "ワールドの形状",
+  "gui.toroidal_world.world_shape.normal": "通常",
+  "gui.toroidal_world.world_shape.toroidal": "トロイダル",
+
+  "gui.toroidal_world.toroidal_settings.title": "トロイダルワールド設定",
+  "gui.toroidal_world.toroidal_settings.preset.tiny": "極小",
+  "gui.toroidal_world.toroidal_settings.preset.small": "小",
+  "gui.toroidal_world.toroidal_settings.preset.medium": "中",
+  "gui.toroidal_world.toroidal_settings.preset.large": "大",
+  "gui.toroidal_world.toroidal_settings.preset.huge": "特大",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_scarce": "村の生成間隔より狭いため、構造物はごくまれにしか生成されません。",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_villages": "村が入る広さです。森の洋館はまれになります。",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_common": "一般的な構造物がひととおり入る広さです。要塞は通常より近くに現れます。",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_all": "すべての構造物が通常の間隔で生成されます。",
+  "gui.toroidal_world.toroidal_settings.size": "ワールドの大きさ（%s–%s チャンク）",
+  "gui.toroidal_world.toroidal_settings.hint": "出発地点に戻ってくるまでに歩く距離。",
+  "gui.toroidal_world.toroidal_settings.effective": "%s チャンク = %s ブロック",
+  "gui.toroidal_world.toroidal_settings.nether_scale": "ネザーの縮尺：1:%s",
+  "gui.toroidal_world.toroidal_settings.nether_hint": "同じ旅がネザー経由でどれだけ短くなるか。ワールドを割り切れる縮尺のみ選べます。",
+  "gui.toroidal_world.toroidal_settings.nether_effective": "ネザー：%s チャンク = %s ブロック",
+  "gui.toroidal_world.toroidal_settings.end_size": "エンドの大きさ（%s–%s チャンク）",
+  "gui.toroidal_world.toroidal_settings.end_hint": "エンドはワールドの大きさとは無関係に、自身の幅で一周します。最小値より小さいと外側の島が存在せず、エンドシティもエリトラもありません。",
+  "gui.toroidal_world.toroidal_settings.end_effective": "エンド：%s チャンク = %s ブロック",
+  "gui.toroidal_world.toroidal_settings.too_small": "小さすぎます — 最低 %s チャンクです。",
+  "gui.toroidal_world.toroidal_settings.too_large": "大きすぎます — 最大 %s チャンクです。"
+}

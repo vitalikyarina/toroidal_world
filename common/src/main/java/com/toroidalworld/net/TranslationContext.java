@@ -8,7 +8,6 @@ import java.util.function.IntPredicate;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
-import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.LogRateGate;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.core.WrapDomain;
@@ -21,6 +20,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ChunkTrackingView;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -45,7 +45,8 @@ public record TranslationContext(
         RegistryAccess registryAccess,
         IntFunction<RegistryFriendlyByteBuf> bufferFactory,
         ResourceKey<Level> dimension,
-        int viewDistance,
+        int trackedViewDistance,
+        int heldViewDistance,
         IntPredicate ownVehicle,
         IntFunction<@Nullable Vec3> entityPosition,
         Runnable rebase) {
@@ -56,11 +57,6 @@ public record TranslationContext(
     // vanilla tracks beyond the view, and one more where it forgets what fell out.
     private static final int VIEW_REACH_SLACK = 2;
 
-    // The mirror is written from the client's own movement packets, while the radius a packet was gated on was
-    // measured against the player's server position a moment earlier. A chunk of blocks covers the gap, so a fast
-    // mover is never accused of standing outside a bound they are inside.
-    private static final double COORD_REACH_SLACK = CoordinateConstants.CHUNK_WIDTH;
-
     // Vanilla's own floor for a client's requested view distance, below which ChunkMap will not go.
     private static final int MIN_VIEW_DISTANCE = 2;
 
@@ -68,25 +64,45 @@ public record TranslationContext(
     private static final LogRateGate WARN_GATE = new LogRateGate();
 
     public static TranslationContext of(ServerPlayer player, WorldLoopTransformer transformer) {
+        int trackedViewDistance = trackedViewDistanceOf(player, transformer);
         return new TranslationContext(
                 transformer,
                 WorldLoopAttachments.clientPositionOf(player),
                 player.registryAccess(),
                 Platforms.get().packetBuffers(player),
                 player.level().dimension(),
-                viewDistanceOf(player, transformer),
+                trackedViewDistance,
+                heldViewDistanceOf(player, trackedViewDistance),
                 entityId -> isControlledVehicle(player, entityId),
                 entityId -> positionOf(player, entityId),
                 () -> WorldLoopAttachments.rebaseClientPositionOf(player));
     }
 
-    // What the client can actually see, resolved the way ChunkMap resolves it: the client's own request, held to the
-    // server's setting and then to the world's ceiling. Not the ceiling on its own — that is half the world by
-    // construction, which is exactly the distance a fold can never exceed, so a guard standing on it can never fire.
-    private static int viewDistanceOf(ServerPlayer player, WorldLoopTransformer transformer) {
+    // What the entity tracker measures with, resolved the way it resolves it: TrackedEntity.updatePlayer re-reads
+    // ChunkMap.getPlayerViewDistance on every pass, so this number is the live one by construction — the client's own
+    // request, held to the server's setting and then to the world's ceiling. Not the ceiling on its own — that is half
+    // the world, which is exactly the distance a fold can never exceed, so a guard standing on it can never fire.
+    private static int trackedViewDistanceOf(ServerPlayer player, WorldLoopTransformer transformer) {
         int serverViewDistance = player.level().getServer().getPlayerList().getViewDistance();
         return transformer.limitViewDistance(
                 Mth.clamp(player.requestedViewDistance(), MIN_VIEW_DISTANCE, serverViewDistance));
+    }
+
+    // What the chunk gate measures with, which is not the same question. ChunkMap.isChunkTracked admits chunk traffic
+    // through player.getChunkTrackingView(), and that view is a standing decision — re-applied in ChunkMap.tick, in
+    // ChunkMap.move and in setServerViewDistance, never at the moment the client's setting changes. Deriving a second
+    // radius from the setting therefore names a different number for as long as the two are out of step, and the
+    // shrinking direction is the one that bites: the traffic is still gated on the wide view while the derivation has
+    // already narrowed. Reading the radius off the view is what makes gate and guard agree by construction — including
+    // this world's own ceiling, which ChunkMapMixin already folds into getPlayerViewDistance.
+    //
+    // EMPTY is the view between a player leaving the tracker and their first tracking pass — updatePlayerStatus sets it
+    // and calls updateChunkTracking in the next statement. Nothing is gated through it, so the derived radius is both
+    // the only number there is and one that costs nothing.
+    private static int heldViewDistanceOf(ServerPlayer player, int trackedViewDistance) {
+        return player.getChunkTrackingView() instanceof ChunkTrackingView.Positioned view
+                ? view.viewDistance()
+                : trackedViewDistance;
     }
 
     private static boolean isControlledVehicle(ServerPlayer player, int entityId) {
@@ -107,12 +123,35 @@ public record TranslationContext(
     // and backstopped here: a chunk farther from the anchor than the view could reach cannot come from view traffic,
     // so it is warned about instead of corrupting the client's cache in silence. No per-chunk memory is needed.
     public ChunkPos toClient(ChunkPos chunkPos) {
-        ChunkPos anchor = clientPosition.chunk();
+        ChunkPos anchor = chunkAnchor();
         ChunkPos clientPos = transformer.chunks.unwrap(anchor, chunkPos);
         int viewReach = viewReach();
         if (Math.abs(clientPos.x() - anchor.x()) > viewReach || Math.abs(clientPos.z() - anchor.z()) > viewReach) {
             warnChunkFarFromAnchor(chunkPos, clientPos, anchor, viewReach);
         }
+        return clientPos;
+    }
+
+    // Where the client's chunk cache stands, which is not always where the player does. Vanilla gates chunk traffic on
+    // the tracking view and announces that view's centre with the cache-centre packet, so the centre the client last
+    // received is both the copy its cache is built around and the point the traffic was measured from. The mirror is a
+    // different thing: it follows the player, and a teleport moves it a tick before the view re-centres — a window this
+    // door used to fold and judge traffic in, from a point the client's cache had not reached. Reading the centre out
+    // of the packet stream keeps the two in step by construction: the anchor changes exactly where the client's own
+    // cache changes, in the same order, because both are that one packet. Before it has ever arrived — the first
+    // chunks of a login or a dimension change — the mirror is the only anchor there is, and it is right, because the
+    // client's cache is empty and about to be built around the player.
+    private ChunkPos chunkAnchor() {
+        ChunkPos heldCacheCenter = clientPosition.heldCacheCenter();
+        return heldCacheCenter == null ? clientPosition.chunk() : heldCacheCenter;
+    }
+
+    // The cache-centre packet sets the anchor rather than riding on it, so it takes its own door. It folds around the
+    // mirror — the centre vanilla computed is the player's own chunk, and the client is about to move its cache there —
+    // and it is not held to the view reach, which measures traffic against a centre this packet is still delivering.
+    public ChunkPos toClientCacheCenter(ChunkPos chunkPos) {
+        ChunkPos clientPos = transformer.chunks.unwrap(clientPosition.chunk(), chunkPos);
+        clientPosition.setHeldCacheCenter(clientPos);
         return clientPos;
     }
 
@@ -153,9 +192,11 @@ public record TranslationContext(
         return other == nearest ? new int[] {nearest} : new int[] {nearest, other};
     }
 
-    // How far a chunk the client is holding may sit from the anchor: as far as its view reaches, and no further.
+    // How far a chunk the client is holding may sit from the anchor: as far as the view it was admitted through
+    // reaches, and no further. ChunkTrackingView.Positioned.contains puts that bound at viewDistance + 1 chunks on an
+    // axis; the slack above carries the one more this door owes.
     private int viewReach() {
-        return viewDistance + VIEW_REACH_SLACK;
+        return heldViewDistance + VIEW_REACH_SLACK;
     }
 
     // A different question, which the same number used to answer. Which copy of a chunk lies nearest the anchor stops
@@ -187,13 +228,19 @@ public record TranslationContext(
     // steps, a damage source, the anchor a particle payload hangs on. All of them ride on a tracked entity, and the
     // tracker never shows one past the client's own view.
     public PacketReach trackedReach() {
-        return PacketReach.tracked(viewDistance);
+        return PacketReach.tracked(trackedViewDistance);
     }
 
     private void guardReach(PacketReach reach, String axis, double serverValue, double clientValue, double anchor) {
-        if (Math.abs(clientValue - anchor) > reach.blocks() + COORD_REACH_SLACK) {
+        if (!withinReach(clientValue, anchor, reach)) {
             warnCoordFarFromAnchor(reach, axis, serverValue, clientValue, anchor);
         }
+    }
+
+    // The verdict on its own, so the bound can be asserted against the terms each family's slack was derived from
+    // rather than read back off the numbers that state it.
+    static boolean withinReach(double clientValue, double anchor, PacketReach reach) {
+        return Math.abs(clientValue - anchor) <= reach.blocks() + reach.slackBlocks();
     }
 
     // The plain nearest-copy fold, outside the guard above — the loose-coordinate twin of nearestCopy(ChunkPos) and of
@@ -232,8 +279,9 @@ public record TranslationContext(
         }
 
         LOGGER.warn("A {} packet's {} lands farther from the client anchor than it can reach in {}:"
-                        + " server {} translated to client {} around anchor {}, reach {} blocks",
-                reach.kind(), axis, dimension.identifier(), serverValue, clientValue, anchor, reach.blocks());
+                        + " server {} translated to client {} around anchor {}, reach {} blocks, slack {} blocks",
+                reach.kind(), axis, dimension.identifier(), serverValue, clientValue, anchor,
+                reach.blocks(), reach.slackBlocks());
     }
 
     public Vec3 toClient(Vec3 position, PacketReach reach) {

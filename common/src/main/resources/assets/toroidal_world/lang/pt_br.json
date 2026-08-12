@@ -1,0 +1,30 @@
+{
+  "argument.toroidal_world.pos.outside_world": "%s está fora deste mundo — deve estar entre %s e %s",
+  "commands.toroidal_world.region.across_seam": "Essa área cruza a emenda do mundo e pode significar qualquer um dos lados — execute o comando uma vez por lado",
+
+  "gui.toroidal_world.world_shape": "Formato do mundo",
+  "gui.toroidal_world.world_shape.normal": "Normal",
+  "gui.toroidal_world.world_shape.toroidal": "Toroidal",
+
+  "gui.toroidal_world.toroidal_settings.title": "Configurações do mundo toroidal",
+  "gui.toroidal_world.toroidal_settings.preset.tiny": "Minúsculo",
+  "gui.toroidal_world.toroidal_settings.preset.small": "Pequeno",
+  "gui.toroidal_world.toroidal_settings.preset.medium": "Médio",
+  "gui.toroidal_world.toroidal_settings.preset.large": "Grande",
+  "gui.toroidal_world.toroidal_settings.preset.huge": "Enorme",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_scarce": "Menor que a grade de vilas — estruturas serão escassas.",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_villages": "Espaço para vilas; mansões da floresta serão raras.",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_common": "Espaço para todas as estruturas comuns; fortalezas ficam mais perto que o normal.",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_all": "Espaço para toda estrutura na distância normal.",
+  "gui.toroidal_world.toroidal_settings.size": "Tamanho do mundo em chunks (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.hint": "Quão longe você anda até voltar ao ponto de partida.",
+  "gui.toroidal_world.toroidal_settings.effective": "%s chunks = %s blocos",
+  "gui.toroidal_world.toroidal_settings.nether_scale": "Escala do Nether: 1:%s",
+  "gui.toroidal_world.toroidal_settings.nether_hint": "Quanto mais curta fica a mesma viagem pelo Nether. Apenas escalas que dividem o mundo por igual são oferecidas.",
+  "gui.toroidal_world.toroidal_settings.nether_effective": "Nether: %s chunks = %s blocos",
+  "gui.toroidal_world.toroidal_settings.end_size": "Tamanho do End em chunks (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.end_hint": "O End dá a volta na própria largura, independente do tamanho do mundo. Menor que o mínimo não deixa ilhas externas — sem cidades do End, sem élitros.",
+  "gui.toroidal_world.toroidal_settings.end_effective": "End: %s chunks = %s blocos",
+  "gui.toroidal_world.toroidal_settings.too_small": "Pequeno demais — no mínimo %s chunks.",
+  "gui.toroidal_world.toroidal_settings.too_large": "Grande demais — no máximo %s chunks."
+}

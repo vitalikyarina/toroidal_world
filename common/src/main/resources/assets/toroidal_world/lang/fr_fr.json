@@ -1,0 +1,30 @@
+{
+  "argument.toroidal_world.pos.outside_world": "%s est en dehors de ce monde — doit être entre %s et %s",
+  "commands.toroidal_world.region.across_seam": "Cette zone traverse la couture du monde et peut désigner l'un ou l'autre côté — exécutez la commande une fois par côté",
+
+  "gui.toroidal_world.world_shape": "Forme du monde",
+  "gui.toroidal_world.world_shape.normal": "Normale",
+  "gui.toroidal_world.world_shape.toroidal": "Toroïdale",
+
+  "gui.toroidal_world.toroidal_settings.title": "Réglages du monde toroïdal",
+  "gui.toroidal_world.toroidal_settings.preset.tiny": "Minuscule",
+  "gui.toroidal_world.toroidal_settings.preset.small": "Petit",
+  "gui.toroidal_world.toroidal_settings.preset.medium": "Moyen",
+  "gui.toroidal_world.toroidal_settings.preset.large": "Grand",
+  "gui.toroidal_world.toroidal_settings.preset.huge": "Immense",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_scarce": "Plus petit que la grille des villages — les structures seront rares.",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_villages": "De la place pour les villages ; les manoirs seront rares.",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_common": "De la place pour toutes les structures courantes ; les forteresses se trouvent plus près que d'habitude.",
+  "gui.toroidal_world.toroidal_settings.consequence.structures_all": "De la place pour chaque structure à sa distance habituelle.",
+  "gui.toroidal_world.toroidal_settings.size": "Taille du monde en tronçons (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.hint": "La distance à parcourir avant de revenir à votre point de départ.",
+  "gui.toroidal_world.toroidal_settings.effective": "%s tronçons = %s blocs",
+  "gui.toroidal_world.toroidal_settings.nether_scale": "Échelle du Nether : 1:%s",
+  "gui.toroidal_world.toroidal_settings.nether_hint": "De combien le même trajet est raccourci en passant par le Nether. Seules les échelles qui divisent le monde exactement sont proposées.",
+  "gui.toroidal_world.toroidal_settings.nether_effective": "Nether : %s tronçons = %s blocs",
+  "gui.toroidal_world.toroidal_settings.end_size": "Taille de l'End en tronçons (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.end_hint": "L'End se referme sur sa propre largeur, indépendamment de la taille du monde. En dessous du minimum, il n'y a plus d'îles extérieures — ni cités de l'End, ni élytres.",
+  "gui.toroidal_world.toroidal_settings.end_effective": "End : %s tronçons = %s blocs",
+  "gui.toroidal_world.toroidal_settings.too_small": "Trop petit — au moins %s tronçons.",
+  "gui.toroidal_world.toroidal_settings.too_large": "Trop grand — au plus %s tronçons."
+}

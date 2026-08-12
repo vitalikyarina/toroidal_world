@@ -34,7 +34,7 @@ public final class WorldLoop {
             DeferredRegister.create(Registries.TICKET_TYPE, ToroidalWorld.MODID);
 
     public static void init(IEventBus modEventBus, ModContainer modContainer) {
-        Platforms.set(new NeoForgePlatform());
+        Platforms.set(new NeoForgePlatform(modContainer));
 
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_ID, () -> LoopedChunkGenerator.CODEC);
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_FLAT_ID, () -> LoopedFlatChunkGenerator.CODEC);
@@ -49,8 +49,10 @@ public final class WorldLoop {
 
         // The spec alone only yields the toml; the mod-list Config button needs a screen factory. NeoForge's generic
         // ConfigurationScreen builds the UI from the registered specs. Guarded because init also runs on the dedicated
-        // server, where the screen classes do not exist; the method reference is only materialised inside.
-        if (Platforms.get().isClient()) {
+        // server, where the screen classes do not exist; the method reference is only materialised inside. The isEmpty
+        // guard keeps the Config button away while the spec has no keys — FML skips registering an empty spec, so the
+        // button would open a blank screen.
+        if (Platforms.get().isClient() && !WorldLoopConfig.SPEC.isEmpty()) {
             modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
         }
     }
