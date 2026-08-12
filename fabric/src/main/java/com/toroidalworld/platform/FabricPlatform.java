@@ -2,7 +2,6 @@ package com.toroidalworld.platform;
 
 import java.util.function.IntFunction;
 
-import com.toroidalworld.config.FabricWorldLoopConfig;
 import com.toroidalworld.net.WrappingSettingsPayload;
 import com.toroidalworld.options.WorldLoopBounds;
 
@@ -26,11 +25,6 @@ public final class FabricPlatform implements Platform {
         if (ServerPlayNetworking.canSend(player, WrappingSettingsPayload.TYPE)) {
             ServerPlayNetworking.send(player, new WrappingSettingsPayload(bounds));
         }
-    }
-
-    @Override
-    public boolean showRawF3Coordinates() {
-        return FabricWorldLoopConfig.showRawF3Coordinates();
     }
 
     @Override
