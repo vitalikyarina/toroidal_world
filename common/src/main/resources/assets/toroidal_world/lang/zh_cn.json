@@ -1,0 +1,21 @@
+{
+  "argument.toroidal_world.pos.outside_world": "%s 超出了这个世界的范围——必须在 %s 和 %s 之间",
+  "commands.toroidal_world.region.across_seam": "该区域跨越世界接缝，可能指接缝的任意一侧——请在每一侧分别执行该命令",
+
+  "gui.toroidal_world.world_shape": "世界形状",
+  "gui.toroidal_world.world_shape.normal": "普通",
+  "gui.toroidal_world.world_shape.toroidal": "环面",
+
+  "gui.toroidal_world.toroidal_settings.title": "环面世界设置",
+  "gui.toroidal_world.toroidal_settings.size": "世界大小（%s–%s 区块）",
+  "gui.toroidal_world.toroidal_settings.hint": "走多远才能回到出发的地方。",
+  "gui.toroidal_world.toroidal_settings.effective": "%s 区块 = %s 方块",
+  "gui.toroidal_world.toroidal_settings.nether_scale": "下界比例：1:%s",
+  "gui.toroidal_world.toroidal_settings.nether_hint": "同样的旅程经由下界能缩短多少。只提供能整除世界大小的比例。",
+  "gui.toroidal_world.toroidal_settings.nether_effective": "下界：%s 区块 = %s 方块",
+  "gui.toroidal_world.toroidal_settings.end_size": "末地大小（%s–%s 区块）",
+  "gui.toroidal_world.toroidal_settings.end_hint": "末地按自身宽度环绕，与世界大小无关。小于最小值将不会有外围岛屿——没有末地城，也没有鞘翅。",
+  "gui.toroidal_world.toroidal_settings.end_effective": "末地：%s 区块 = %s 方块",
+  "gui.toroidal_world.toroidal_settings.too_small": "太小——至少 %s 区块。",
+  "gui.toroidal_world.toroidal_settings.too_large": "太大——至多 %s 区块。"
+}
