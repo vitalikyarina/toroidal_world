@@ -52,6 +52,7 @@
     "DensityFunctionsNoiseMixin",
     "DensityFunctionsShiftNoiseMixin",
     "DensityFunctionsShiftedNoiseMixin",
+    "DensityFunctionsWeirdScaledSamplerMixin",
     "DistanceBoundsMixin",
     "DistanceManagerMixin",
     "DolphinSwimToTreasureGoalMixin",
