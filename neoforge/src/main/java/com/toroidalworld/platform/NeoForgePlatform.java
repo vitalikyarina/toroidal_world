@@ -2,7 +2,6 @@ package com.toroidalworld.platform;
 
 import java.util.function.IntFunction;
 
-import com.toroidalworld.config.WorldLoopConfig;
 import com.toroidalworld.net.WrappingSettingsPayload;
 import com.toroidalworld.options.WorldLoopBounds;
 
@@ -27,11 +26,6 @@ public final class NeoForgePlatform implements Platform {
         if (player.connection.hasChannel(WrappingSettingsPayload.TYPE)) {
             PacketDistributor.sendToPlayer(player, new WrappingSettingsPayload(bounds));
         }
-    }
-
-    @Override
-    public boolean showRawF3Coordinates() {
-        return WorldLoopConfig.SHOW_RAW_F3_COORDINATES.get();
     }
 
     @Override

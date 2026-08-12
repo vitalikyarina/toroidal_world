@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.platform.Platforms;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 
@@ -22,8 +21,8 @@ import net.minecraft.world.level.Level;
 
 // F3 shows the client's own coordinate, which in a looped world is the unbounded one the packet layer feeds it — x grows
 // past the seam while the player is really a few blocks the other side of it. This rewrites the three position lines to
-// the true torus coordinate, keeping the raw client value in parentheses: when the two part ways, that is the seam being
-// crossed, and a mismatch would show up here first.
+// the true torus coordinate and inserts the unwrapped client frame as its own labeled triple right below them: when the
+// two part ways, that is the seam being crossed, and a mismatch would show up here first.
 //
 // The three lines are found by their own prefix rather than by index: what precedes them varies (the server chunk stats
 // line is conditional), and the reduced-debug-info branch returns a list without them at all — where finding nothing and
@@ -72,25 +71,23 @@ public class DebugEntryPositionMixin {
         BlockPos wrappedFeet = transformer.blocks.wrap(feet);
         ChunkPos rawChunk = new ChunkPos(feet);
         ChunkPos wrappedChunk = transformer.chunks.wrap(rawChunk);
-        boolean showRaw = Platforms.get().showRawF3Coordinates();
 
-        lines.set(xyzLine, String.format(Locale.ROOT, showRaw
-                        ? "XYZ: %.3f / %.5f / %.3f (raw %.3f / %.3f)"
-                        : "XYZ: %.3f / %.5f / %.3f",
-                transformer.coords.x.wrap(rawX), entity.getY(), transformer.coords.z.wrap(rawZ), rawX, rawZ));
-        lines.set(blockLine, String.format(Locale.ROOT, showRaw
-                        ? "Block: %d %d %d [%d %d %d] (raw %d %d)"
-                        : "Block: %d %d %d [%d %d %d]",
+        lines.set(xyzLine, String.format(Locale.ROOT, "XYZ: %.3f / %.5f / %.3f",
+                transformer.coords.x.wrap(rawX), entity.getY(), transformer.coords.z.wrap(rawZ)));
+        lines.set(blockLine, String.format(Locale.ROOT, "Block: %d %d %d [%d %d %d]",
                 wrappedFeet.getX(), wrappedFeet.getY(), wrappedFeet.getZ(),
-                wrappedFeet.getX() & 15, wrappedFeet.getY() & 15, wrappedFeet.getZ() & 15,
-                feet.getX(), feet.getZ()));
-        lines.set(chunkLine, String.format(Locale.ROOT, showRaw
-                        ? "Chunk: %d %d %d [%d %d in r.%d.%d.mca] (raw %d %d)"
-                        : "Chunk: %d %d %d [%d %d in r.%d.%d.mca]",
+                wrappedFeet.getX() & 15, wrappedFeet.getY() & 15, wrappedFeet.getZ() & 15));
+        lines.set(chunkLine, String.format(Locale.ROOT, "Chunk: %d %d %d [%d %d in r.%d.%d.mca]",
                 wrappedChunk.x, SectionPos.blockToSectionCoord(feet.getY()), wrappedChunk.z,
                 wrappedChunk.getRegionLocalX(), wrappedChunk.getRegionLocalZ(),
-                wrappedChunk.getRegionX(), wrappedChunk.getRegionZ(),
-                rawChunk.x, rawChunk.z));
+                wrappedChunk.getRegionX(), wrappedChunk.getRegionZ()));
+        // No region part on the unwrapped chunk line: region files on disk live in the wrapped frame, so a raw-frame
+        // region name would point at a file that does not exist.
+        lines.addAll(chunkLine + 1, List.of(
+                String.format(Locale.ROOT, "Unwrapped XYZ: %.3f / %.5f / %.3f", rawX, entity.getY(), rawZ),
+                String.format(Locale.ROOT, "Unwrapped Block: %d %d %d", feet.getX(), feet.getY(), feet.getZ()),
+                String.format(Locale.ROOT, "Unwrapped Chunk: %d %d %d",
+                        rawChunk.x, SectionPos.blockToSectionCoord(feet.getY()), rawChunk.z)));
 
         return lines;
     }
