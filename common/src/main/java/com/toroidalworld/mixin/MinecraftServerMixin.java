@@ -6,7 +6,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.gen.WorldShapeReport;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.storage.CurrentServer;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -47,6 +49,16 @@ public class MinecraftServerMixin {
     @Inject(method = "runServer", at = @At("RETURN"))
     private void toroidal$clearCurrentServer(CallbackInfo ci) {
         CurrentServer.clear();
+    }
+
+    // The world-shape lines a bug report needs, at the TAIL of createLevels: every level and its generator exist by
+    // then, and the world-load section of the log has only just begun — so the lines sit where a report's excerpt
+    // starts, on the dedicated server as much as in singleplayer. An unwrapped world contributes no lines at all.
+    @Inject(method = "createLevels", at = @At("TAIL"))
+    private void toroidal$logWorldShape(CallbackInfo ci) {
+        for (String line : WorldShapeReport.lines((MinecraftServer) (Object) this)) {
+            ToroidalWorld.LOGGER.info(line);
+        }
     }
 
     // The sampler has no idea which dimension it serves and no argument to tell it, so the transformer is bound around

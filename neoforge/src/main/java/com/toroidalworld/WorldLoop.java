@@ -29,7 +29,7 @@ public final class WorldLoop {
             DeferredRegister.create(Registries.CHUNK_GENERATOR, ToroidalWorld.MODID);
 
     public static void init(IEventBus modEventBus, ModContainer modContainer) {
-        Platforms.set(new NeoForgePlatform());
+        Platforms.set(new NeoForgePlatform(modContainer));
 
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_ID, () -> LoopedChunkGenerator.CODEC);
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_FLAT_ID, () -> LoopedFlatChunkGenerator.CODEC);
