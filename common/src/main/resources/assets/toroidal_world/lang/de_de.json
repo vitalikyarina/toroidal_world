@@ -1,0 +1,21 @@
+{
+  "argument.toroidal_world.pos.outside_world": "%s liegt außerhalb dieser Welt — muss zwischen %s und %s liegen",
+  "commands.toroidal_world.region.across_seam": "Dieser Bereich kreuzt die Weltnaht und kann beide Seiten meinen — führe den Befehl je Seite einmal aus",
+
+  "gui.toroidal_world.world_shape": "Weltform",
+  "gui.toroidal_world.world_shape.normal": "Normal",
+  "gui.toroidal_world.world_shape.toroidal": "Toroidal",
+
+  "gui.toroidal_world.toroidal_settings.title": "Einstellungen der toroidalen Welt",
+  "gui.toroidal_world.toroidal_settings.size": "Weltgröße in Chunks (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.hint": "Wie weit du läufst, bis du wieder am Ausgangspunkt ankommst.",
+  "gui.toroidal_world.toroidal_settings.effective": "%s Chunks = %s Blöcke",
+  "gui.toroidal_world.toroidal_settings.nether_scale": "Nether-Maßstab: 1:%s",
+  "gui.toroidal_world.toroidal_settings.nether_hint": "Um wie viel kürzer dieselbe Reise durch den Nether ist. Angeboten werden nur Maßstäbe, die die Welt glatt teilen.",
+  "gui.toroidal_world.toroidal_settings.nether_effective": "Nether: %s Chunks = %s Blöcke",
+  "gui.toroidal_world.toroidal_settings.end_size": "Größe des Endes in Chunks (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.end_hint": "Das Ende schließt sich bei seiner eigenen Breite, unabhängig von der Weltgröße. Unter dem Minimum bleiben keine äußeren Inseln — keine Endstädte, keine Elytren.",
+  "gui.toroidal_world.toroidal_settings.end_effective": "Ende: %s Chunks = %s Blöcke",
+  "gui.toroidal_world.toroidal_settings.too_small": "Zu klein — mindestens %s Chunks.",
+  "gui.toroidal_world.toroidal_settings.too_large": "Zu groß — höchstens %s Chunks."
+}

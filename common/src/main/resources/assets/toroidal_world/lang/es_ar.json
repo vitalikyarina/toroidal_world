@@ -1,0 +1,21 @@
+{
+  "argument.toroidal_world.pos.outside_world": "%s está fuera de este mundo — debe estar entre %s y %s",
+  "commands.toroidal_world.region.across_seam": "Esa zona cruza la costura del mundo y puede significar cualquiera de los dos lados — ejecuta el comando una vez por lado",
+
+  "gui.toroidal_world.world_shape": "Forma del mundo",
+  "gui.toroidal_world.world_shape.normal": "Normal",
+  "gui.toroidal_world.world_shape.toroidal": "Toroidal",
+
+  "gui.toroidal_world.toroidal_settings.title": "Ajustes del mundo toroidal",
+  "gui.toroidal_world.toroidal_settings.size": "Tamaño del mundo en chunks (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.hint": "Cuánto caminas hasta volver al punto de partida.",
+  "gui.toroidal_world.toroidal_settings.effective": "%s chunks = %s bloques",
+  "gui.toroidal_world.toroidal_settings.nether_scale": "Escala del Nether: 1:%s",
+  "gui.toroidal_world.toroidal_settings.nether_hint": "Cuánto se acorta el mismo viaje a través del Nether. Solo se ofrecen escalas que dividen el mundo exactamente.",
+  "gui.toroidal_world.toroidal_settings.nether_effective": "Nether: %s chunks = %s bloques",
+  "gui.toroidal_world.toroidal_settings.end_size": "Tamaño del End en chunks (%s–%s)",
+  "gui.toroidal_world.toroidal_settings.end_hint": "El End se cierra a su propia anchura, independiente del tamaño del mundo. Por debajo del mínimo no quedan islas exteriores — sin ciudades del End, sin élitros.",
+  "gui.toroidal_world.toroidal_settings.end_effective": "End: %s chunks = %s bloques",
+  "gui.toroidal_world.toroidal_settings.too_small": "Demasiado pequeño — al menos %s chunks.",
+  "gui.toroidal_world.toroidal_settings.too_large": "Demasiado grande — como máximo %s chunks."
+}
