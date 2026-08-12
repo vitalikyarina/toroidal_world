@@ -95,18 +95,18 @@ public class BiomeMixin {
     @Unique
     private float toroidal$frozenPatchTemperature(Context generation, BlockPos pos, float baseTemperature) {
         double groundValueLargeVariation;
-        try (Context.ScaleScope _ = generation.withScale(NoiseConstants.FROZEN_TEMPERATURE_SCALE)) {
+        try (Context.ScaleScope scope = generation.withScale(NoiseConstants.FROZEN_TEMPERATURE_SCALE)) {
             groundValueLargeVariation = FROZEN_TEMPERATURE_NOISE.getValue(pos.getX(), pos.getZ(), false) * 7.0;
         }
 
         double groundValueEdgeVariation;
-        try (Context.ScaleScope _ = generation.withScale(NoiseConstants.BIOME_INFO_EDGE_SCALE)) {
+        try (Context.ScaleScope scope = generation.withScale(NoiseConstants.BIOME_INFO_EDGE_SCALE)) {
             groundValueEdgeVariation = Biome.BIOME_INFO_NOISE.getValue(pos.getX(), pos.getZ(), false);
         }
 
         if (groundValueLargeVariation + groundValueEdgeVariation < 0.3) {
             double groundValueSmallVariation;
-            try (Context.ScaleScope _ = generation.withScale(NoiseConstants.BIOME_INFO_PATCH_SCALE)) {
+            try (Context.ScaleScope scope = generation.withScale(NoiseConstants.BIOME_INFO_PATCH_SCALE)) {
                 groundValueSmallVariation = Biome.BIOME_INFO_NOISE.getValue(pos.getX(), pos.getZ(), false);
             }
 
@@ -137,7 +137,7 @@ public class BiomeMixin {
             return original.call(noise, x, z, useNoiseStart);
         }
 
-        try (Context.ScaleScope _ = generation.withScale(NoiseConstants.HEIGHT_TEMPERATURE_SCALE)) {
+        try (Context.ScaleScope scope = generation.withScale(NoiseConstants.HEIGHT_TEMPERATURE_SCALE)) {
             return original.call(noise, (double) pos.getX(), (double) pos.getZ(), useNoiseStart);
         }
     }

@@ -30,13 +30,13 @@ public final class WorldShapeReport {
                 continue;
             }
 
-            lines.add("World shape: " + level.dimension().identifier()
+            lines.add("World shape: " + level.dimension().location()
                     + " generator=" + generatorId(level.getChunkSource().getGenerator())
                     + " x=" + axisSpan(bounds.x()) + " z=" + axisSpan(bounds.z()) + " chunks"
                     + ", " + widths(bounds)
                     + netherScale(server, level, bounds)
                     + " | mod=" + Platforms.get().modVersion()
-                    + " mc=" + SharedConstants.getCurrentVersion().name()
+                    + " mc=" + SharedConstants.getCurrentVersion().getName()
                     + " loader=" + Platforms.get().loaderName() + " " + Platforms.get().loaderVersion());
         }
 

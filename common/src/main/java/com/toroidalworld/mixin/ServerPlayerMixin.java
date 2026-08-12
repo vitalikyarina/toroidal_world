@@ -121,7 +121,7 @@ public class ServerPlayerMixin {
         }
 
         TrackedEntityRefresher refresher =
-                (TrackedEntityRefresher) (Object) player.level().getChunkSource().chunkMap;
+                (TrackedEntityRefresher) (Object) player.serverLevel().getChunkSource().chunkMap;
         refresher.toroidal$refreshTrackedEntities(player);
     }
 

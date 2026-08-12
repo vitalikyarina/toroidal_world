@@ -196,7 +196,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
     @Unique
     private void toroidal$refreshTrackedEntities() {
         TrackedEntityRefresher refresher =
-                (TrackedEntityRefresher) (Object) this.player.level().getChunkSource().chunkMap;
+                (TrackedEntityRefresher) (Object) this.player.serverLevel().getChunkSource().chunkMap;
         refresher.toroidal$refreshTrackedEntities(this.player);
     }
 

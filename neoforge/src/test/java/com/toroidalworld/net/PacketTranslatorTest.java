@@ -540,7 +540,7 @@ class PacketTranslatorTest {
             ClientPosition mirror = new ClientPosition();
             mirror.rebase(MIRROR_X, MIRROR_Z, Level.NETHER, TRANSFORMER);
             TranslationContext context = new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS,
-                    Level.NETHER, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
+                    Level.NETHER, VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
             ClientboundSetDefaultSpawnPositionPacket packet =
                     new ClientboundSetDefaultSpawnPositionPacket(SERVER_BLOCK, 0.0F);
 
@@ -692,7 +692,7 @@ class PacketTranslatorTest {
             ClientPosition mirror = new ClientPosition();
             mirror.rebase(100.0, 50.0, Level.OVERWORLD, TRANSFORMER);
             TranslationContext context = new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS,
-                    Level.OVERWORLD, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
+                    Level.OVERWORLD, VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
 
             List<BlockPos> blown = List.of(new BlockPos(100, 70, 50));
             ClientboundExplodePacket packet = new ClientboundExplodePacket(
@@ -760,7 +760,7 @@ class PacketTranslatorTest {
             ClientPosition mirror = new ClientPosition();
             mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, TRANSFORMER);
             TranslationContext context = new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS,
-                    Level.OVERWORLD, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
+                    Level.OVERWORLD, VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
 
             ClientboundPlayerPositionPacket translated = (ClientboundPlayerPositionPacket) PacketTranslator.toClient(
                     new ClientboundPlayerPositionPacket(SERVER_X, 70.0, SERVER_Z, 0.0F, 0.0F, Set.of(), 1),

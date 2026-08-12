@@ -14,8 +14,8 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.biome.Biome;
 
-// The one temperature question that is handed no level at all: getPrecipitationAt takes a position and a sea level, so
-// unlike shouldFreeze and shouldSnow it cannot bind for itself. Everything in the game that asks it through a level is
+// The one temperature question that is handed no level at all: getPrecipitationAt takes only a position, so unlike
+// shouldFreeze and shouldSnow it cannot bind for itself. Everything in the game that asks it through a level is
 // already bound by the time it arrives here — but a caller may hold a biome and ask it directly, and one does: Iris
 // feeds its shader uniforms from BiomeUniforms, which calls this on the biome every frame. Left unfolded those samples
 // read the seam as an edge, and the sky the shader draws parts ways with the ground the server froze.
@@ -27,25 +27,25 @@ import net.minecraft.world.level.biome.Biome;
 public class BiomePrecipitationMixin {
     @WrapMethod(method = "getPrecipitationAt")
     private Biome.Precipitation toroidal$foldForLevellessCaller(
-            BlockPos pos, int seaLevel, Operation<Biome.Precipitation> original) {
+            BlockPos pos, Operation<Biome.Precipitation> original) {
         Minecraft minecraft = Minecraft.getInstance();
         if (!minecraft.isSameThread()) {
-            return original.call(pos, seaLevel);
+            return original.call(pos);
         }
 
         // A caller that came in through a level bound the answer already, and that binding is the better one: it names
         // the level that was actually asked, where this can only name the one the client is looking at.
         if (GenerationTransformerContext.context().wrappedTransformer() != null) {
-            return original.call(pos, seaLevel);
+            return original.call(pos);
         }
 
         @Nullable ClientLevel level = minecraft.level;
         WorldLoopTransformer bounds =
                 level == null ? null : WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
         if (bounds == null) {
-            return original.call(pos, seaLevel);
+            return original.call(pos);
         }
 
-        return GenerationTransformerContext.withTransformer(bounds, () -> original.call(pos, seaLevel));
+        return GenerationTransformerContext.withTransformer(bounds, () -> original.call(pos));
     }
 }

@@ -31,7 +31,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.AbortableIterationConsumer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -241,13 +240,13 @@ public class LevelMixin implements TransformerCache {
         return WorldLoopTransformer.NOOP;
     }
 
-    // Whether it rains or snows on a block is the same temperature field the ice is placed from, asked outside any
+    // Whether rain falls on a block is the same temperature field the ice is placed from, asked outside any
     // generation step — so the transformer has to be bound here too, or the sky disagrees with the ground at the seam.
+    // On 1.21.1 the level-side primitive is isRainingAt; 26.x later split its body out as precipitationAt.
     // On a client level this binds NOOP, which is correct twice over: the client's engine transformer is NOOP by
     // design, and a bound NOOP shields the call from a leftover binding on the same thread.
-    @WrapMethod(method = "precipitationAt")
-    private Biome.Precipitation toroidal$bindPrecipitationTransformer(
-            BlockPos pos, Operation<Biome.Precipitation> original) {
+    @WrapMethod(method = "isRainingAt")
+    private boolean toroidal$bindPrecipitationTransformer(BlockPos pos, Operation<Boolean> original) {
         return GenerationTransformerContext.withTransformer(
                 toroidal$precipitationTransformer(), () -> original.call(pos));
     }
@@ -255,7 +254,7 @@ public class LevelMixin implements TransformerCache {
     // A client level's own transformer is NOOP by design, so binding it here would leave the client reading the
     // unfolded temperature field — and disagreeing with the server about the same block, worst of all near the seam
     // where client coordinates may sit a whole world width away. What the client does know is the bounds the server
-    // told it, which is the same source ClientLevel.getPrecipitationAt binds.
+    // told it, which is the same source the weather renderer binds.
     @Unique
     private WorldLoopTransformer toroidal$precipitationTransformer() {
         WorldLoopTransformer clientBounds =
