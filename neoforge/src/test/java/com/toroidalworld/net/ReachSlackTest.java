@@ -6,8 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-// The slack each packet family is allowed past its own radius, stated as the terms it was derived from rather than as
-// the numbers that hold it. A family whose slack is flattened back into one shared constant fails here.
+// The slack each packet family is allowed past its own radius. Every bound below is stated by hand — the radius as
+// the literal the vanilla send site fixes, the slack as the terms it was derived from — because a bound built on
+// reach.blocks() stands on both sides of the comparison and cancels: a drifted radius then holds its own drifted
+// bound and passes unseen. A family whose slack is flattened back into one shared constant fails here too.
 class ReachSlackTest {
     private static final double SECTION_BLOCKS = 16.0;
 
@@ -23,27 +25,29 @@ class ReachSlackTest {
 
     private static final double PAST_THE_BOUND_BLOCKS = 1.0;
 
-    private static void assertBound(PacketReach reach, double slackBlocks) {
-        double bound = reach.blocks() + slackBlocks;
-        assertTrue(TranslationContext.withinReach(bound, ANCHOR, reach));
-        assertTrue(TranslationContext.withinReach(-bound, ANCHOR, reach));
-        assertFalse(TranslationContext.withinReach(bound + PAST_THE_BOUND_BLOCKS, ANCHOR, reach));
-        assertFalse(TranslationContext.withinReach(-bound - PAST_THE_BOUND_BLOCKS, ANCHOR, reach));
+    private static void assertBound(PacketReach reach, double boundBlocks) {
+        assertTrue(TranslationContext.withinReach(boundBlocks, ANCHOR, reach));
+        assertTrue(TranslationContext.withinReach(-boundBlocks, ANCHOR, reach));
+        assertFalse(TranslationContext.withinReach(boundBlocks + PAST_THE_BOUND_BLOCKS, ANCHOR, reach));
+        assertFalse(TranslationContext.withinReach(-boundBlocks - PAST_THE_BOUND_BLOCKS, ANCHOR, reach));
     }
 
     @Nested
     class TrackedEntities {
         @Test
         void reachesTwoSectionsPastTheView() {
-            // View distance 12 chunks (192 blocks), so the bound is 192 + 16 + 16 = 224 blocks.
-            assertBound(PacketReach.tracked(12), MIRROR_GAP_BLOCKS + ENTITY_DRIFT_BLOCKS);
+            // View distance 12 chunks is 192 blocks, multiplied out by hand so the radius cannot cancel out of its
+            // own bound: 192 + 16 + 16 = 224 blocks.
+            assertBound(PacketReach.tracked(12), 192.0 + MIRROR_GAP_BLOCKS + ENTITY_DRIFT_BLOCKS);
         }
 
         @Test
         void carriesOneSectionMoreThanTheFamiliesGatedAtTheSend() {
-            assertBound(PacketReach.tracked(2), MIRROR_GAP_BLOCKS + ENTITY_DRIFT_BLOCKS);
+            // View distance 2 chunks is 32 blocks — the same radius ServerLevel.sendParticles fixes for the ordinary
+            // particle family, which does not get the second section.
+            assertBound(PacketReach.tracked(2), 32.0 + MIRROR_GAP_BLOCKS + ENTITY_DRIFT_BLOCKS);
             assertFalse(TranslationContext.withinReach(
-                    PacketReach.PARTICLE.blocks() + MIRROR_GAP_BLOCKS + ENTITY_DRIFT_BLOCKS,
+                    32.0 + MIRROR_GAP_BLOCKS + ENTITY_DRIFT_BLOCKS,
                     ANCHOR,
                     PacketReach.PARTICLE));
         }
@@ -53,19 +57,21 @@ class ReachSlackTest {
     class GatedAtTheSend {
         @Test
         void particlesReachOneSectionPastTheirRadius() {
-            assertBound(PacketReach.PARTICLE, MIRROR_GAP_BLOCKS);
-            assertBound(PacketReach.FORCED_PARTICLE, MIRROR_GAP_BLOCKS);
+            // ServerLevel.sendParticles offers within 32 blocks, or 512 when the sender overrides the limiter.
+            assertBound(PacketReach.PARTICLE, 32.0 + MIRROR_GAP_BLOCKS);
+            assertBound(PacketReach.FORCED_PARTICLE, 512.0 + MIRROR_GAP_BLOCKS);
         }
 
         @Test
         void explosionsReachOneSectionPastTheirRadius() {
-            assertBound(PacketReach.EXPLOSION, MIRROR_GAP_BLOCKS);
+            // ServerLevel.explode sends the burst to everyone within 64 blocks of the centre.
+            assertBound(PacketReach.EXPLOSION, 64.0 + MIRROR_GAP_BLOCKS);
         }
 
         @Test
         void soundsReachOneSectionPastTheRangeTheyCarry() {
-            assertBound(PacketReach.sound(16.0F), MIRROR_GAP_BLOCKS);
-            assertBound(PacketReach.sound(256.0F), MIRROR_GAP_BLOCKS);
+            assertBound(PacketReach.sound(16.0F), 16.0 + MIRROR_GAP_BLOCKS);
+            assertBound(PacketReach.sound(256.0F), 256.0 + MIRROR_GAP_BLOCKS);
         }
     }
 }
