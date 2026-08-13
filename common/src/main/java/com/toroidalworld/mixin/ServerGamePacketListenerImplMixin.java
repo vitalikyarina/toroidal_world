@@ -254,6 +254,18 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
     @Shadow
     private double lastGoodZ;
 
+    @Shadow
+    private double vehicleFirstGoodX;
+
+    @Shadow
+    private double vehicleFirstGoodZ;
+
+    @Shadow
+    private double vehicleLastGoodX;
+
+    @Shadow
+    private double vehicleLastGoodZ;
+
     @WrapOperation(
             method = "handleMovePlayer",
             at = @At(
@@ -385,5 +397,14 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
 
         Vec3 wrapped = transformer.vectors.wrap(vehicle.position());
         SeamSnap.withPassengers(vehicle, wrapped.subtract(vehicle.position()));
+
+        // The baselines the next packet measures from were written before this wrap — the success path stores the
+        // pre-wrap coordinate, and vanilla re-seats them only at the next tick. A second packet handled in the same
+        // tick would measure against a copy a world away and feed vehicle.move a world-width sweep. The player path
+        // re-seats its own bounds after wrapping (toroidal$wrapIntoBounds); the vehicle's follow it the same way.
+        this.vehicleFirstGoodX = vehicle.getX();
+        this.vehicleFirstGoodZ = vehicle.getZ();
+        this.vehicleLastGoodX = vehicle.getX();
+        this.vehicleLastGoodZ = vehicle.getZ();
     }
 }
