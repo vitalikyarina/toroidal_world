@@ -54,14 +54,14 @@ public class ToroidalJourneyMapPlugin implements IClientPlugin {
         // next MAPPING_STARTED for the real level will do the work.
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null || !level.dimension().equals(event.dimension)) {
-            LOGGER.info("[jm-compat] seam_overlay dim={} shown=0 reason=level_mismatch", event.dimension.identifier());
+            LOGGER.info("[jm-compat] seam_overlay dim={} shown=0 reason=level_mismatch", event.dimension.location());
             return;
         }
 
         Optional<ToroidalShape> shape = ToroidalWorldClientApi.shapeOf(level);
         if (shape.isEmpty() || !this.api.playerAccepts(ToroidalWorld.MODID, DisplayType.Polygon)) {
             LOGGER.info("[jm-compat] seam_overlay dim={} shown=0 wrapped={}",
-                    event.dimension.identifier(), shape.isPresent());
+                    event.dimension.location(), shape.isPresent());
             return;
         }
 
@@ -76,6 +76,6 @@ public class ToroidalJourneyMapPlugin implements IClientPlugin {
             }
         }
 
-        LOGGER.info("[jm-compat] seam_overlay dim={} shown={}", event.dimension.identifier(), shown);
+        LOGGER.info("[jm-compat] seam_overlay dim={} shown={}", event.dimension.location(), shown);
     }
 }

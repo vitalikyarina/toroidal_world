@@ -2,7 +2,7 @@
   "required": false,
   "minVersion": "0.8",
   "package": "com.toroidalworld.compat.xaero.mixin",
-  "compatibilityLevel": "JAVA_25",
+  "compatibilityLevel": "JAVA_21",
   "plugin": "com.toroidalworld.compat.xaero.XaeroMixinPlugin",
   "client": [
     "InfoDisplayCompilerMixin",

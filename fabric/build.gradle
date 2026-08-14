@@ -70,10 +70,14 @@ dependencies {
     // useLegacyMixinAp to false and remaps the mixin annotations inside remapJar instead.
     include(implementation("io.github.llamalad7:mixinextras-fabric:${mixinextras_version}"))
 
-    // 26.x is unobfuscated, so the neoforge API flavor compiles fine here; only the plugin class touches it.
+    // NeoForge 1.21.1 runs on Mojmap, so the neoforge API flavor already speaks this workspace's names — plain
+    // compileOnly, nothing to remap off intermediary. remapJar bridges the runtime gap the other way.
     compileOnly "info.journeymap:journeymap-api-neoforge:${journeymap_api_version}"
-    compileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
-    compileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
+    // The Xaero jars ride modCompileOnly as the FABRIC flavor: Loom remaps them off intermediary onto this
+    // workspace's names AND puts them on remapJar's classpath — without that, GuiMap does not resolve to Screen and
+    // the mixin target for its render override never becomes method_25394 in the shipped jar.
+    modCompileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_fabric_version}"
+    modCompileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_fabric_version}"
 }
 
 // Two jars on this game version, and only the second one ships. Minecraft is obfuscated here, so Loom compiles into a

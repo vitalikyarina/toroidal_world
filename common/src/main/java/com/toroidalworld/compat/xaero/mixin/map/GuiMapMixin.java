@@ -12,7 +12,6 @@ import org.joml.Matrix4f;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -46,7 +45,12 @@ import xaero.map.region.texture.RegionTexture;
 //    quadrant is worse than a briefly blank tile. Slots stay unglued at a zoom whose texture size the world width
 //    does not divide (the nether at the deepest zoom-out). The redirects share per-iteration state; safe because
 //    the render thread walks fetch → hasTextures → texture strictly in order.
-@Mixin(value = GuiMap.class, remap = false)
+// The injection method is GuiMap's override of Screen.render, and its NAME differs per loader jar: Mojmap "render"
+// in the neoforge build, intermediary "method_25394" in the fabric build (the remap pipeline rewrites descriptors in
+// the target strings but cannot rename an override it can't resolve to Screen). Both names are listed on every
+// injector and defaultRequire=1 accepts whichever the running loader has — the same dual-name pattern as
+// EntitySectionManagerMixin's addEntity/addEntityWithoutEvent.
+@Mixin(GuiMap.class)
 public abstract class GuiMapMixin {
     @Shadow
     private int mouseBlockPosX;
@@ -74,7 +78,7 @@ public abstract class GuiMapMixin {
     @Unique
     private int toroidal$slotViewBlockZ;
     @WrapOperation(
-            method = "extractRenderState",
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/entity/util/EntityUtil;getEntityX(Lnet/minecraft/world/entity/Entity;F)D"))
@@ -83,7 +87,7 @@ public abstract class GuiMapMixin {
     }
 
     @WrapOperation(
-            method = "extractRenderState",
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/entity/util/EntityUtil;getEntityZ(Lnet/minecraft/world/entity/Entity;F)D"))
@@ -95,7 +99,7 @@ public abstract class GuiMapMixin {
     // (the coordinate readout, right-click menu, teleport, tile selection, the hover region lookups) then speaks
     // canonical coordinates, which is also where the glued copies' content actually lives.
     @Inject(
-            method = "extractRenderState",
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "FIELD",
                     target = "Lxaero/map/gui/GuiMap;mouseBlockPosZ:I",
@@ -108,7 +112,7 @@ public abstract class GuiMapMixin {
     }
 
     @Redirect(
-            method = "extractRenderState",
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/MapProcessor;getLeveledRegion(IIII)Lxaero/map/region/LeveledRegion;"))
@@ -141,7 +145,7 @@ public abstract class GuiMapMixin {
     // origin-fold substitute is enough: the block runs, the canonical region rides the reload queue, and the
     // texture redirect resolves each slot precisely anyway.
     @Redirect(
-            method = "extractRenderState",
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/MapProcessor;getLeafMapRegion(IIIZ)Lxaero/map/region/MapRegion;"))
@@ -160,7 +164,7 @@ public abstract class GuiMapMixin {
     }
 
     @Redirect(
-            method = "extractRenderState",
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(value = "INVOKE", target = "Lxaero/map/region/LeveledRegion;hasTextures()Z"))
     private boolean toroidal$candidateHasTextures(LeveledRegion<?> region) {
         if (XaeroWorldMapFold.active() && region != null && region == this.toroidal$leveledCandidate) {
@@ -171,7 +175,7 @@ public abstract class GuiMapMixin {
     }
 
     @Redirect(
-            method = "extractRenderState",
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/region/LeveledRegion;getTexture(II)Lxaero/map/region/texture/RegionTexture;",
@@ -213,7 +217,7 @@ public abstract class GuiMapMixin {
     }
 
     @Redirect(
-            method = "extractRenderState",
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/region/LeveledRegion;getTexture(II)Lxaero/map/region/texture/RegionTexture;",
@@ -233,13 +237,13 @@ public abstract class GuiMapMixin {
     // order stops mattering. The two glue mechanisms are gated on the same alignment test, so exactly one runs at
     // any zoom. The slot's view position rides in from the texture-fetch redirect that always precedes this draw.
     @WrapOperation(
-            method = "extractRenderState",
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "INVOKE",
-                    target = "Lxaero/map/gui/GuiMap;renderTexturedModalRectWithLighting3(Lorg/joml/Matrix4f;FFFFLcom/mojang/blaze3d/textures/GpuTextureView;ZLxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRenderer;)V"))
+                    target = "Lxaero/map/gui/GuiMap;renderTexturedModalRectWithLighting3(Lorg/joml/Matrix4f;FFFFIZLxaero/map/graphics/renderer/multitexture/MultiTextureRenderTypeRenderer;)V"))
     private void toroidal$drawClippedPeriodCopies(
             Matrix4f matrix, float x, float y, float width, float height,
-            GpuTextureView texture, boolean hasLight, MultiTextureRenderTypeRenderer renderer, Operation<Void> original) {
+            int texture, boolean hasLight, MultiTextureRenderTypeRenderer renderer, Operation<Void> original) {
         int slotSize = 64 << this.toroidal$viewLevel;
         int[] xBounds;
         int[] zBounds;
@@ -289,7 +293,7 @@ public abstract class GuiMapMixin {
     // lines need, so its arguments carry the whole transform. The thickness tracks one screen pixel, floored at
     // one block.
     @WrapOperation(
-            method = "extractRenderState",
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/graphics/MapRenderHelper;renderDynamicHighlight(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIIIIIFFFFFFFF)V",

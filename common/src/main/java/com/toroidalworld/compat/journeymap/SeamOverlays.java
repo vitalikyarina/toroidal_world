@@ -9,7 +9,7 @@ import com.toroidalworld.ToroidalWorld;
 import journeymap.api.v2.client.display.PolygonOverlay;
 import journeymap.api.v2.client.model.MapPolygon;
 import journeymap.api.v2.client.model.ShapeProperties;
-import journeymap.api.v2.common.Context;
+import journeymap.api.v2.client.display.Context;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;

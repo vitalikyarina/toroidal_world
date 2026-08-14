@@ -2,18 +2,25 @@ package com.toroidalworld.compat.journeymap.mixin;
 
 import java.awt.geom.Point2D;
 
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
 
+import journeymap.api.v2.client.display.Context;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -39,6 +46,13 @@ public abstract class MapRendererMixin {
     @Shadow(remap = false)
     public abstract void clear();
 
+    @Shadow(remap = false)
+    protected int zoom;
+
+    @Shadow(remap = false)
+    @Final
+    protected Context.UI contextUi;
+
     // Render-thread only, like every caller of these methods.
     @Unique
     private static boolean toroidal$anchorPass;
@@ -63,8 +77,8 @@ public abstract class MapRendererMixin {
         ResourceKey<Level> dimension = level.dimension();
         if (toroidal$lastLevelDimension != null && toroidal$lastLevelDimension != dimension) {
             this.clear();
-            JourneyMapFold.gridDropped(toroidal$lastLevelDimension.identifier().toString(),
-                    dimension.identifier().toString());
+            JourneyMapFold.gridDropped(toroidal$lastLevelDimension.location().toString(),
+                    dimension.location().toString());
         }
 
         toroidal$lastLevelDimension = dimension;
@@ -117,6 +131,54 @@ public abstract class MapRendererMixin {
         int floor = JourneyMapFold.minGridSize();
         if (floor > cir.getReturnValue()) {
             cir.setReturnValue(floor);
+        }
+    }
+
+    // Glues the map together across the seam: after a tile draws itself, it is drawn again at every world-width
+    // period that still lands in the viewport, so the torus reads as the endlessly repeating ground it is — on the
+    // minimap at the seam and on the fullscreen map alike. This is also what swallows the fullscreen pan jump: the
+    // folded center moves by exactly one period, and a picture periodic in that period looks identical. The tile
+    // renders by (tile.x + pixelOffset), so a copy is one re-invocation with shifted offsets — no matrix work.
+    // Wrapped at the renderer's single dispatch rather than inside RegionTile: on this game version the tile
+    // carries no UI context — the renderer it belongs to does. Webmap tiles are left alone: their offsets are
+    // web-tile space, not the on-screen grid.
+    @WrapOperation(
+            method = "render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;DDFZ)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Ljourneymap/client/render/map/RegionTile;render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/renderer/MultiBufferSource;DDF)V"))
+    private void toroidal$renderWrappedCopies(@Coerce Object tile, GuiGraphics graphics, MultiBufferSource buffers,
+            double pixelOffsetX, double pixelOffsetZ, float alpha, Operation<Void> original) {
+        original.call(tile, graphics, buffers, pixelOffsetX, pixelOffsetZ, alpha);
+        if (this.contextUi == Context.UI.Webmap) {
+            return;
+        }
+
+        double periodX = JourneyMapFold.worldPixelPeriod(Direction.Axis.X, this.zoom);
+        double periodZ = JourneyMapFold.worldPixelPeriod(Direction.Axis.Z, this.zoom);
+        int rangeX = JourneyMapFold.copyRange(periodX, graphics.guiWidth());
+        int rangeZ = JourneyMapFold.copyRange(periodZ, graphics.guiHeight());
+        // The fullscreen map caps at one copy per side (at most 3x3) — the canonical world in the middle, its glued
+        // neighbours around it; zoomed far out the ground past those copies is left empty rather than repeated to
+        // the horizon.
+        if (this.contextUi == Context.UI.Fullscreen) {
+            rangeX = Math.min(rangeX, 1);
+            rangeZ = Math.min(rangeZ, 1);
+        }
+
+        if (rangeX == 0 && rangeZ == 0) {
+            return;
+        }
+
+        for (int lapX = -rangeX; lapX <= rangeX; lapX++) {
+            for (int lapZ = -rangeZ; lapZ <= rangeZ; lapZ++) {
+                if (lapX == 0 && lapZ == 0) {
+                    continue;
+                }
+
+                original.call(tile, graphics, buffers,
+                        pixelOffsetX + lapX * periodX, pixelOffsetZ + lapZ * periodZ, alpha);
+            }
         }
     }
 }
