@@ -1,0 +1,20 @@
+package com.toroidalworld.mixin;
+
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Invoker;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundInitializeBorderPacket;
+
+// The vanilla wire pair behind the packet's STREAM_CODEC — the translator re-encodes through these instead of the
+// codec field, which mods are free to wrap (see PacketTranslator.rewritePosition).
+@Mixin(ClientboundInitializeBorderPacket.class)
+public interface InitializeBorderPacketAccessor {
+    @Invoker("write")
+    void toroidal$write(FriendlyByteBuf output);
+
+    @Invoker("<init>")
+    static ClientboundInitializeBorderPacket toroidal$create(FriendlyByteBuf input) {
+        throw new AssertionError();
+    }
+}
