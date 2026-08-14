@@ -33,9 +33,13 @@ public final class GenerationTransformerContext {
     //
     // Mutable fields rather than a record for the same reason the scale was a holder before: it is written once per
     // sample, and a fresh object (or a boxed Double) per write allocates on the hottest path in the mod.
+    // No call site has declared its vertical-to-horizontal scale ratio — the octave variance correction stays off.
+    public static final double UNDECLARED_VERTICAL_SHARE = -1.0;
+
     public static final class Context {
         private WorldLoopTransformer transformer = WorldLoopTransformer.NOOP;
         private double horizontalScale = UNSCALED;
+        private double verticalShare = UNDECLARED_VERTICAL_SHARE;
         private final ScaleScope scaleScope = new ScaleScope();
 
         public WorldLoopTransformer transformer() {
@@ -56,12 +60,26 @@ public final class GenerationTransformerContext {
             return this.horizontalScale;
         }
 
+        // The sampled field's vertical-to-horizontal scale ratio (0 = vertically flat, UNDECLARED_VERTICAL_SHARE =
+        // unknown, correction off). Set at the density-function call sites that know both scales; inner scopes (the
+        // detune layer, the octave walk) inherit it, so it describes the field, not the innermost scale push.
+        public double verticalShare() {
+            return this.verticalShare;
+        }
+
         // The scale twin of withTransformer, minus the lambda: a noise sample is the hottest path in the mod, and a
         // capturing closure per sample would allocate where even a boxed Double was too much. One reusable scope per
         // context carries the previous values; try-with-resources guarantees the restore.
         public ScaleScope withScale(double scale) {
             this.scaleScope.push();
             this.horizontalScale = scale;
+            return this.scaleScope;
+        }
+
+        public ScaleScope withScale(double scale, double verticalShare) {
+            this.scaleScope.push();
+            this.horizontalScale = scale;
+            this.verticalShare = verticalShare;
             return this.scaleScope;
         }
 
@@ -73,6 +91,7 @@ public final class GenerationTransformerContext {
 
         public final class ScaleScope implements AutoCloseable {
             private double[] previousScales = new double[8];
+            private double[] previousShares = new double[8];
             private int depth;
 
             private ScaleScope() {
@@ -81,9 +100,11 @@ public final class GenerationTransformerContext {
             private void push() {
                 if (this.depth == this.previousScales.length) {
                     this.previousScales = Arrays.copyOf(this.previousScales, this.depth * 2);
+                    this.previousShares = Arrays.copyOf(this.previousShares, this.depth * 2);
                 }
 
-                this.previousScales[this.depth++] = horizontalScale;
+                this.previousScales[this.depth] = horizontalScale;
+                this.previousShares[this.depth++] = verticalShare;
             }
 
             // A write bounded by the innermost open scope — close() restores the entry value regardless of what was
@@ -100,6 +121,7 @@ public final class GenerationTransformerContext {
             @Override
             public void close() {
                 horizontalScale = this.previousScales[--this.depth];
+                verticalShare = this.previousShares[this.depth];
             }
         }
     }

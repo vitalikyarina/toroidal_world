@@ -47,13 +47,21 @@ public final class PeriodicNoiseSampler {
 
     private static final long UNBOUNDED_PERIOD = 0L;
 
+    private static final long FLOORED_PERIOD = 4L;
+
     public static double sample(byte[] permutations, double xOffset, double yOffset, double zOffset,
             WorldLoopTransformer transformer, double scale,
-            double x, double y, double z, double yScale, double yFudge) {
+            double x, double y, double z, double yScale, double yFudge, double verticalShare) {
         WrapDomain xDomain = transformer.coords.x;
         WrapDomain zDomain = transformer.coords.z;
         long xPeriod = period(xDomain, scale);
         long zPeriod = period(zDomain, scale);
+
+        // The variance correction is a per-octave constant, so scaling the sample scales the whole field uniformly.
+        // verticalShare is the caller's vertical-to-horizontal scale ratio (negative = undeclared, correction off);
+        // the deeper the field really varies with Y, the less damping its floored octaves need (see the correction
+        // class), and most octaves fold to periods above the floored bound, where the factor is 1.
+        double correction = OctaveVarianceCorrection.factor(xDomain, zDomain, xPeriod, zPeriod, scale, verticalShare);
 
         double xs = foldAndScale(xDomain, xPeriod, scale, x) + xOffset;
         double ys = y + yOffset;
@@ -73,19 +81,44 @@ public final class PeriodicNoiseSampler {
             yFracFudge = 0.0;
         }
 
-        return sampleAndLerp(permutations, xCell, yCell, zCell, xFrac, yFrac - yFracFudge, zFrac, yFrac,
-                xPeriod, zPeriod);
+        double value = correction * sampleAndLerp(permutations, xCell, yCell, zCell, xFrac, yFrac - yFracFudge, zFrac,
+                yFrac, xPeriod, zPeriod);
+
+        // The DC restoration: a fixed-lattice-point sample of the same octave — constant across the whole world, Y
+        // included, so it shifts the field without adding any variance the damp calibration already accounts for.
+        // A constant cannot open the seam, and for the flat router fields it is what spreads toroidal worlds across
+        // vanilla's ocean-to-inland range instead of parking every one at the coast band.
+        double anchorGain = OctaveVarianceCorrection.anchorGain(xDomain, zDomain, xPeriod, zPeriod, scale,
+                verticalShare);
+        if (anchorGain > 0.0) {
+            double xsAnchor = foldAndScale(xDomain, xPeriod, scale, 0.0) + xOffset;
+            double zsAnchor = foldAndScale(zDomain, zPeriod, scale, 0.0) + zOffset;
+            int xCellAnchor = Mth.floor(xsAnchor);
+            int zCellAnchor = Mth.floor(zsAnchor);
+            int yCellAnchor = Mth.floor(yOffset);
+            double yFracAnchor = yOffset - yCellAnchor;
+            value += anchorGain * sampleAndLerp(permutations, xCellAnchor, yCellAnchor, zCellAnchor,
+                    xsAnchor - xCellAnchor, yFracAnchor, zsAnchor - zCellAnchor, yFracAnchor, xPeriod, zPeriod);
+        }
+
+        return value;
     }
 
-    // Cells per lap for one axis: the world width at this scale, rounded to the integer the lattice needs. The floor
-    // of 1 covers octaves whose single cell outgrows the whole world — the octave degrades to one repeated cell,
-    // continuous at the seam, in the same regime where the old circle embedding collapsed to near-constant.
+    // Cells per lap for one axis: the world width at this scale, rounded to the integer the lattice needs. An octave
+    // whose rounding falls under 2 is degenerate: at period 1 every cell index wraps to 0, all corners hash to the
+    // same gradient, and the "octave" collapses to a single smoothstep-warped plane spanning the world — a monotone
+    // ramp no amplitude correction can turn back into noise. Those octaves are floored to 4 cells per lap rather
+    // than the minimal 2: a 2-cell closed walk is an axis-aligned lattice whose 256-block wavelength (on a 512-block
+    // world) reads as square mountains in-game, while 4 cells halves the wavelength to 128 blocks and blurs the axis
+    // alignment. Octaves whose natural rounding reaches 2 already match vanilla's window and keep it; the amplitude
+    // the floored structure over-delivers is damped back by OctaveVarianceCorrection.
     static long period(WrapDomain domain, double scale) {
         if (domain instanceof WrapDomain.Noop) {
             return UNBOUNDED_PERIOD;
         }
 
-        return Math.max(1L, Math.round(domain.domainLength * scale));
+        long rounded = Math.round(domain.domainLength * scale);
+        return rounded < 2L ? FLOORED_PERIOD : rounded;
     }
 
     // A looped axis folds into its bounds first — fold(x) == fold(x + width) bit-exactly, which is the whole closure

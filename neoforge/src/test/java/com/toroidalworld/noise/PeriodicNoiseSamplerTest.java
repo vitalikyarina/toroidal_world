@@ -91,7 +91,7 @@ class PeriodicNoiseSamplerTest {
         double sample(WorldLoopTransformer transformer, double scale,
                 double x, double y, double z, double yScale, double yFudge) {
             return PeriodicNoiseSampler.sample(permutations, xo, yo, zo, transformer, scale,
-                    x, y, z, yScale, yFudge);
+                    x, y, z, yScale, yFudge, -1.0);
         }
     }
 
@@ -132,7 +132,8 @@ class PeriodicNoiseSamplerTest {
             assertEquals(1024, PeriodicNoiseSampler.period(evenX, 1.0));
             assertEquals(102400, PeriodicNoiseSampler.period(evenX, 100.0));
             assertEquals(94, PeriodicNoiseSampler.period(ODD.coords.x, 1.17));
-            assertEquals(1, PeriodicNoiseSampler.period(evenX, 1.0 / 2048.0));
+            assertEquals(2, PeriodicNoiseSampler.period(evenX, 2.0 / 1024.0));
+            assertEquals(4, PeriodicNoiseSampler.period(evenX, 1.0 / 2048.0));
             assertEquals(0, PeriodicNoiseSampler.period(X_ONLY.coords.z, 1.0));
         }
     }
