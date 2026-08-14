@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.options.WorldLoopBounds;
 
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.synth.ImprovedNoise;
@@ -276,6 +277,7 @@ class FieldDistributionProbeTest {
         appendMeanSpreadCalibration(report);
         appendRectangularCalibration(report);
         appendVerticalCalibration(report);
+        appendBlendedFoldCalibration(report);
         appendExtremeStatistics(report);
 
         for (long worldSeed : WORLD_SEEDS) {
@@ -526,6 +528,204 @@ class FieldDistributionProbeTest {
                         correctedRatio));
             }
             report.append(line).append('\n');
+        }
+        report.append('\n');
+    }
+
+    // The base 3D terrain noise (BlendedNoise, overworld params verified against NoiseRouterData: xzScale 0.25,
+    // yScale 0.125, xzFactor 80, yFactor 160, smear 8): its dominant low octaves fold at NATURAL periods on the
+    // 512-block world (f = 2.67 → period 3, f = 5.35 → period 5) — the band no correction covers — and the in-game
+    // per-noise trace named it the floating-island carrier (base_3d ≈ +0.24…+0.39 at every suspended site while
+    // vanilla finalDensity never crosses 0 aloft). This measures the full blended walk, vanilla window vs the
+    // period-quantized fold, at the two altitudes the in-game sweep used: pooled mean/std, the positive tail shares
+    // P(v > 0.2) and P(v > 0.3), the across-seed spread of the slice mean, and the mean per-seed maximum.
+    private static final double BLEND_XZ_MULTIPLIER = 684.412 * 0.25;
+    private static final double BLEND_Y_MULTIPLIER = 684.412 * 0.125;
+    private static final double BLEND_XZ_FACTOR = 80.0;
+    private static final double BLEND_Y_FACTOR = 160.0;
+    private static final double BLEND_SMEAR = 8.0;
+    private static final int BLEND_MAIN_OCTAVES = 8;
+    private static final int BLEND_LIMIT_OCTAVES = 16;
+
+    private record BlendedReplica(Octave[] mainOctaves, Octave[] minOctaves, Octave[] maxOctaves) {
+        static BlendedReplica of(long seed) {
+            Octave[] mainOctaves = new Octave[BLEND_MAIN_OCTAVES];
+            Octave[] minOctaves = new Octave[BLEND_LIMIT_OCTAVES];
+            Octave[] maxOctaves = new Octave[BLEND_LIMIT_OCTAVES];
+            for (int i = 0; i < BLEND_LIMIT_OCTAVES; i++) {
+                minOctaves[i] = Octave.of(mix(seed + 0x9E3779B97F4A7C15L * (i + 1L)));
+                maxOctaves[i] = Octave.of(mix(seed + 0x9E3779B97F4A7C15L * (i + 101L)));
+                if (i < BLEND_MAIN_OCTAVES) {
+                    mainOctaves[i] = Octave.of(mix(seed + 0x9E3779B97F4A7C15L * (i + 201L)));
+                }
+            }
+            return new BlendedReplica(mainOctaves, minOctaves, maxOctaves);
+        }
+    }
+
+    // Vanilla BlendedNoise.compute verbatim over the replica octaves (verified against the 26.2 source; the mixin
+    // runs the same body with the horizontal coordinates raw and the octave scale in the context instead).
+    @SuppressWarnings("deprecation")
+    private double blendedVanilla(BlendedReplica replica, double blockX, double blockY, double blockZ) {
+        double limitX = blockX * BLEND_XZ_MULTIPLIER;
+        double limitY = blockY * BLEND_Y_MULTIPLIER;
+        double limitZ = blockZ * BLEND_XZ_MULTIPLIER;
+        double mainX = limitX / BLEND_XZ_FACTOR;
+        double mainY = limitY / BLEND_Y_FACTOR;
+        double mainZ = limitZ / BLEND_XZ_FACTOR;
+        double limitSmear = BLEND_Y_MULTIPLIER * BLEND_SMEAR;
+        double mainSmear = limitSmear / BLEND_Y_FACTOR;
+        double mainNoiseValue = 0.0;
+        double pow = 1.0;
+        for (int i = 0; i < BLEND_MAIN_OCTAVES; i++) {
+            Octave octave = replica.mainOctaves()[i];
+            mainNoiseValue += octave.vanilla().noise(PerlinNoise.wrap(mainX * pow), PerlinNoise.wrap(mainY * pow),
+                    PerlinNoise.wrap(mainZ * pow), mainSmear * pow, mainY * pow) / pow;
+            pow /= 2.0;
+        }
+
+        double factor = (mainNoiseValue / 10.0 + 1.0) / 2.0;
+        boolean isMax = factor >= 1.0;
+        boolean isMin = factor <= 0.0;
+        double blendMin = 0.0;
+        double blendMax = 0.0;
+        pow = 1.0;
+        for (int i = 0; i < BLEND_LIMIT_OCTAVES; i++) {
+            double wx = PerlinNoise.wrap(limitX * pow);
+            double wy = PerlinNoise.wrap(limitY * pow);
+            double wz = PerlinNoise.wrap(limitZ * pow);
+            double yScalePow = limitSmear * pow;
+            if (!isMax) {
+                blendMin += replica.minOctaves()[i].vanilla().noise(wx, wy, wz, yScalePow, limitY * pow) / pow;
+            }
+
+            if (!isMin) {
+                blendMax += replica.maxOctaves()[i].vanilla().noise(wx, wy, wz, yScalePow, limitY * pow) / pow;
+            }
+
+            pow /= 2.0;
+        }
+
+        return Mth.clampedLerp(factor, blendMin / 512.0, blendMax / 512.0) / 128.0;
+    }
+
+    // The BlendedNoiseMixin walk: raw block X/Z into the periodic sampler, per-octave scale as cells per block,
+    // verticalShare undeclared — exactly what production computes for base_3d_noise inside finalDensity.
+    private double blendedWrapped(BlendedReplica replica, double blockX, double blockY, double blockZ) {
+        double limitY = blockY * BLEND_Y_MULTIPLIER;
+        double mainY = limitY / BLEND_Y_FACTOR;
+        double mainScale = BLEND_XZ_MULTIPLIER / BLEND_XZ_FACTOR;
+        double limitSmear = BLEND_Y_MULTIPLIER * BLEND_SMEAR;
+        double mainSmear = limitSmear / BLEND_Y_FACTOR;
+        double mainNoiseValue = 0.0;
+        double pow = 1.0;
+        for (int i = 0; i < BLEND_MAIN_OCTAVES; i++) {
+            Octave octave = replica.mainOctaves()[i];
+            mainNoiseValue += PeriodicNoiseSampler.sample(octave.permutations(), octave.xo(), octave.yo(),
+                    octave.zo(), WORLD, mainScale * pow, blockX, PerlinNoise.wrap(mainY * pow), blockZ,
+                    mainSmear * pow, mainY * pow, -1.0) / pow;
+            pow /= 2.0;
+        }
+
+        double factor = (mainNoiseValue / 10.0 + 1.0) / 2.0;
+        boolean isMax = factor >= 1.0;
+        boolean isMin = factor <= 0.0;
+        double blendMin = 0.0;
+        double blendMax = 0.0;
+        pow = 1.0;
+        for (int i = 0; i < BLEND_LIMIT_OCTAVES; i++) {
+            double wy = PerlinNoise.wrap(limitY * pow);
+            double yScalePow = limitSmear * pow;
+            double limitScale = BLEND_XZ_MULTIPLIER * pow;
+            if (!isMax) {
+                Octave octave = replica.minOctaves()[i];
+                blendMin += PeriodicNoiseSampler.sample(octave.permutations(), octave.xo(), octave.yo(), octave.zo(),
+                        WORLD, limitScale, blockX, wy, blockZ, yScalePow, limitY * pow, -1.0) / pow;
+            }
+
+            if (!isMin) {
+                Octave octave = replica.maxOctaves()[i];
+                blendMax += PeriodicNoiseSampler.sample(octave.permutations(), octave.xo(), octave.yo(), octave.zo(),
+                        WORLD, limitScale, blockX, wy, blockZ, yScalePow, limitY * pow, -1.0) / pow;
+            }
+
+            pow /= 2.0;
+        }
+
+        return Mth.clampedLerp(factor, blendMin / 512.0, blendMax / 512.0) / 128.0;
+    }
+
+    private void appendBlendedFoldCalibration(StringBuilder report) {
+        int seeds = 256;
+        int grid = 32;
+        int[] ySlices = {100, 150};
+        java.util.Random windows = new java.util.Random(0x0153E);
+        report.append("blended-noise fold calibration (full walk, 512-block lap, ").append(seeds)
+                .append(" seeds x ").append(grid).append("x").append(grid).append(" grid):\n");
+        for (int ySlice : ySlices) {
+            double[] vanillaSums = new double[2];
+            double[] foldedSums = new double[2];
+            long[] vanillaTails = new long[2];
+            long[] foldedTails = new long[2];
+            double[] vanillaSeedMeans = new double[seeds];
+            double[] foldedSeedMeans = new double[seeds];
+            double vanillaMaxSum = 0.0;
+            double foldedMaxSum = 0.0;
+            long points = 0;
+            for (int s = 0; s < seeds; s++) {
+                BlendedReplica replica = BlendedReplica.of(0xB1E4DEDL + s * 7919L);
+                double windowX = windows.nextDouble() * 1.0E6;
+                double windowZ = windows.nextDouble() * 1.0E6;
+                double vanillaSeedSum = 0.0;
+                double foldedSeedSum = 0.0;
+                double vanillaSeedMax = -Double.MAX_VALUE;
+                double foldedSeedMax = -Double.MAX_VALUE;
+                for (int i = 0; i < grid; i++) {
+                    double x = i * (WORLD_BLOCKS / (double) grid);
+                    for (int j = 0; j < grid; j++) {
+                        double z = j * (WORLD_BLOCKS / (double) grid);
+                        double vanilla = blendedVanilla(replica, windowX + x, ySlice, windowZ + z);
+                        double folded = blendedWrapped(replica, x - 256.0, ySlice, z - 256.0);
+                        vanillaSums[0] += vanilla;
+                        vanillaSums[1] += vanilla * vanilla;
+                        foldedSums[0] += folded;
+                        foldedSums[1] += folded * folded;
+                        if (vanilla > 0.2) {
+                            vanillaTails[0]++;
+                        }
+                        if (vanilla > 0.3) {
+                            vanillaTails[1]++;
+                        }
+                        if (folded > 0.2) {
+                            foldedTails[0]++;
+                        }
+                        if (folded > 0.3) {
+                            foldedTails[1]++;
+                        }
+                        vanillaSeedSum += vanilla;
+                        foldedSeedSum += folded;
+                        vanillaSeedMax = Math.max(vanillaSeedMax, vanilla);
+                        foldedSeedMax = Math.max(foldedSeedMax, folded);
+                        points++;
+                    }
+                }
+                vanillaSeedMeans[s] = vanillaSeedSum / (grid * grid);
+                foldedSeedMeans[s] = foldedSeedSum / (grid * grid);
+                vanillaMaxSum += vanillaSeedMax;
+                foldedMaxSum += foldedSeedMax;
+            }
+            report.append(String.format(
+                    "  y=%d vanilla: mean=%+.4f std=%.4f tail02=%.3f%% tail03=%.3f%% mean_spread=%.4f avg_max=%.4f%n",
+                    ySlice, vanillaSums[0] / points,
+                    Math.sqrt(vanillaSums[1] / points - Math.pow(vanillaSums[0] / points, 2)),
+                    100.0 * vanillaTails[0] / points, 100.0 * vanillaTails[1] / points,
+                    Math.sqrt(variance(vanillaSeedMeans)), vanillaMaxSum / seeds));
+            report.append(String.format(
+                    "  y=%d folded:  mean=%+.4f std=%.4f tail02=%.3f%% tail03=%.3f%% mean_spread=%.4f avg_max=%.4f%n",
+                    ySlice, foldedSums[0] / points,
+                    Math.sqrt(foldedSums[1] / points - Math.pow(foldedSums[0] / points, 2)),
+                    100.0 * foldedTails[0] / points, 100.0 * foldedTails[1] / points,
+                    Math.sqrt(variance(foldedSeedMeans)), foldedMaxSum / seeds));
         }
         report.append('\n');
     }
