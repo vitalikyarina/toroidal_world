@@ -1,0 +1,22 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.toroidalworld.compat.xaero.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "plugin": "com.toroidalworld.compat.xaero.XaeroMixinPlugin",
+  "client": [
+    "InfoDisplayCompilerMixin",
+    "MinimapElementRendererHandlerMixin",
+    "MinimapWorldStateUpdaterMixin",
+    "WaypointMixin",
+    "map.GuiMapMixin",
+    "map.MapProcessorMixin",
+    "map.MapWriterMixin",
+    "map.MinimapElementReaderWrapperMixin",
+    "map.SupportXaeroWorldmapMixin",
+    "map.WaypointWrapperMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
