@@ -19,10 +19,10 @@ import net.minecraft.core.Direction;
 @Mixin(targets = "xaero.hud.minimap.element.render.MinimapElementRendererHandler", remap = false)
 public abstract class MinimapElementRendererHandlerMixin {
     @ModifyArgs(
-            method = "transformAndRenderForRenderer(Ljava/lang/Object;Lxaero/hud/minimap/element/render/MinimapElementRenderer;Ljava/lang/Object;IDLxaero/hud/minimap/element/render/MinimapElementRenderInfo;Lxaero/lib/client/graphics/XaeroBufferProvider;)Z",
+            method = "transformAndRenderForRenderer(Ljava/lang/Object;Lxaero/hud/minimap/element/render/MinimapElementRenderer;Ljava/lang/Object;IDLxaero/hud/minimap/element/render/MinimapElementRenderInfo;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)Z",
             at = @At(
                     value = "INVOKE",
-                    target = "Lxaero/hud/minimap/element/render/MinimapElementRendererHandler;transformAndRenderForRenderer(Ljava/lang/Object;DDDLxaero/hud/minimap/element/render/MinimapElementRenderer;Ljava/lang/Object;IDLxaero/hud/minimap/element/render/MinimapElementRenderInfo;Lxaero/lib/client/graphics/XaeroBufferProvider;)Z",
+                    target = "Lxaero/hud/minimap/element/render/MinimapElementRendererHandler;transformAndRenderForRenderer(Ljava/lang/Object;DDDLxaero/hud/minimap/element/render/MinimapElementRenderer;Ljava/lang/Object;IDLxaero/hud/minimap/element/render/MinimapElementRenderInfo;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)Z",
                     ordinal = 0))
     private void toroidal$foldElementCoords(Args args) {
         double elementX = args.get(1);

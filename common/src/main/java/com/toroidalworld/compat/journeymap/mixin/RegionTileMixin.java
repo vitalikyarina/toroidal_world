@@ -9,8 +9,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
 
-import journeymap.api.v2.common.Context.UI;
+import journeymap.api.v2.client.display.Context.UI;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.Direction;
 import org.joml.Matrix3x2fStack;
 
@@ -24,8 +25,8 @@ import org.joml.Matrix3x2fStack;
 @Mixin(targets = "journeymap.client.render.map.RegionTile", remap = false)
 public abstract class RegionTileMixin {
     @Shadow(remap = false)
-    public abstract void render(GuiGraphicsExtractor graphics, Matrix3x2fStack pose, UI context,
-            double pixelOffsetX, double pixelOffsetZ, float alpha);
+    public abstract void render(GuiGraphicsExtractor graphics, MultiBufferSource.BufferSource buffers,
+            Matrix3x2fStack pose, UI context, double pixelOffsetX, double pixelOffsetZ, float alpha);
 
     @Shadow(remap = false)
     private int zoom;
@@ -35,8 +36,8 @@ public abstract class RegionTileMixin {
     private static boolean toroidal$drawingCopies;
 
     @Inject(method = "render", at = @At("TAIL"))
-    private void toroidal$renderWrappedCopies(GuiGraphicsExtractor graphics, Matrix3x2fStack pose, UI context,
-            double pixelOffsetX, double pixelOffsetZ, float alpha, CallbackInfo ci) {
+    private void toroidal$renderWrappedCopies(GuiGraphicsExtractor graphics, MultiBufferSource.BufferSource buffers,
+            Matrix3x2fStack pose, UI context, double pixelOffsetX, double pixelOffsetZ, float alpha, CallbackInfo ci) {
         if (toroidal$drawingCopies || context == UI.Webmap) {
             return;
         }
@@ -65,7 +66,7 @@ public abstract class RegionTileMixin {
                         continue;
                     }
 
-                    this.render(graphics, pose, context,
+                    this.render(graphics, buffers, pose, context,
                             pixelOffsetX + lapX * periodX, pixelOffsetZ + lapZ * periodZ, alpha);
                 }
             }
