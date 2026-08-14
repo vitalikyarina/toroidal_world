@@ -1,0 +1,18 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.toroidalworld.compat.journeymap.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "plugin": "com.toroidalworld.compat.journeymap.JourneyMapMixinPlugin",
+  "client": [
+    "ClientWaypointImplMixin",
+    "LayerDelegateMixin",
+    "LocationFormatMixin",
+    "MapRendererMixin",
+    "RegionCoordMixin",
+    "RegionTileMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

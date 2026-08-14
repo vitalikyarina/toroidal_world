@@ -16,11 +16,15 @@
     ],
     "client": [
       "com.toroidalworld.client.ToroidalWorldFabricClient"
+    ],
+    "journeymap": [
+      "com.toroidalworld.compat.journeymap.ToroidalJourneyMapPlugin"
     ]
   },
   "mixins": [
     "toroidal_world.mixins.json",
-    "toroidal_world.shape.mixins.json"
+    "toroidal_world.shape.mixins.json",
+    "toroidal_world.compat.journeymap.mixins.json"
   ],
   "accessWidener": "toroidal_world.accesswidener",
   "custom": {
