@@ -6,16 +6,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.mixin.BlockEntityDataPacketAccessor;
 import com.toroidalworld.mixin.BlockPositionSourceAccessor;
+import com.toroidalworld.mixin.InitializeBorderPacketAccessor;
 import com.toroidalworld.mixin.LevelChunkPacketAccessor;
 import com.toroidalworld.mixin.LightUpdatePacketAccessor;
 import com.toroidalworld.mixin.PlayerLookAtPacketAccessor;
+import com.toroidalworld.mixin.SectionBlocksUpdatePacketAccessor;
+import com.toroidalworld.mixin.SetBorderCenterPacketAccessor;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
 import com.toroidalworld.player.MirrorWriter;
@@ -458,13 +464,16 @@ public final class PacketTranslator {
 
     // Several blocks changing in one section travel as a batch, and the section they belong to sits in a private field.
     private static ClientboundSectionBlocksUpdatePacket sectionBlocksUpdate(ClientboundSectionBlocksUpdatePacket packet, TranslationContext context) {
-        return rewritePosition(ClientboundSectionBlocksUpdatePacket.STREAM_CODEC, SECTION_POS_CODEC, packet, context,
+        return rewritePosition(
+                (sectionPacket, output) -> ((SectionBlocksUpdatePacketAccessor) sectionPacket).toroidal$write(output),
+                SectionBlocksUpdatePacketAccessor::toroidal$create,
+                SECTION_POS_CODEC, packet, context,
                 section -> SectionPos.of(context.toClient(section.chunk(), ChunkTraffic.SECTION_BLOCKS), section.y()));
     }
 
     private static ClientboundBlockEntityDataPacket blockEntityData(ClientboundBlockEntityDataPacket packet, TranslationContext context) {
-        return rewritePosition(ClientboundBlockEntityDataPacket.STREAM_CODEC, BlockPos.STREAM_CODEC, packet, context,
-                pos -> toClientBlock(context, pos, ChunkTraffic.BLOCK_ENTITY));
+        return BlockEntityDataPacketAccessor.toroidal$create(
+                toClientBlock(context, packet.getPos(), ChunkTraffic.BLOCK_ENTITY), packet.getType(), packet.getTag());
     }
 
     private static ClientboundBlockDestructionPacket blockDestruction(ClientboundBlockDestructionPacket packet, TranslationContext context) {
@@ -725,7 +734,10 @@ public final class PacketTranslator {
             return packet;
         }
 
-        return rewritePosition(ClientboundInitializeBorderPacket.STREAM_CODEC, BORDER_CENTER_CODEC, packet, context,
+        return rewritePosition(
+                (borderPacket, output) -> ((InitializeBorderPacketAccessor) borderPacket).toroidal$write(output),
+                InitializeBorderPacketAccessor::toroidal$create,
+                BORDER_CENTER_CODEC, packet, context,
                 center -> toClientBorderCenter(context, center));
     }
 
@@ -734,7 +746,10 @@ public final class PacketTranslator {
             return packet;
         }
 
-        return rewritePosition(ClientboundSetBorderCenterPacket.STREAM_CODEC, BORDER_CENTER_CODEC, packet, context,
+        return rewritePosition(
+                (borderPacket, output) -> ((SetBorderCenterPacketAccessor) borderPacket).toroidal$write(output),
+                SetBorderCenterPacketAccessor::toroidal$create,
+                BORDER_CENTER_CODEC, packet, context,
                 center -> toClientBorderCenter(context, center));
     }
 
@@ -959,6 +974,30 @@ public final class PacketTranslator {
             UnaryOperator<P> toClient) {
         return rewritePosition(codec, NO_PREFIX_CODEC, positionCodec, packet, context,
                 (noPrefix, serverPosition) -> toClient.apply(serverPosition));
+    }
+
+    // The same swap, taken through vanilla's own write/read behind the packet's STREAM_CODEC instead of the codec
+    // field. The position codecs are
+    // fixed-size, so the client position re-encodes to the width the server one vacated and the target holds exactly
+    // the source packet — no buffer growth.
+    //
+    // The wire pair is vanilla's own write/read behind the packet's STREAM_CODEC, reached through invokers rather
+    // than the codec field: loaders and mods swap wrappers into those fields whose transforms assume the network
+    // pipeline around them — Fabric's PacketContext is a scoped value bound only inside the encoder, and this runs
+    // on the server thread — and the pipeline still encodes the finished packet, so a wrapper run here would also
+    // run twice.
+    private static <T, P> T rewritePosition(BiConsumer<T, RegistryFriendlyByteBuf> writer,
+            Function<FriendlyByteBuf, T> reader,
+            StreamCodec<? super RegistryFriendlyByteBuf, P> positionCodec, T packet, TranslationContext context,
+            UnaryOperator<P> toClient) {
+        RegistryFriendlyByteBuf source = buffer(context);
+        writer.accept(packet, source);
+        P serverPosition = positionCodec.decode(source);
+
+        RegistryFriendlyByteBuf target = buffer(context, source.readerIndex() + source.readableBytes());
+        positionCodec.encode(target, toClient.apply(serverPosition));
+        target.writeBytes(source);
+        return reader.apply(target);
     }
 
     // The same swap where the position is not first on the wire — an entity id stands in front of it, or an id and an
