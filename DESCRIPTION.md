@@ -21,10 +21,11 @@ Runs on **NeoForge** and **Fabric**.
 
 - [Sodium](https://modrinth.com/mod/sodium) and [Iris Shaders](https://modrinth.com/mod/iris).
 - [Lithium](https://modrinth.com/mod/lithium) — two of its optimizations are switched off automatically.
+- [JourneyMap](https://modrinth.com/mod/journeymap) — the map wraps and repeats with the world, a lap paints back onto the same map, waypoints across the seam show the short distance, and the fullscreen map outlines the world edge.
+- [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) and [Xaero's World Map](https://modrinth.com/mod/xaeros-world-map) — the minimap and the full map continue across the seam, the full map repeats with the world and outlines its edge, waypoints across the seam show the short distance, and coordinate readouts stay inside the world.
 
 **Partially supported**
 
-- Map mods — maps still draw raw coordinates across the seam.
 - LOD mods (**Distant Horizons**, **Voxy**) — distant terrain is not wrapped across the seam yet.
 
 ## Before you download

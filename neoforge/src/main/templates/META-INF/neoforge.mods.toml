@@ -67,3 +67,6 @@ config="toroidal_world.shape.mixins.json"
 
 [[mixins]]
 config="toroidal_world.compat.journeymap.mixins.json"
+
+[[mixins]]
+config="toroidal_world.compat.xaero.mixins.json"

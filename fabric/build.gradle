@@ -44,6 +44,14 @@ repositories {
         name = 'BlameJared'
         url = 'https://maven.blamejared.com'
     }
+    // Xaero's Minimap / World Map jars for the compat mixins.
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
 }
 
 dependencies {
@@ -64,6 +72,8 @@ dependencies {
 
     // 26.x is unobfuscated, so the neoforge API flavor compiles fine here; only the plugin class touches it.
     compileOnly "info.journeymap:journeymap-api-neoforge:${journeymap_api_version}"
+    compileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
+    compileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
 }
 
 // Two jars on this game version, and only the second one ships. Minecraft is obfuscated here, so Loom compiles into a
