@@ -38,6 +38,14 @@ loom {
     accessWidenerPath = file('src/main/resources/toroidal_world.accesswidener')
 }
 
+repositories {
+    // JourneyMap API mirror (TeamJM's own maven is flaky). Needed here too: common's sources compile in this module.
+    maven {
+        name = 'BlameJared'
+        url = 'https://maven.blamejared.com'
+    }
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     // Mojmap on both sides: the mixins and the accesswidener are written against the same names NeoForge uses,
@@ -53,6 +61,9 @@ dependencies {
     // Bundled into the jar for production. No annotation processor and no refmap: Loom 1.17 defaults
     // useLegacyMixinAp to false and remaps the mixin annotations inside remapJar instead.
     include(implementation("io.github.llamalad7:mixinextras-fabric:${mixinextras_version}"))
+
+    // 26.x is unobfuscated, so the neoforge API flavor compiles fine here; only the plugin class touches it.
+    compileOnly "info.journeymap:journeymap-api-neoforge:${journeymap_api_version}"
 }
 
 // Two jars on this game version, and only the second one ships. Minecraft is obfuscated here, so Loom compiles into a

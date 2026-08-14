@@ -62,10 +62,10 @@ public class PlayerListMixin {
         }
     }
 
-    // The first of the two moments the client's space changes and it needs the wrap bounds: joining. The other is
-    // crossing to another dimension (ServerPlayerMixin) — the two wrapped dimensions carry different widths. A
-    // same-dimension respawn keeps the client level, and with it the transformer, so it needs nothing. At the tail,
-    // once the connection is fully placed and flushing again, so the payload follows the whole login sequence.
+    // The first of the three moments the client's space changes and it needs the wrap bounds: joining. The others
+    // are crossing to another dimension (ServerPlayerMixin) and the death respawn below — the wrapped dimensions
+    // carry different widths. At the tail, once the connection is fully placed and flushing again, so the payload
+    // follows the whole login sequence.
     @Inject(method = "placeNewPlayer", at = @At("TAIL"))
     private void toroidal$sendBoundsOnLogin(Connection connection, ServerPlayer player, CommonListenerCookie cookie,
             CallbackInfo ci) {
@@ -87,6 +87,16 @@ public class PlayerListMixin {
             Entity.RemovalReason reason, CallbackInfoReturnable<ServerPlayer> cir,
             @Local(ordinal = 1) ServerPlayer respawned) {
         WorldLoopAttachments.rebaseClientPositionOf(respawned);
+    }
+
+    // The third moment: a death respawn. It replaces the ServerPlayer without passing through teleport, and when the
+    // death was in another dimension the client rebuilds its level — which is born with NOOP bounds and would stay
+    // that way. At the tail the payload queues behind the respawn packet, so it lands on the level the client just
+    // built; a same-dimension respawn keeps the level and the repeat is an idempotent re-apply.
+    @Inject(method = "respawn", at = @At("TAIL"))
+    private void toroidal$sendBoundsOnRespawn(ServerPlayer player, boolean keepAllPlayerData,
+            Entity.RemovalReason removalReason, CallbackInfoReturnable<ServerPlayer> cir) {
+        WrappingBoundsSync.sendTo(cir.getReturnValue());
     }
 
     @WrapOperation(
