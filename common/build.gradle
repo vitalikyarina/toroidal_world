@@ -21,12 +21,31 @@ sourceSets.main.resources {
     exclude("**/*.bbmodel") // BlockBench project files
 }
 
+repositories {
+    // JourneyMap API mirror (TeamJM's own maven is flaky).
+    maven {
+        name = 'BlameJared'
+        url = 'https://maven.blamejared.com'
+    }
+    // Xaero's Minimap / World Map jars for the compat mixins.
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
+}
+
 // NeoForm brings only vanilla; the mixin annotations the sources carry come from the same artifacts the NeoForge
 // runtime ships (pinned in gradle.properties from the neo_version userdev config). compileOnly — applying them is
 // the loaders' business.
 dependencies {
     compileOnly "net.fabricmc:sponge-mixin:${mixin_version}"
     compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
+    compileOnly "info.journeymap:journeymap-api-neoforge:${journeymap_api_version}"
+    compileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
+    compileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
 }
 
 tasks.withType(JavaCompile).configureEach {
