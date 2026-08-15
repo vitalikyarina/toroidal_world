@@ -52,6 +52,14 @@ repositories {
             includeGroup 'maven.modrinth'
         }
     }
+    // MixinSquared — the C2ME compat mixin injects into C2ME's own handler.
+    maven {
+        name = 'Bawnorton'
+        url = 'https://maven.bawnorton.com/releases'
+        content {
+            includeGroup 'com.github.bawnorton.mixinsquared'
+        }
+    }
 }
 
 dependencies {
@@ -61,6 +69,11 @@ dependencies {
 
     // Bundled into the jar for production; no annotation processor — with no remapping there is no refmap to generate.
     include(implementation("io.github.llamalad7:mixinextras-fabric:${mixinextras_version}"))
+
+    // Bundled rather than borrowed from C2ME's own jar-in-jar: that copy is C2ME's implementation detail, and leaning
+    // on it would make the fold vanish the day C2ME drops or renames it. Loader JiJ keeps the highest version present,
+    // so shipping ours costs nothing where C2ME already carries a newer one.
+    include(implementation("com.github.bawnorton.mixinsquared:mixinsquared-fabric:${mixinsquared_version}"))
 
     // 26.x is unobfuscated, so the neoforge API flavor compiles fine here; only the plugin class touches it.
     compileOnly "info.journeymap:journeymap-api-neoforge:${journeymap_api_version}"
