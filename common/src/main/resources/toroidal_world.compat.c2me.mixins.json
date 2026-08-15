@@ -6,7 +6,18 @@
   "plugin": "com.toroidalworld.compat.c2me.C2meMixinPlugin",
   "mixinPriority": 1200,
   "mixins": [
-    "AquiferSeamMixin"
+    "AquiferSeamMixin",
+    "BytecodeGenRegistryMixin",
+    "DotGenRegistryMixin",
+    "McToAstMixin",
+    "NewChunkHolderVanillaInterfaceMixin",
+    "NewChunkStatusMixin",
+    "PerlinNoiseMixin",
+    "PlayerNoTickLoaderMixin",
+    "ServerAccessibleChunkSendingMixin",
+    "ServerBlockTickingMixin",
+    "TheChunkSystemMixin",
+    "VanillaWorldGenerationDelegateMixin"
   ],
   "injectors": {
     "defaultRequire": 1

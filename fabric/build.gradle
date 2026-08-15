@@ -62,7 +62,27 @@ repositories {
     }
 }
 
+// Same unpack as in common, for the same reason: common's sources compile in this module too, and the chunk-system
+// compat mixins name C2ME types. compileOnly on both sides — the classes come from the installed C2ME at runtime.
+configurations {
+    c2meModules
+}
+
 dependencies {
+    c2meModules "maven.modrinth:c2me-neoforge:${c2me_version}"
+}
+
+var c2meModuleJars = tasks.register('unpackC2meModules', Sync) {
+    from(zipTree(configurations.c2meModules.singleFile)) {
+        include 'META-INF/jars/c2me-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('c2me-modules')
+}
+
+dependencies {
+    compileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     minecraft "com.mojang:minecraft:${minecraft_version}"
     // Mojmap on both sides: the mixins and the accesswidener are written against the same names NeoForge uses,
     // so common's sources compile unchanged for either loader.
