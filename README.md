@@ -2,13 +2,15 @@
 
 A NeoForge mod that makes the Minecraft world a seamless torus: the world has a finite size and no edge — cross the +X border and you arrive from the −X side, with terrain, structures, mobs and gameplay continuous across the seam.
 
-The player-facing description (the Modrinth page source) lives in [DESCRIPTION.md](DESCRIPTION.md).
-
-Running a server? [docs/dedicated-server.md](docs/dedicated-server.md) — one `level-type` line turns a dedicated server into a toroidal world.
-
 ## Versions
 
-- Minecraft **26.2**, NeoForge **26.2.0.45-beta+**.
+- Minecraft **26.1.2**
+- NeoForge **26.1.2.94+**
+- Fabric Loader **0.19.3+** with Fabric API **0.141.3+26.1**
+
+## Dedicated server
+
+One `level-type` line in `server.properties` turns a dedicated server into a toroidal world — see [docs/dedicated-server.md](docs/dedicated-server.md) for the presets, custom sizes and the size rules.
 
 ## Building from source
 
