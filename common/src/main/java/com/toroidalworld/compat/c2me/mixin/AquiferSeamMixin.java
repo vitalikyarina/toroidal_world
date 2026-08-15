@@ -1,19 +1,13 @@
 package com.toroidalworld.compat.c2me.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import org.slf4j.Logger;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.bawnorton.mixinsquared.TargetHandler;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.mojang.logging.LogUtils;
 
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.PositionalRandomFactory;
@@ -53,44 +47,11 @@ public class AquiferSeamMixin {
             int gridZ,
             Operation<Void> original) {
         WorldLoopTransformer transformer = GenerationTransformerContext.context().wrappedTransformer();
-        this.toroidal$cells++;
         if (transformer == null) {
             original.call(factory, random, gridX, gridY, gridZ);
             return;
         }
 
-        int wrappedX = transformer.chunks.x.wrap(gridX);
-        int wrappedZ = transformer.chunks.z.wrap(gridZ);
-        if (wrappedX != gridX || wrappedZ != gridZ) {
-            this.toroidal$wrappedCells++;
-        }
-
-        original.call(factory, random, wrappedX, gridY, wrappedZ);
-    }
-
-    @Unique
-    private static final Logger toroidal$LOGGER = LogUtils.getLogger();
-
-    @Unique
-    private int toroidal$cells;
-
-    @Unique
-    private int toroidal$wrappedCells;
-
-    // The fold is invisible when it works and equally invisible when it never ran: an unbound generation context makes
-    // every seed take the raw branch, and the aquifer splits at the seam with nothing said. One line per aquifer that
-    // actually renamed a cell is the difference between the two, and it costs a line only for the grids that reach
-    // past the bounds — the seam band, not the world.
-    @Inject(method = "@MixinSquared:Handler", at = @At("TAIL"))
-    @TargetHandler(
-            mixin = "com.ishland.c2me.opts.worldgen.vanilla.mixin.aquifer.MixinAquiferSamplerImpl",
-            name = "onInit")
-    private void toroidal$reportFoldedGrid(CallbackInfo ci) {
-        if (this.toroidal$wrappedCells == 0) {
-            return;
-        }
-
-        toroidal$LOGGER.info("[c2me-compat] aquifer_grid cells={} wrapped_cells={}",
-                this.toroidal$cells, this.toroidal$wrappedCells);
+        original.call(factory, random, transformer.chunks.x.wrap(gridX), gridY, transformer.chunks.z.wrap(gridZ));
     }
 }
