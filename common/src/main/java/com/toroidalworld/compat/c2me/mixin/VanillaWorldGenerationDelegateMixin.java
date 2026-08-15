@@ -1,13 +1,21 @@
 package com.toroidalworld.compat.c2me.mixin;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.compat.c2me.C2meSeamFold;
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.ishland.c2me.base.common.scheduler.LockTokenImpl;
+import com.ishland.c2me.base.common.scheduler.ScheduledTask;
+import com.ishland.c2me.base.common.scheduler.SchedulingManager;
 import com.ishland.c2me.rewrites.chunksystem.common.ChunkLoadingContext;
 import com.ishland.c2me.rewrites.chunksystem.common.statuses.VanillaWorldGenerationDelegate;
+import com.ishland.flowsched.executor.LockToken;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -52,5 +60,42 @@ public class VanillaWorldGenerationDelegateMixin {
             return initializer.get(slot.x, slot.z);
         };
         return original.call(centerX, centerZ, range, folding);
+    }
+
+    // The write lock is taken on the raw square, so a step whose square runs past the bounds locks chunks that do not
+    // exist while writing, through the mod's own fold, into the ones across the seam — two tasks on opposite sides
+    // hold disjoint tokens and the same physical chunk. Folding the token positions is what makes them meet.
+    //
+    // The whole method is wrapped rather than its call in upgradeToThis: that call sits inside a Completable.defer
+    // lambda, and a handler bound to the enclosing method matches nothing (conventions.md), while one bound to
+    // lambda$upgradeToThis$N holds only until C2ME is next recompiled. This is the primitive both helpers funnel
+    // through, and the only place in C2ME that builds a worldgen lock token.
+    //
+    // The task's own position stays as C2ME computes it. It is the square's corner and it feeds the priority map, not
+    // the lock — folding it would move a task between priority buckets to no purpose.
+    @WrapMethod(method = "runTaskWithLockArea")
+    private static <T> CompletableFuture<T> toroidal$foldLockArea(
+            int baseChunkX,
+            int baseChunkZ,
+            int sizeX,
+            int sizeZ,
+            SchedulingManager schedulingManager,
+            Supplier<CompletableFuture<T>> action,
+            Operation<CompletableFuture<T>> original) {
+        WorldLoopTransformer transformer = ((TransformerSource) schedulingManager).toroidal$wrappedTransformer();
+        if (transformer == null) {
+            return original.call(baseChunkX, baseChunkZ, sizeX, sizeZ, schedulingManager, action);
+        }
+
+        long[] positions = C2meSeamFold.canonicalLockPositions(transformer, baseChunkX, baseChunkZ, sizeX, sizeZ);
+        LockToken[] tokens = new LockToken[positions.length];
+        for (int tokenIdx = 0; tokenIdx < positions.length; tokenIdx++) {
+            tokens[tokenIdx] =
+                    new LockTokenImpl(schedulingManager.getId(), positions[tokenIdx], LockTokenImpl.Usage.WORLDGEN);
+        }
+
+        ScheduledTask<T> task = new ScheduledTask<>(ChunkPos.asLong(baseChunkX, baseChunkZ), action, tokens);
+        schedulingManager.enqueue(task);
+        return task.getFuture();
     }
 }

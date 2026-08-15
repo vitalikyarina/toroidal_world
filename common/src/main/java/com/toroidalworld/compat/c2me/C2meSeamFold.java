@@ -2,6 +2,7 @@ package com.toroidalworld.compat.c2me;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.world.level.ChunkPos;
 
 // One statement, worn by every neighbourhood square C2ME builds: the neighbour of a chunk at the bounds IS the chunk
@@ -29,6 +30,29 @@ public final class C2meSeamFold {
     // The same fold with no centre to spare — for the squares whose every member is a neighbour.
     public static ChunkPos canonical(WorldLoopTransformer transformer, int chunkX, int chunkZ) {
         return new ChunkPos(transformer.chunks.x.wrap(chunkX), transformer.chunks.z.wrap(chunkZ));
+    }
+
+    // The write lock's square, as packed positions. The centre folds here along with everything else — a lock token
+    // names a physical chunk, so two tasks whose centres are different keys for one chunk have to arrive at the same
+    // token, which is the opposite of what canonicalSlot needs.
+    //
+    // Duplicates are removed rather than tolerated: ExecutorManager.tryLock meets the second copy of a token with the
+    // listener set its own call just inserted, frees that set while rolling back, and restarts the loop on a state it
+    // has not changed — an infinite spin holding a worker thread. A square wider than the world is the only way to
+    // produce one, which the write radius and the world's width decide between them.
+    public static long[] canonicalLockPositions(
+            WorldLoopTransformer transformer, int baseChunkX, int baseChunkZ, int sizeX, int sizeZ) {
+        LongOpenHashSet folded = new LongOpenHashSet(sizeX * sizeZ);
+
+        for (int offsetX = 0; offsetX < sizeX; offsetX++) {
+            for (int offsetZ = 0; offsetZ < sizeZ; offsetZ++) {
+                folded.add(ChunkPos.asLong(
+                        transformer.chunks.x.wrap(baseChunkX + offsetX),
+                        transformer.chunks.z.wrap(baseChunkZ + offsetZ)));
+            }
+        }
+
+        return folded.toLongArray();
     }
 
     private C2meSeamFold() {
