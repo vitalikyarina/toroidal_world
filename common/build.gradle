@@ -35,6 +35,14 @@ repositories {
             includeGroup 'maven.modrinth'
         }
     }
+    // MixinSquared — the C2ME compat mixin injects into C2ME's own handler.
+    maven {
+        name = 'Bawnorton'
+        url = 'https://maven.bawnorton.com/releases'
+        content {
+            includeGroup 'com.github.bawnorton.mixinsquared'
+        }
+    }
 }
 
 // NeoForm brings only vanilla; the mixin annotations the sources carry come from the same artifacts the NeoForge
@@ -47,6 +55,7 @@ dependencies {
     compileOnly "info.journeymap:journeymap-api-neoforge:${journeymap_api_version}"
     compileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
     compileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
+    compileOnly "com.github.bawnorton.mixinsquared:mixinsquared-common:${mixinsquared_version}"
 }
 
 tasks.withType(JavaCompile).configureEach {

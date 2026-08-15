@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.toroidalworld.compat.c2me.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "com.toroidalworld.compat.c2me.C2meMixinPlugin",
+  "mixinPriority": 1200,
+  "mixins": [
+    "AquiferSeamMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

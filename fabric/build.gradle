@@ -52,6 +52,14 @@ repositories {
             includeGroup 'maven.modrinth'
         }
     }
+    // MixinSquared — the C2ME compat mixin injects into C2ME's own handler.
+    maven {
+        name = 'Bawnorton'
+        url = 'https://maven.bawnorton.com/releases'
+        content {
+            includeGroup 'com.github.bawnorton.mixinsquared'
+        }
+    }
 }
 
 dependencies {
@@ -69,6 +77,11 @@ dependencies {
     // Bundled into the jar for production. No annotation processor and no refmap: Loom 1.17 defaults
     // useLegacyMixinAp to false and remaps the mixin annotations inside remapJar instead.
     include(implementation("io.github.llamalad7:mixinextras-fabric:${mixinextras_version}"))
+
+    // Bundled rather than borrowed from C2ME's own jar-in-jar: that copy is C2ME's implementation detail, and leaning
+    // on it would make the fold vanish the day C2ME drops or renames it. Loader JiJ keeps the highest version present,
+    // so shipping ours costs nothing where C2ME already carries a newer one.
+    include(implementation("com.github.bawnorton.mixinsquared:mixinsquared-fabric:${mixinsquared_version}"))
 
     // NeoForge 1.21.1 runs on Mojmap, so the neoforge API flavor already speaks this workspace's names — plain
     // compileOnly, nothing to remap off intermediary. remapJar bridges the runtime gap the other way.

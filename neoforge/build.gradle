@@ -35,7 +35,14 @@ tasks.named('jar', Jar) {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    // MixinSquared — the C2ME compat mixin injects into C2ME's own handler.
+    maven {
+        name = 'Bawnorton'
+        url = 'https://maven.bawnorton.com/releases'
+        content {
+            includeGroup 'com.github.bawnorton.mixinsquared'
+        }
+    }
 }
 
 // 1.21.1 runs on Java 21 — that is what NeoForge 21.1.x and its Fabric contemporaries are built against.
@@ -96,6 +103,17 @@ neoForge {
 
 dependencies {
     implementation project(':common')
+
+    // Bundled rather than borrowed from C2ME's own jar-in-jar: that copy is C2ME's implementation detail, and leaning
+    // on it would make the fold vanish the day C2ME drops or renames it. The open range is a floor, not a pin — where
+    // C2ME already carries a newer MixinSquared, JarJar keeps that one and ours is dropped.
+    jarJar(implementation("com.github.bawnorton.mixinsquared:mixinsquared-neoforge")) {
+        version {
+            require "[${mixinsquared_version},)"
+            prefer "${mixinsquared_version}"
+        }
+    }
+
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
