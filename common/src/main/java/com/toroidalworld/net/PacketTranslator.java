@@ -278,7 +278,8 @@ public final class PacketTranslator {
     // both packets are built fresh for every recipient: the chunk packet in PlayerChunkSender.sendChunk, the light
     // packet per player via ChunkHolderMixin splitting vanilla's shared broadcast.
     private static ClientboundLevelChunkWithLightPacket levelChunk(ClientboundLevelChunkWithLightPacket packet, TranslationContext context) {
-        ChunkPos clientPos = context.toClient(new ChunkPos(packet.getX(), packet.getZ()));
+        ChunkPos serverPos = new ChunkPos(packet.getX(), packet.getZ());
+        ChunkPos clientPos = context.toClient(serverPos);
 
         LevelChunkPacketAccessor accessor = (LevelChunkPacketAccessor) packet;
         accessor.toroidal$setX(clientPos.x());
