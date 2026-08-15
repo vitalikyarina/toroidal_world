@@ -15,8 +15,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.LevelHolder;
 import com.toroidalworld.accessors.TransformerSource;
+import com.toroidalworld.accessors.TransformerSourceBindable;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.storage.WorldLoopAttachments;
+import com.ishland.c2me.base.common.scheduler.SchedulingManager;
 import com.ishland.c2me.rewrites.chunksystem.common.TheChunkSystem;
 import com.ishland.flowsched.scheduler.ItemHolder;
 import com.ishland.flowsched.scheduler.ItemStatus;
@@ -33,6 +35,18 @@ public class TheChunkSystemMixin implements TransformerSource {
     @Shadow
     @Final
     private ChunkMap tacs;
+
+    @Shadow
+    @Final
+    private SchedulingManager schedulingManager;
+
+    // The worldgen write lock is taken with nothing but this manager in hand, so it is given the one object per level
+    // that answers the question — bound here rather than resolved there, because the answer is still lazy and this is
+    // where the two meet.
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void toroidal$bindLockFoldSource(ChunkMap tacs, CallbackInfo ci) {
+        ((TransformerSourceBindable) this.schedulingManager).toroidal$bindTransformerSource(this);
+    }
 
     @Unique
     private boolean toroidal$resolved;
