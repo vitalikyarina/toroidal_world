@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 import com.toroidalworld.compat.c2me.C2meAquifer;
+import com.toroidalworld.compat.c2me.C2meNativesMath;
 
 // The main config's mixins are unconditional but for one case: where another mod has taken over the vanilla code a
 // fold attaches to, this mod's copy of that fold steps aside and the compat module's copy takes over. Both sides read
@@ -21,6 +22,8 @@ import com.toroidalworld.compat.c2me.C2meAquifer;
 public class ToroidalMixinPlugin implements IMixinConfigPlugin {
     private static final String AQUIFER_SEAM_MIXIN = "com.toroidalworld.mixin.AquiferSeamMixin";
 
+    private static final String END_ISLAND_MIXIN = "com.toroidalworld.mixin.DensityFunctionsEndIslandMixin";
+
     @Override
     public void onLoad(String mixinPackage) {
     }
@@ -29,6 +32,10 @@ public class ToroidalMixinPlugin implements IMixinConfigPlugin {
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         if (AQUIFER_SEAM_MIXIN.equals(mixinClassName)) {
             return !C2meAquifer.optimizesAquifer();
+        }
+
+        if (END_ISLAND_MIXIN.equals(mixinClassName)) {
+            return !C2meNativesMath.enabled();
         }
 
         return true;
