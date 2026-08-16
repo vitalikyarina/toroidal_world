@@ -127,6 +127,7 @@
     "NoiseBasedChunkGeneratorMixin",
     "NoiseBasedStateProviderMixin",
     "NormalNoiseMixin",
+    "OreVeinSeamMixin",
     "ParrotMixin",
     "PathNavigationAccessor",
     "PathNavigationMixin",
