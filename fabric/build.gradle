@@ -44,7 +44,7 @@ repositories {
         name = 'BlameJared'
         url = 'https://maven.blamejared.com'
     }
-    // Xaero's Minimap / World Map jars for the compat mixins.
+    // JourneyMap / Xaero's Minimap / World Map jars for the compat mixins.
     maven {
         name = 'Modrinth'
         url = 'https://api.modrinth.com/maven'
@@ -95,8 +95,9 @@ dependencies {
     // so shipping ours costs nothing where C2ME already carries a newer one.
     include(implementation("com.github.bawnorton.mixinsquared:mixinsquared-fabric:${mixinsquared_version}"))
 
-    // 26.x is unobfuscated, so the neoforge API flavor compiles fine here; only the plugin class touches it.
+    // 26.x is unobfuscated, so the neoforge flavors compile fine here; only the plugin class touches the API.
     compileOnly "info.journeymap:journeymap-api-neoforge:${journeymap_api_version}"
+    compileOnly "maven.modrinth:journeymap:${journeymap_version}"
     compileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
     compileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
 }
