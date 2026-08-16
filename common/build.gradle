@@ -27,7 +27,7 @@ repositories {
         name = 'BlameJared'
         url = 'https://maven.blamejared.com'
     }
-    // Xaero's Minimap / World Map jars for the compat mixins.
+    // JourneyMap / Xaero's Minimap / World Map jars for the compat mixins.
     maven {
         name = 'Modrinth'
         url = 'https://api.modrinth.com/maven'
@@ -73,6 +73,7 @@ dependencies {
     compileOnly "net.fabricmc:sponge-mixin:${mixin_version}"
     compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
     compileOnly "info.journeymap:journeymap-api-neoforge:${journeymap_api_version}"
+    compileOnly "maven.modrinth:journeymap:${journeymap_version}"
     compileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
     compileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
     compileOnly "com.github.bawnorton.mixinsquared:mixinsquared-common:${mixinsquared_version}"
