@@ -1,6 +1,5 @@
 package com.toroidalworld.compat.journeymap;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -54,28 +53,20 @@ public class ToroidalJourneyMapPlugin implements IClientPlugin {
         // next MAPPING_STARTED for the real level will do the work.
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null || !level.dimension().equals(event.dimension)) {
-            LOGGER.info("[jm-compat] seam_overlay dim={} shown=0 reason=level_mismatch", event.dimension.identifier());
             return;
         }
 
         Optional<ToroidalShape> shape = ToroidalWorldClientApi.shapeOf(level);
         if (shape.isEmpty() || !this.api.playerAccepts(ToroidalWorld.MODID, DisplayType.Polygon)) {
-            LOGGER.info("[jm-compat] seam_overlay dim={} shown=0 wrapped={}",
-                    event.dimension.identifier(), shape.isPresent());
             return;
         }
 
-        List<PolygonOverlay> overlays = SeamOverlays.build(event.dimension, shape.get());
-        int shown = 0;
-        for (PolygonOverlay overlay : overlays) {
+        for (PolygonOverlay overlay : SeamOverlays.build(event.dimension, shape.get())) {
             try {
                 this.api.show(overlay);
-                shown++;
             } catch (Exception e) {
                 LOGGER.warn("[jm-compat] seam_overlay show failed", e);
             }
         }
-
-        LOGGER.info("[jm-compat] seam_overlay dim={} shown={}", event.dimension.identifier(), shown);
     }
 }
