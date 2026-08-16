@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.Unique;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.noise.PeriodicOctaveSampler;
-import com.bawnorton.mixinsquared.TargetHandler;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
@@ -28,6 +27,12 @@ import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 //
 // The same statement, then, made where C2ME moved the loop. An unwrapped level falls through to C2ME's own optimised
 // walk, which is left exactly as it is.
+//
+// The three-argument method is wrapped directly rather than through MixinSquared, the way EndIslandSeamMixin wraps its
+// own: an overwrite leaves no handler to target, only the method carrying someone else's body, and this config's 1200
+// lands after C2ME's inherited 1100. Naming C2ME's handler instead would be a name from a foreign jar, and on this game
+// version that jar is compiled per loader — the NeoForge build calls it getValue, the Fabric one method_15416, so the
+// selector can only ever resolve on one of the two. A vanilla method name has no such problem: Loom remaps it.
 @Mixin(PerlinNoise.class)
 public class PerlinNoiseMixin {
     @Shadow
@@ -46,10 +51,7 @@ public class PerlinNoiseMixin {
     @Final
     private double lowestFreqInputFactor;
 
-    @WrapMethod(method = "@MixinSquared:Handler")
-    @TargetHandler(
-            mixin = "com.ishland.c2me.opts.math.mixin.MixinOctavePerlinNoiseSampler",
-            name = "getValue")
+    @WrapMethod(method = "getValue(DDD)D")
     private double toroidal$periodicValue(double x, double y, double z, Operation<Double> original) {
         Context generation = GenerationTransformerContext.context();
         if (!generation.transformer().isWrapped()) {

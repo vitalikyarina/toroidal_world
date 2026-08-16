@@ -22,10 +22,15 @@ import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 //
 // The vein noises themselves are periodic and already wrap; only this seed was blind. Grid Y is untouched — the seam is
 // horizontal. Inside the bounds the wrap is the identity, so an ordinary generation is byte-for-byte what it was.
+//
+// The filler is a lambda, and a lambda body is an ordinary private method once the game is obfuscated — so its name is
+// whatever the running loader's mappings call it. Mojmap restores javac's lambda$create$0 for NeoForge; intermediary
+// gives it an id of its own, method_40547, for Fabric. Both are listed and defaultRequire = 1 takes whichever exists,
+// the same dual-name pattern GuiMapMixin uses for its Screen override.
 @Mixin(OreVeinifier.class)
 public class OreVeinSeamMixin {
     @WrapOperation(
-            method = "lambda$create$0",
+            method = {"lambda$create$0", "method_40547"},
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/levelgen/PositionalRandomFactory;at(III)Lnet/minecraft/util/RandomSource;"))
