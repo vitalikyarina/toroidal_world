@@ -142,14 +142,20 @@ public abstract class MapRendererMixin {
     // Wrapped at the renderer's single dispatch rather than inside RegionTile: on this game version the tile
     // carries no UI context — the renderer it belongs to does. Webmap tiles are left alone: their offsets are
     // web-tile space, not the on-screen grid.
+    //
+    // The map type and shader index that 6.0.5 added to the tile signature travel through untouched — a copy is the
+    // same layer drawn with the same shader. The type is taken as @Coerce Object rather than named: nothing here reads
+    // it, and naming it would put JourneyMap's own jar on the compile classpath for a value that only passes by.
     @WrapOperation(
             method = "render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;DDFZ)V",
             at = @At(
                     value = "INVOKE",
-                    target = "Ljourneymap/client/render/map/RegionTile;render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/renderer/MultiBufferSource;DDF)V"))
+                    target = "Ljourneymap/client/render/map/RegionTile;render(Lnet/minecraft/client/gui/GuiGraphics;"
+                            + "Lnet/minecraft/client/renderer/MultiBufferSource;DDFLjourneymap/client/model/map/MapType;I)V"))
     private void toroidal$renderWrappedCopies(@Coerce Object tile, GuiGraphics graphics, MultiBufferSource buffers,
-            double pixelOffsetX, double pixelOffsetZ, float alpha, Operation<Void> original) {
-        original.call(tile, graphics, buffers, pixelOffsetX, pixelOffsetZ, alpha);
+            double pixelOffsetX, double pixelOffsetZ, float alpha, @Coerce Object mapType, int shaderIndex,
+            Operation<Void> original) {
+        original.call(tile, graphics, buffers, pixelOffsetX, pixelOffsetZ, alpha, mapType, shaderIndex);
         if (this.contextUi == Context.UI.Webmap) {
             return;
         }
@@ -177,7 +183,7 @@ public abstract class MapRendererMixin {
                 }
 
                 original.call(tile, graphics, buffers,
-                        pixelOffsetX + lapX * periodX, pixelOffsetZ + lapZ * periodZ, alpha);
+                        pixelOffsetX + lapX * periodX, pixelOffsetZ + lapZ * periodZ, alpha, mapType, shaderIndex);
             }
         }
     }
