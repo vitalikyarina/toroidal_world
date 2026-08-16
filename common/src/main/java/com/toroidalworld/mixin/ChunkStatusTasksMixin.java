@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.noise.PeriodicityCheck;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -44,6 +45,10 @@ public class ChunkStatusTasksMixin {
             ChunkAccess chunk,
             Operation<CompletableFuture<ChunkAccess>> original) {
         WorldLoopTransformer transformer = WorldLoopAttachments.transformerOf(context.level());
+        if (transformer.isWrapped()) {
+            PeriodicityCheck.runOnce(context.level(), transformer);
+        }
+
         return GenerationTransformerContext.withTransformer(transformer,
                 () -> original.call(context, step, chunks, chunk));
     }

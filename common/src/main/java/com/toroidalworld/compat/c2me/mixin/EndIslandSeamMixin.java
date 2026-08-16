@@ -1,4 +1,4 @@
-package com.toroidalworld.mixin;
+package com.toroidalworld.compat.c2me.mixin;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,14 +13,18 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.synth.SimplexNoise;
 
-// The fold that makes the End's island grid periodic, said where vanilla computes it. The walk itself is
-// PeriodicEndIslands, shared with the C2ME-shaped twin in compat/c2me; this mixin only decides whether the level being
-// generated wraps at all.
+// The C2ME-shaped twin of com.toroidalworld.mixin.DensityFunctionsEndIslandMixin, and the reason that one goes quiet:
+// C2ME's opts/natives_math overwrites compute with a native sample keyed on the raw block coordinate, from a config of
+// priority 1100 against the mod's default 1000 — so the vanilla-shaped wrapper is merged first and then replaced
+// wholesale, with no error and no warning.
 //
-// It stands down when C2ME's natives-math module owns compute: that module overwrites the method outright, from a
-// config of higher priority than this one, so what stays here would be replaced rather than reached.
+// The same statement, then, made from this config's 1200, which lands after C2ME's overwrite rather than under it. No
+// MixinSquared here: an overwrite leaves no handler to target, it leaves the method itself carrying someone else's
+// body, and a wrapper does not care whose body it wraps.
+//
+// An unwrapped level falls through to C2ME's native walk, which is left exactly as it is.
 @Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$EndIslandDensityFunction")
-public class DensityFunctionsEndIslandMixin {
+public class EndIslandSeamMixin {
     @Shadow
     @Final
     private SimplexNoise islandNoise;

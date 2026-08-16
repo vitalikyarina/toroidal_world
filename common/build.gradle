@@ -35,17 +35,47 @@ repositories {
             includeGroup 'maven.modrinth'
         }
     }
+    // MixinSquared — the C2ME compat mixin injects into C2ME's own handler.
+    maven {
+        name = 'Bawnorton'
+        url = 'https://maven.bawnorton.com/releases'
+        content {
+            includeGroup 'com.github.bawnorton.mixinsquared'
+        }
+    }
+}
+
+// C2ME publishes one jar that carries no classes of its own — every module rides inside it as a jar-in-jar, and no
+// maven serves them separately. The chunk-system compat mixins name C2ME types in their signatures, so the inner jars
+// are unpacked here and put on the compile classpath alone; at runtime those classes come from the installed C2ME.
+configurations {
+    c2meModules
+}
+
+dependencies {
+    c2meModules "maven.modrinth:c2me-neoforge:${c2me_version}"
+}
+
+var c2meModuleJars = tasks.register('unpackC2meModules', Sync) {
+    from(zipTree(configurations.c2meModules.singleFile)) {
+        include 'META-INF/jars/c2me-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('c2me-modules')
 }
 
 // NeoForm brings only vanilla; the mixin annotations the sources carry come from the same artifacts the NeoForge
 // runtime ships (pinned in gradle.properties from the neo_version userdev config). compileOnly — applying them is
 // the loaders' business.
 dependencies {
+    compileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     compileOnly "net.fabricmc:sponge-mixin:${mixin_version}"
     compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
     compileOnly "info.journeymap:journeymap-api-neoforge:${journeymap_api_version}"
     compileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
     compileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
+    compileOnly "com.github.bawnorton.mixinsquared:mixinsquared-common:${mixinsquared_version}"
 }
 
 tasks.withType(JavaCompile).configureEach {

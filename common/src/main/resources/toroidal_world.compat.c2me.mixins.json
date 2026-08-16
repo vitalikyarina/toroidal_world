@@ -1,0 +1,27 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.toroidalworld.compat.c2me.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "plugin": "com.toroidalworld.compat.c2me.C2meMixinPlugin",
+  "mixinPriority": 1200,
+  "mixins": [
+    "AquiferSeamMixin",
+    "BytecodeGenRegistryMixin",
+    "DotGenRegistryMixin",
+    "EndIslandSeamMixin",
+    "McToAstMixin",
+    "NewChunkHolderVanillaInterfaceMixin",
+    "NewChunkStatusMixin",
+    "PerlinNoiseMixin",
+    "PlayerNoTickLoaderMixin",
+    "SchedulingManagerMixin",
+    "ServerAccessibleChunkSendingMixin",
+    "ServerBlockTickingMixin",
+    "TheChunkSystemMixin",
+    "VanillaWorldGenerationDelegateMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

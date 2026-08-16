@@ -63,3 +63,6 @@ config="toroidal_world.compat.journeymap.mixins.json"
 
 [[mixins]]
 config="toroidal_world.compat.xaero.mixins.json"
+
+[[mixins]]
+config="toroidal_world.compat.c2me.mixins.json"
