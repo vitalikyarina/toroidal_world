@@ -9,7 +9,11 @@ import com.ishland.c2me.opts.dfc.common.ast.binary.AddNode;
 import com.ishland.c2me.opts.dfc.common.ast.binary.MulNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.ConstantNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.CoordinateNode;
+import com.ishland.c2me.opts.dfc.common.ast.misc.DelegateNode;
+import com.ishland.c2me.opts.dfc.common.ast.noise.DFTWeirdScaledSamplerNode;
 import com.ishland.c2me.opts.dfc.common.ast.noise.GenericShiftedNoiseNode;
+
+import net.minecraft.world.level.levelgen.DensityFunction;
 
 // Gives every noise node C2ME compiles a second reading of its own inputs — the folded one — at the moment the node is
 // built.
@@ -25,7 +29,18 @@ public final class C2meDfcAst {
 
     // The two shapes C2ME's frontend produces around a noise node: the node itself for Noise and ShiftedNoise, and the
     // node times four for the three Shift functions.
-    public static AstNode fold(AstNode produced) {
+    public static AstNode fold(DensityFunction source, AstNode produced) {
+        // The cave sampler is handed back to vanilla rather than folded here. It divides the coordinate by a rarity the
+        // function itself computes, so a fold has to sit inside that division — which DensityFunctionsWeirdScaledSamplerMixin
+        // already does, and which C2ME's own emitter writes past by inlining the whole division. Compiling a second copy of
+        // that fold would put the same statement in two places that must agree block for block, and a disagreement between
+        // them shows up only as terrain that differs with C2ME's compiler on or off. So the node goes back to the
+        // interpreter, exactly as C2ME does with the End islands, and the one fold stays the one fold. Costs the compiled
+        // path for the three router uses on this game version; 26.2 retired the function, so main has nothing here.
+        if (produced instanceof DFTWeirdScaledSamplerNode) {
+            return new DelegateNode(source);
+        }
+
         if (produced instanceof MulNode scaled && scaled.left instanceof GenericShiftedNoiseNode noise) {
             AstNode folded = foldNoise(noise);
             return folded == noise ? produced : new MulNode(folded, scaled.right);
