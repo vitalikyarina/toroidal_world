@@ -1,7 +1,5 @@
 package com.toroidalworld.compat.c2me.mixin;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
@@ -25,7 +23,6 @@ import com.ishland.flowsched.scheduler.ItemStatus;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.server.level.ChunkMap;
-import net.minecraft.world.level.ChunkPos;
 
 // One chunk system per level, so the transformer is resolved once and read off a field afterwards — the dependency
 // sets this feeds are recomputed on every status transition of every chunk, which is no place for an attachment
@@ -67,35 +64,6 @@ public class TheChunkSystemMixin implements TransformerSource {
 
     @Unique
     private static final Logger toroidal$LOGGER = LogUtils.getLogger();
-
-    @Unique
-    private static final int TRACED_HOLDERS = 20;
-
-    @Unique
-    private static final AtomicInteger toroidal$outOfBoundsHolders = new AtomicInteger();
-
-    // Diagnostic. On a wrapped level no holder may exist past the bounds at all — that invariant is what the whole
-    // cross-seam design rests on, and the chunk-upgrade failures say something is still creating them. The key alone
-    // does not say who, so the first few carry a stack.
-    @Inject(method = "onItemConstruct", at = @At("TAIL"))
-    private void toroidal$reportOutOfBoundsHolder(ItemHolder<?, ?, ?, ?> holder, CallbackInfo ci) {
-        WorldLoopTransformer transformer = this.toroidal$wrappedTransformer();
-        if (transformer == null || !(holder.getKey() instanceof ChunkPos pos)) {
-            return;
-        }
-
-        if (!transformer.chunks.x.isOver(pos.x()) && !transformer.chunks.z.isOver(pos.z())) {
-            return;
-        }
-
-        int seen = toroidal$outOfBoundsHolders.incrementAndGet();
-        if (seen <= TRACED_HOLDERS) {
-            toroidal$LOGGER.warn("[c2me-compat] oob_holder chunk_x={} chunk_z={} seen={}",
-                    pos.x(), pos.z(), seen, new Throwable("holder created past the bounds"));
-        } else if (seen % 1000 == 0) {
-            toroidal$LOGGER.warn("[c2me-compat] oob_holder chunk_x={} chunk_z={} seen={}", pos.x(), pos.z(), seen);
-        }
-    }
 
     // Diagnostic. C2ME logs this failure with three placeholders and three arguments plus the throwable, so slf4j
     // consumes the throwable as an argument and the stack is never printed — the run says "NullPointerException" and
