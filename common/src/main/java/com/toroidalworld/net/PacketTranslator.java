@@ -17,11 +17,14 @@ import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.mixin.BlockEntityDataPacketAccessor;
 import com.toroidalworld.mixin.BlockPositionSourceAccessor;
 import com.toroidalworld.mixin.InitializeBorderPacketAccessor;
+import com.toroidalworld.mixin.InteractPacketAccessor;
 import com.toroidalworld.mixin.LevelChunkPacketAccessor;
 import com.toroidalworld.mixin.LightUpdatePacketAccessor;
+import com.toroidalworld.mixin.MoveVehiclePacketAccessor;
 import com.toroidalworld.mixin.PlayerLookAtPacketAccessor;
 import com.toroidalworld.mixin.SectionBlocksUpdatePacketAccessor;
 import com.toroidalworld.mixin.SetBorderCenterPacketAccessor;
+import com.toroidalworld.mixin.TeleportEntityPacketAccessor;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
 import com.toroidalworld.player.MirrorWriter;
@@ -444,7 +447,10 @@ public final class PacketTranslator {
         }
 
         PacketReach reach = context.trackedReach();
-        return rewritePosition(ClientboundTeleportEntityPacket.STREAM_CODEC, ByteBufCodecs.VAR_INT, POSITION_CODEC,
+        return rewritePosition(
+                (teleportPacket, output) -> ((TeleportEntityPacketAccessor) teleportPacket).toroidal$write(output),
+                TeleportEntityPacketAccessor::toroidal$create,
+                ByteBufCodecs.VAR_INT, POSITION_CODEC,
                 packet, context, (entityId, position) -> context.toClient(position, reach));
     }
 
@@ -453,7 +459,10 @@ public final class PacketTranslator {
     // from values either, but here the position opens the packet, so nothing precedes it.
     private static Packet<?> moveVehicle(ClientboundMoveVehiclePacket packet, TranslationContext context) {
         PacketReach reach = context.trackedReach();
-        return rewritePosition(ClientboundMoveVehiclePacket.STREAM_CODEC, POSITION_CODEC, packet, context,
+        return rewritePosition(
+                (vehiclePacket, output) -> ((MoveVehiclePacketAccessor) vehiclePacket).toroidal$write(output),
+                MoveVehiclePacketAccessor::toroidal$create,
+                POSITION_CODEC, packet, context,
                 position -> context.toClient(position, reach));
     }
 
@@ -865,7 +874,10 @@ public final class PacketTranslator {
             return packet;
         }
 
-        return rewritePosition(ServerboundInteractPacket.STREAM_CODEC, INTERACT_HEADER_CODEC, HIT_LOCATION_CODEC,
+        return rewritePosition(
+                (interactPacket, output) -> ((InteractPacketAccessor) interactPacket).toroidal$write(output),
+                InteractPacketAccessor::toroidal$create,
+                INTERACT_HEADER_CODEC, HIT_LOCATION_CODEC,
                 packet, context, (header, location) -> toServerHitLocation(context, header.entityId(), location));
     }
 
@@ -968,36 +980,15 @@ public final class PacketTranslator {
     }
 
     // A packet whose position sits in a private field can still be moved: the position is the first thing on the wire,
-    // so the packet is re-encoded with a new one in front of its untouched remainder.
-    private static <T, P> T rewritePosition(StreamCodec<? super RegistryFriendlyByteBuf, T> codec,
-            StreamCodec<? super RegistryFriendlyByteBuf, P> positionCodec, T packet, TranslationContext context,
-            UnaryOperator<P> toClient) {
-        return rewritePosition(codec, NO_PREFIX_CODEC, positionCodec, packet, context,
-                (noPrefix, serverPosition) -> toClient.apply(serverPosition));
-    }
-
-    // The same swap, taken through vanilla's own write/read behind the packet's STREAM_CODEC instead of the codec
-    // field. The position codecs are
+    // so the packet is re-encoded with a new one in front of its untouched remainder. The position codecs are
     // fixed-size, so the client position re-encodes to the width the server one vacated and the target holds exactly
     // the source packet — no buffer growth.
-    //
-    // The wire pair is vanilla's own write/read behind the packet's STREAM_CODEC, reached through invokers rather
-    // than the codec field: loaders and mods swap wrappers into those fields whose transforms assume the network
-    // pipeline around them — Fabric's PacketContext is a scoped value bound only inside the encoder, and this runs
-    // on the server thread — and the pipeline still encodes the finished packet, so a wrapper run here would also
-    // run twice.
     private static <T, P> T rewritePosition(BiConsumer<T, RegistryFriendlyByteBuf> writer,
             Function<FriendlyByteBuf, T> reader,
             StreamCodec<? super RegistryFriendlyByteBuf, P> positionCodec, T packet, TranslationContext context,
             UnaryOperator<P> toClient) {
-        RegistryFriendlyByteBuf source = buffer(context);
-        writer.accept(packet, source);
-        P serverPosition = positionCodec.decode(source);
-
-        RegistryFriendlyByteBuf target = buffer(context, source.readerIndex() + source.readableBytes());
-        positionCodec.encode(target, toClient.apply(serverPosition));
-        target.writeBytes(source);
-        return reader.apply(target);
+        return rewritePosition(writer, reader, NO_PREFIX_CODEC, positionCodec, packet, context,
+                (noPrefix, serverPosition) -> toClient.apply(serverPosition));
     }
 
     // The same swap where the position is not first on the wire — an entity id stands in front of it, or an id and an
@@ -1008,12 +999,19 @@ public final class PacketTranslator {
     //
     // Every position codec that comes through here re-encodes to the width the server one vacated — a packed long,
     // three doubles, three floats — so the target holds exactly the source packet and the buffer never grows.
-    private static <T, R, P> T rewritePosition(StreamCodec<? super RegistryFriendlyByteBuf, T> codec,
+    //
+    // The wire pair is vanilla's own write/read behind the packet's STREAM_CODEC, reached through invokers rather
+    // than the codec field: loaders and mods swap wrappers into those fields whose transforms assume the network
+    // pipeline around them — Fabric's PacketContext is a scoped value bound only inside the encoder, and this runs
+    // on the server thread — and the pipeline still encodes the finished packet, so a wrapper run here would also
+    // run twice.
+    private static <T, R, P> T rewritePosition(BiConsumer<T, RegistryFriendlyByteBuf> writer,
+            Function<FriendlyByteBuf, T> reader,
             StreamCodec<? super RegistryFriendlyByteBuf, R> prefixCodec,
             StreamCodec<? super RegistryFriendlyByteBuf, P> positionCodec, T packet, TranslationContext context,
             BiFunction<R, P, P> toClient) {
         RegistryFriendlyByteBuf source = buffer(context);
-        codec.encode(source, packet);
+        writer.accept(packet, source);
         R prefix = prefixCodec.decode(source);
         int prefixLength = source.readerIndex();
         P serverPosition = positionCodec.decode(source);
@@ -1022,7 +1020,7 @@ public final class PacketTranslator {
         target.writeBytes(source, 0, prefixLength);
         positionCodec.encode(target, toClient.apply(prefix, serverPosition));
         target.writeBytes(source);
-        return codec.decode(target);
+        return reader.apply(target);
     }
 
     // Unpooled.buffer()'s own default, spelled out because the factory always takes an explicit capacity.
