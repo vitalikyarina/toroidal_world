@@ -18,7 +18,10 @@ import net.minecraft.world.entity.ai.util.RandomPos;
 //
 // The home becomes its copy nearest the mob, which is the side it is physically on, and the two comparisons answer for
 // the real ground again. A home on this side is handed back untouched, so ordinary wandering keeps its exact bias.
-@Mixin(RandomPos.class)
+// The priority is raised because a mod may replace this method wholesale — Sable does, for its sublevels — and mixin
+// refuses an injection into a method merged by another mixin of equal priority. The read this fold modifies survives
+// such a replacement; the arithmetic around it is the other mod's own.
+@Mixin(value = RandomPos.class, priority = 1100)
 public class RandomPosMixin {
     @ModifyExpressionValue(
             method = "generateRandomPosTowardDirection",
