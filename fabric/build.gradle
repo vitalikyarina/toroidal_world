@@ -44,7 +44,7 @@ repositories {
         name = 'BlameJared'
         url = 'https://maven.blamejared.com'
     }
-    // Xaero's Minimap / World Map jars for the compat mixins.
+    // Xaero's Minimap / World Map and Create jars for the compat mixins.
     maven {
         name = 'Modrinth'
         url = 'https://api.modrinth.com/maven'
@@ -111,6 +111,10 @@ dependencies {
     // the mixin target for its render override never becomes method_25394 in the shipped jar.
     modCompileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_fabric_version}"
     modCompileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_fabric_version}"
+    // Needed here only because common's sources compile in this module. Plain compileOnly, and the neoforge flavor:
+    // there is no fabric flavor of Create to remap, and none is wanted — Create cannot be installed on this loader,
+    // so the compat config stays gated off and remapJar has nothing to resolve.
+    compileOnly "maven.modrinth:create:${create_version}"
 }
 
 // Two jars on this game version, and only the second one ships. Minecraft is obfuscated here, so Loom compiles into a

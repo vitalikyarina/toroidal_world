@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.toroidalworld.compat.create.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "com.toroidalworld.compat.create.CreateMixinPlugin",
+  "mixins": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
