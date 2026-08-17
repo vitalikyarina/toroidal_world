@@ -32,9 +32,8 @@ import net.minecraft.world.level.levelgen.structure.StructureStart;
 // chunk in the chunk's OWN frame instead: a copy of the start, moved by the whole world widths that separate the two.
 //
 // The substitution is made where the starts are FETCHED, not where they are placed. The place call sits inside a lambda,
-// which compiles to a synthetic method that a handler scoped to applyBiomeDecoration matches not at all (conventions.md
-// warns of exactly this); the fetch is in the method body, and pre-framing the list there reaches the same placement
-// with nothing to say about lambdas.
+// which compiles to a synthetic method that a handler scoped to applyBiomeDecoration matches not at all; the fetch is in
+// the method body, and pre-framing the list there reaches the same placement with nothing to say about lambdas.
 //
 // The copy is real, not a view. The live start serves the near half of the very same structure and worldgen runs on
 // several threads, so moving its pieces in place would corrupt the half that was already correct. Serialising and
