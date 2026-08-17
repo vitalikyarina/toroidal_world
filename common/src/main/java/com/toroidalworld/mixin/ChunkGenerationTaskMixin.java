@@ -31,7 +31,7 @@ import net.minecraft.world.level.ChunkPos;
 // The slot is REPLACED, never added beside: one physical chunk, one live key.
 //
 // The initializer is wrapped rather than the acquireGeneration call inside it, because that call lives in a lambda and a
-// handler scoped to create() would match nothing at all (see conventions.md).
+// handler scoped to create() would match nothing at all.
 @Mixin(ChunkGenerationTask.class)
 public class ChunkGenerationTaskMixin {
     @WrapOperation(
