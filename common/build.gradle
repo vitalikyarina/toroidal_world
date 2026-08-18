@@ -65,10 +65,12 @@ var c2meModuleJars = tasks.register('unpackC2meModules', Sync) {
     into layout.buildDirectory.dir('c2me-modules')
 }
 
-// Every Create block entity inherits SmartBlockEntity, which implements net.createmod.ponder.api.VirtualBlockEntity —
-// and Ponder rides jar-in-jar inside the Create jar, so reading any member off a Create block entity fails to compile
-// against the plain artifact with "cannot access VirtualBlockEntity". That interface is the entire gap: nothing else
-// in the hierarchy names a type the compile classpath is missing.
+// Two of the jars Create carries in jar-in-jar have to be on the compile classpath, and neither is reachable from the
+// plain artifact. Ponder: every Create block entity inherits SmartBlockEntity, which implements
+// net.createmod.ponder.api.VirtualBlockEntity, so reading any member off one fails with "cannot access
+// VirtualBlockEntity". Flywheel: Create's visual classes descend from AbstractBlockEntityVisual, so a mixin naming
+// one as its target does not resolve either. Those two types are the whole gap — nothing else in either hierarchy
+// names something the compile classpath is missing.
 configurations {
     createJarJar
 }
@@ -77,13 +79,14 @@ dependencies {
     createJarJar "maven.modrinth:create:${create_version}"
 }
 
-var createPonderJar = tasks.register('unpackCreatePonder', Sync) {
+var createBundledJars = tasks.register('unpackCreateBundled', Sync) {
     from(zipTree(configurations.createJarJar.singleFile)) {
         include 'META-INF/jarjar/ponder-*.jar'
+        include 'META-INF/jarjar/flywheel-*.jar'
         eachFile { it.relativePath = new RelativePath(true, it.name) }
     }
     includeEmptyDirs = false
-    into layout.buildDirectory.dir('create-ponder')
+    into layout.buildDirectory.dir('create-bundled')
 }
 
 // NeoForm brings only vanilla; the mixin annotations the sources carry come from the same artifacts the NeoForge
@@ -91,7 +94,7 @@ var createPonderJar = tasks.register('unpackCreatePonder', Sync) {
 // the loaders' business.
 dependencies {
     compileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
-    compileOnly files(createPonderJar).asFileTree.matching { include '*.jar' }
+    compileOnly files(createBundledJars).asFileTree.matching { include '*.jar' }
     compileOnly "net.fabricmc:sponge-mixin:${mixin_version}"
     compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
     compileOnly "org.jspecify:jspecify:${jspecify_version}"

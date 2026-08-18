@@ -8,6 +8,11 @@
     "DirectionalShaftHalvesBlockEntityMixin",
     "RotationPropagatorMixin"
   ],
+  "client": [
+    "AbstractBlockEntityVisualAccessor",
+    "GearboxRendererMixin",
+    "GearboxVisualMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
