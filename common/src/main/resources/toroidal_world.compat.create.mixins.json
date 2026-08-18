@@ -4,7 +4,10 @@
   "package": "com.toroidalworld.compat.create.mixin",
   "compatibilityLevel": "JAVA_21",
   "plugin": "com.toroidalworld.compat.create.CreateMixinPlugin",
-  "mixins": [],
+  "mixins": [
+    "DirectionalShaftHalvesBlockEntityMixin",
+    "RotationPropagatorMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

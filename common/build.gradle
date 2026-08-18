@@ -65,11 +65,33 @@ var c2meModuleJars = tasks.register('unpackC2meModules', Sync) {
     into layout.buildDirectory.dir('c2me-modules')
 }
 
+// Every Create block entity inherits SmartBlockEntity, which implements net.createmod.ponder.api.VirtualBlockEntity —
+// and Ponder rides jar-in-jar inside the Create jar, so reading any member off a Create block entity fails to compile
+// against the plain artifact with "cannot access VirtualBlockEntity". That interface is the entire gap: nothing else
+// in the hierarchy names a type the compile classpath is missing.
+configurations {
+    createJarJar
+}
+
+dependencies {
+    createJarJar "maven.modrinth:create:${create_version}"
+}
+
+var createPonderJar = tasks.register('unpackCreatePonder', Sync) {
+    from(zipTree(configurations.createJarJar.singleFile)) {
+        include 'META-INF/jarjar/ponder-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('create-ponder')
+}
+
 // NeoForm brings only vanilla; the mixin annotations the sources carry come from the same artifacts the NeoForge
 // runtime ships (pinned in gradle.properties from the neo_version userdev config). compileOnly — applying them is
 // the loaders' business.
 dependencies {
     compileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
+    compileOnly files(createPonderJar).asFileTree.matching { include '*.jar' }
     compileOnly "net.fabricmc:sponge-mixin:${mixin_version}"
     compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
     compileOnly "org.jspecify:jspecify:${jspecify_version}"
