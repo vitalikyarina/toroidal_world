@@ -6,6 +6,8 @@
   "plugin": "com.toroidalworld.compat.create.CreateMixinPlugin",
   "mixins": [
     "BeltConnectorItemMixin",
+    "ChainConveyorBlockEntityMixin",
+    "ChainConveyorConnectionPacketMixin",
     "DirectionalShaftHalvesBlockEntityMixin",
     "RotationPropagatorMixin"
   ],
