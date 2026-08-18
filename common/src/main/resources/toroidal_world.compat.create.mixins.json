@@ -5,11 +5,13 @@
   "compatibilityLevel": "JAVA_21",
   "plugin": "com.toroidalworld.compat.create.CreateMixinPlugin",
   "mixins": [
+    "BeltConnectorItemMixin",
     "DirectionalShaftHalvesBlockEntityMixin",
     "RotationPropagatorMixin"
   ],
   "client": [
     "AbstractBlockEntityVisualAccessor",
+    "BeltConnectorHandlerMixin",
     "GearboxRendererMixin",
     "GearboxVisualMixin"
   ],
