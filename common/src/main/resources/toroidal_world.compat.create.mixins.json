@@ -6,10 +6,20 @@
   "plugin": "com.toroidalworld.compat.create.CreateMixinPlugin",
   "mixins": [
     "BeltConnectorItemMixin",
+    "CarriageAnchorMixin",
+    "CarriageBogeyMixin",
+    "CarriagePairMixin",
+    "CarriagePrevPositionMixin",
     "ChainConveyorBlockEntityMixin",
     "ChainConveyorConnectionPacketMixin",
+    "ContraptionColliderAccessor",
     "DirectionalShaftHalvesBlockEntityMixin",
-    "RotationPropagatorMixin"
+    "ITrackBlockMixin",
+    "RotationPropagatorMixin",
+    "TrackEdgeMixin",
+    "TrackGraphHelperMixin",
+    "TrackNodeLocationMixin",
+    "TrainCollisionSpanMixin"
   ],
   "client": [
     "AbstractBlockEntityVisualAccessor",
