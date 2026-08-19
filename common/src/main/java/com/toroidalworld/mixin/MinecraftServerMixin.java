@@ -39,8 +39,7 @@ import net.minecraft.world.level.storage.ServerLevelData;
 // vanilla's method running and only correct what it asks the world.
 @Mixin(MinecraftServer.class)
 public class MinecraftServerMixin {
-    // runServer is the server thread's whole life: published before initServer loads the first level — so a chunk read
-    // during world load already finds it — and cleared only when the thread unwinds past its own finally.
+    // Published before initServer loads the first level and cleared only when the server thread unwinds.
     @Inject(method = "runServer", at = @At("HEAD"))
     private void toroidal$publishCurrentServer(CallbackInfo ci) {
         CurrentServer.set((MinecraftServer) (Object) this);
@@ -51,9 +50,6 @@ public class MinecraftServerMixin {
         CurrentServer.clear();
     }
 
-    // The world-shape lines a bug report needs, at the TAIL of createLevels: every level and its generator exist by
-    // then, and the world-load section of the log has only just begun — so the lines sit where a report's excerpt
-    // starts, on the dedicated server as much as in singleplayer. An unwrapped world contributes no lines at all.
     @Inject(method = "createLevels", at = @At("TAIL"))
     private void toroidal$logWorldShape(CallbackInfo ci) {
         for (String line : WorldShapeReport.lines((MinecraftServer) (Object) this)) {
@@ -61,10 +57,6 @@ public class MinecraftServerMixin {
         }
     }
 
-    // The sampler has no idea which dimension it serves and no argument to tell it, so the transformer is bound around
-    // the call the way every other out-of-step worldgen query binds it. The answer is then folded into the bounds: with
-    // periodic noise X=400 in a 512-wide world *is* X=-112, so folding is the correct reading of the result rather than
-    // a clamp over a wrong one.
     @WrapOperation(
             method = "setInitialSpawn",
             at = @At(
@@ -81,8 +73,6 @@ public class MinecraftServerMixin {
         return transformer.blocks.wrap(found);
     }
 
-    // The spiral steps one chunk at a time from the chosen chunk, and near the seam its ring runs straight off the edge;
-    // those chunks are really on the other side of the world.
     @WrapOperation(
             method = "setInitialSpawn",
             at = @At(

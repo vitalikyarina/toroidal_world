@@ -8,9 +8,6 @@ import com.toroidalworld.core.WorldLoopTransformer;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 
-// Until the server's bounds payload arrives the holder answers NOOP, so a bounds reader honestly sees an unwrapped
-// world — which is also the truth on a server that never sends the payload. A fresh level (a dimension change) starts
-// back at NOOP the same way.
 @Mixin(ClientLevel.class)
 public class ClientLevelMixin implements ClientBoundsHolder {
     @Unique

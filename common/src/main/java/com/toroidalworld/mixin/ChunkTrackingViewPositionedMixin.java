@@ -15,9 +15,6 @@ import com.toroidalworld.core.WorldLoopTransformer;
 import net.minecraft.server.level.ChunkTrackingView;
 import net.minecraft.world.level.ChunkPos;
 
-// The view decides which chunks a player sees, by plain distance from their chunk. Across the seam that distance is a
-// whole world wide, so the far side would never be tracked — every chunk position is therefore unwrapped around the
-// centre first (its shortest representation through the seam) and only then measured.
 @Mixin(ChunkTrackingView.Positioned.class)
 public abstract class ChunkTrackingViewPositionedMixin implements TransformerHolder {
     @Unique
@@ -39,10 +36,6 @@ public abstract class ChunkTrackingViewPositionedMixin implements TransformerHol
             return;
         }
 
-        // Chunks past the wrap bounds are phantoms: vanilla keeps holders for them as generation neighbours, but their
-        // generation is cancelled, so they are empty. Tracking one means sending an empty chunk to the client under the
-        // very coordinate the real chunk on the other side is sent with — the phantom overwrites it and leaves terrain
-        // that is invisible and has no collision, while the server happily walks its mobs over the real ground.
         if (this.toroidal$transformer.chunks.x.isOver(chunkX) || this.toroidal$transformer.chunks.z.isOver(chunkZ)) {
             cir.setReturnValue(false);
             return;
@@ -58,8 +51,6 @@ public abstract class ChunkTrackingViewPositionedMixin implements TransformerHol
                 center.x, center.z, viewDistance, unwrappedX, unwrappedZ, includeNeighbors));
     }
 
-    // The square is walked in unwrapped space and each position wrapped back, because everything downstream (chunk
-    // loading, the pending-send set) speaks the server's wrapped coordinates.
     @Inject(method = "forEach", at = @At("HEAD"), cancellable = true)
     private void toroidal$forEachWrapped(Consumer<ChunkPos> consumer, CallbackInfo ci) {
         if (!this.toroidal$transformer.isWrapped()) {

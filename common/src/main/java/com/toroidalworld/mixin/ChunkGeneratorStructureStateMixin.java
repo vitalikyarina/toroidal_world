@@ -37,9 +37,7 @@ import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 // at createState; a state without the stamp keeps the NOOP transformer and vanilla behaviour.
 @Mixin(ChunkGeneratorStructureState.class)
 public abstract class ChunkGeneratorStructureStateMixin implements TransformerHolder {
-    // How far the biome search can move a ring position from the centre it was handed. It searches a radius of 112
-    // blocks, so the block it answers with lies in [centre*16 - 104, centre*16 + 120], which floor-divides to exactly
-    // centre +/- 7 chunks. A centre further out of bounds than this cannot be pulled back in by any answer.
+    // Vanilla searches a radius of 112 blocks, so the answer lies in [centre*16 - 104, centre*16 + 120].
     @Unique
     private static final int toroidal$BIOME_SEARCH_REACH_CHUNKS = 7;
 
@@ -71,26 +69,6 @@ public abstract class ChunkGeneratorStructureStateMixin implements TransformerHo
         this.toroidal$transformer = transformer;
     }
 
-    // Each ring position fans out its own task onto the shared background pool, and the biome search inside it is the
-    // single largest noise consumer of a world load — 128 searches of a 224x224 block square, ~86 million ImprovedNoise
-    // samples. Nothing bound the transformer there, so every one of them answered from non-periodic noise: the search
-    // exists to bias a stronghold onto land, and it was reading land that this world does not have.
-    //
-    // The supplier is wrapped rather than the search itself because the search sits in a lambda — a synthetic method
-    // whose name depends on compilation order — while supplyAsync is a unique call in the method's own body. Wrapping
-    // it binds inside the task, on the thread that runs it, which is the only place a thread-local binding survives to.
-    //
-    // Bound unconditionally, NOOP included, for the reason NoiseBasedChunkGeneratorMixin binds unconditionally: this is
-    // a shared pool, and a scoped bind that overwrites and restores leaves the thread as clean as it found it.
-    //
-    // A position the bounds filter below will drop whatever the search answers costs nothing to leave unsearched: the
-    // task returns vanilla's own no-biome-found value, the raw ring position, and the filter drops that instead. On a
-    // world of 256 chunks every ring past the first sits at 280 chunks or further, so this is most of the 128.
-    //
-    // The first position is never skipped. It seeds the last resort of theWorldsShare — on a world narrower than the
-    // first ring nothing survives the filter, and that one wrapped position is the world's only stronghold. Skipping it
-    // would hand the fold a raw ring point instead of a searched one, which is exactly the land bias this search exists
-    // for.
     @ModifyArg(
             method = "generateRingPositions",
             at = @At(
@@ -123,8 +101,6 @@ public abstract class ChunkGeneratorStructureStateMixin implements TransformerHo
         return original.thenApply(positions -> toroidal$theWorldsShare(transformer, positions));
     }
 
-    // The folded position sits in the same biome as its raw original — the search above runs on the bound, periodic
-    // chain — so the ring's own biome search loses nothing by running in raw coordinates first.
     @Unique
     private static List<ChunkPos> toroidal$theWorldsShare(WorldLoopTransformer transformer, List<ChunkPos> positions) {
         List<ChunkPos> inBounds = new ArrayList<>(positions.size());

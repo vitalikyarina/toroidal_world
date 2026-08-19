@@ -13,9 +13,6 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
-// The Fabric half of the loader seam — the same wiring WorldLoop does on NeoForge: platform first, then the game
-// registries and the bounds payload. The NeoForge-only rewriters (auxiliary light, block particle position) have no
-// Fabric counterpart to rewrite, so nothing registers them here.
 public class ToroidalWorldFabric implements ModInitializer {
     @Override
     public void onInitialize() {

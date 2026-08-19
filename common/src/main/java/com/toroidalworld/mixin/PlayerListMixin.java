@@ -39,10 +39,6 @@ public class PlayerListMixin {
     @Final
     private List<ServerPlayer> players;
 
-    // Everything positional the world says out loud — sounds, level events — is broadcast to whoever is close enough.
-    // Across the seam the plain distance is a whole world, so a player standing right there would be told nothing.
-    //
-    // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.
     @WrapMethod(method = "broadcast")
     private void toroidal$broadcastThroughSeam(@Nullable Player except, double x, double y, double z, double range,
             ResourceKey<Level> dimension, Packet<?> packet, Operation<Void> original) {
@@ -89,10 +85,6 @@ public class PlayerListMixin {
         WorldLoopAttachments.rebaseClientPositionOf(respawned);
     }
 
-    // The third moment: a death respawn. It replaces the ServerPlayer without passing through teleport, and when the
-    // death was in another dimension the client rebuilds its level — which is born with NOOP bounds and would stay
-    // that way. At the tail the payload queues behind the respawn packet, so it lands on the level the client just
-    // built; a same-dimension respawn keeps the level and the repeat is an idempotent re-apply.
     @Inject(method = "respawn", at = @At("TAIL"))
     private void toroidal$sendBoundsOnRespawn(ServerPlayer player, boolean keepAllPlayerData,
             Entity.RemovalReason removalReason, CallbackInfoReturnable<ServerPlayer> cir) {

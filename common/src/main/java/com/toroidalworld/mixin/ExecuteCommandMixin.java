@@ -12,12 +12,6 @@ import net.minecraft.server.commands.ExecuteCommand;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
-// `execute if blocks` is a question, and a question has to be answered. Refusing an ambiguous region the way /fill
-// does would throw out of the middle of a datapack's condition chain — the whole command fails instead of the check
-// simply saying "no" — so this one takes the shorter of the two readings instead.
-//
-// Only the source region is folded. The destination is built right after, from this region's own length, so it
-// follows along; the comparison walk then reads both through the wrapped Level.getChunk like any other block access.
 @Mixin(ExecuteCommand.class)
 public class ExecuteCommandMixin {
     @ModifyExpressionValue(

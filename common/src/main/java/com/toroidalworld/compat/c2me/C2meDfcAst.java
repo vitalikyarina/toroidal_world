@@ -71,10 +71,6 @@ public final class C2meDfcAst {
                 x.raw, z.raw, horizontalScale);
     }
 
-    // What the slot would hand the noise once the fold takes it over: the coordinate alone. A horizontal shift warps
-    // the sampling domain and breaks the phase of the wrapped noise, so it is dropped here exactly as
-    // DensityFunctionsShiftedNoiseMixin drops it; a slot that is already a bare constant travels through untouched,
-    // which is the third input of every ShiftB.
     private static @Nullable Slot slot(AstNode input) {
         if (input instanceof ConstantNode constant) {
             return new Slot(constant, false, 0.0);
@@ -104,8 +100,6 @@ public final class C2meDfcAst {
         return null;
     }
 
-    // One scale is parked per sample and both horizontal axes read it, so two slots that disagree have no single
-    // answer to park — the node keeps C2ME's reading alone rather than take one axis's scale for the other's.
     private record Slot(AstNode raw, boolean scaled, double scale) {
         boolean agreesWith(Slot other) {
             if (this.scaled && other.scaled) {

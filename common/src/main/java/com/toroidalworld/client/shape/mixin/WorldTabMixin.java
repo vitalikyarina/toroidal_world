@@ -34,9 +34,6 @@ public class WorldTabMixin {
     @Unique
     private Button toroidal$customizeShapeButton;
 
-    // The shape row mirrors the World Type row right above it — a cycle button and its Customize button — because the
-    // two choices are siblings: one picks how the terrain is generated, the other what shape the world has. Injecting
-    // in front of the seed field is what places it there.
     @Inject(
             method = "<init>",
             at = @At(
@@ -58,7 +55,6 @@ public class WorldTabMixin {
         toroidal$refreshCustomizeButton();
     }
 
-    // A shape without a customizer leaves the button inactive, exactly as a world type without a preset editor does.
     @Unique
     private void toroidal$refreshCustomizeButton() {
         this.toroidal$customizeShapeButton.active = WorldShapes.selected().customizer() != null;

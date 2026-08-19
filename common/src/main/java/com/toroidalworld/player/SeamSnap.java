@@ -7,11 +7,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 
-// The one way to move an entity across the seam: the whole passenger stack shifts by the same vector in the same
-// moment, or vehicle and rider spend time a world apart and every distance check between them lies. absMoveTo also
-// resets the old position, so nothing interpolates across the whole world; a player's chunk source follows, because
-// the shift is a whole-world jump the tracker must see at once. A mob's navigation shifts too — its path was laid out
-// in the coordinate space the mob just left (see NavigationShifter).
 public final class SeamSnap {
     public static void withPassengers(Entity entity, Vec3 shift) {
         Vec3 to = entity.position().add(shift);

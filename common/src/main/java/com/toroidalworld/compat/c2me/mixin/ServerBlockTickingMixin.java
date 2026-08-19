@@ -16,10 +16,6 @@ import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.util.StaticCache2D;
 import net.minecraft.world.level.ChunkPos;
 
-// The third square C2ME builds: fluid post-processing wraps a WorldGenRegion around the chunk and its eight
-// neighbours to decide which scheduled fluid ticks can be dropped. Same statement as the generation caches — a
-// neighbour at the bounds is the chunk across the seam — and unfolded it would ask for a holder that does not exist
-// and take an NPE on a worker thread, or judge the seam's fluids against the wrong side.
 @Mixin(ServerBlockTicking.class)
 public class ServerBlockTickingMixin {
     @WrapOperation(

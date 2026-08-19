@@ -13,12 +13,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
 import net.minecraft.world.entity.animal.Turtle;
 
-// Laying is allowed only within nine blocks of the home beach, asked once to begin and once every tick to continue. The
-// sand the turtle walks to is found by the block goal underneath this one, whose own arrival is already folded — so
-// across the seam the turtle reaches the right sand and is then refused by the gate above it.
-//
-// A turtle carrying an egg stands on its own beach and is told it is a world from home, so it never digs; the egg is
-// carried until the turtle finds a beach far enough from the boundary, which on a small world may be nowhere.
 @Mixin(targets = "net.minecraft.world.entity.animal.Turtle$TurtleLayEggGoal")
 public class TurtleLayEggGoalMixin {
     @Shadow

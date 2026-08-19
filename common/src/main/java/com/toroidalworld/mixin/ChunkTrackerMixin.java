@@ -15,17 +15,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.server.level.ChunkTracker;
 import net.minecraft.server.level.ServerLevel;
 
-// The ticket graphs decide which chunks are loaded, by spreading a distance level through neighbouring chunks. Their
-// neighbours are computed in unbounded space, so the chunks on the far side of the seam are a whole world away and
-// never get a level — they stay unloaded, and a player looking across the seam sees the void.
-//
-// An out-of-bounds neighbour is REPLACED by its wrapped (physical) chunk, not added beside it: one physical chunk must
-// hold exactly one live key, or the same chunk carries levels and tickets under both representations and every seam
-// crossing churns as the duplicate band swaps sides. EVERY graph folds, the LoadingChunkTracker included:
-// the loading graph's folded edge gives the chunk across the seam level+1 per hop — exactly what the companion-ticket
-// machinery used to hand-simulate, but distance-correct and settled in the same runAllUpdates pass. With it folded, no
-// out-of-bounds key is ever enumerated, so updateChunkScheduling never creates a phantom holder; the generation cache
-// folds its slots to the physical chunks the graph now levels (ChunkGenerationTaskMixin).
 @Mixin(ChunkTracker.class)
 public class ChunkTrackerMixin implements LevelBindable, TransformerCache {
     @Unique
@@ -44,10 +33,6 @@ public class ChunkTrackerMixin implements LevelBindable, TransformerCache {
         return this.toroidal$level;
     }
 
-    // Both neighbour walks — the spread (checkNeighborsAfterUpdate) and the recompute (getComputedLevel) — enumerate
-    // the eight raw ±1 keys around the node at this one call. Substituting the physical key here is the whole seam fix:
-    // vanilla's own guards then do the rest against the only key that is live — the self cell folds to the source
-    // sentinel, the known parent is skipped, and the level is read from where it is actually stored.
     @WrapOperation(
             method = {"checkNeighborsAfterUpdate", "getComputedLevel"},
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ChunkPos;asLong(II)J"),

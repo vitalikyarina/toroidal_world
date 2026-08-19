@@ -14,10 +14,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 
-// The jar world presets (data/toroidal_world/worldgen/world_preset/*.json) are the server half of WorldLoopPresets:
-// the screen reads the enum, a dedicated server reads the JSON, and nothing at runtime checks they agree — a preset
-// drifting from the enum would silently create worlds of a different size than the screen advertises. So the suite
-// holds the two together, through the same ofWidth convention the creation flow builds bounds with.
 class WorldLoopPresetsJsonTest {
     private static final String PRESET_RESOURCE_DIR = "/data/toroidal_world/worldgen/world_preset/";
     private static final String LOOPED_GENERATOR_ID = "toroidal_world:toroidal";

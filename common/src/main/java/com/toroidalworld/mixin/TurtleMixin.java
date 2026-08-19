@@ -11,10 +11,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
 import net.minecraft.world.entity.animal.Turtle;
 
-// A turtle sinks while it swims, unless it is heading home and already close to the beach — that is what keeps it near
-// the surface for the last twenty blocks instead of scraping along the sea floor. The home is written down where it
-// lies and the turtle is wrapped, so a beach across the seam never reads as close and the turtle arrives underneath its
-// own nesting ground.
 @Mixin(Turtle.class)
 public class TurtleMixin {
     @WrapOperation(

@@ -26,12 +26,6 @@ public final class WorldLoopAttachments {
         return transformer.isWrapped() ? transformer : null;
     }
 
-    // The bounds the server told this client, held apart from the engine's transformer on purpose. That one drives the
-    // whole wrapping engine, and on the client it MUST stay NOOP — the client is told the world is infinite, which is
-    // what keeps rendering and chunk loading working across the seam. So the client's knowledge of the bounds lives in
-    // ClientBoundsHolder on the client level, where only things that want to *read* the bounds without making the level
-    // wrap will look (the debug overlay and the compass today). Server levels never implement it and fall out on the
-    // instanceof; the default is NOOP, and the client sets it from WrappingSettingsPayload.
     private static WorldLoopTransformer clientBoundsTransformerOf(Level level) {
         return level instanceof ClientBoundsHolder holder ? holder.toroidal$clientBounds() : WorldLoopTransformer.NOOP;
     }
@@ -41,13 +35,6 @@ public final class WorldLoopAttachments {
         return transformer.isWrapped() ? transformer : null;
     }
 
-    // Which transformer the shared noise fields should fold by for a reader that is not necessarily a Level: the
-    // temperature question is asked through a LevelReader, which on the generation side is a WorldGenRegion holding
-    // the level rather than being one. Client bounds come first for the same reason they do everywhere else — a client
-    // level's own transformer is NOOP by design, and folding by it would leave the client reading the unfolded field.
-    //
-    // Null, not NOOP, when the reader names no level: a binder that cannot answer must leave whatever is already bound
-    // on this thread alone. Binding NOOP there would shield the call from the generation step's own valid binding.
     public static @Nullable WorldLoopTransformer noiseTransformerOf(LevelReader reader) {
         if (reader instanceof Level level) {
             WorldLoopTransformer clientBounds = wrappedClientBoundsTransformerOf(level);
@@ -81,9 +68,6 @@ public final class WorldLoopAttachments {
     // with the server's own truth is what keeps its coordinate meaningful. On a level that does not wrap the transformer
     // is NOOP and wrap() is the identity, so this is safe to call anywhere.
     public static void rebaseClientPositionOf(ServerPlayer player) {
-        // The server places a player once while they are still being configured, before there is a connection to hold
-        // the mirror. Nothing to seed then: the connection creates its own the moment it exists, from this same
-        // position. The check belongs here rather than in each caller — this is the only path that can run that early.
         if (player.connection == null) {
             return;
         }

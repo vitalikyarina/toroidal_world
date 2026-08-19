@@ -4,11 +4,6 @@ import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 
-// Whether C2ME's math optimisations own PerlinNoise. Its opts/math module overwrites the three-argument getValue with
-// an octave loop of its own, which no longer delegates to the five-argument overload this mod wraps — so the periodic
-// walk stops being called without a single line in the log, and the low-frequency fields stop tiling at the seam.
-//
-// Presence is the whole condition: the module carries no config key of its own.
 public final class C2meOctaveNoise {
     private static final Logger LOGGER = LogUtils.getLogger();
 

@@ -19,11 +19,6 @@ import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-// The one wiring point for the looped world feature, and the NeoForge half of its loader seam: the platform
-// implementation, the game-registry entries and the payload rewriters are all bound here, so the classes they wire
-// stay loader-free. The mod entrypoint calls init and knows nothing else about the feature's internals — the pattern
-// a second feature in this mod would follow. Self-registering pieces (@EventBusSubscriber: shape setup, network) are
-// not listed here; they wire themselves.
 public final class WorldLoop {
     private static final DeferredRegister<MapCodec<? extends ChunkGenerator>> CHUNK_GENERATORS =
             DeferredRegister.create(Registries.CHUNK_GENERATOR, ToroidalWorld.MODID);
@@ -39,11 +34,6 @@ public final class WorldLoop {
         BlockParticleTranslation.register();
         modContainer.registerConfig(ModConfig.Type.CLIENT, WorldLoopConfig.SPEC);
 
-        // The spec alone only yields the toml; the mod-list Config button needs a screen factory. NeoForge's generic
-        // ConfigurationScreen builds the UI from the registered specs. Guarded because init also runs on the dedicated
-        // server, where the screen classes do not exist; the method reference is only materialised inside. The isEmpty
-        // guard keeps the Config button away while the spec has no keys — FML skips registering an empty spec, so the
-        // button would open a blank screen.
         if (Platforms.get().isClient() && !WorldLoopConfig.SPEC.isEmpty()) {
             modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
         }

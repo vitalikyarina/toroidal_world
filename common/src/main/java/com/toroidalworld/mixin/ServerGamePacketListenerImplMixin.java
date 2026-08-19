@@ -51,10 +51,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
     @Shadow
     public ServerPlayer player;
 
-    // Keep this the last field with an initialiser in the file. The declaration initialiser is spliced into the target
-    // constructor by a line-number range, and an initialised field declared on a later line — even a static one —
-    // stretches that range over this line, so the splice is silently dropped and the mirror sits null on the network
-    // thread.
+    // Keep this the last field with an initialiser: mixin splices declaration initialisers by line-number range.
     @Unique
     private final ClientPosition toroidal$clientPosition = new ClientPosition();
 
@@ -63,13 +60,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         return this.toroidal$clientPosition;
     }
 
-    // Seeded here rather than on first use so the field can be final. Created lazily it was a data race: the getter is
-    // reached from the server thread while handling movement and from the network thread while translating packets, and
-    // two threads finding it null each built their own mirror — after which the movement writes went to an object the
-    // packet translator no longer read, and the mirror sat frozen at the login position.
-    //
-    // The connection is the right moment: the client has just been told where it is, so the two spaces still agree, and
-    // from then on the client reports its own coordinate in every movement packet.
+    // Seeded here so the field can be final: the getter is reached from the server thread and the network thread alike.
     @Inject(method = "<init>", at = @At("TAIL"))
     private void toroidal$seedMirror(MinecraftServer server, Connection connection, ServerPlayer player,
             CommonListenerCookie cookie, CallbackInfo ci) {
@@ -127,19 +118,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         return transformer.coords.z.wrap(z);
     }
 
-    // Every player teleport funnels through here (commands, pearls, portals resolve to this), and it jumps the mirror
-    // past the one-step increment ordinary movement keeps to. The chunk→client mapping is a pure function of the mirror,
-    // so a chunk the client still holds can now map to a different copy: vanilla neither re-sends it at the new copy
-    // (void behind the player) nor forgets it at the old one (a ghost a world away). The fix straddles the mirror move.
-    //
-    // Both halves are needed only for the chunks whose client-space copy the jump actually changes — a teleport inside
-    // the current frame changes none, and forgetting the whole view for it would throw away meshes the client could
-    // keep. The set is computed once, HEAD, before the mirror moves, and shared with TAIL through the invocation-scoped
-    // local: computing it twice could disagree across the mirror move and leave chunks dropped but never re-sent.
-    //
-    // HEAD, before the mirror shifts: forget the flipped chunks, so the forgets name the copies the client is actually
-    // holding. The position packet this method sends next moves the mirror; the re-send below then goes out around it.
-    // A mirror built for another dimension has nothing to diff against — there the whole view is dropped and re-sent.
     @Inject(method = "teleport(DDDFFLjava/util/Set;)V", at = @At("HEAD"))
     private void toroidal$dropChunksBeforeTeleport(double x, double y, double z, float yRot, float xRot,
             Set<RelativeMovement> relatives, CallbackInfo ci,
@@ -164,8 +142,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         }
     }
 
-    // TAIL, mirror now moved by the position packet above: re-send the same chunks, so each lands on the copy the
-    // client should now hold. The chunks flush over later ticks, after that position packet, so they translate right.
     @Inject(method = "teleport(DDDFFLjava/util/Set;)V", at = @At("TAIL"))
     private void toroidal$resendChunksAfterTeleport(double x, double y, double z, float yRot, float xRot,
             Set<RelativeMovement> relatives, CallbackInfo ci,
@@ -188,11 +164,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         toroidal$refreshTrackedEntities();
     }
 
-    // The entity half of the same obligation, and it belongs after the mirror has moved rather than straddling it: an
-    // entity the player has left behind leaves through a packet that carries no coordinates, while one the destination
-    // brings into view is placed by an absolute position that has to be folded around the mirror it will be drawn
-    // beside. Vanilla refreshes this decision on every ordinary move and never on a teleport, so without this the
-    // tracker spends one tick shipping updates it decided around a position the mirror has already left.
     @Unique
     private void toroidal$refreshTrackedEntities() {
         TrackedEntityRefresher refresher =
@@ -286,13 +257,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         mirror.setX(clamped, MirrorWriter.PLAYER_MOVE);
         double unwrapped = transformer.coords.x.unwrapAround(this.player.getX(), clamped);
 
-        // The movement check measures targetX - firstGoodX, a distance taken in raw coordinates, and the bounds it
-        // measures from are only refreshed when the client acknowledges a teleport. A portal exit maps to the far side
-        // of the world, so between the arrival and that acknowledgement the reference names the same physical place a
-        // whole world away: every packet then reads as a 512-block jump, is rejected, and the player is pulled back to
-        // the portal they just left. Folding the reference to its nearest copy is the same treatment every other
-        // distance in the mod already gets — and it is the identity wherever the seam is not involved, so ordinary
-        // movement keeps vanilla's check byte-for-byte.
         this.firstGoodX = transformer.coords.x.unwrapAround(unwrapped, this.firstGoodX);
         this.lastGoodX = transformer.coords.x.unwrapAround(unwrapped, this.lastGoodX);
         return unwrapped;
@@ -322,9 +286,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         return unwrapped;
     }
 
-    // The step above lets the player walk out of the world by up to one move; here they are brought back to the other
-    // side. absMoveTo also resets the old position, so nothing interpolates across the whole world, and the movement
-    // bounds have to follow — they are the reference the next packet's distance checks measure against.
     @Inject(method = "handleMovePlayer", at = @At("RETURN"))
     private void toroidal$wrapIntoBounds(ServerboundMovePlayerPacket packet, CallbackInfo ci) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
@@ -341,10 +302,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         this.player.serverLevel().getChunkSource().move(this.player);
     }
 
-    // A ridden vehicle moves the same way, but through its own packet, and the reference to keep the movement continuous
-    // is the vehicle's position, not the player's. This is also where the client position is kept fed — the player rides
-    // the vehicle and sends no move packets of their own, so otherwise the chunk cache stops following the boat and the
-    // world stops loading around it.
     @WrapOperation(
             method = "handleMoveVehicle",
             at = @At(
@@ -379,10 +336,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         return transformer.coords.z.unwrapAround(this.player.getRootVehicle().getZ(), clamped);
     }
 
-    // The vehicle's position is applied packet-by-packet, so it must come back inside the world here too, not only at
-    // the vehicle's own tick end: out of bounds it stands in a phantom chunk, which never ticks — the tick-end wrap
-    // then never runs, and the boat with its rider is stranded outside the world, deaf to dismount input. The whole
-    // passenger stack shifts together, same as the tick-end path.
     @Inject(method = "handleMoveVehicle", at = @At("RETURN"))
     private void toroidal$wrapVehicleIntoBounds(ServerboundMoveVehiclePacket packet, CallbackInfo ci) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
@@ -398,10 +351,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         Vec3 wrapped = transformer.vectors.wrap(vehicle.position());
         SeamSnap.withPassengers(vehicle, wrapped.subtract(vehicle.position()));
 
-        // The baselines the next packet measures from were written before this wrap — the success path stores the
-        // pre-wrap coordinate, and vanilla re-seats them only at the next tick. A second packet handled in the same
-        // tick would measure against a copy a world away and feed vehicle.move a world-width sweep. The player path
-        // re-seats its own bounds after wrapping (toroidal$wrapIntoBounds); the vehicle's follow it the same way.
         this.vehicleFirstGoodX = vehicle.getX();
         this.vehicleFirstGoodZ = vehicle.getZ();
         this.vehicleLastGoodX = vehicle.getX();

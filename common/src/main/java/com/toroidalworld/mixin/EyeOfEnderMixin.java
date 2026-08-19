@@ -14,23 +14,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.projectile.EyeOfEnder;
 
-// The eye is aimed once, at throw time, from the raw difference between the thrower and the stronghold — across the
-// seam that points the long way round the world. The target is folded to its nearest copy in both places that read it:
-//
-// signalTo bakes the direction into a steering point at most 12 blocks out, so the fold must happen before that bake —
-// afterwards the wrong direction is all that is left. The folded target may sit a few blocks past the bounds; it is
-// only a point to steer from, never ground that is read.
-//
-// The per-tick steering is folded too, because the eye itself can cross the seam mid-flight: ServerLevelMixin wraps
-// every non-player entity back into the world at the end of its tick, which moves the eye a whole world while the
-// stored target stays put. The raw per-tick delta would then read a world long — turning the eye around and, because
-// the wanted speed chases the delta's length, launching it.
-//
-// On this game version that steering has no helper to wrap: the difference is taken inline off the tx/tz fields, in the
-// middle of the method that also rotates, moves and draws the eye. So the fold is applied to the fields themselves,
-// once on entry, which is the same correction in one place instead of at each of their reads — and it is safe to
-// write there because they are steering state the throw sets and nothing persists. A target already on this side is
-// left at the value it had.
 @Mixin(EyeOfEnder.class)
 public class EyeOfEnderMixin {
     @Shadow

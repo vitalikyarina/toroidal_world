@@ -11,9 +11,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
 import net.minecraft.world.entity.animal.allay.Allay;
 
-// The allay's dance holds while the jukebox that started it is inside the notification radius of the play event. The
-// position is the one the event carried, in the world, and the allay is wrapped — so across the seam it stops dancing
-// on the next tick, and an allay that is not dancing cannot be duplicated with an amethyst shard.
 @Mixin(Allay.class)
 public class AllayMixin {
     @WrapOperation(

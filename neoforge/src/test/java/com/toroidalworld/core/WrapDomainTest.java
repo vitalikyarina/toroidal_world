@@ -10,15 +10,10 @@ import java.util.Random;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-// Randomized checks run against brute-force references (shift by whole world widths until in bounds, minimum over the
-// lattice of world copies) rather than re-deriving the production formulas — the reference has to be dumber than the
-// code under test or the comparison proves nothing. The seed is fixed so a failure reproduces.
 class WrapDomainTest {
     private static final long SEED = 0x5EEDL;
     private static final int SAMPLES = 2000;
 
-    // Even centered, odd, one unit wide, uneven split, zero-based lower bound — the shapes ofWidth and hand-edited
-    // settings JSON can produce.
     private static final List<WrapDomain> DOMAINS = List.of(
             new WrapDomain(-32, 32),
             new WrapDomain(-2, 3),
@@ -255,10 +250,6 @@ class WrapDomainTest {
             }
         }
 
-        // The fold's whole job is to add or remove world widths. Anything else it does to a coordinate — the last bits
-        // of a difference it did not need to take — is damage, and it hides where a rounded result is still "about
-        // right": the lap count comes out as 1e-16 instead of 0 and reads as no lap at all. Measured as a lap count so
-        // that the two readings are separable, and held to the bit exactly where the count says nothing moved.
         @Test
         void unwrapAroundShiftsByWholeWorldsAndTouchesNothingElse() {
             Random random = new Random(SEED);
@@ -280,9 +271,6 @@ class WrapDomainTest {
             }
         }
 
-        // Asking again cannot find another lap to take: the answer is already the copy nearest the reference. A fold
-        // that says otherwise is one whose own output it does not recognise, and the movement bounds on the packet
-        // listener re-fold theirs through it every tick.
         @Test
         void foldingTwiceIsFoldingOnce() {
             Random random = new Random(SEED);
@@ -299,14 +287,6 @@ class WrapDomainTest {
             }
         }
 
-        // Exactly half a world away both copies are equally near and one of them has to be named. The one named is the
-        // argument itself: the fold takes the lap count nearest zero, and at the antipode that count is none — so a
-        // coordinate already sitting at one of its two nearest copies is handed straight back, which is the identity
-        // every fast path above this one is built on.
-        //
-        // The two domains are the same width with their bounds drawn a world apart, and every call below hands both the
-        // same numbers: -12 is inside either of them and 20 / -44 wrap into opposite halves. One answer for both is the
-        // point — while the tie was settled on the reference's wrapped image these read -12 / 52, -76 / -12, -12 / 52.
         @Test
         void theAntipodeResolvesTheSameWhateverTheBoundsAre() {
             for (WrapDomain domain : List.of(new WrapDomain(-32, 32), new WrapDomain(-48, 16))) {
@@ -318,8 +298,6 @@ class WrapDomainTest {
                 assertEquals(52, domain.unwrapAround(20, 52), in(domain));
                 assertEquals(52.0, domain.unwrapAround(20.0, 52.0), 0.0, in(domain));
 
-                // Laps out, the tie asks the same question: of the two copies half a world from the reference, the one
-                // fewest laps from where the coordinate already was.
                 assertEquals(52, domain.unwrapAround(20, 116), in(domain));
                 assertEquals(52.0, domain.unwrapAround(20.0, 116.0), 0.0, in(domain));
                 assertEquals(-12, domain.unwrapAround(20, -76), in(domain));
@@ -497,7 +475,6 @@ class WrapDomainTest {
 
     @Nested
     class NearsAntipode {
-        // Width 64, so half is 32; with a margin of 2 the band starts past 30.
         private final WrapDomain domain = new WrapDomain(-32, 32);
 
         @Test

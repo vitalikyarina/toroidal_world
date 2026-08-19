@@ -11,8 +11,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
 
-// The horizontal shifts warp the sampling domain, which breaks the phase of the wrapped noise — only the vertical
-// shift survives, X/Z reach the noise raw, and xzScale travels through the context.
 @Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$ShiftedNoise")
 public class DensityFunctionsShiftedNoiseMixin {
     @Shadow

@@ -11,8 +11,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
 
-// The horizontal coordinate reaches ImprovedNoise raw, where it is mapped onto the world circle; xzScale travels
-// through the context instead and sizes that circle.
 @Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$Noise")
 public class DensityFunctionsNoiseMixin {
     @Shadow

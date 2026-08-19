@@ -41,17 +41,6 @@ public class RaidMixin {
     @Final
     private ServerLevel level;
 
-    // The horn is the one raid sound the raid aims itself instead of handing to PlayerList.broadcast, so the seam-aware
-    // distance that covers every other sound never touches it. Both of its readings are taken in raw coordinates: the
-    // 64-block gate that decides who hears it at all, and the 13 blocks the horn is pinned to from the listener along the
-    // direction to the raid. Across the seam that direction points the long way round and that distance is a whole world,
-    // so a player twenty blocks from the raid is told nothing — unless the raid bossbar already holds them, and then the
-    // horn blows from behind them.
-    //
-    // Both readings are built from this one point, so folding the raid to the copy nearest the listener is the whole fix:
-    // the gate then measures the walk that exists, and the horn is pinned toward the raid where it really stands.
-    // Vanilla's 13 and 64 blocks are untouched, and a horn placed beyond the bounds is what the packet translation is
-    // for — it lays the position back into the listener's own space.
     @ModifyExpressionValue(
             method = "playSound",
             at = @At(
@@ -74,9 +63,6 @@ public class RaidMixin {
         return SeamRange.sqr(this.level, raidCenter, raiderPos);
     }
 
-    // The candidate cube is walked in raw section coordinates, and the village-distance tracker only ever holds
-    // canonical sections — a section past the bounds is never a village, whatever stands there. Each candidate is
-    // restated as the section that physically exists; Y has no seam and passes through.
     @WrapOperation(
             method = "moveRaidCenterToNearbyVillageSection",
             at = @At(
@@ -93,8 +79,6 @@ public class RaidMixin {
         return folded.stream();
     }
 
-    // With the candidates canonical, the winner must be picked by the distance the world actually walks: a section
-    // across the seam reads raw-far and would lose to any same-side candidate, however close it really is.
     @ModifyArg(
             method = "moveRaidCenterToNearbyVillageSection",
             at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;min(Ljava/util/Comparator;)Ljava/util/Optional;"),

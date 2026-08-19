@@ -15,10 +15,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.world.level.levelgen.SurfaceSystem;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
 
-// The badlands pillars and the frozen-ocean icebergs are the only surface noises vanilla samples at pre-scaled
-// coordinates. A scaled coordinate reads as a different block position to the wrapped noise, which shifts the circle
-// phase and cuts the pillar in half at the seam — so the coordinate is handed over raw and the scale travels through
-// the context. Every other surface noise already gets raw block coordinates and needs no help.
 @Mixin(SurfaceSystem.class)
 public class SurfaceSystemMixin {
     @Shadow

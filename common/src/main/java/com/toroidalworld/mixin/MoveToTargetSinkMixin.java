@@ -13,15 +13,6 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.behavior.MoveToTargetSink;
 
-// The one behaviour every walk target in the game passes through: whatever set it — a bed, a job site, a fleeing
-// villager's escape route — this is what turns it into a path and decides when the mob has arrived. Both of its own
-// readings compare the target's coordinates against the mob's, and both are raw.
-//
-// Arrival errs the safe way across the seam, since a target read a world off is never "reached", so the mob keeps
-// walking and the state rights itself once it crosses. What it costs is the shortcut: a mob already standing within
-// reach of its target is sent to compute a path to where it is, and the erase that would have ended the behaviour
-// waits for the crossing. The retarget check pays worse — a walk target that moves a step across the boundary reads as
-// a whole world of movement and forces a full repath every tick it does so.
 @Mixin(MoveToTargetSink.class)
 public class MoveToTargetSinkMixin {
     @WrapOperation(

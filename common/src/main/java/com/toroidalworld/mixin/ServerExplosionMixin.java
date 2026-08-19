@@ -43,8 +43,6 @@ public class ServerExplosionMixin {
     @Final
     private double z;
 
-    // Folded once on entry rather than at each sample point: the samples all sit on the one body, and there are up to a
-    // few hundred of them.
     @ModifyVariable(
             method = "getSeenPercent(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/Entity;)F",
             at = @At("HEAD"), argsOnly = true)

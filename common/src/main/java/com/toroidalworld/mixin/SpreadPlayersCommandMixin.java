@@ -22,20 +22,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec2;
 
-// The spread is computed inside a square laid over the world: positions are randomised in it, pushed apart inside it,
-// clamped to its edges, and the placement wraps whatever comes out. Every one of those steps measures distance as plain
-// subtraction, which is the truth only while no pair in the square is closer the other way round — that is, while the
-// square fits inside half the world. Wider than that and a pair standing side by side across the seam reads as the
-// furthest apart there is, so each gets pushed towards the other in the belief it is being pushed away.
-//
-// The search is therefore restated with folded arithmetic rather than the range being cut down to keep vanilla's honest:
-// cutting it would answer a request to spread across the world by spreading across a quarter of it and saying nothing.
-// A square that already fits in half the world goes straight back to vanilla — folding is the identity there, so the
-// ordinary case stays byte-for-byte untouched.
-//
-// An axis whose square covers a whole world width has no edges left to clamp against: the two of them are the same
-// ground. That axis wraps instead, which is also what lets a search over a full world settle — pressing positions
-// against edges that coincide never does.
+    // Vanilla's clamp, except where the square is the whole world: there the two edges are the same ground.
 @Mixin(SpreadPlayersCommand.class)
 public class SpreadPlayersCommandMixin {
     @Unique
@@ -82,8 +69,6 @@ public class SpreadPlayersCommandMixin {
                 SpreadPositionAccessor position = (SpreadPositionAccessor) positions[i];
                 int neighbourCount = 0;
 
-                // Vanilla accumulates this in a throwaway Position; two locals say the same thing without an allocation
-                // per position per iteration, of which there are up to ten thousand.
                 double towardNeighboursX = 0.0;
                 double towardNeighboursZ = 0.0;
 
@@ -146,7 +131,6 @@ public class SpreadPlayersCommandMixin {
         }
     }
 
-    // The average distance the command reports back, measured the way the search measured it.
     @WrapOperation(
             method = "setPlayerPositions",
             at = @At(

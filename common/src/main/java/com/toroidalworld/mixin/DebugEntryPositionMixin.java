@@ -81,8 +81,6 @@ public class DebugEntryPositionMixin {
                 wrappedChunk.x, SectionPos.blockToSectionCoord(feet.getY()), wrappedChunk.z,
                 wrappedChunk.getRegionLocalX(), wrappedChunk.getRegionLocalZ(),
                 wrappedChunk.getRegionX(), wrappedChunk.getRegionZ()));
-        // No region part on the unwrapped chunk line: region files on disk live in the wrapped frame, so a raw-frame
-        // region name would point at a file that does not exist.
         lines.addAll(chunkLine + 1, List.of(
                 String.format(Locale.ROOT, "Unwrapped XYZ: %.3f / %.5f / %.3f", rawX, entity.getY(), rawZ),
                 String.format(Locale.ROOT, "Unwrapped Block: %d %d %d", feet.getX(), feet.getY(), feet.getZ()),

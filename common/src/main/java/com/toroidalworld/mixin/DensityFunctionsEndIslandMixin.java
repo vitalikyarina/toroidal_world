@@ -13,12 +13,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.synth.SimplexNoise;
 
-// The fold that makes the End's island grid periodic, said where vanilla computes it. The walk itself is
-// PeriodicEndIslands, shared with the C2ME-shaped twin in compat/c2me; this mixin only decides whether the level being
-// generated wraps at all.
-//
-// It stands down when C2ME's natives-math module owns compute: that module overwrites the method outright, from a
-// config of higher priority than this one, so what stays here would be replaced rather than reached.
 @Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$EndIslandDensityFunction")
 public class DensityFunctionsEndIslandMixin {
     @Shadow

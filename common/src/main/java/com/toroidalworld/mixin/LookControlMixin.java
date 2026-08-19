@@ -13,7 +13,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.control.LookControl;
 
-// Same as walking: a mob turns towards the absolute position of what it is watching, which across the seam is behind it.
 @Mixin(LookControl.class)
 public class LookControlMixin implements NavigationShifter {
     @Shadow
@@ -40,8 +39,6 @@ public class LookControlMixin implements NavigationShifter {
         original.call(nearestX, y, nearestZ, yMaxRotSpeed, xMaxRotAngle);
     }
 
-    // The pending look point is the same kind of holder as the move control's wanted: consumed raw after a wrap, it
-    // snaps the head toward the old-space copy. Shifted by the wrap funnel (see NavigationShifter).
     @Override
     public void toroidal$shiftBy(int shiftX, int shiftZ) {
         this.wantedX += shiftX;

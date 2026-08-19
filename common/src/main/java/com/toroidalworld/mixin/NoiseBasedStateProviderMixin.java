@@ -13,8 +13,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.levelgen.feature.stateproviders.NoiseBasedStateProvider;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
 
-// Feature state providers scale X/Z before sampling; the wrapped noise needs the raw block position and takes the
-// scale from the context, otherwise the same feature would pick different blocks on the two sides of the seam.
 @Mixin(NoiseBasedStateProvider.class)
 public class NoiseBasedStateProviderMixin {
     @Shadow

@@ -18,19 +18,11 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-// Distance and direction across the seam checked against brute force: the true wrapped answer is the minimum over the
-// lattice of translated world copies, and the nearest copy is its argmin. The reference stays dumber than the code
-// under test, and the seed is fixed so a failure reproduces. Inputs to the sqrDistToBounds family are wrapped in
-// bounds first — that is the contract of every production call site; chessboardDistance and nearestCopy wrap on their
-// own and get targets many laps out.
 class SeamDistanceTest {
     private static final long SEED = 0xD157L;
     private static final int SAMPLES = 1500;
     private static final int LAPS = 5;
 
-    // Even centered, odd, uneven split with unequal axis widths, one wrapped axis beside an unbounded one, and the
-    // fully unbounded transformer every unlooped dimension gets. Sampling reach is capped on wide worlds; an unbounded
-    // axis has no width to derive it from, so its samples cover a plain span around the origin.
     private static final WorldLoopTransformer EVEN = transformer(-32, 32, -32, 32);
     private static final WorldLoopTransformer ODD = transformer(-2, 3, -2, 3);
     private static final WorldLoopTransformer UNEVEN = transformer(-48, 16, 0, 16);
@@ -192,7 +184,6 @@ class SeamDistanceTest {
         }
     }
 
-    // An unbounded axis has every chunk inside, so the nearest chunk still inside is the chunk itself.
     private static int refClamp(WrapDomain domain, int coord) {
         return domain instanceof WrapDomain.Noop ? coord
                 : Math.min(Math.max(coord, domain.lowerBound), domain.upperBound - 1);
@@ -259,8 +250,6 @@ class SeamDistanceTest {
                     assertEquals(expected, actual, 1e-3,
                             () -> "nearestCopy(" + ref + ", " + target + ") is not the nearest copy " + in(transformer));
 
-                    // The half-a-world guarantee is a looped-axis promise; an unbounded axis has no width to halve
-                    // and never moves the target anyway.
                     if (!(transformer.coords.x instanceof WrapDomain.Noop)) {
                         assertTrue(Math.abs(nearest.x - ref.x) <= transformer.coords.x.domainLength / 2.0 + 1e-9,
                                 () -> "nearestCopy is over half a world away on X " + in(transformer));
@@ -273,8 +262,6 @@ class SeamDistanceTest {
             }
         }
 
-        // The block twin answers the same three promises against the same brute force. Ties are left to the code: the
-        // distance is asserted, not which of two equally near copies it picked.
         @Test
         void blocksLandOnTheSameBlockNoFurtherThanAnyOtherCopyAndWithinHalfAWorld() {
             Random random = new Random(SEED);
@@ -401,7 +388,6 @@ class SeamDistanceTest {
             }
         }
 
-        // An unbounded axis has no lattice — the only legal shift there is none at all.
         private void checkShiftOnLattice(WrapDomain domain, double boxMin, double foldedMin,
                 String axis, WorldLoopTransformer transformer) {
             if (domain instanceof WrapDomain.Noop) {

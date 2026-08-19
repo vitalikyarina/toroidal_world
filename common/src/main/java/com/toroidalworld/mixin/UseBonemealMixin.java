@@ -13,9 +13,6 @@ import net.minecraft.core.Position;
 import net.minecraft.world.entity.ai.behavior.UseBonemeal;
 import net.minecraft.world.entity.npc.Villager;
 
-// The same shape as the harvest: the crop is picked from the cube around the farmer and then remembered for the eighty
-// ticks the bonemealing lasts, so the seam only gets between them when the farmer crosses it mid-session. After that
-// the gate reads a crop under its own feet as a world away and no bone meal is ever applied.
 @Mixin(UseBonemeal.class)
 public class UseBonemealMixin {
     @WrapOperation(

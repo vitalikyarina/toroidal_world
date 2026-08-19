@@ -50,10 +50,7 @@ public final class ClientPosition {
     // watches this against the copy the client should hold now.
     private volatile @Nullable BorderCenter heldBorderCenter;
 
-    // The chunk-cache centre most recently sent to the client, in client space — where the client's own chunk cache
-    // actually stands, as opposed to the mirror, which runs ahead of it for the tick between a teleport and the
-    // tracking view re-centring. Every chunk packet is folded and judged around this, so it is written by the
-    // cache-centre rewriter and read by the chunk door, both on the connection's own thread and in packet order.
+    // One record because the two coordinates and their space are one fact: written on the server thread, read on the network thread.
     private volatile @Nullable ChunkPos heldCacheCenter;
 
     private final LogRateGate warnGate = new LogRateGate();
@@ -66,9 +63,6 @@ public final class ClientPosition {
         return seededMirror().z();
     }
 
-    // An unseeded mirror holds (0.0, 0.0) — a plausible spawn-area coordinate, not a recognizable sentinel. Handing it
-    // out would anchor packet translation a whole world from the player and corrupt their chunk cache in silence, so a
-    // read before the first rebase fails here instead.
     private Mirror seededMirror() {
         Mirror currMirror = this.mirror;
         if (currMirror.space() == null) {
@@ -77,9 +71,6 @@ public final class ClientPosition {
         return currMirror;
     }
 
-    // X and Z arrive through two separate vanilla clamp sites, so a mover writes them as two stores. A reader between
-    // the stores sees the new X with the previous Z — coordinates one movement step apart, in the same space, which the
-    // unwrap anchor tolerates. Only the dimension must never tear, and neither store touches it.
     public void setX(double x, MirrorWriter writer) {
         Mirror currMirror = this.mirror;
         checkStep(writer, "x", currMirror.transformer().coords.x, currMirror.x(), x, currMirror.space());
@@ -107,7 +98,6 @@ public final class ClientPosition {
 
     public void rebase(double x, double z, ResourceKey<Level> dimension, WorldLoopTransformer transformer) {
         this.mirror = new Mirror(x, z, dimension, transformer);
-        // A new space makes the stored copies meaningless; null makes the refresher send fresh ones.
         this.heldSpawn = null;
         this.heldBorderCenter = null;
         this.heldCacheCenter = null;
@@ -144,11 +134,6 @@ public final class ClientPosition {
                 SectionPos.blockToSectionCoord(currMirror.z()));
     }
 
-    // Every mirror move funnels through the setters above except rebase — which is the one legal way to jump it far.
-    // So the invariant all of packet translation stands on is checked at its source: a single step longer than half a
-    // world flips which copy of a held chunk lies nearest the client, and nothing downstream can tell anymore. The
-    // move is still applied — the guard only makes the break loud. Before the first rebase the transformer is NOOP,
-    // whose every step fits in half by meaning.
     private void checkStep(MirrorWriter writer, String axis, WrapDomain domain, double from, double to,
             @Nullable ResourceKey<Level> space) {
         if (domain.fitsInHalf(Math.abs(to - from)) || !warnGate.tryPass()) {

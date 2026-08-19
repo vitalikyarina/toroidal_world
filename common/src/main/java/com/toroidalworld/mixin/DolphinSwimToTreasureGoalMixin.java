@@ -13,13 +13,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
 import net.minecraft.world.entity.animal.Dolphin;
 
-// Fed a fish, a dolphin leads the way to the nearest buried treasure and stops once it is four blocks from it. The
-// structure it found sits at its own coordinates in the world and the dolphin is wrapped, so a treasure across the seam
-// is never arrived at: the goal cannot end, and stopping does not clear the fish either, so the same swim starts again.
-// The dolphin circles the chest it is leading you to.
-//
-// Only the horizontal gap is asked — the comparison is built at the dolphin's own height — and folding leaves that as
-// it was; the seam has no vertical direction to fold.
 @Mixin(targets = "net.minecraft.world.entity.animal.Dolphin$DolphinSwimToTreasureGoal")
 public class DolphinSwimToTreasureGoalMixin {
     @Shadow

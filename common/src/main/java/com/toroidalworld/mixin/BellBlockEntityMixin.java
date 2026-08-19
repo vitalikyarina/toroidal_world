@@ -13,20 +13,8 @@ import net.minecraft.core.Position;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.entity.BellBlockEntity;
 
-// A rung bell gathers everything living within 48 blocks and then measures each of them again, at 32 to be heard and at
-// 48 to be lit. The gathering already reaches across the seam — the level splits an entity box that crosses the bounds
-// and searches both pieces — so the far half of a village does arrive in the list, and is then dropped by four raw
-// differences against the bell's own position.
-//
-// What is lost is the whole point of ringing one. Villagers on the far side never receive the heard-bell memory, so they
-// do not break off and hide; the resonance never sees the raiders standing next to the bell, so none of them are
-// outlined; and the particle count is scaled by a tally that comes back zero.
 @Mixin(BellBlockEntity.class)
 public class BellBlockEntityMixin {
-    // The bell asks one question in four places — who hears it, may it resonate, who is outlined by it, how dense the
-    // particles are — and each holds the entity it measures, so one handler answers all four. The handler is static
-    // because three of the four targets are; a @WrapOperation handler may serve an instance target from a static
-    // method, only the reverse is refused.
     @WrapOperation(
             method = "*",
             require = 4,

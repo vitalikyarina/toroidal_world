@@ -13,11 +13,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 
-// The ring list is already folded into the world (ChunkGeneratorStructureStateMixin), but the concentric locate branch
-// still picks the closest ring position by raw distSqr on canonical coordinates. On a torus a stronghold just across
-// the seam reads as half a world away and loses to one much farther the flat way — /locate names the wrong stronghold
-// and the eye of ender is signalled toward it. The candidate distance is measured through the seam instead; on a world
-// with a single surviving ring position the fold changes which number is reported, not which stronghold wins.
 @Mixin(ChunkGenerator.class)
 public class ChunkGeneratorNearestRingMixin {
     @Unique

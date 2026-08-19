@@ -12,16 +12,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.OreVeinifier;
 import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 
-// The block-unit twin of AquiferSeamMixin. The vein filler decides copper against granite, iron against tuff, from
-// oreVeinsPositionalRandomFactory.at(blockX, y, blockZ) on RAW block coordinates, so one physical point asked under two
-// names draws two randoms and lands on two different sides of the nextFloat() > 0.7 gate.
-//
-// The units are why this is a second mixin rather than a fold on the factory: the aquifer hands at() GRID coordinates
-// and this hands it BLOCK ones, and nothing at the factory can tell which it was given. RandomState shares its
-// factories across consumers that count in different units, so the fold belongs where the unit is known.
-//
-// The vein noises themselves are periodic and already wrap; only this seed was blind. Grid Y is untouched — the seam is
-// horizontal. Inside the bounds the wrap is the identity, so an ordinary generation is byte-for-byte what it was.
 //
 // The filler is a lambda, and a lambda body is an ordinary private method once the game is obfuscated — so its name is
 // whatever the running loader's mappings call it. Mojmap restores javac's lambda$create$0 for NeoForge; intermediary

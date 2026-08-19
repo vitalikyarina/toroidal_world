@@ -48,7 +48,7 @@ public class SerializableChunkDataMixin {
     @Unique
     private static final String toroidal$REFERENCES_KEY = "References";
 
-    // Vanilla-body re-implementation — verified against 1.21.1; re-diff on a platform bump.
+    // Vanilla's own literal, restated because the code it lives in is not reachable from here.
     @WrapOperation(
             method = "read",
             at = @At(

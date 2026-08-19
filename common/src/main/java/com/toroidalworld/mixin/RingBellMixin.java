@@ -13,11 +13,6 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.behavior.RingBell;
 
-// Ringing the bell is a bare "am I within three blocks of the meeting point?" with nothing behind it — no walk, no
-// retry, no second branch. What walked the villager here stops it as soon as it is within six of the bell, which past
-// the seam can leave it standing on the far side of the boundary: the gate then reads a world wide and the bell is
-// never rung. The bell is what gathers the village at day's end and what sounds the raid alarm, so a village that
-// straddles the seam loses both.
 @Mixin(RingBell.class)
 public class RingBellMixin {
     @WrapOperation(

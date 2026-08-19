@@ -13,10 +13,6 @@ import com.google.gson.JsonObject;
 
 import net.fabricmc.loader.api.FabricLoader;
 
-// Fabric has no config API, so the client config is one hand-rolled JSON (config/toroidal_world.json) read once at
-// first use. Keys mirror the NeoForge toml so the docs describe one name. Currently empty, kept as the wiring point
-// for future client keys: a key adds a cached getter that reads its name out of load(), and until one exists nothing
-// calls load(), so no file is written either.
 public final class FabricWorldLoopConfig {
     private static final String FILE_NAME = ToroidalWorld.MODID + ".json";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

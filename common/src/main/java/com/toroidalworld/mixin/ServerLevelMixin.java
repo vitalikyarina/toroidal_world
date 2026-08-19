@@ -34,9 +34,7 @@ import net.minecraft.world.phys.Vec3;
 // lies: a block a step away across the seam sits a whole world apart. The packet would never even be sent.
 @Mixin(ServerLevel.class)
 public class ServerLevelMixin {
-    // Shared with the packet translation, which holds a particle's translated position to the very radius this gate
-    // let it through by. Two copies of the number could drift apart, and the guard would then be judging traffic
-    // against a bound its sender never used.
+    // Shared with the packet translation, which holds a particle to the very radius this gate let it through by.
     @Unique
     private static final double PARTICLE_RANGE = PacketReach.PARTICLE.blocks();
 
@@ -50,9 +48,6 @@ public class ServerLevelMixin {
     @Final
     private PersistentEntitySectionManager<Entity> entityManager;
 
-    // The two tick containers are built in the level's own field initialisers, the raid registry comes out of saved
-    // data, and the entity manager is handed nothing but its own storage — none of them ever learn which level owns
-    // them, so they are handed it here, the first moment there is a level to hand.
     @Inject(method = "<init>", at = @At("TAIL"))
     private void toroidal$bindLevelToTickContainers(CallbackInfo ci) {
         ServerLevel level = (ServerLevel) (Object) this;
@@ -62,17 +57,6 @@ public class ServerLevelMixin {
         ((LevelBindable) this.entityManager).toroidal$bindLevel(level);
     }
 
-    // Whatever moved an entity, at the end of its tick it is back inside the world — the same guarantee the player gets,
-    // and for the same reason: a step past the boundary lands in a chunk that was never generated, and the entity is
-    // simply lost. A lone on-foot player is left out on purpose: their own wrap also realigns the movement bounds vanilla
-    // measures the next packet against.
-    //
-    // A wrap moves the entity a whole world, so the entity tracker sees a jump too large for a delta and sends a
-    // teleport instead — which is translated on the way out, and the client sees the entity where it belongs.
-    //
-    // Passengers must move with the vehicle, by the same shift, in the same tick. Leave a passenger behind for even one
-    // tick and it snaps back across the seam — the vehicle is dragged after it, and the two spend a moment a world apart:
-    // a boat with a rider oscillates on the seam, and a mob in a minecart flickers as it crosses.
     @Inject(method = "tickNonPassenger", at = @At("TAIL"))
     private void toroidal$wrapEntityIntoBounds(Entity entity, CallbackInfo ci) {
         if (entity instanceof Player) {
@@ -90,11 +74,6 @@ public class ServerLevelMixin {
         }
     }
 
-    // "Does this chunk tick?" is asked of coordinates the asker walked to, and a neighbourhood walked around a chunk at
-    // the edge of the world names chunks past it — which are in no ticking range, having never been anywhere at all. The
-    // question is answered about the chunk that physically exists, so a neighbourhood spanning the seam reads as the
-    // continuous ground it is. A sculk sensor is the loudest casualty: it requires all nine chunks around it to tick, and
-    // one block from the bounds it silently dropped every vibration it was ever sent.
     @ModifyVariable(method = "shouldTickBlocksAt(J)Z", at = @At("HEAD"), argsOnly = true)
     private long toroidal$tickingChunkThroughSeam(long chunkPos) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
@@ -148,18 +127,6 @@ public class ServerLevelMixin {
         return true;
     }
 
-    // The crack overlay a breaker draws on a block is offered to everyone within 32 blocks of it, and like the global
-    // event above this walks the player list itself instead of going through the seam-aware PlayerList.broadcast. The
-    // range is read in raw coordinates, so a witness standing a few steps away across the seam measures a whole world
-    // and is told nothing: the block shatters with no warning and no animation, and the -1 that clears the overlay
-    // never arrives either. Both server-side breakers reach here — a player mining and a zombie working a door — so
-    // the gate is folded once, where they meet.
-    //
-    // The position stays canonical: ClientboundBlockDestructionPacket is translated into each client's own frame on the
-    // way out. Vanilla's reading is kept exactly — the block's corner against the viewer's feet, its 32 blocks, and its
-    // exclusion of the breaker, whose own client draws the crack locally.
-    //
-    // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.
     @WrapMethod(method = "destroyBlockProgress")
     private void toroidal$blockCracksThroughSeam(int id, BlockPos blockPos, int progress, Operation<Void> original) {
         ServerLevel level = (ServerLevel) (Object) this;
@@ -184,16 +151,6 @@ public class ServerLevelMixin {
         }
     }
 
-    // The level's own precipitation work, bound as a whole. Ice and snow do not stop being written once a chunk is
-    // generated: tickChunk asks this of a random column on every loaded chunk, roughly once every 16 ticks at the
-    // default random-tick speed, and the freeze branch is not even gated on the weather.
-    //
-    // Two of the three questions in vanilla's body go through Biome.shouldFreeze and shouldSnow, which bind for
-    // themselves from the level they are handed. The third asks getPrecipitationAt straight off the biome — and that
-    // one is handed no level at all, so nothing below this point has anything to bind from. A boundary binding and a
-    // primitive binding are layers, not copies: this one says the level is doing precipitation work, the primitive
-    // says it was asked. Drop this and the block that handles the precipitation — a cauldron filling at the seam —
-    // silently reads the unfolded field again.
     @WrapMethod(method = "tickPrecipitation")
     private void toroidal$bindPrecipitationTransformer(BlockPos pos, Operation<Void> original) {
         ServerLevel level = (ServerLevel) (Object) this;

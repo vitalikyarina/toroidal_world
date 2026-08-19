@@ -18,7 +18,6 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 
-// The one place the server's wrapped coordinates are turned into the unbounded ones the client believes in — and back.
 @Mixin(Connection.class)
 public class ConnectionMixin {
     @Shadow
@@ -35,8 +34,6 @@ public class ConnectionMixin {
             return;
         }
 
-        // A null translation means the packet is deliberately dropped — a position correction for the rider's own
-        // vehicle, which they predict locally and which would only make them jolt across the seam.
         Packet<?> translated = PacketTranslator.toClient(packet, player);
         if (translated != null) {
             original.call(translated, listener, flush);

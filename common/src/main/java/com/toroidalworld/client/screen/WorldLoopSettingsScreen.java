@@ -23,14 +23,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
-// What sits behind the Looped shape's Customize button: how wide the world is before it wraps.
-//
-// The size is counted in chunks because the wrap bounds are chunk bounds — measured in blocks every keystroke would
-// have to be rounded to a multiple of 32. Any whole number of chunks is honoured exactly.
-//
-// The range is where a world still works, so a size outside it holds Done back rather than building something that does
-// not — the same as an empty or half-typed field. The field label names the range, so the disabled button has a visible
-// reason.
 public class WorldLoopSettingsScreen extends Screen {
     private static final Component TITLE = Component.translatable("gui.toroidal_world.toroidal_settings.title");
     private static final Component HINT = Component.translatable("gui.toroidal_world.toroidal_settings.hint");
@@ -51,10 +43,7 @@ public class WorldLoopSettingsScreen extends Screen {
     private static final String STRUCTURES_COMMON_KEY = "gui.toroidal_world.toroidal_settings.consequence.structures_common";
     private static final String STRUCTURES_ALL_KEY = "gui.toroidal_world.toroidal_settings.consequence.structures_all";
 
-    // Thresholds for the structure-room sentence, read off vanilla 26.2 placement data (StructureSets): the densest
-    // common grids — villages, trail ruins, trial chambers — space at 34 chunks (544 blocks); woodland mansions at
-    // 80 chunks (1280 blocks); the first stronghold ring reaches out to 168 chunks (2688 blocks) of radius, so
-    // doubled it names the width where the ring fits whole.
+    // Read off vanilla 26.2 StructureSets: densest common grids 34 chunks, mansions 80, the stronghold ring 168.
     private static final int VILLAGE_GRID_CHUNKS = 34;
     private static final int MANSION_GRID_CHUNKS = 80;
     private static final int STRONGHOLD_RING_CHUNKS = 336;
@@ -66,7 +55,6 @@ public class WorldLoopSettingsScreen extends Screen {
     private static final int CONTENTS_SPACING = 8;
     private static final int PRESET_SPACING = 5;
 
-    // The row shares the fields' width, so the button width falls out of it rather than being its own choice.
     private static final int PRESET_WIDTH =
             (FIELD_WIDTH - PRESET_SPACING * (WorldLoopPresets.values().length - 1)) / WorldLoopPresets.values().length;
 
@@ -74,34 +62,17 @@ public class WorldLoopSettingsScreen extends Screen {
     private final OnDone onDone;
     private final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
 
-    // What the field holds, kept outside the widget: `init()` runs again on every resize and would otherwise rebuild
-    // the box from the size the screen opened with, throwing away whatever had been typed.
     private String sizeText;
 
-    // The typed size when it names a world that works — a number within the range — or null otherwise (empty,
-    // unparseable, or out of range), which is exactly when Done is held back. Written only by onSizeChanged; everything
-    // downstream reads it, so nothing re-parses.
     private @Nullable Integer effectiveSize;
 
-    // The End's twin of sizeText/effectiveSize: its own width with its own floor, coupled to nothing — not the world
-    // size, not the nether scale.
     private String endSizeText;
     private @Nullable Integer effectiveEndSize;
 
-    // Kept outside the widget for the same reason, and additionally because it is not free: which scales exist at all
-    // depends on the size, so this one is re-checked every time the size changes. Kept normalized to the current size by
-    // refreshNetherScale, so commit can hand it over as-is.
     private int netherScale;
 
-    // The scale the player last picked by hand (seeded with the screen's opening scale), as opposed to netherScale,
-    // which is what the current width actually allows. The re-pick on a size change seeds from this instead of a flat
-    // 1:8, so a hand-picked 1:16 survives large -> huge instead of silently resetting — and a width that disallows it
-    // only lowers netherScale, never the wish, so growing back restores the pick.
     private int wantedNetherScale;
 
-    // The width the current scale was picked for. A refresh at a different width re-picks from scratch seeded with
-    // wantedNetherScale; a refresh at the same width — init runs again on every resize, and the cycle button re-renders
-    // through the same path — keeps the scale the player has, restored or cycled.
     private int scalePickedForSize;
 
     private EditBox sizeEdit;
@@ -128,11 +99,6 @@ public class WorldLoopSettingsScreen extends Screen {
 
         LinearLayout contents = this.layout.addToContents(LinearLayout.vertical().spacing(CONTENTS_SPACING));
 
-        // A preset is a shortcut into the fields, not a mode: clicking one types the whole configuration it names —
-        // overworld width, nether scale, End width — through the same responders a keystroke takes, so the fields stay
-        // the single source of truth. The scale is also recorded as the wish, so the next width change re-picks toward
-        // the preset's scale rather than toward an older hand pick. The tooltip carries the full configuration plus
-        // the structure room — fixed per preset, so the screen itself never changes height over it.
         LinearLayout presetRow = contents.addChild(LinearLayout.horizontal().spacing(PRESET_SPACING));
         for (WorldLoopPresets preset : WorldLoopPresets.values()) {
             Button presetButton = presetRow.addChild(Button.builder(presetLabel(preset),
@@ -199,8 +165,6 @@ public class WorldLoopSettingsScreen extends Screen {
         Minecraft.getInstance().setScreen(this.parent);
     }
 
-    // An empty or half-typed field names no world at all — that is the only case with nothing to build, and the only
-    // one that holds Done back. Every real number names a world, once pulled into the range where one works.
     private void onSizeChanged() {
         Integer sizeChunks = parseSizeChunks(this.sizeEdit.getValue());
         this.effectiveSize = sizeChunks != null && WorldLoopSizes.isInRange(sizeChunks) ? sizeChunks : null;
@@ -218,8 +182,6 @@ public class WorldLoopSettingsScreen extends Screen {
                         .append(CommonComponents.NEW_LINE)
                         .append(HINT)));
 
-        // The scale refresh runs before the highlight: a size change re-picks the scale, and the highlight compares
-        // against the picked one.
         this.refreshNetherScale();
         this.refreshPresetButtons();
     }
@@ -240,13 +202,6 @@ public class WorldLoopSettingsScreen extends Screen {
         return STRUCTURES_ALL_KEY;
     }
 
-    // The size decides which scales exist, so a change of size re-picks the scale from scratch, seeded with the scale
-    // the player last picked by hand (1:8 until they pick one): the wish when the new width allows it, otherwise the
-    // largest scale under it. The wish itself never lowers, so a world shrunk under it comes back to it when it grows
-    // again — and a player who never touched the button keeps the old 1:8-priority behaviour exactly. A refresh at an
-    // unchanged width (resize, the cycle button) keeps the scale the player has. A world with only one usable scale
-    // has nothing to cycle through, so the button says so by going inactive. Only reached with a non-null
-    // effectiveSize.
     private void refreshNetherScale() {
         int sizeChunks = this.effectiveSize;
         List<Integer> allowed = NetherScales.allowedFor(sizeChunks);
@@ -274,8 +229,6 @@ public class WorldLoopSettingsScreen extends Screen {
         this.refreshPresetButtons();
     }
 
-    // The End field mirrors the world size field with its own floor: below it the outer islands — and with them the
-    // whole End progression — would not generate. It couples to nothing, so an End change never re-checks the others.
     private void onEndSizeChanged() {
         Integer sizeChunks = parseSizeChunks(this.endSizeEdit.getValue());
         this.effectiveEndSize = sizeChunks != null && WorldLoopSizes.isEndInRange(sizeChunks) ? sizeChunks : null;
@@ -299,9 +252,6 @@ public class WorldLoopSettingsScreen extends Screen {
         this.doneButton.active = this.effectiveSize != null && this.effectiveEndSize != null;
     }
 
-    // The preset matching the current configuration goes inactive: it reads as "you are here" and a click on it would
-    // type nothing new anyway. The match takes all three parameters — width, nether scale, End width — so a
-    // hand-cycled scale or an edited End re-arms the button, and clicking it restores the full preset.
     private void refreshPresetButtons() {
         for (Map.Entry<WorldLoopPresets, Button> entry : this.presetButtons.entrySet()) {
             entry.getValue().active = !this.matchesPreset(entry.getKey());
@@ -336,9 +286,6 @@ public class WorldLoopSettingsScreen extends Screen {
         return Component.translatable(END_SIZE_LABEL_KEY, WorldLoopSizes.END_MIN_CHUNK_WIDTH, WorldLoopSizes.MAX_CHUNK_WIDTH);
     }
 
-    // An empty or half-typed field names no world, so it only gets the general hint; a real number that misses the range
-    // says which way it missed and by which bound, then the same hint. The ceiling is the same for every dimension, so
-    // only the floor and the hint vary by field.
     private static Component sizeHint(@Nullable Integer sizeChunks, int minChunks, Component hint) {
         if (sizeChunks == null) {
             return hint;
@@ -358,8 +305,6 @@ public class WorldLoopSettingsScreen extends Screen {
         }
     }
 
-    // Named shape instead of a generic three-arg consumer: two of the values share a type, and only a signature with
-    // names says which width is which.
     @FunctionalInterface
     public interface OnDone {
         void accept(WorldLoopBounds wrapping, int netherScale, WorldLoopBounds endWrapping);

@@ -20,12 +20,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.portal.PortalForcer;
 
-// Which existing portal an arriving player is sent to is decided by plain distance, so across the seam a portal a few
-// blocks away is a whole world off and loses to anything else — or to nothing at all, and a second portal gets built
-// beside the first.
-//
-// The comparison is replaced rather than the distance call inside it: vanilla measures in a static lambda, which has no
-// route back to the level and therefore none to the transformer.
 @Mixin(PortalForcer.class)
 public class PortalForcerMixin {
     @Shadow

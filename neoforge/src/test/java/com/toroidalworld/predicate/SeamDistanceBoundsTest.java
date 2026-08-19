@@ -14,13 +14,6 @@ import net.minecraft.advancements.critereon.DistancePredicate;
 import net.minecraft.advancements.critereon.MinMaxBounds;
 import net.minecraft.world.phys.Vec3;
 
-// What SeamDistanceBounds claims about the pair it folds, checked against DistancePredicate itself: folding one end
-// brings every horizontal component of the bound right at once, and leaves the vertical one exactly as vanilla read
-// it. The level is the only thing the production helper adds, so the fold here is taken from the transformer directly.
-//
-// The pair is the motivating case — a body five blocks away through the seam of a 32-chunk (512-block) world, whose
-// raw separation is 507 blocks. Every assertion states both readings, so a fold that stopped happening fails rather
-// than passing on the reading it was supposed to replace.
 class SeamDistanceBoundsTest {
     private static final WorldLoopTransformer WORLD = new WorldLoopTransformer(new WorldLoopBounds(-16, 16, -16, 16));
 
@@ -68,8 +61,6 @@ class SeamDistanceBoundsTest {
         assertTrue(matches(fallFromWorldHeight, start, folded));
     }
 
-    // A pair on the same side of the seam is the argument itself back, so an ordinary bound is decided by the very
-    // doubles vanilla would have compared.
     @Test
     void aPairThatDoesNotCrossIsLeftAlone() {
         Vec3 nearby = new Vec3(193.5, 64.0, 0.0);

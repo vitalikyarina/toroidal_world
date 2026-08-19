@@ -37,7 +37,7 @@ import net.minecraft.world.level.levelgen.structure.StructureStart;
 // slot would resolve to the phantom and find nothing.
 @Mixin(ChunkGenerator.class)
 public class ChunkGeneratorReferencesMixin {
-    // Vanilla's own scan reach, restated here because the loop is.
+    // Vanilla's own scan reach, restated here because the loop it lives in is.
     @Unique
     private static final int toroidal$REFERENCE_RANGE = 8;
 

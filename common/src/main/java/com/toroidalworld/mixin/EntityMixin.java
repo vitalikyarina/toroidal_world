@@ -21,11 +21,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-// What the seam changes about an entity is distance. In a looped world there is no other kind: the way between two
-// points is the shortest one, and it may run through the seam. Every question the game asks about how far something is
-// — a mob deciding whether to despawn, a chicken following seeds, anything hunting a target — comes down to these five
-// methods, each carrying its own copy of the same arithmetic. Fixing the notion itself is what keeps us from chasing
-// the same bug through the whole of vanilla's AI.
 @Mixin(Entity.class)
 public class EntityMixin implements TransformerSource {
     @WrapMethod(method = "distanceTo")
@@ -68,7 +63,6 @@ public class EntityMixin implements TransformerSource {
         return toroidal$sqrTo(transformer, other.getX(), other.getY(), other.getZ()) < Mth.square(distance);
     }
 
-    // The horizontal reach wraps; the vertical one has nowhere to wrap to.
     @WrapMethod(method = "closerThan(Lnet/minecraft/world/entity/Entity;DD)Z")
     private boolean toroidal$closerThanXZThroughSeam(Entity other, double distanceXZ, double distanceY,
             Operation<Boolean> original) {
@@ -102,10 +96,6 @@ public class EntityMixin implements TransformerSource {
         return SeamAim.nearestTo((Entity) (Object) this, pos);
     }
 
-    // Shoving another entity is the same delta once more. Across the seam the raw gap is a whole world, so the shove
-    // points the long way round and the 1/distance falloff scales it to nothing — two mobs a step apart on the torus
-    // drift through each other. Folding both components aims the push the short way with its true strength. The candidate
-    // query that even finds a cross-seam neighbour is already seam-aware (LevelMixin); only this direction was left raw.
     @ModifyVariable(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("STORE"), ordinal = 0)
     private double toroidal$pushDeltaX(double deltaX) {
         WorldLoopTransformer transformer = toroidal$wrappedTransformer();
@@ -118,9 +108,6 @@ public class EntityMixin implements TransformerSource {
         return transformer == null ? deltaZ : transformer.coords.z.foldDelta(deltaZ);
     }
 
-    // At the head, before the detach nulls the vehicle field: the resync has to read which vehicle is being left, and
-    // its send must be deferred past the detach — both handled inside the helper. Vanilla fires no callback here, and
-    // the passenger is the one party that knows the moment.
     @Inject(method = "removeVehicle", at = @At("HEAD"))
     private void toroidal$resyncVehicleOnDismount(CallbackInfo ci) {
         VehicleDismountResync.resyncAfterDismount((Entity) (Object) this);
@@ -132,10 +119,6 @@ public class EntityMixin implements TransformerSource {
     @Unique
     private WorldLoopTransformer toroidal$transformer;
 
-    // The distance methods run per AI tick for every entity, but an entity can change levels (a portal), so the cache is
-    // a (level, transformer) pair re-resolved when level() changes. Deliberately not volatile: resolution is idempotent —
-    // transformerOf hands back the level's one attachment instance — so a race can only cost a repeated lookup, never a
-    // second transformer.
     @Override
     public @Nullable WorldLoopTransformer toroidal$wrappedTransformer() {
         Level level = ((Entity) (Object) this).level();

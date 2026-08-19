@@ -16,10 +16,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
 import net.minecraft.world.phys.Vec3;
 
-// A vibration's travel time and its occlusion check are both measured from the event to the listener. Across the seam
-// that line runs the long way round the world: the vibration would take a lap to arrive, and the occlusion ray, crossing
-// the whole map, almost always hits something and cancels it. Both are measured through the seam instead — the ray by
-// unwrapping the destination to the copy nearest the source, so it travels the short way (block reads along it wrap).
 @Mixin(VibrationSystem.Listener.class)
 public class VibrationSystemListenerMixin {
     @WrapOperation(

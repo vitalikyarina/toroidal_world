@@ -13,11 +13,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
 import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 
-// Vanilla detunes the second layer by a 1.018… factor so the two lattices never resonate. Scaling the coordinate
-// would shift the phase of the wrapped sample and leave the second layer unclosed at the seam — so the coordinates
-// stay shared and the detune travels through the context scale instead, where it rounds into the second layer's own
-// lattice period. At low periods both layers round to the same period and fall back to sharing coordinates; the
-// separate seeds still decorrelate them there.
 @Mixin(NormalNoise.class)
 public class NormalNoiseMixin {
     @Shadow

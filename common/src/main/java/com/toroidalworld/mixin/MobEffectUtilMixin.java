@@ -13,14 +13,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectUtil;
 import net.minecraft.world.phys.Vec3;
 
-// The one place the game hands a mob effect to everyone standing around a point: shrieker Darkness at 40 blocks, the
-// warden's own darkness pulse at 20, and elder guardian mining fatigue at 50. All three read the reach off a bare Vec3,
-// so the seam is a wall none of them cross — a player two blocks from a shrieking sculk stays lit, and a guardian's
-// fatigue stops at the edge of the world instead of at fifty blocks.
-//
-// Folded here rather than at each of the three callers, which is where the whole failure class already meets: they
-// differ only in the radius they pass. The gate itself sits in the getPlayers predicate, a lambda that captures the
-// point and the radius but not the level; the player it tests carries the level instead.
 @Mixin(MobEffectUtil.class)
 public class MobEffectUtilMixin {
     @WrapOperation(

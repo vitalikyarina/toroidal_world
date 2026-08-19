@@ -17,13 +17,6 @@ import net.minecraft.world.phys.Vec3;
 // keeps the plain delta, so ordinary knockback is unchanged.
 @Mixin(LivingEntity.class)
 public class LivingEntityMixin {
-    // A bed whose halves sit on opposite sides of the seam is named by two forms of the same coordinate: the clicked
-    // half arrives wrapped, but vanilla derives the other half with a raw relative() that can step past the bounds.
-    // Whichever form reaches startSleeping becomes the sleeping position and every placement derived from it — the
-    // lie-down pose, the occupied flag, the morning stand-up — so an unwrapped form puts the player a world outside
-    // the domain for a tick and the client flashes the unfolded frame. Folding here, and not earlier, is deliberate:
-    // the reachability check upstream compares raw distances against where the player actually stands, so the raw
-    // form must survive up to it.
     @ModifyVariable(method = "startSleeping", at = @At("HEAD"), argsOnly = true)
     private BlockPos toroidal$wrapBedPosition(BlockPos bedPosition) {
         WorldLoopTransformer transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
@@ -48,12 +41,6 @@ public class LivingEntityMixin {
         return transformer == null ? zd : transformer.coords.z.foldDelta(zd);
     }
 
-    // Seeing something is drawn as a line from the eye to it, refused outright past 128 blocks and then clipped against
-    // the blocks along the way. Both readings are taken from raw positions, so a player a step away across the seam is
-    // half a world off: the range gate alone refuses, and the ray it would have cast crosses the whole map. The point
-    // looked at becomes the copy nearest the looker, which is where it visually is — block reads along the ray wrap on
-    // their way to a chunk, exactly as they do for the vibration occlusion ray. A target already on this side is
-    // untouched, so ordinary sight keeps its exact behaviour.
     @ModifyVariable(
             method = "hasLineOfSight(Lnet/minecraft/world/entity/Entity;)Z",
             at = @At("STORE"), ordinal = 1)

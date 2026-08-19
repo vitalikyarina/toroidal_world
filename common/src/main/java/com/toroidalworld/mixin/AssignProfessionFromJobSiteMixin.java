@@ -13,11 +13,6 @@ import net.minecraft.core.Position;
 import net.minecraft.world.entity.ai.behavior.AssignProfessionFromJobSite;
 import net.minecraft.world.entity.npc.Villager;
 
-// The moment a villager takes a trade: it has claimed a workstation, walked to it, and touching it turns the claim into
-// a profession. Two blocks is the whole of the test, and it is a raw difference against the claimed position.
-//
-// Across the seam the villager arrives and the claim never converts. It keeps the potential job site, so the acquire
-// behaviour will not look for another, and it stands at an unemployed lectern for good.
 @Mixin(AssignProfessionFromJobSite.class)
 public class AssignProfessionFromJobSiteMixin {
     @WrapOperation(

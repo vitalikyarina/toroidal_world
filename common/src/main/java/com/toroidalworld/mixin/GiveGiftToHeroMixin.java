@@ -13,10 +13,6 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.ai.behavior.GiveGiftToHero;
 import net.minecraft.world.entity.npc.Villager;
 
-// Everything up to the throw measures the hero as an entity and so already reads through the seam: the villager sees
-// them, walks to them, turns to face them. Only the last question — are we within five blocks — is asked of two block
-// positions, and there the seam returns. The villager stands beside its hero holding a gift it will never throw, and
-// the gift cooldown it is waiting on never restarts.
 @Mixin(GiveGiftToHero.class)
 public class GiveGiftToHeroMixin {
     @WrapOperation(

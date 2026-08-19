@@ -27,24 +27,6 @@ import xaero.map.gui.GuiMap;
 import xaero.map.region.LeveledRegion;
 import xaero.map.region.texture.RegionTexture;
 
-// Two concerns on the full-map screen:
-//
-// 1. The camera-follow anchor reads the raw player position, which runs a world width per lap — with canonical
-//    storage the map would open on empty ground a world away from where the terrain actually is. The two position
-//    reads feeding the follow anchor (and the player arrow drawn from the same locals) fold canonical; the
-//    free-pan branch never touches these reads, so a camera panned by hand is left alone. The fold happens before
-//    the dimension scaling — the player position folds in the player's own level space, the only one the shape
-//    describes.
-//
-// 2. The view glue: the region draw loop enumerates leveled regions straight off the view window, so past the
-//    canonical edge there is nothing to draw. As on the minimap, the SOURCE folds and the PLACEMENT stays the
-//    view slot: a null region fetch beyond the edge substitutes a canonical candidate (so the draw block runs at
-//    all — its hasTextures answers yes by force), and the per-slot texture fetch re-resolves the exact canonical
-//    texture from the slot's view-space block position. The root-texture fallback (the blurry placeholder) is
-//    suppressed for folded slots rather than folded — its sub-rect math lives in locals out of reach, and a wrong
-//    quadrant is worse than a briefly blank tile. Slots stay unglued at a zoom whose texture size the world width
-//    does not divide (the nether at the deepest zoom-out). The redirects share per-iteration state; safe because
-//    the render thread walks fetch → hasTextures → texture strictly in order.
 // The injection method is GuiMap's override of Screen.render, and its NAME differs per loader jar: Mojmap "render"
 // in the neoforge build, intermediary "method_25394" in the fabric build (the remap pipeline rewrites descriptors in
 // the target strings but cannot rename an override it can't resolve to Screen). Both names are listed on every
@@ -95,9 +77,6 @@ public abstract class GuiMapMixin {
         return XaeroWorldMapFold.foldCameraCoord(Direction.Axis.Z, original.call(entity, partialTicks));
     }
 
-    // The cursor block position, folded canonical right after it is derived from the view — everything downstream
-    // (the coordinate readout, right-click menu, teleport, tile selection, the hover region lookups) then speaks
-    // canonical coordinates, which is also where the glued copies' content actually lives.
     @Inject(
             method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
@@ -128,9 +107,7 @@ public abstract class GuiMapMixin {
             return original;
         }
 
-        // A candidate so the draw block runs at all; the texture redirect re-resolves each slot precisely. No
-        // period cap here: a region straddling the 3x3 boundary must still run for its inner half — the per-slot
-        // fold enforces the cap exactly.
+        // A candidate value only, so the draw block runs at all; the texture redirect re-resolves each slot precisely.
         int side = 512 << level;
         int foldedOriginX = XaeroWorldMapFold.foldBlock(Direction.Axis.X, regX * side);
         int foldedOriginZ = XaeroWorldMapFold.foldBlock(Direction.Axis.Z, regZ * side);
@@ -140,10 +117,7 @@ public abstract class GuiMapMixin {
         return candidate;
     }
 
-    // The draw block additionally demands a non-null LEAF region per 512-block cell — for a cell fully beyond the
-    // canonical edge there is none, and the whole block (including the per-slot texture folds) never runs. An
-    // origin-fold substitute is enough: the block runs, the canonical region rides the reload queue, and the
-    // texture redirect resolves each slot precisely anyway.
+    // An origin-fold substitute, so the block runs even where the cell has no LEAF region of its own.
     @Redirect(
             method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
@@ -155,8 +129,6 @@ public abstract class GuiMapMixin {
             return original;
         }
 
-        // No period cap here: a region straddling the 3x3 boundary must still run the draw block for its inner
-        // half — the per-slot fold enforces the cap exactly.
         int foldedOriginX = XaeroWorldMapFold.foldBlock(Direction.Axis.X, regX * 512);
         int foldedOriginZ = XaeroWorldMapFold.foldBlock(Direction.Axis.Z, regZ * 512);
         return processor.getLeafMapRegion(
@@ -230,12 +202,6 @@ public abstract class GuiMapMixin {
         return region.getTexture(textureX, textureZ);
     }
 
-    // At a zoom whose texture slot the world does not align to (the deepest zoom-out), the slot substitution is
-    // off — every slot straddles the world edge internally, and its texture's empty half is opaque. There the
-    // copies come clipped: the original full-rect draw is replaced by a sub-rect draw of just the slot's
-    // world-overlapping part, repeated at the eight period offsets — no empty texel is ever drawn, so the draw
-    // order stops mattering. The two glue mechanisms are gated on the same alignment test, so exactly one runs at
-    // any zoom. The slot's view position rides in from the texture-fetch redirect that always precedes this draw.
     @WrapOperation(
             method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
@@ -273,8 +239,7 @@ public abstract class GuiMapMixin {
         float u2 = (float) (clippedMaxX - slotMinX) / slotSize;
         float v1 = (float) (clippedMinZ - slotMinZ) / slotSize;
         float v2 = (float) (clippedMaxZ - slotMinZ) / slotSize;
-        // The quad is emitted directly (the same four vertices GuiMap's own sub-rect helper writes) — calling the
-        // static helper would drag GuiMap's xaerolib superclass onto the compile classpath.
+        // The quad is emitted directly: calling GuiMap's own helper would drag its xaerolib superclass onto the compile classpath.
         for (int periodX = -1; periodX <= 1; periodX++) {
             for (int periodZ = -1; periodZ <= 1; periodZ++) {
                 float copyX = clippedX + periodX * xBounds[1];
@@ -288,10 +253,6 @@ public abstract class GuiMapMixin {
         }
     }
 
-    // The white seam grid — the JourneyMap-style outline of the canonical world and its eight glued copies. Drawn
-    // by wrapping the cursor-chunk highlight: it renders every frame in exactly the map-space pass and buffer the
-    // lines need, so its arguments carry the whole transform. The thickness tracks one screen pixel, floored at
-    // one block.
     @WrapOperation(
             method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(

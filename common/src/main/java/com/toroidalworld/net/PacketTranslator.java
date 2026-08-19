@@ -100,8 +100,6 @@ import net.minecraft.world.phys.Vec3;
 // Rewriters read the world only through the TranslationContext, never a live player — the ServerPlayer entry points
 // below resolve one, a test builds one by hand.
 public final class PacketTranslator {
-    // The two border packets both open with the centre as a pair of plain doubles, which is what lets the position in
-    // front of them be swapped without naming any of their private fields.
     private static final StreamCodec<FriendlyByteBuf, BorderCenter> BORDER_CENTER_CODEC = StreamCodec.of(
             (buffer, center) -> {
                 buffer.writeDouble(center.x());
@@ -178,7 +176,6 @@ public final class PacketTranslator {
             Map.entry(ClientboundDamageEventPacket.class, rewriter(PacketTranslator::damageEvent)),
             Map.entry(ClientboundCustomPayloadPacket.class, rewriter(PacketTranslator::customPayload)));
 
-    // Filled once by the loader glue while the mod initializes — before any server exists — then only read.
     private static final Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>> PAYLOAD_REWRITERS =
             new HashMap<>();
 
@@ -188,8 +185,6 @@ public final class PacketTranslator {
                 (payload, context) -> payloadRewriter.apply(payloadType.cast(payload), context));
     }
 
-    // The particle twin of the payload table, with one extra input: a particle's own position folds around the origin
-    // its packet was just translated to.
     public interface ParticleRewriter<P extends ParticleOptions> {
         ParticleOptions rewrite(P particle, TranslationContext context, Vec3 clientOrigin);
     }
@@ -217,9 +212,6 @@ public final class PacketTranslator {
             Map.entry(ServerboundSetJigsawBlockPacket.class, rewriter(PacketTranslator::setJigsawBlock)),
             Map.entry(ServerboundSetStructureBlockPacket.class, rewriter(PacketTranslator::setStructureBlock)));
 
-    // The context costs a record plus three player-capturing lambdas, and most traffic (entity moves, keepalives)
-    // never hits the dispatch map — so the map is consulted first and the context built only for a packet that will
-    // actually be rewritten, with the transformer the wrap guard already fetched passed along.
     public static <T extends net.minecraft.network.PacketListener> Packet<T> toClient(Packet<T> packet, ServerPlayer player) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
         if (transformer == null) {
@@ -237,12 +229,6 @@ public final class PacketTranslator {
         return castPacket(rewrite(TO_CLIENT, packet, context));
     }
 
-    // NeoForge ships every chunk inside a bundle (the chunk packet plus its auxiliary light payload), so the
-    // contents have to be translated one by one. A sub-packet translated to null is a deliberate drop and has to be
-    // skipped — a null element would NPE when the bundle serializes. One context serves every sub, built on the
-    // first one the dispatch map knows. A rewriter that worked in place returns the same instance, so identity is
-    // the change signal: when nothing was replaced or dropped the original bundle goes out as-is, already carrying
-    // any in-place mutations.
     @SuppressWarnings("unchecked")
     private static Packet<?> toClientBundle(ClientboundBundlePacket bundle, ServerPlayer player, WorldLoopTransformer transformer) {
         TranslationContext context = null;
@@ -302,10 +288,6 @@ public final class PacketTranslator {
         return (Packet<T>) packet;
     }
 
-    // Chunk data and light data are opaque, position-independent blobs — only the two header ints name the chunk, so
-    // the header is swapped in place instead of re-encoding hundreds of kilobytes per chunk. Mutating is safe because
-    // both packets are built fresh for every recipient: the chunk packet in PlayerChunkSender.sendChunk, the light
-    // packet per player via ChunkHolderMixin splitting vanilla's shared broadcast.
     private static ClientboundLevelChunkWithLightPacket levelChunk(ClientboundLevelChunkWithLightPacket packet, TranslationContext context) {
         ChunkPos serverPos = new ChunkPos(packet.getX(), packet.getZ());
         ChunkPos clientPos = context.toClient(serverPos, ChunkTraffic.CHUNK_DATA);
@@ -325,11 +307,6 @@ public final class PacketTranslator {
         return packet;
     }
 
-    // A forget arrives with the raw view coordinate, decided against the old view centre but sent after the mirror
-    // has already moved on — on a multi-chunk view jump (speed, teleport) the fold can flip to the copy the client
-    // does not hold, leaving a ghost chunk rendered behind the player. When the coordinate lands past the view's
-    // reach the choice is not trusted: a forget goes out for every copy the client might hold, and the unheld ones
-    // are client-side no-ops.
     private static Packet<?> forgetChunk(ClientboundForgetLevelChunkPacket packet, TranslationContext context) {
         List<ChunkPos> candidates = context.forgetCandidates(packet.pos());
         if (candidates.size() == 1) {
@@ -351,9 +328,6 @@ public final class PacketTranslator {
         return new ClientboundSetChunkCacheCenterPacket(clientPos.x, clientPos.z);
     }
 
-    // A custom payload's shape is its owner's business — a loader ships payloads of its own (NeoForge's auxiliary
-    // light data), and their classes are loader API this table must not name. So the packet dispatches to a second,
-    // payload-keyed table that the loader glue fills at init; a payload nobody claimed passes through untouched.
     private static Packet<?> customPayload(ClientboundCustomPayloadPacket packet, TranslationContext context) {
         BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload> payloadRewriter =
                 PAYLOAD_REWRITERS.get(packet.payload().getClass());
@@ -384,19 +358,11 @@ public final class PacketTranslator {
     private static ClientboundPlayerPositionPacket playerPosition(ClientboundPlayerPositionPacket packet, TranslationContext context) {
         ClientPosition clientPosition = context.clientPosition();
 
-        // A mirror built for another dimension names a place in a different world, so there is nothing to shift against:
-        // it is rebased on where the player actually arrived, and the packet goes out unchanged, leaving both sides
-        // agreeing at that moment. The position is read off the player rather than the packet because
-        // ServerGamePacketListenerImpl.teleport applies the move — resolving any relative axes — before sending it.
         if (!clientPosition.describes(context.dimension())) {
             context.rebase().run();
             return packet;
         }
 
-        // A relative delta reaches the client as-is and moves its unbounded coordinate by that much. Folded to its
-        // shortest equivalent through the seam it names the same physical arrival, but a lap-sized hop (a relative
-        // move of about a world width) stops carrying the client a world over — where every chunk it holds would
-        // re-anchor to a different copy and have to be re-sent.
         //
         // That fold is load-bearing here rather than a nicety. The teleport funnel takes absolute arguments on this
         // version and subtracts the player's position itself, so a destination the wrap hook pulled back inside the
@@ -418,8 +384,6 @@ public final class PacketTranslator {
                 packet.getYRot(), packet.getXRot(), relatives, packet.getId());
     }
 
-    // Entities are placed by absolute position when they appear or are teleported; their ordinary movement travels as a
-    // delta from the last known position and needs no translation.
     private static ClientboundAddEntityPacket addEntity(ClientboundAddEntityPacket packet, TranslationContext context) {
         PacketReach reach = context.trackedReach();
         double clientX = context.toClientX(packet.getX(), reach);
@@ -433,11 +397,6 @@ public final class PacketTranslator {
                 new Vec3(packet.getXa(), packet.getYa(), packet.getZa()), packet.getYHeadRot());
     }
 
-    // The rider predicts their own vehicle; a correction only arrives when the server disagrees, which the continuous
-    // read prevents. Across the seam the server would still send one — its position jumped a world — and the client,
-    // told to snap its own boat, resets interpolation and jolts. Dropping it leaves the smooth local prediction alone.
-    // Only a vehicle the player actually steers is dropped: a minecart the server drives must keep being sent, or it
-    // would freeze on the passenger's screen.
     //
     // An entity teleport carries no relative flags on this version — it is always an absolute position — so there is no
     // axis to leave alone. The packet also offers no constructor to rebuild from values, so the position is swapped on
@@ -472,7 +431,6 @@ public final class PacketTranslator {
                 toClientBlock(context, packet.getPos(), ChunkTraffic.BLOCK_UPDATE), packet.getBlockState());
     }
 
-    // Several blocks changing in one section travel as a batch, and the section they belong to sits in a private field.
     private static ClientboundSectionBlocksUpdatePacket sectionBlocksUpdate(ClientboundSectionBlocksUpdatePacket packet, TranslationContext context) {
         return rewritePosition(
                 (sectionPacket, output) -> ((SectionBlocksUpdatePacketAccessor) sectionPacket).toroidal$write(output),
@@ -505,16 +463,6 @@ public final class PacketTranslator {
                 packet.getType(), clientPos, packet.getData(), packet.isGlobalEvent());
     }
 
-    // Entity data carries positions with their type erased — the bed a player is sleeping in travels as an anonymous
-    // value inside a list. Left untranslated, the client puts itself in the server's copy of the bed: a whole world from
-    // where it stands, taking its chunk cache with it. A plain BlockPos travels the same way (a falling block's start
-    // position — the seed of its model variant), so both shapes are moved.
-    //
-    // A particle payload is the third shape, and the only one whose anchor is not in the packet: an area effect cloud
-    // sprays its payload around itself, so the position inside it belongs beside the entity, not beside the player. The
-    // packet names only an id, so the entity is resolved and moved into client space — the very value the add and the
-    // position-sync rewriters would compute in the same breath, which is what keeps payload and cloud in one copy. It
-    // is resolved once for the packet and only when something in it actually carries a payload.
     private static ClientboundSetEntityDataPacket setEntityData(ClientboundSetEntityDataPacket packet, TranslationContext context) {
         List<SynchedEntityData.DataValue<?>> items = packet.packedItems();
         Vec3 anchor = carriesParticle(items) ? entityAnchor(packet.id(), context) : null;
@@ -538,10 +486,6 @@ public final class PacketTranslator {
         return false;
     }
 
-    // A payload can also arrive as a list — the effect particles a mob shows. Vanilla builds those through MobEffect's
-    // default factory, which carries no position, but the constructors take any ParticleOptions and the value reaches
-    // the wire with its type erased just the same. Every element is checked rather than the first: nothing about a list
-    // in entity data promises it holds particles at all.
     private static boolean isParticleList(List<?> values) {
         if (values.isEmpty()) {
             return false;
@@ -556,8 +500,6 @@ public final class PacketTranslator {
         return true;
     }
 
-    // Without the entity there is nothing to fold the payload around — it has despawned mid-flight, and the packet
-    // describes something the client is about to drop anyway, so the payload travels as it came.
     private static @Nullable Vec3 entityAnchor(int entityId, TranslationContext context) {
         Vec3 serverPosition = context.entityPosition().apply(entityId);
         return serverPosition == null ? null : context.toClient(serverPosition, context.trackedReach());
@@ -611,12 +553,6 @@ public final class PacketTranslator {
                 toClientBlock(context, packet.getPos(), ChunkTraffic.SIGN_EDITOR), packet.isFrontText());
     }
 
-    // Sounds, particles and explosions are not anchored to a chunk, so they are unwrapped around the player: of all the
-    // copies of that spot in the world, the one nearest them is the one they should hear and see.
-    //
-    // Each also carries its own radius on the wire, which is what the guarded door is held to. A sound's is the very
-    // number its sender gated on — the packet keeps both the event and the volume getRange was computed from — so the
-    // guard asks the sound itself how far it was meant to travel.
     private static ClientboundSoundPacket sound(ClientboundSoundPacket packet, TranslationContext context) {
         PacketReach reach = PacketReach.sound(packet.getSound().value().getRange(packet.getVolume()));
         return new ClientboundSoundPacket(
@@ -627,8 +563,6 @@ public final class PacketTranslator {
                 packet.getVolume(), packet.getPitch(), packet.getSeed());
     }
 
-    // The flag that widens a particle's reach from 32 blocks to 512 is the same one the sender gated on, and it rides
-    // along on the packet — so /particle with force names its own far bound instead of tripping a narrow one.
     private static ClientboundLevelParticlesPacket levelParticles(ClientboundLevelParticlesPacket packet, TranslationContext context) {
         PacketReach reach = packet.isOverrideLimiter() ? PacketReach.FORCED_PARTICLE : PacketReach.PARTICLE;
         Vec3 clientOrigin = context.toClient(new Vec3(packet.getX(), packet.getY(), packet.getZ()), reach);
@@ -639,9 +573,6 @@ public final class PacketTranslator {
                 packet.getXDist(), packet.getYDist(), packet.getZDist(), packet.getMaxSpeed(), packet.getCount());
     }
 
-    // Both particle payloads are spawned around the centre client-side, so the centre is the anchor for anything they
-    // carry inside. The knockback is a velocity the client adds to itself and names no place, so it rides across as it
-    // came — rebuilt from the three floats it was stored as, which is exact in both directions.
     private static ClientboundExplodePacket explode(ClientboundExplodePacket packet, TranslationContext context) {
         Vec3 serverCenter = new Vec3(packet.getX(), packet.getY(), packet.getZ());
         Vec3 clientCenter = context.toClient(serverCenter, PacketReach.EXPLOSION);
@@ -677,17 +608,6 @@ public final class PacketTranslator {
         return translated;
     }
 
-    // A particle payload can carry a second, absolute position of its own, and the packet coordinate it rides on has
-    // just been moved a whole world; left as it came, the particle is drawn from a translated start toward a raw
-    // server coordinate. It is folded to the copy nearest that start — a target the client can actually fly to.
-    //
-    // Which fold differs by what the position names. A vibration's sensor is a loose point a few blocks from the start
-    // and takes the plain nearest copy. A block particle's position names a block whose model data the client looks up,
-    // so it takes the chunk-anchored fold: it has to land in the copy of the chunk the client holds, or the lookup
-    // resolves against nothing and falls back to the default sprite.
-    //
-    // A vibration travelling to a warden or an allay carries an entity position source, which is an entity id on the
-    // wire and resolves to the client's own copy — already in client space, and nothing to move.
     private static ParticleOptions toClientParticle(TranslationContext context, ParticleOptions particle,
             Vec3 clientOrigin) {
         switch (particle) {
@@ -702,8 +622,6 @@ public final class PacketTranslator {
                 return new VibrationParticleOption(
                         new BlockPositionSource(clientDestination), vibration.getArrivalInTicks());
             }
-            // A particle payload only a loader ships (NeoForge's block particle carries an extra position) is its
-            // owner's to move — the loader glue contributes a rewriter; an unclaimed particle passes untouched.
             default -> {
                 ParticleRewriter<ParticleOptions> particleRewriter = particleRewriterFor(particle);
                 return particleRewriter == null ? particle : particleRewriter.rewrite(particle, context, clientOrigin);
@@ -711,10 +629,6 @@ public final class PacketTranslator {
         }
     }
 
-    // The compass needle is computed in the client's unbounded space, so the spawn is moved to the copy nearest the
-    // player — a directional hint that may legitimately sit far beyond the view, like a global event. The world spawn
-    // lives in the overworld's level data and every other dimension is handed that same coordinate back through
-    // DerivedLevelData; it names no place in their wrap, so outside the overworld it passes as-is.
     private static Packet<?> setDefaultSpawnPosition(ClientboundSetDefaultSpawnPositionPacket packet, TranslationContext context) {
         if (!Level.OVERWORLD.equals(context.dimension())) {
             return packet;
@@ -726,19 +640,6 @@ public final class PacketTranslator {
         return new ClientboundSetDefaultSpawnPositionPacket(clientPos, packet.getAngle());
     }
 
-    // The world border's centre is the second absolute coordinate the client keeps for good, and vanilla is as sparing
-    // with it as with the world spawn: once on the way into a level, then only when someone moves it. The client
-    // measures its own copy of the border in the unbounded space it believes in, so a canonical centre puts the wall a
-    // whole world from where the server measures it after a single lap — and the client refuses block breaking and
-    // placement against that same wrong square, so it is more than a wall drawn in the wrong place.
-    //
-    // Only two of the six border packets carry a centre; size, lerp, warning delay and warning distance name no
-    // coordinate and pass untouched. Neither of the two can be rebuilt — private fields, and the only public
-    // constructor takes a live WorldBorder — but the centre is the first thing on the wire in both, two plain doubles,
-    // so it is re-encoded in front of the untouched remainder.
-    //
-    // A mirror belonging to another dimension has nothing to fold against: the packet goes out as it came and the
-    // stored copy stays empty, so the watcher sends a fresh one on the first tick after the rebase.
     private static Packet<?> initializeBorder(ClientboundInitializeBorderPacket packet, TranslationContext context) {
         if (!context.clientPosition().describes(context.dimension())) {
             return packet;
@@ -770,11 +671,6 @@ public final class PacketTranslator {
         return clientCenter;
     }
 
-    // Also the ClientAnchorSync flip check — recomputed outside a packet flow, so the math is shared here and the
-    // stored copy can never disagree with what a re-send would produce.
-    //
-    // The plain nearest-copy fold, the door nearestCopyX/Z open inside a packet flow: a border centre may legitimately
-    // sit half a world from the player, which is the very distance the guarded door exists to shout about.
     static BorderCenter nearestCopyCenter(WorldLoopTransformer transformer, ClientPosition clientPosition,
             BorderCenter center) {
         return new BorderCenter(
@@ -790,14 +686,6 @@ public final class PacketTranslator {
         return transformer.coords.z.unwrapAround(clientPosition.z(), centerZ);
     }
 
-    // The client turns toward the target in its own unbounded space — moved to the nearest copy, the turn goes the
-    // short way across the seam. The at-entity form resolves the live entity client-side, already in client space;
-    // the coordinates riding along are its fallback and are moved the same way. The target hides in private fields
-    // with no rebuild path, so the packet is moved in place — vanilla creates a fresh instance for every send.
-    //
-    // A turn is aimed at whatever point the command named, so the target may sit anywhere in the world — a directional
-    // hint like a global event, not a coordinate the player's nearness put on the wire. It takes the plain nearest-copy
-    // fold for the same reason a global event does.
     private static ClientboundPlayerLookAtPacket playerLookAt(ClientboundPlayerLookAtPacket packet, TranslationContext context) {
         PlayerLookAtPacketAccessor accessor = (PlayerLookAtPacketAccessor) packet;
         accessor.toroidal$setX(context.nearestCopyX(accessor.toroidal$getX()));
@@ -805,11 +693,6 @@ public final class PacketTranslator {
         return packet;
     }
 
-    // The source position drives the directional damage tilt and the shield's block arc, both computed in client
-    // space; nearest the player it points from the correct side of the seam. It is only present when the source has
-    // no entity — an entity source resolves to the client's own copy of that entity. The packet goes to whoever is
-    // tracking the entity that was hurt, and the one positional source vanilla has without an entity is the exploding
-    // respawn anchor, which stands where the sleeper does — so the tracking reach bounds it.
     private static Packet<?> damageEvent(ClientboundDamageEventPacket packet, TranslationContext context) {
         if (packet.sourcePosition().isEmpty()) {
             return packet;
@@ -828,11 +711,6 @@ public final class PacketTranslator {
                 .toList());
     }
 
-    // The block the player clicked is named in their own space, and the point they hit travels with it — but it cannot be
-    // wrapped on its own. A block owns [z, z+1), so a hit on its far face sits at exactly z+1, which already belongs to
-    // the next block: wrapped separately, the point and the block land on opposite sides of the seam, and vanilla's
-    // check that the hit lies inside the block it names quietly throws the packet away. The block is the anchor; the
-    // offset within it is carried across unchanged.
     private static ServerboundUseItemOnPacket useItemOn(ServerboundUseItemOnPacket packet, TranslationContext context) {
         BlockHitResult hit = packet.getHitResult();
         BlockPos pos = context.toServer(hit.getBlockPos());
@@ -861,10 +739,6 @@ public final class PacketTranslator {
                 packet.getTransactionId(), context.toServer(packet.getPos()));
     }
 
-    // The point the player hit on an entity must land beside the entity it names — the server reads the hit relative to
-    // the entity's position. A plain wrap is not enough: for an entity standing on the seam the hit point can fall past
-    // the world boundary, and wrapped on its own it lands a whole world from the entity. The location is folded to the
-    // copy nearest the entity itself; without the entity (despawned mid-flight) the plain wrap is the best that's left.
     //
     // The packet keeps all three of the entity, the hand and the point inside a private action object, and the only
     // ways in are three factories that want a live Entity. So it is rewritten on the wire instead: the two varints
@@ -912,7 +786,6 @@ public final class PacketTranslator {
         return atLocation[0];
     }
 
-    // A block-entity screen sends back the position it was opened with — a client-frame coordinate, same as SignUpdate.
     private static ServerboundJigsawGeneratePacket jigsawGenerate(ServerboundJigsawGeneratePacket packet, TranslationContext context) {
         return new ServerboundJigsawGeneratePacket(
                 context.toServer(packet.getPos()), packet.levels(), packet.keepJigsaws());
@@ -931,7 +804,6 @@ public final class PacketTranslator {
                 packet.getSelectionPriority(), packet.getPlacementPriority());
     }
 
-    // Only the anchor position is wrapped — offset and size are relative byte deltas.
     private static ServerboundSetStructureBlockPacket setStructureBlock(ServerboundSetStructureBlockPacket packet, TranslationContext context) {
         return new ServerboundSetStructureBlockPacket(
                 context.toServer(packet.getPos()), packet.getUpdateType(), packet.getMode(),
@@ -952,9 +824,6 @@ public final class PacketTranslator {
         return nearestCopyBlock(context.transformer(), context.clientPosition().chunk(), pos);
     }
 
-    // Also the ClientAnchorSync flip check — recomputed outside a packet flow, so the math is shared here and the
-    // stored copy can never disagree with what a re-send would produce. The per-axis forms are the primitive truth:
-    // the tick-side check reads them directly and builds nothing on its steady-state path.
     static BlockPos nearestCopyBlock(WorldLoopTransformer transformer, ChunkPos anchor, BlockPos pos) {
         return new BlockPos(
                 nearestCopyBlockX(transformer, anchor.x, pos.getX()),
@@ -972,7 +841,6 @@ public final class PacketTranslator {
         return SectionPos.sectionToBlockCoord(nearestChunkZ) + (blockZ & SectionPos.SECTION_MASK);
     }
 
-    // The block within the chunk is the low bits of the position, which are the same in either copy.
     private static BlockPos blockInChunkCopy(ChunkPos clientChunk, BlockPos pos) {
         return new BlockPos(
                 clientChunk.getMinBlockX() + (pos.getX() & SectionPos.SECTION_MASK),
@@ -980,10 +848,6 @@ public final class PacketTranslator {
                 clientChunk.getMinBlockZ() + (pos.getZ() & SectionPos.SECTION_MASK));
     }
 
-    // A packet whose position sits in a private field can still be moved: the position is the first thing on the wire,
-    // so the packet is re-encoded with a new one in front of its untouched remainder. The position codecs are
-    // fixed-size, so the client position re-encodes to the width the server one vacated and the target holds exactly
-    // the source packet — no buffer growth.
     private static <T, P> T rewritePosition(BiConsumer<T, RegistryFriendlyByteBuf> writer,
             Function<FriendlyByteBuf, T> reader,
             StreamCodec<? super RegistryFriendlyByteBuf, P> positionCodec, T packet, TranslationContext context,
@@ -1024,7 +888,6 @@ public final class PacketTranslator {
         return reader.apply(target);
     }
 
-    // Unpooled.buffer()'s own default, spelled out because the factory always takes an explicit capacity.
     private static final int DEFAULT_BUFFER_CAPACITY = 256;
 
     private static RegistryFriendlyByteBuf buffer(TranslationContext context) {

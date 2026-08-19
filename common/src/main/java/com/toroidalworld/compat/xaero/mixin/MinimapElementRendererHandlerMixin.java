@@ -9,13 +9,6 @@ import com.toroidalworld.compat.xaero.XaeroFold;
 
 import net.minecraft.core.Direction;
 
-// Every minimap element — waypoint icons on the minimap, the clamped edge arrows, the in-world icons and labels —
-// is positioned by one of three handlers, and all three subtract the render position from an element coordinate
-// this shared base method hands them. Folding the coordinate here, at the one dispatch point, takes each element
-// to the copy nearest the camera before any handler measures it: an element just across the seam draws beside the
-// player instead of a world away. Only the unscaled dispatch is folded (ordinal 0) — the scaled branch mixes two
-// dimensions' coordinate spaces, where a nearest-copy against the camera would fold in the wrong space; an element
-// viewed through a foreign-dimension scale stays a stated limitation.
 @Mixin(targets = "xaero.hud.minimap.element.render.MinimapElementRendererHandler", remap = false)
 public abstract class MinimapElementRendererHandlerMixin {
     @ModifyArgs(

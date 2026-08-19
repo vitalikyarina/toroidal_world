@@ -95,12 +95,6 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
         }
     }
 
-    // Vanilla's own decision, re-asked for one player — the first half of ChunkMap.move, which the teleport path never
-    // reaches. The self case needs no branch: updatePlayer returns immediately for the player's own tracked entity, and
-    // who is shown THAT entity is already refreshed before it broadcasts, in ChunkMap.tick's section-changed arm.
-    //
-    // Unwrapped dimensions keep vanilla's timing byte-for-byte: there the client and the server share one space, so a
-    // tick of stale tracking costs nothing but an entity update drawn where it belongs.
     @Override
     public void toroidal$refreshTrackedEntities(ServerPlayer player) {
         if (WorldLoopAttachments.wrappedTransformerOf(this.level) == null) {
@@ -113,11 +107,6 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
         }
     }
 
-    // The other writer of the radius the tracker gates entity visibility on. Vanilla re-applies the chunk view for
-    // every player here and leaves the entity decision standing on the distance that has just been replaced, so the
-    // traffic those pairs keep producing is measured against a bound they were never gated on. Taking the decision
-    // again in the same loop iteration is what keeps the two from ever naming different radii; the loop itself sits
-    // inside vanilla's own "the distance really moved" branch, so an unchanged setting costs nothing.
     @Inject(
             method = "setServerViewDistance",
             at = @At(
@@ -134,13 +123,6 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
         throw new AssertionError();
     }
 
-    // The cache a generation task carries is, in vanilla, a plain map from a holder's own position to that holder — and
-    // applyStep leans on it, re-reading the holder it was just handed by that holder's own position. A folded slot files
-    // the wrapped neighbour under its RAW key instead, so the identity no longer holds and the lookup walks off the
-    // square: "Requested out of range value (-8,1) from StaticCache2D[-3, -8, 18, 13]".
-    //
-    // The step runs on the holder it was given. Saying so restores exactly what vanilla means by this line and owes
-    // nothing to the wrap math — which is why it is stated here rather than repaired with coordinates.
     @WrapOperation(
             method = "applyStep",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/util/StaticCache2D;get(II)Ljava/lang/Object;"))
@@ -157,19 +139,6 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
         return chunkHolder;
     }
 
-    // Every promotion a chunk can receive is decided here: prepareAccessibleChunk (range 1) turns it into a FULL chunk
-    // and is what loads its entities, prepareTickingChunk (range 1) is what makes getChunkToSend hand it to a player,
-    // and prepareEntityTickingChunk (range 2) starts its entities ticking. All three ask that a square around the chunk
-    // reach a status, and all three walk that square in raw coordinates.
-    //
-    // For a chunk on the bounds the raw square names keys no holder answers for — the future settles on a failed
-    // result, scheduleFullChunkPromotion's ifSuccess never runs, and the promotion simply never arrives. Nothing throws
-    // and nothing is logged: the chunk generates, becomes a LevelChunk, and then sits there un-promoted. That is one
-    // bug wearing two faces — the world hangs on spawn waiting for entities that will never load, and the band along
-    // the seam is never sent to the client at all.
-    //
-    // The neighbours of a chunk at the bounds ARE the chunks across the seam, so naming them physically is what the
-    // range meant all along — the same statement already made for the ticket graphs and the generation cache.
     @WrapOperation(
             method = "getChunkRangeFuture",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ChunkPos;asLong(II)J"))
@@ -185,13 +154,6 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
     @Unique
     private final ConcurrentLinkedQueue<SeamDriveRequest> toroidal$driveRequests = new ConcurrentLinkedQueue<>();
 
-    // A foreign task may wait on a cross-seam holder but never generate it (GenerationChunkHolderMixin), so somebody
-    // has to: vanilla gives a task only to a chunk somebody asks the scheduler for, and the foreign task's ask went to
-    // the holder instead. The declined CAS files the request from a worker thread; it is drained here because
-    // runGenerationTasks runs after runAllUpdates has refreshed every highestAllowedStatus — the request is not refused
-    // for a status the holder is about to be allowed — and on the server thread, the only one permitted to touch the
-    // pending-task queue. scheduleChunkGenerationTask dedupes on its own: an existing task at the same or a later
-    // target is left alone, so repeated requests are cheap no-ops.
     @Override
     public void toroidal$requestDrive(GenerationChunkHolder holder, ChunkStatus status) {
         if (WorldLoopAttachments.wrappedTransformerOf(this.level) == null) {
@@ -276,8 +238,6 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
         return transformer == null ? pos : transformer.chunks.wrap(pos);
     }
 
-    // The view is built by a static factory that never sees the level, so the transformer is handed to it here — the
-    // one place views are created.
     @WrapOperation(
             method = "updateChunkTracking",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ChunkTrackingView;of(Lnet/minecraft/world/level/ChunkPos;I)Lnet/minecraft/server/level/ChunkTrackingView;"))
@@ -287,11 +247,6 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
         return view;
     }
 
-    // The client mapping shows every chunk at its representation nearest the player, which is unambiguous only while
-    // everything a player holds is closer than half the world around. The setting is already clamped where it is
-    // written (PlayerListMixin) — but the level is CONSTRUCTED with an initial distance that bypasses that setter, so
-    // the invariant is enforced once more at the one place every view decision is read from. Same formula, owned by
-    // the transformer; dimensions that do not loop are untouched.
     @WrapMethod(method = "getPlayerViewDistance")
     private int toroidal$clampLoopedViewDistance(ServerPlayer player, Operation<Integer> original) {
         int vanilla = original.call(player);

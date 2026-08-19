@@ -10,9 +10,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
-// The API view over the engine's transformer: every operation delegates to the wrap math the mod itself runs on, so
-// the public answers can never drift from the engine's. Bounds are read from the persisted model rather than the
-// domains — a Noop domain carries meaningless zeros where the contract promises an exception.
 final class TransformerToroidalShape implements ToroidalShape {
     private final WorldLoopTransformer transformer;
 

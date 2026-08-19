@@ -13,9 +13,6 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.gameevent.GameEventListener;
 import net.minecraft.world.phys.Vec3;
 
-// The recipient's position, kept so the dispatch order can be taken again through the seam. Vanilla reads it once and
-// keeps only the distance it made of it, and that distance is measured with a Vec3 — a type with no level, and so the
-// one place in this chain the fold cannot reach.
 @Mixin(targets = "net.minecraft.world.level.gameevent.GameEvent$ListenerInfo")
 public class GameEventListenerInfoMixin implements RecipientPositionHolder {
     @Unique

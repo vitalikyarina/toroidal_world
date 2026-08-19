@@ -17,12 +17,7 @@ import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 
 import net.minecraft.world.phys.Vec3;
 
-// The questions callers used to answer from a raw width, asked of the domain instead. Each is checked on real wrapping
-// axes against a reference dumber than the production formula, and then on the disabled axis — where the width is a
-// meaningless zero, and the arithmetic those callers did would divide by it, filter out everything, or cap a search
-// that has no far side to stop at.
 class AxisShapeTest {
-    // Even centered, odd, one unit wide, uneven split — the same shapes the rest of the core suite is checked on.
     private static final List<WrapDomain> LOOPED = List.of(
             new WrapDomain(-32, 32),
             new WrapDomain(-2, 3),
@@ -205,7 +200,6 @@ class AxisShapeTest {
 
     @Nested
     class MappingBetweenWorlds {
-        // What the dimensions themselves say about a nether: an eighth of the overworld, whatever their widths are.
         private static final double DECLARED = 1.0 / 8.0;
 
         private final WrapDomain wide = new WrapDomain(-512, 512);
