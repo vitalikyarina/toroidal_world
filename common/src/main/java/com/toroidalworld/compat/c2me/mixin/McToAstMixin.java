@@ -15,6 +15,6 @@ public class McToAstMixin {
     @WrapMethod(method = "toAst(Lnet/minecraft/world/level/levelgen/DensityFunction;)"
             + "Lcom/ishland/c2me/opts/dfc/common/ast/AstNode;")
     private static AstNode toroidal$foldNoiseNodes(DensityFunction densityFunction, Operation<AstNode> original) {
-        return C2meDfcAst.fold(original.call(densityFunction));
+        return C2meDfcAst.fold(densityFunction, original.call(densityFunction));
     }
 }

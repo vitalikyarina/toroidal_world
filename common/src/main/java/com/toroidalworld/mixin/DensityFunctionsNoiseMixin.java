@@ -4,6 +4,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
+import com.toroidalworld.noise.ContextScaledNoise;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -32,8 +33,7 @@ public class DensityFunctionsNoiseMixin {
             return original.call(context);
         }
 
-        try (Context.ScaleScope _ = generation.withScale(this.xzScale)) {
-            return this.noise.getValue(context.blockX(), context.blockY() * this.yScale, context.blockZ());
-        }
+        return ContextScaledNoise.sample(generation, this.noise,
+                context.blockX(), context.blockY() * this.yScale, context.blockZ(), this.xzScale);
     }
 }
