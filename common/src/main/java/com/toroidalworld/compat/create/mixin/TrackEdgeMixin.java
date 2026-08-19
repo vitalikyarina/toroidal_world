@@ -3,12 +3,17 @@ package com.toroidalworld.compat.create.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.trains.graph.TrackEdge;
 import com.simibubi.create.content.trains.graph.TrackNode;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
+import com.simibubi.create.content.trains.track.BezierConnection;
+import com.simibubi.create.content.trains.track.TrackMaterial;
+import com.toroidalworld.compat.create.BezierCurveFold;
 import com.toroidalworld.compat.create.CreateTrackFold;
 
 import net.minecraft.world.phys.Vec3;
@@ -31,6 +36,20 @@ import net.minecraft.world.phys.Vec3;
 public abstract class TrackEdgeMixin {
     @Shadow
     public TrackNode node1;
+
+    // A curved edge answers none of the above: getLength and getPosition hand the question to the curve as soon as one
+    // is present, so the folds below never run for it and the frame has to be right in the curve itself. The curve is
+    // built from the block entity that stores it, and the constructor is where it meets the node that will be asked
+    // about it — the same node, since the edge running the other way carries the swapped copy, whose own first end is
+    // this edge's first node. So this is where a curve is told which world it is in, whichever way it arrived: laid by
+    // a player, read off disk, or received from the server on a graph the client is only watching.
+    @Inject(method = "<init>", at = @At("RETURN"))
+    private void toroidal$foldEdgeCurve(TrackNode node1, TrackNode node2, BezierConnection turn,
+            TrackMaterial trackMaterial, CallbackInfo ci) {
+        if (turn != null) {
+            ((BezierCurveFold) turn).toroidal$foldCurve(null, node1.getLocation().getDimension());
+        }
+    }
 
     @WrapOperation(method = "getLength",
             at = @At(value = "INVOKE",

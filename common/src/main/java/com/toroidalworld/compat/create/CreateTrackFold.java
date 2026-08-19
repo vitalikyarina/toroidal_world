@@ -9,6 +9,7 @@ import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.storage.CurrentServer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -78,6 +79,13 @@ public final class CreateTrackFold {
 
     public static Vec3 nearestCopy(@Nullable ResourceKey<Level> dimension, Vec3 anchor, Vec3 target) {
         return nearestCopy(transformerOf(null, dimension), anchor, target);
+    }
+
+    // The same question asked of a block, for the one caller that has to fold a position before it has any geometry —
+    // placement, which measures the gap between two clicked blocks before it will draw anything between them.
+    public static BlockPos nearestCopy(@Nullable Level level, BlockPos anchor, BlockPos target) {
+        WorldLoopTransformer transformer = transformerOf(level, null);
+        return transformer == null ? target : transformer.blocks.nearestCopy(anchor, target);
     }
 
     private static Vec3 nearestCopy(@Nullable WorldLoopTransformer transformer, Vec3 anchor, Vec3 target) {

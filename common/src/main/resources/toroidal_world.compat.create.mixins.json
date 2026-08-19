@@ -6,6 +6,7 @@
   "plugin": "com.toroidalworld.compat.create.CreateMixinPlugin",
   "mixins": [
     "BeltConnectorItemMixin",
+    "BezierConnectionMixin",
     "CarriageAnchorMixin",
     "CarriageBogeyMixin",
     "CarriagePairMixin",
@@ -16,9 +17,11 @@
     "DirectionalShaftHalvesBlockEntityMixin",
     "ITrackBlockMixin",
     "RotationPropagatorMixin",
+    "TrackBlockEntityMixin",
     "TrackEdgeMixin",
     "TrackGraphHelperMixin",
     "TrackNodeLocationMixin",
+    "TrackPlacementMixin",
     "TrainCollisionSpanMixin"
   ],
   "client": [
