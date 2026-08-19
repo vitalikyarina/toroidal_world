@@ -30,6 +30,7 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
@@ -102,6 +103,8 @@ class PacketTranslatorTest {
 
     private static final BlockPos SERVER_BLOCK = new BlockPos(-510, 64, -505);
     private static final BlockPos CLIENT_BLOCK = new BlockPos(514, 64, -505);
+    private static final BlockPos SERVER_CARRIED_BLOCK = new BlockPos(-510, 64, -100);
+    private static final BlockPos CLIENT_CARRIED_BLOCK = new BlockPos(514, 64, -100);
     private static final ChunkPos SERVER_CHUNK = new ChunkPos(-32, -32);
     private static final ChunkPos CLIENT_CHUNK = new ChunkPos(32, -32);
 
@@ -789,20 +792,36 @@ class PacketTranslatorTest {
         }
 
         @Test
-        void synchedBlockPosIsTranslatedOtherValuesPassThrough() {
+        void synchedBlockPosFollowsTheEntityOtherValuesPassThrough() {
             ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
-                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.OPTIONAL_BLOCK_POS, Optional.of(SERVER_BLOCK)),
+                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.OPTIONAL_BLOCK_POS, Optional.of(SERVER_CARRIED_BLOCK)),
                     new SynchedEntityData.DataValue<>(1, EntityDataSerializers.BYTE, (byte) 6),
                     new SynchedEntityData.DataValue<>(2, EntityDataSerializers.OPTIONAL_BLOCK_POS, Optional.empty()),
-                    new SynchedEntityData.DataValue<>(3, EntityDataSerializers.BLOCK_POS, SERVER_BLOCK)));
+                    new SynchedEntityData.DataValue<>(3, EntityDataSerializers.BLOCK_POS, SERVER_CARRIED_BLOCK)));
 
-            ClientboundSetEntityDataPacket translated =
-                    (ClientboundSetEntityDataPacket) PacketTranslator.toClient(packet, context());
+            ClientboundSetEntityDataPacket translated = (ClientboundSetEntityDataPacket) PacketTranslator.toClient(
+                    packet, context(entityId -> false, entityId -> new Vec3(SERVER_X, 70.0, SERVER_Z)));
 
-            assertEquals(Optional.of(CLIENT_BLOCK), translated.packedItems().get(0).value());
+            assertEquals(Optional.of(CLIENT_CARRIED_BLOCK), translated.packedItems().get(0).value());
             assertEquals((byte) 6, translated.packedItems().get(1).value());
             assertEquals(Optional.empty(), translated.packedItems().get(2).value());
-            assertEquals(CLIENT_BLOCK, translated.packedItems().get(3).value());
+            assertEquals(CLIENT_CARRIED_BLOCK, translated.packedItems().get(3).value());
+        }
+
+        @Test
+        void synchedGlobalPosFollowsTheEntityOnlyInItsOwnDimension() {
+            GlobalPos elsewhere = GlobalPos.of(Level.NETHER, SERVER_CARRIED_BLOCK);
+            ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
+                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.OPTIONAL_GLOBAL_POS,
+                            Optional.of(GlobalPos.of(Level.OVERWORLD, SERVER_CARRIED_BLOCK))),
+                    new SynchedEntityData.DataValue<>(1, EntityDataSerializers.OPTIONAL_GLOBAL_POS, Optional.of(elsewhere))));
+
+            ClientboundSetEntityDataPacket translated = (ClientboundSetEntityDataPacket) PacketTranslator.toClient(
+                    packet, context(entityId -> false, entityId -> new Vec3(SERVER_X, 70.0, SERVER_Z)));
+
+            assertEquals(Optional.of(GlobalPos.of(Level.OVERWORLD, CLIENT_CARRIED_BLOCK)),
+                    translated.packedItems().get(0).value());
+            assertEquals(Optional.of(elsewhere), translated.packedItems().get(1).value());
         }
 
         @Test
