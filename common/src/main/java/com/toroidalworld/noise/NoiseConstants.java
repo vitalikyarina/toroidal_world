@@ -2,6 +2,7 @@ package com.toroidalworld.noise;
 
 public final class NoiseConstants {
     public static final double SHIFT_SCALE = 0.25;
+    public static final double SHIFT_AMPLITUDE = 4.0;
 
     // Horizontal scales vanilla bakes into the coordinates it hands the surface noises (SurfaceSystem).
     public static final double BADLANDS_PILLAR_SCALE = 0.2;

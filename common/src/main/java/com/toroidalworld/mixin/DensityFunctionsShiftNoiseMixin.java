@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.toroidalworld.noise.ContextScaledNoise;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.noise.NoiseConstants;
@@ -24,8 +25,8 @@ public interface DensityFunctionsShiftNoiseMixin {
             return;
         }
 
-        try (Context.ScaleScope scope = generation.withScale(NoiseConstants.SHIFT_SCALE)) {
-            cir.setReturnValue(this.offsetNoise().getValue(localX, localY * NoiseConstants.SHIFT_SCALE, localZ) * 4.0);
-        }
+        cir.setReturnValue(ContextScaledNoise.sample(generation, this.offsetNoise(),
+                localX, localY * NoiseConstants.SHIFT_SCALE, localZ, NoiseConstants.SHIFT_SCALE)
+                * NoiseConstants.SHIFT_AMPLITUDE);
     }
 }
