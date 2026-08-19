@@ -398,7 +398,14 @@ public final class PacketTranslator {
 
     private static ClientboundSetEntityDataPacket setEntityData(ClientboundSetEntityDataPacket packet, TranslationContext context) {
         List<SynchedEntityData.DataValue<?>> items = packet.packedItems();
-        Vec3 anchor = carriesParticle(items) ? entityAnchor(packet.id(), context) : null;
+        if (!needsEntityAnchor(items)) {
+            return packet;
+        }
+
+        Vec3 anchor = entityAnchor(packet.id(), context);
+        if (anchor == null) {
+            return packet;
+        }
 
         List<SynchedEntityData.DataValue<?>> translated = new ArrayList<>(items.size());
         for (SynchedEntityData.DataValue<?> item : items) {
@@ -408,15 +415,22 @@ public final class PacketTranslator {
         return new ClientboundSetEntityDataPacket(packet.id(), translated);
     }
 
-    private static boolean carriesParticle(List<SynchedEntityData.DataValue<?>> items) {
+    private static boolean needsEntityAnchor(List<SynchedEntityData.DataValue<?>> items) {
         for (SynchedEntityData.DataValue<?> item : items) {
-            if (item.value() instanceof ParticleOptions
-                    || item.value() instanceof List<?> values && isParticleList(values)) {
+            Object value = item.value() instanceof Optional<?> optional ? optional.orElse(null) : item.value();
+            if (isAnchored(value)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static boolean isAnchored(@Nullable Object value) {
+        return value instanceof BlockPos
+                || value instanceof GlobalPos
+                || value instanceof ParticleOptions
+                || value instanceof List<?> values && isParticleList(values);
     }
 
     private static boolean isParticleList(List<?> values) {
@@ -438,37 +452,58 @@ public final class PacketTranslator {
         return serverPosition == null ? null : context.toClient(serverPosition, context.trackedReach());
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     private static SynchedEntityData.DataValue<?> toClientData(SynchedEntityData.DataValue<?> item,
-            @Nullable Vec3 anchor, TranslationContext context) {
-        if (item.value() instanceof BlockPos pos) {
-            return new SynchedEntityData.DataValue(item.id(), item.serializer(), toClientBlock(context, pos));
-        }
-
-        if (item.value() instanceof Optional<?> optional && optional.orElse(null) instanceof BlockPos pos) {
-            return new SynchedEntityData.DataValue(item.id(), item.serializer(), Optional.of(toClientBlock(context, pos)));
-        }
-
-        if (anchor != null && item.value() instanceof ParticleOptions particle) {
-            ParticleOptions clientParticle = toClientParticle(context, particle, anchor);
-            return clientParticle == particle ? item
-                    : new SynchedEntityData.DataValue(item.id(), item.serializer(), clientParticle);
-        }
-
-        if (anchor != null && item.value() instanceof List<?> values && isParticleList(values)) {
-            List<ParticleOptions> clientParticles = new ArrayList<>(values.size());
-            boolean changed = false;
-            for (Object value : values) {
-                ParticleOptions particle = (ParticleOptions) value;
-                ParticleOptions clientParticle = toClientParticle(context, particle, anchor);
-                changed |= clientParticle != particle;
-                clientParticles.add(clientParticle);
+            Vec3 anchor, TranslationContext context) {
+        Object value = item.value();
+        if (value instanceof Optional<?> optional) {
+            Object held = optional.orElse(null);
+            if (held == null) {
+                return item;
             }
 
-            return changed ? new SynchedEntityData.DataValue(item.id(), item.serializer(), clientParticles) : item;
+            Object clientHeld = toClientValue(held, anchor, context);
+            return clientHeld == held ? item : withValue(item, Optional.of(clientHeld));
         }
 
-        return item;
+        Object clientValue = toClientValue(value, anchor, context);
+        return clientValue == value ? item : withValue(item, clientValue);
+    }
+
+    private static Object toClientValue(Object value, Vec3 anchor, TranslationContext context) {
+        return switch (value) {
+            case BlockPos pos -> nearestCopyBlock(context, anchor, pos);
+            case GlobalPos globalPos -> toClientGlobal(globalPos, anchor, context);
+            case ParticleOptions particle -> toClientParticle(context, particle, anchor);
+            case List<?> values when isParticleList(values) -> toClientParticles(values, anchor, context);
+            default -> value;
+        };
+    }
+
+    private static GlobalPos toClientGlobal(GlobalPos globalPos, Vec3 anchor, TranslationContext context) {
+        if (!globalPos.dimension().equals(context.dimension())) {
+            return globalPos;
+        }
+
+        BlockPos clientPos = nearestCopyBlock(context, anchor, globalPos.pos());
+        return clientPos == globalPos.pos() ? globalPos : GlobalPos.of(globalPos.dimension(), clientPos);
+    }
+
+    private static List<?> toClientParticles(List<?> values, Vec3 anchor, TranslationContext context) {
+        List<ParticleOptions> clientParticles = new ArrayList<>(values.size());
+        boolean changed = false;
+        for (Object value : values) {
+            ParticleOptions particle = (ParticleOptions) value;
+            ParticleOptions clientParticle = toClientParticle(context, particle, anchor);
+            changed |= clientParticle != particle;
+            clientParticles.add(clientParticle);
+        }
+
+        return changed ? clientParticles : values;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static SynchedEntityData.DataValue<?> withValue(SynchedEntityData.DataValue<?> item, Object value) {
+        return new SynchedEntityData.DataValue(item.id(), item.serializer(), value);
     }
 
     private static ClientboundBlockEventPacket blockEvent(ClientboundBlockEventPacket packet, TranslationContext context) {
@@ -522,8 +557,7 @@ public final class PacketTranslator {
                     return particle;
                 }
 
-                BlockPos clientDestination = context.transformer().blocks.nearestCopy(
-                        BlockPos.containing(clientOrigin), destination.pos());
+                BlockPos clientDestination = nearestCopyBlock(context, clientOrigin, destination.pos());
                 return new VibrationParticleOption(
                         new BlockPositionSource(clientDestination), vibration.getArrivalInTicks());
             }
@@ -741,6 +775,10 @@ public final class PacketTranslator {
 
     private static BlockPos nearestCopyBlock(TranslationContext context, BlockPos pos) {
         return nearestCopyBlock(context.transformer(), context.clientPosition().chunk(), pos);
+    }
+
+    private static BlockPos nearestCopyBlock(TranslationContext context, Vec3 anchor, BlockPos pos) {
+        return context.transformer().blocks.nearestCopy(BlockPos.containing(anchor), pos);
     }
 
     static BlockPos nearestCopyBlock(WorldLoopTransformer transformer, ChunkPos anchor, BlockPos pos) {
