@@ -20,10 +20,6 @@ import journeymap.api.v2.common.event.ClientEventRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 
-// Registered with JourneyMap through its own plugin surface (annotation scan). The coordinate folds live in the
-// mixins — the plugin API offers no hook over the cartography pipeline — so this carries the API-level part of the
-// compat: the seam outline overlays, shown when JourneyMap starts mapping a wrapped dimension and cleared when it
-// stops. compileOnly against the published API jar; the class only loads when JourneyMap itself instantiates it.
 @JourneyMapPlugin(apiVersion = "2.0.0", dependencies = {}, require = false)
 public class ToroidalJourneyMapPlugin implements IClientPlugin {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -48,9 +44,6 @@ public class ToroidalJourneyMapPlugin implements IClientPlugin {
             return;
         }
 
-        // The bounds always precede mapping: the payload arrives during login/dimension change, before any chunk.
-        // A level that does not match the event's dimension (or is absent) means the client is mid-switch — the
-        // next MAPPING_STARTED for the real level will do the work.
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null || !level.dimension().equals(event.dimension)) {
             return;

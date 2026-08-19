@@ -12,8 +12,6 @@ import com.toroidalworld.noise.NoiseConstants;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
 
-// The 0.25 scale stays applied to Y directly; horizontally it travels through the context, because scaling X/Z would
-// shift the phase of the wrapped noise.
 @Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$ShiftNoise")
 public interface DensityFunctionsShiftNoiseMixin {
     @Shadow

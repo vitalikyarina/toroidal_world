@@ -31,18 +31,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
-// A view distance wider than half the world would show the player the same chunk twice — and eventually themselves,
-// from behind. The client keeps the distance it asked for; only the server's per-level distance is clamped.
 @Mixin(PlayerList.class)
 public class PlayerListMixin {
     @Shadow
     @Final
     private List<ServerPlayer> players;
 
-    // Everything positional the world says out loud — sounds, level events — is broadcast to whoever is close enough.
-    // Across the seam the plain distance is a whole world, so a player standing right there would be told nothing.
-    //
-    // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.
     @WrapMethod(method = "broadcast")
     private void toroidal$broadcastThroughSeam(@Nullable Player except, double x, double y, double z, double range,
             ResourceKey<Level> dimension, Packet<?> packet, Operation<Void> original) {
@@ -62,20 +56,12 @@ public class PlayerListMixin {
         }
     }
 
-    // The first of the three moments the client's space changes and it needs the wrap bounds: joining. The others
-    // are crossing to another dimension (ServerPlayerMixin) and the death respawn below — the wrapped dimensions
-    // carry different widths. At the tail, once the connection is fully placed and flushing again, so the payload
-    // follows the whole login sequence.
     @Inject(method = "placeNewPlayer", at = @At("TAIL"))
     private void toroidal$sendBoundsOnLogin(Connection connection, ServerPlayer player, CommonListenerCookie cookie,
             CallbackInfo ci) {
         WrappingBoundsSync.sendTo(player);
     }
 
-    // The third moment: a death respawn. It replaces the ServerPlayer without passing through teleport, and when the
-    // death was in another dimension the client rebuilds its level — which is born with NOOP bounds and would stay
-    // that way. At the tail the payload queues behind the respawn packet, so it lands on the level the client just
-    // built; a same-dimension respawn keeps the level and the repeat is an idempotent re-apply.
     @Inject(method = "respawn", at = @At("TAIL"))
     private void toroidal$sendBoundsOnRespawn(ServerPlayer player, boolean keepAllPlayerData,
             Entity.RemovalReason removalReason, CallbackInfoReturnable<ServerPlayer> cir) {

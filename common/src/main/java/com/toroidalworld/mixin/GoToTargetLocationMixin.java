@@ -13,9 +13,6 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.behavior.GoToTargetLocation;
 
-// The arrival test for a remembered location — where a raid was won, where a celebration is held. Read raw from the far
-// side of the seam it never says yes, so the mob keeps setting itself a fresh walk and look target one tick after
-// another around a place it is already standing in, and never settles into what it came here to do.
 @Mixin(GoToTargetLocation.class)
 public class GoToTargetLocationMixin {
     @WrapOperation(

@@ -12,10 +12,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.behavior.GoAndGiveItemsToTarget;
 import net.minecraft.world.phys.Vec3;
 
-// The carrier walks its item to somebody and throws it once it is within three blocks. The walk is fine; the throw is
-// gated on a raw distance between the deposit point and the carrier's own eyes, so across the seam an allay hovers over
-// the player it fetched for and holds onto the item forever — the pickup cooldown that would let it fetch anything else
-// is only set when the throw happens.
 @Mixin(GoAndGiveItemsToTarget.class)
 public class GoAndGiveItemsToTargetMixin {
     @WrapOperation(

@@ -13,9 +13,6 @@ import net.minecraft.core.Position;
 import net.minecraft.world.entity.ai.behavior.StrollToPoiList;
 import net.minecraft.world.entity.npc.villager.Villager;
 
-// Two remembered places at once: one is picked to walk to, a second has to still be close by for the walk to be allowed
-// at all. Only the second is measured, and it is the anchor — the villager's meeting point, kept in the world while the
-// villager itself is wrapped. Across the seam the anchor never holds, so the whole list of secondary sites goes unused.
 @Mixin(StrollToPoiList.class)
 public class StrollToPoiListMixin {
     @WrapOperation(

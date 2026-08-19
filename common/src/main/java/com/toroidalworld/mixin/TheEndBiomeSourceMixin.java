@@ -17,12 +17,6 @@ import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.TheEndBiomeSource;
 import net.minecraft.world.level.levelgen.DensityFunction;
 
-// The biome split repeats the density function's raw-coordinate reasoning once more: a radial main-island test on the
-// column's chunk coordinates, then erosion — which in the End router is the same end_islands function the density
-// mixin already folds. Only the radial test needs its own fold: a caller sampling past the bounds (structure
-// placement scans near the seam) would otherwise measure the distance to the origin through coordinates a world
-// apart. The chunk coordinates are folded once and everything downstream reads them folded, so the erosion sample
-// also lands inside the world.
 @Mixin(TheEndBiomeSource.class)
 public class TheEndBiomeSourceMixin {
     @Shadow
@@ -45,7 +39,6 @@ public class TheEndBiomeSourceMixin {
     @Final
     private Holder<Biome> barrens;
 
-    // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.
     @WrapMethod(method = "getNoiseBiome(IIILnet/minecraft/world/level/biome/Climate$Sampler;)Lnet/minecraft/core/Holder;")
     private Holder<Biome> toroidal$loopedNoiseBiome(int quartX, int quartY, int quartZ, Climate.Sampler sampler,
             Operation<Holder<Biome>> original) {

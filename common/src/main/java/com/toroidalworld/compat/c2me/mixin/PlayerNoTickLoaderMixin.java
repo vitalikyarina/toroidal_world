@@ -23,15 +23,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.world.level.ChunkPos;
 
-// The second chunk loader. No-tick view distance walks a spiral around each player and tickets every position it
-// yields directly into the chunk system — past the vanilla ticket graph the mod folds in ChunkTrackerMixin, which is
-// why holders kept appearing past the bounds however much of C2ME's own chunk system was already folded. The spiral
-// runs in raw coordinates by design; what it names past the bounds is the ground across the seam.
-//
-// The chunk the ticket lands on is folded; the ticket's SOURCE is left raw on purpose. Two players on opposite sides
-// of the seam can want the same physical chunk under two raw names, and a ticket identity of (type, source, status)
-// keeps those two apart — folded, the second player's arrival would be a no-op and the first player's departure would
-// drop the chunk out from under them.
 @Mixin(PlayerNoTickLoader.class)
 public class PlayerNoTickLoaderMixin {
     @Shadow
@@ -96,12 +87,7 @@ public class PlayerNoTickLoaderMixin {
         return C2meSeamFold.canonical(transformer, pos.x(), pos.z());
     }
 
-    // The other writer of the radius the client's mapping depends on. A chunk is shown at its representation nearest
-    // the player, which is unambiguous only while everything the player holds is closer than half the world — the
-    // invariant ChunkMapMixin.getPlayerViewDistance enforces for the ticking distance. This loader decides a second
-    // radius of its own, and it reaches much further by design (its own ceiling is 65536 chunks), so the same ceiling
-    // is applied here. The player's render distance setting is untouched: what is bounded is how far this mod lets
-    // the world be loaded around them, which is this mod's decision and not the client's.
+    // The other writer of the radius the client's mapping depends on, held to the same half-a-world bound as the ticking distance.
     @ModifyVariable(method = "setViewDistance", at = @At("HEAD"), argsOnly = true)
     private int toroidal$clampNoTickViewDistance(int viewDistance) {
         WorldLoopTransformer transformer = this.toroidal$transformer();

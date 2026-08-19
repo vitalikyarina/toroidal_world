@@ -16,9 +16,6 @@ import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.SimulationChunkTracker;
 
-// The distance manager owns every ticket graph, so binding the level here reaches all of them at once. The cross-seam
-// neighbour relation itself lives in the graphs now — every tracker folds its neighbour walk (ChunkTrackerMixin) — so
-// the companion-ticket machinery that used to be issued from this pass is gone.
 @Mixin(DistanceManager.class)
 public class DistanceManagerMixin implements LevelBindable {
     @Shadow
@@ -46,10 +43,6 @@ public class DistanceManagerMixin implements LevelBindable {
         ((LevelBindable) this.playerTicketManager).toroidal$bindLevel(level);
     }
 
-    // Whether an entity is ticked at all is decided by this gate, asked of the raw chunk the entity's coordinate names.
-    // An entity pushed a step past the bounds still stands in a real chunk — the wrapped one — but the raw chunk is one
-    // the manager never heard of, so the gate says no, the entity is skipped, and the tick-tail wrap that would bring
-    // it home never runs. It is the same question the tracker already asks correctly for isChunkTracked.
     @ModifyVariable(method = "inEntityTickingRange", at = @At("HEAD"), argsOnly = true)
     private long toroidal$entityTickingOnPhysicalChunk(long chunkKey) {
         if (this.toroidal$level == null) {

@@ -10,8 +10,6 @@ import com.toroidalworld.accessors.RelocatableBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-// The field is final in vanilla for a good reason — nothing may move a block entity once the world knows about it. The
-// one caller here rewrites it strictly before registration, while the entity is still nobody's, so that invariant holds.
 @Mixin(BlockEntity.class)
 public class BlockEntityMixin implements RelocatableBlockEntity {
     @Mutable

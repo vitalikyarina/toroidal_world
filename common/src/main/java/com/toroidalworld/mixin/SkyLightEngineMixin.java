@@ -14,10 +14,6 @@ import net.minecraft.world.level.chunk.LightChunk;
 import net.minecraft.world.level.chunk.LightChunkGetter;
 import net.minecraft.world.level.lighting.SkyLightEngine;
 
-// Sky light has the same seam blindness as block light — propagation stops at the boundary — plus a second one unique to
-// it: to place sky sources it reads the four neighbouring chunks' sky-light columns, and at the seam a neighbour is a
-// whole world away and reads as void. Wrapping the target node fixes propagation; wrapping the chunk source read fixes
-// the neighbour lookups (every one of them, in checkNode, addSourcesAbove and propagateLightSources, goes through it).
 @Mixin(SkyLightEngine.class)
 public abstract class SkyLightEngineMixin {
     @WrapOperation(
