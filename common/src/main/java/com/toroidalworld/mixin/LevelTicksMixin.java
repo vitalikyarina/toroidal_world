@@ -4,7 +4,9 @@ import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.WorldLoopTransformer;
@@ -12,6 +14,7 @@ import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.ticks.LevelTicks;
 import net.minecraft.world.ticks.ScheduledTick;
 
@@ -46,6 +49,26 @@ public class LevelTicksMixin<T> implements LevelBindable {
 
         return new ScheduledTick<>(tick.type(), transformer.blocks.wrap(pos), tick.triggerTick(), tick.priority(),
                 tick.subTickOrder());
+    }
+
+    @Inject(method = "clearArea", at = @At("HEAD"), cancellable = true)
+    private void toroidal$clearEachCopyOfTheArea(BoundingBox area, CallbackInfo ci) {
+        if (this.toroidal$level == null) {
+            return;
+        }
+
+        WorldLoopTransformer transformer = toroidal$transformer();
+        if (!transformer.isWrapped() || !transformer.crossesBounds(area)) {
+            return;
+        }
+
+        ci.cancel();
+
+        @SuppressWarnings("unchecked")
+        LevelTicks<T> ticks = (LevelTicks<T>) (Object) this;
+        for (BoundingBox piece : transformer.splitAcrossBounds(area)) {
+            ticks.clearArea(piece);
+        }
     }
 
     @Unique

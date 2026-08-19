@@ -194,6 +194,158 @@ class SeamRegionTest {
     }
 
     @Nested
+    class SplitRegionAcrossBounds {
+        private BoundingBox sampleRegion(Random random, WorldLoopTransformer transformer) {
+            int minX = sampleBlockInt(random, transformer.coords.x);
+            int minY = random.nextInt(320) - 64;
+            int minZ = sampleBlockInt(random, transformer.coords.z);
+            return new BoundingBox(
+                    minX, minY, minZ,
+                    minX + random.nextInt(2 * reachCap(transformer.coords.x, 16_000) + 1),
+                    minY + random.nextInt(32),
+                    minZ + random.nextInt(2 * reachCap(transformer.coords.z, 16_000) + 1));
+        }
+
+        private long coveredCells(WrapDomain domain, int min, int max) {
+            long cells = (long) max - min + 1;
+            return domain instanceof WrapDomain.Noop ? cells : Math.min(cells, domain.domainLength);
+        }
+
+        private long cellCount(BoundingBox region) {
+            return ((long) region.maxX() - region.minX() + 1)
+                    * (region.maxY() - region.minY() + 1)
+                    * (region.maxZ() - region.minZ() + 1);
+        }
+
+        private void assertLiesOnACopyInsideTheWorld(WrapDomain domain, int coord, int copy,
+                WorldLoopTransformer transformer) {
+            if (domain instanceof WrapDomain.Noop) {
+                assertEquals(coord, copy, () -> in(transformer));
+                return;
+            }
+
+            assertEquals(0, ((long) copy - coord) % domain.domainLength,
+                    () -> copy + " is not a copy of " + coord + " " + in(transformer));
+            assertFalse(domain.isOver(copy), () -> copy + " lies outside the world " + in(transformer));
+        }
+
+        @Test
+        void partsCoverTheRegionCellsCappedAtOneWorldPerAxis() {
+            Random random = new Random(SEED);
+            for (WorldLoopTransformer transformer : TRANSFORMERS) {
+                for (int i = 0; i < SAMPLES; i++) {
+                    BoundingBox region = sampleRegion(random, transformer);
+                    long expected = coveredCells(transformer.coords.x, region.minX(), region.maxX())
+                            * (region.maxY() - region.minY() + 1)
+                            * coveredCells(transformer.coords.z, region.minZ(), region.maxZ());
+
+                    long total = 0;
+                    for (BoundingBox part : transformer.splitAcrossBounds(region)) {
+                        total += cellCount(part);
+                    }
+
+                    long covered = total;
+                    assertEquals(expected, total,
+                            () -> "splitAcrossBounds(" + region + ") covers " + covered + " cells instead of "
+                                    + expected + " " + in(transformer));
+                }
+            }
+        }
+
+        @Test
+        void everyPartLiesInsideTheBoundsAndKeepsTheRegionHeight() {
+            Random random = new Random(SEED);
+            for (WorldLoopTransformer transformer : TRANSFORMERS) {
+                for (int i = 0; i < SAMPLES; i++) {
+                    BoundingBox region = sampleRegion(random, transformer);
+                    for (BoundingBox part : transformer.splitAcrossBounds(region)) {
+                        assertFalse(transformer.coords.x.isOver(part.minX()) || transformer.coords.x.isOver(part.maxX()),
+                                () -> "part " + part + " of " + region + " leaves the X bounds " + in(transformer));
+                        assertFalse(transformer.coords.z.isOver(part.minZ()) || transformer.coords.z.isOver(part.maxZ()),
+                                () -> "part " + part + " of " + region + " leaves the Z bounds " + in(transformer));
+                        assertEquals(region.minY(), part.minY(), () -> in(transformer));
+                        assertEquals(region.maxY(), part.maxY(), () -> in(transformer));
+                    }
+                }
+            }
+        }
+
+        @Test
+        void containmentAgreesWithTheLatticeOfRegionCopies() {
+            Random random = new Random(SEED);
+            for (WorldLoopTransformer transformer : TRANSFORMERS) {
+                for (int i = 0; i < SAMPLES; i++) {
+                    BoundingBox region = sampleRegion(random, transformer);
+                    List<BoundingBox> parts = transformer.splitAcrossBounds(region);
+                    for (int p = 0; p < 4; p++) {
+                        int x = sampleBlockInt(random, transformer.coords.x);
+                        int z = sampleBlockInt(random, transformer.coords.z);
+                        boolean expected = containsOnLattice(transformer.coords.x, region.minX(), region.maxX(), x)
+                                && containsOnLattice(transformer.coords.z, region.minZ(), region.maxZ(), z);
+
+                        int wrappedX = transformer.coords.x.wrap(x);
+                        int wrappedZ = transformer.coords.z.wrap(z);
+                        boolean actual = parts.stream()
+                                .anyMatch(part -> part.isInside(wrappedX, region.minY(), wrappedZ));
+
+                        assertEquals(expected, actual,
+                                () -> "(" + x + ", " + z + ") in splitAcrossBounds(" + region + ") should be "
+                                        + expected + " " + in(transformer));
+                    }
+                }
+            }
+        }
+
+        @Test
+        void aSingleBlockNamesTheSamePhysicalBlockFromEveryCopy() {
+            Random random = new Random(SEED);
+            for (WorldLoopTransformer transformer : TRANSFORMERS) {
+                for (int i = 0; i < SAMPLES; i++) {
+                    int x = sampleBlockInt(random, transformer.coords.x);
+                    int y = random.nextInt(320) - 64;
+                    int z = sampleBlockInt(random, transformer.coords.z);
+                    BoundingBox region = new BoundingBox(x, y, z, x, y, z);
+
+                    List<BoundingBox> parts = transformer.splitAcrossBounds(region);
+                    assertEquals(1, parts.size(), () -> "single block " + region + " " + in(transformer));
+
+                    BoundingBox part = parts.getFirst();
+                    assertEquals(1, cellCount(part), () -> "single block " + region + " " + in(transformer));
+                    assertEquals(y, part.minY(), () -> in(transformer));
+                    assertLiesOnACopyInsideTheWorld(transformer.coords.x, x, part.minX(), transformer);
+                    assertLiesOnACopyInsideTheWorld(transformer.coords.z, z, part.minZ(), transformer);
+                }
+            }
+        }
+
+        @Test
+        void aRegionInsideTheWorldComesBackAsTheSameInstance() {
+            BoundingBox region = new BoundingBox(1, 0, 1, 5, 10, 5);
+            for (WorldLoopTransformer transformer : TRANSFORMERS) {
+                List<BoundingBox> parts = transformer.splitAcrossBounds(region);
+                assertEquals(1, parts.size(), () -> in(transformer));
+                assertSame(region, parts.getFirst(), () -> in(transformer));
+            }
+        }
+
+        @Test
+        void aRegionCrossingTheSeamIsCutInTwoAtTheBounds() {
+            WrapDomain domain = EVEN.coords.x;
+            BoundingBox region = new BoundingBox(domain.upperBound - 4, 0, 0, domain.upperBound + 3, 8, 4);
+
+            List<BoundingBox> parts = EVEN.splitAcrossBounds(region);
+            assertEquals(2, parts.size());
+            assertEquals(cellCount(region), parts.stream().mapToLong(this::cellCount).sum());
+            for (BoundingBox part : parts) {
+                assertFalse(domain.isOver(part.minX()) || domain.isOver(part.maxX()),
+                        () -> "part " + part + " leaves the X bounds " + in(EVEN));
+            }
+
+            assertSame(region, WorldLoopTransformer.NOOP.splitAcrossBounds(region).getFirst());
+        }
+    }
+
+    @Nested
     class RegionFolding {
         private BoundingBox sampleRegion(Random random, WorldLoopTransformer transformer) {
             int minX = sampleBlockInt(random, transformer.coords.x);
