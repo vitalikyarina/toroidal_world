@@ -2,11 +2,12 @@ package com.toroidalworld.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.entity.SeamAim;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
@@ -19,24 +20,27 @@ public class LivingEntityMixin {
         WorldLoopTransformer transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
         return transformer == null ? bedPosition : transformer.blocks.wrap(bedPosition);
     }
-    @ModifyArg(
-            method = "dealDefaultKnockback",
-            at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/LivingEntity;knockback(DDDLnet/minecraft/world/damagesource/DamageSource;F)V"),
-            index = 1)
+
+    @ModifyVariable(
+            method = "knockback(DDDLnet/minecraft/world/damagesource/DamageSource;FZ)V",
+            at = @At("HEAD"), argsOnly = true, ordinal = 1)
     private double toroidal$knockbackDirX(double xd) {
-        WorldLoopTransformer transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? xd : transformer.coords.x.foldDelta(xd);
+        return SeamAim.foldX((LivingEntity) (Object) this, xd);
     }
 
-    @ModifyArg(
-            method = "dealDefaultKnockback",
-            at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/LivingEntity;knockback(DDDLnet/minecraft/world/damagesource/DamageSource;F)V"),
-            index = 2)
+    @ModifyVariable(
+            method = "knockback(DDDLnet/minecraft/world/damagesource/DamageSource;FZ)V",
+            at = @At("HEAD"), argsOnly = true, ordinal = 2)
     private double toroidal$knockbackDirZ(double zd) {
-        WorldLoopTransformer transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? zd : transformer.coords.z.foldDelta(zd);
+        return SeamAim.foldZ((LivingEntity) (Object) this, zd);
+    }
+
+    @ModifyExpressionValue(
+            method = "applyItemBlocking",
+            at = @At(value = "INVOKE",
+                    target = "Lnet/minecraft/world/phys/Vec3;subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"))
+    private Vec3 toroidal$blockConeThroughSeam(Vec3 attackDirection) {
+        return SeamAim.foldDelta((LivingEntity) (Object) this, attackDirection);
     }
 
     @ModifyVariable(
