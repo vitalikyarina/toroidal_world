@@ -243,6 +243,28 @@ public class WorldLoopTransformer {
         return pieces;
     }
 
+    public boolean crossesBounds(BoundingBox region) {
+        return coords.x.isOver(region.minX()) || coords.x.isOver(region.maxX())
+                || coords.z.isOver(region.minZ()) || coords.z.isOver(region.maxZ());
+    }
+
+    public List<BoundingBox> splitAcrossBounds(BoundingBox region) {
+        if (!crossesBounds(region)) {
+            return List.of(region);
+        }
+
+        List<int[]> xSpans = coords.x.cellSpans(region.minX(), region.maxX());
+        List<int[]> zSpans = coords.z.cellSpans(region.minZ(), region.maxZ());
+        List<BoundingBox> pieces = new ArrayList<>(xSpans.size() * zSpans.size());
+        for (int[] xSpan : xSpans) {
+            for (int[] zSpan : zSpans) {
+                pieces.add(new BoundingBox(xSpan[0], region.minY(), zSpan[0], xSpan[1], region.maxY(), zSpan[1]));
+            }
+        }
+
+        return pieces;
+    }
+
     public long wrapBlockNode(long blockNode) {
         int x = BlockPos.getX(blockNode);
         int z = BlockPos.getZ(blockNode);
