@@ -112,6 +112,7 @@
     "LongDistancePatrolGoalMixin",
     "LongJumpUtilMixin",
     "LookControlMixin",
+    "MaceSmashKnockbackMixin",
     "MapItemMixin",
     "MapItemSavedDataMixin",
     "MinecraftServerMixin",
