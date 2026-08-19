@@ -4,6 +4,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.InstructionAdapter;
 
+import com.toroidalworld.noise.ContextScaledNoise;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.BytecodeEmitter;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.BytecodeGen;
@@ -17,6 +18,7 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
     public static final C2meFoldedNoiseEmitter INSTANCE = new C2meFoldedNoiseEmitter();
 
     private static final String FOLD_CLASS = Type.getInternalName(C2meDfcFold.class);
+    private static final String SAMPLE_CLASS = Type.getInternalName(ContextScaledNoise.class);
     private static final String CONTEXT_DESC = Type.getDescriptor(Context.class);
     private static final String NOISE_HOLDER_DESC = Type.getDescriptor(NoiseHolder.class);
 
@@ -61,7 +63,7 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
         context.callDelegateSingle(m, inputYMethod);
         context.callDelegateSingle(m, foldedZMethod);
         m.dconst(node.horizontalScale);
-        m.invokestatic(FOLD_CLASS, SAMPLE_METHOD, SAMPLE_DESC, false);
+        m.invokestatic(SAMPLE_CLASS, SAMPLE_METHOD, SAMPLE_DESC, false);
         m.areturn(Type.DOUBLE_TYPE);
 
         m.visitLabel(vanilla);
@@ -145,7 +147,7 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
             loadInput(m, idx, arrays, readArrays, foldedZMethod, constantZ);
 
             m.dconst(node.horizontalScale);
-            m.invokestatic(FOLD_CLASS, SAMPLE_METHOD, SAMPLE_DESC, false);
+            m.invokestatic(SAMPLE_CLASS, SAMPLE_METHOD, SAMPLE_DESC, false);
             m.astore(Type.DOUBLE_TYPE);
         });
 

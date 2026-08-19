@@ -43,6 +43,14 @@ repositories {
             includeGroup 'com.github.bawnorton.mixinsquared'
         }
     }
+    // C2ME, for the AST classes the density-function fold test builds by hand.
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
 }
 
 // Mojang ships Java 25 to end users, so mods should target Java 25.
@@ -123,12 +131,34 @@ test {
     useJUnitPlatform()
 }
 
-// Sets up a dependency configuration called 'localRuntime'.
-// This configuration should be used instead of 'runtimeOnly' to declare
-// a dependency that will be present for runtime testing but that is
-// "optional", meaning it will not be pulled by dependents of this mod.
+// The fold test compiles against C2ME's AST classes and runs against C2ME itself. The module jars are jar-in-jar
+// payloads FML cannot load, so they serve the compile alone; the outer artifact goes on the test runtime as a mod.
 configurations {
-    runtimeClasspath.extendsFrom localRuntime
+    c2meModules
+}
+
+dependencies {
+    c2meModules "maven.modrinth:c2me-neoforge:${c2me_version}"
+    testRuntimeOnly "maven.modrinth:c2me-neoforge:${c2me_version}"
+}
+
+var c2meModuleJars = tasks.register('unpackC2meModules', Sync) {
+    from(zipTree(configurations.c2meModules.singleFile)) {
+        include 'META-INF/jars/c2me-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('c2me-modules')
+}
+
+dependencies {
+    testCompileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
+}
+
+// C2ME bundles its own MixinSquared. JarJar picks one of the two in a real installation; the test runtime has no
+// JarJar, so both land on the module path and the launcher refuses two modules exporting one package.
+configurations.testRuntimeClasspath {
+    exclude group: 'com.github.bawnorton.mixinsquared'
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

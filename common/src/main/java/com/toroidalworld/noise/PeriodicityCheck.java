@@ -75,12 +75,16 @@ public final class PeriodicityCheck {
             }
         }
 
-        if (!brokenFields.isEmpty()) {
-            LOGGER.warn(
-                    "[world-loop] periodicity_broken level={} width_blocks={} fields={} broken_samples={} samples={}",
-                    levelName, widthBlocks, String.join(",", brokenFields), brokenSamples,
-                    SAMPLE_X.length * SAMPLE_Z.length);
+        int samples = SAMPLE_X.length * SAMPLE_Z.length;
+        if (brokenFields.isEmpty()) {
+            LOGGER.info("[world-loop] periodicity_ok level={} width_blocks={} samples={}",
+                    levelName, widthBlocks, samples);
+            return;
         }
+
+        LOGGER.warn(
+                "[world-loop] periodicity_broken level={} width_blocks={} fields={} broken_samples={} samples={}",
+                levelName, widthBlocks, String.join(",", brokenFields), brokenSamples, samples);
     }
 
     private static boolean collectColumn(Set<String> brokenFields, LevelHeightAccessor heightAccessor,
