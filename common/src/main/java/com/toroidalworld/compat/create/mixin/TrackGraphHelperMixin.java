@@ -24,6 +24,9 @@ import net.minecraft.world.phys.Vec3;
 // one it is measured from — so one handler serves the ends of the rail and every step of the walk, and the distance
 // the walk accumulates comes out in blocks travelled rather than worlds. The level is the method's own parameter,
 // which is what makes this work on a client with no server to ask.
+//
+// What the walk does with those ends once it has them is ITrackBlockClientMixin: the ends are graph keys and the
+// steps between them are block reads, and on a client those are two different frames.
 @Mixin(value = TrackGraphHelper.class, remap = false)
 public abstract class TrackGraphHelperMixin {
     @WrapOperation(method = "getGraphLocationAt",

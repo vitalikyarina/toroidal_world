@@ -22,13 +22,17 @@
     "TrackGraphHelperMixin",
     "TrackNodeLocationMixin",
     "TrackPlacementMixin",
+    "TrackTargetingBlockItemMixin",
     "TrainCollisionSpanMixin"
   ],
   "client": [
     "AbstractBlockEntityVisualAccessor",
     "BeltConnectorHandlerMixin",
     "GearboxRendererMixin",
-    "GearboxVisualMixin"
+    "GearboxVisualMixin",
+    "ITrackBlockClientMixin",
+    "TrackGraphVisualizerMixin",
+    "TrackTargetingClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1
