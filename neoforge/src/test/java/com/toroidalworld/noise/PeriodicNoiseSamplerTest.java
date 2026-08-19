@@ -18,13 +18,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.synth.ImprovedNoise;
 
-// Periodicity is the sampler's whole contract, and with the fold-first design it is bit-exact: a coordinate and its
-// copy one world width away fold to the same double before any arithmetic, so every lap assertion demands exact
-// equality — no epsilon. The coordinates are kept dyadic (whole sixteenths of a block) so that adding a world width
-// is itself exact; worldgen only ever asks at such coordinates. A degenerate sampler (a constant) would pass every
-// seam assertion while generating flat terrain, so the output is also pinned to actually vary, and the parity suite
-// pins the character: wherever 256 divides the period, the sampler must reproduce vanilla's ImprovedNoise bit for bit.
-// The whole matrix runs on fixed seeds so a failure reproduces.
 class PeriodicNoiseSamplerTest {
     private static final long SEED = 0x0153EL;
     private static final int LINE_SAMPLES = 256;
@@ -33,20 +26,12 @@ class PeriodicNoiseSamplerTest {
 
     private static final long[] WORLD_SEEDS = {0x0153EL, 0xC0FFEEL, -1234567890123456789L};
 
-    // The horizontal scale each caller parks in the context spans orders of magnitude in vanilla; 1.17 is one of the
-    // hardcoded surface scales and lands on a non-integer period, exercising the rounding path.
     private static final double[] SCALES = {0.25, 1.0, 100.0, 1.17};
 
-    // On the 1024-block configurations these scales give periods 256, 1024 and 102400 — all multiples of 256, where
-    // the sampler must be bit-exact vanilla.
     private static final double[] PARITY_SCALES = {0.25, 1.0, 100.0};
 
-    // yScale zero skips the fudge quantization entirely; a nonzero pair exercises it.
     private static final double[][] Y_PARAMS = {{0.0, 0.0}, {1.0, 2.0}};
 
-    // Even centered, odd, uneven split with unequal axis widths, and one wrapped axis beside an unbounded one — the
-    // unbounded Z rides vanilla's straight lattice and must not disturb X periodicity, but its own axis has no seam
-    // contract to hold.
     private static final WorldLoopTransformer EVEN = transformer(-32, 32, -32, 32);
     private static final WorldLoopTransformer ODD = transformer(-2, 3, -2, 3);
     private static final WorldLoopTransformer UNEVEN = transformer(-48, 16, 0, 16);
@@ -60,9 +45,6 @@ class PeriodicNoiseSamplerTest {
         return new WorldLoopTransformer(new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax));
     }
 
-    // A real vanilla ImprovedNoise beside a replica of its private permutation table, built by replaying the
-    // constructor's shuffle on an identically seeded random. The parity suite validates the replica: if the replay
-    // ever drifted from the constructor, the bit-exact comparison against vanilla.noise would fail loudly.
     private record NoiseInstance(ImprovedNoise vanilla, byte[] permutations, double xo, double yo, double zo) {
         static NoiseInstance of(long worldSeed) {
             ImprovedNoise vanilla = new ImprovedNoise(new LegacyRandomSource(worldSeed));
@@ -95,14 +77,10 @@ class PeriodicNoiseSamplerTest {
         }
     }
 
-    // Whole sixteenths of a block, uniformly over the axis — dyadic, so the coordinate plus a world width is exact.
     private static double blockInDomain(Random random, WrapDomain domain) {
         return domain.lowerBound + random.nextInt(domain.domainLength) + sixteenth(random);
     }
 
-    // Walks the axis end to end in LINE_SAMPLES strides with a sixteenth jitter inside each — the whole seam line
-    // gets covered, not a lucky subset. An unbounded axis has no ends to walk between; there the walk covers a plain
-    // span around the origin, which is all the coordinate variety that axis is for.
     private static double lineCoord(Random random, WrapDomain domain, int step) {
         if (domain instanceof WrapDomain.Noop) {
             return -2048.0 + step * (4096.0 / LINE_SAMPLES) + sixteenth(random);
@@ -226,9 +204,6 @@ class PeriodicNoiseSamplerTest {
         }
     }
 
-    // Wherever 256 divides the period the cell modulo is a no-op, and the sampler must reproduce vanilla's field bit
-    // for bit — vanilla samples pre-scaled coordinates, the sampler scales raw ones itself. This is the sampler's
-    // character guarantee: away from the low octaves, looped terrain IS vanilla terrain.
     @Nested
     class VanillaParity {
         @Test
@@ -258,9 +233,6 @@ class PeriodicNoiseSamplerTest {
         }
     }
 
-    // The design floor: an octave whose single cell outgrows the whole world collapses to period 1 — one repeated
-    // cell. The seam contract must still hold exactly; the shape inside the cell is whatever the one gradient pair
-    // gives, so nothing else is pinned here.
     @Nested
     class LowestPeriod {
         private static final double TINY_SCALE = 1.0 / 2048.0;
@@ -310,8 +282,6 @@ class PeriodicNoiseSamplerTest {
             }
         }
 
-        // Min-to-max over one full sweep: along the seam line X sits at the bound and Z walks the world; around the
-        // world X walks a whole lap at a fixed Z. Y is fixed so nothing but the swept axis feeds the spread.
         private double spread(Random random, NoiseInstance noise, WorldLoopTransformer transformer, double scale,
                 boolean alongSeam) {
             double min = Double.MAX_VALUE;

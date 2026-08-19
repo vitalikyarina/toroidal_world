@@ -17,12 +17,8 @@ import net.minecraft.server.network.PlayerChunkSender;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.LevelChunk;
 
-// Chunks are sent nearest-first. A chunk just across the seam is a whole world away by plain distance, so it would sit
-// at the back of the queue and effectively never arrive — the ordering has to measure through the seam instead. Only
-// the ordering key is swapped; vanilla's collection pipeline stays untouched.
 @Mixin(PlayerChunkSender.class)
 public class PlayerChunkSenderMixin {
-    // The over-quota branch: picks the closest batch out of the pending set before the chunks are even resolved.
     @ModifyArg(
             method = "collectChunksToSend",
             at = @At(
@@ -40,7 +36,6 @@ public class PlayerChunkSenderMixin {
         return Comparator.comparingInt(pending -> transformer.chunks.sqrDistToBounds(packedPlayerPos, pending));
     }
 
-    // The everything-fits branch: the resolved chunks are merely ordered, so the sort key is all that matters.
     @ModifyArg(
             method = "collectChunksToSend",
             at = @At(

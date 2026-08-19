@@ -14,16 +14,6 @@ import net.minecraft.world.entity.monster.breeze.Breeze;
 import net.minecraft.world.entity.monster.breeze.Shoot;
 import net.minecraft.world.phys.Vec3;
 
-// Two readings here, and the first decides whether the second ever happens.
-//
-// The range gate is Vec3.distanceToSqr against 256 — sixteen blocks — a bare subtraction between two absolute positions
-// that no Entity fold reaches. Through the seam it refuses and then erases BREEZE_SHOOT, so the behaviour never starts:
-// the breeze faces a target a few blocks away across the boundary and never fires. The distance becomes the folded one
-// and vanilla's own comparison against its own threshold decides on it.
-//
-// The breeze shoots from a brain behaviour rather than a goal, and its wind charge leaves with no arc lift at all — but
-// the horizontal difference under it is the same raw one, so the charge goes the long way round like everything else.
-// The head turn beside it needs nothing: it goes through Entity.lookAt, folded already.
 @Mixin(Shoot.class)
 public class BreezeShootMixin {
     @WrapOperation(

@@ -16,12 +16,6 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.animal.bee.Bee;
 
-// Choosing a hive, rather than returning to one: the search itself already reaches across the seam, so a hive on the
-// far side does come back as a candidate — but the candidates are then ranked by a raw distance, which puts a hive
-// three blocks away through the boundary behind one nineteen blocks away on this side, and the bee takes the first.
-//
-// The comparator is replaced whole rather than the distance inside it: the ranking expression is a lambda, which
-// compiles to a method of its own that an injector scoped to this method would not see at all.
 @Mixin(targets = "net.minecraft.world.entity.animal.bee.Bee$BeeLocateHiveGoal")
 public class BeeLocateHiveGoalMixin {
     @Shadow(aliases = "this$0")

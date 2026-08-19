@@ -10,9 +10,6 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 import com.mojang.logging.LogUtils;
 
-// Gates the JourneyMap compat mixins on JourneyMap actually being installed. Detection is a classpath resource probe
-// rather than a loader API or Class.forName: mixin config plugins run before mod initialization on both loaders, and
-// looking a .class resource up loads nothing.
 public class JourneyMapMixinPlugin implements IMixinConfigPlugin {
     private static final Logger LOGGER = LogUtils.getLogger();
 

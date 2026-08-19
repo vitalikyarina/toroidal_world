@@ -13,12 +13,6 @@ import com.ishland.c2me.opts.dfc.common.gen.meta.ValuesMethodDefF64;
 
 import net.minecraft.world.level.levelgen.DensityFunction.NoiseHolder;
 
-// Writes the branch C2ME's own emitter has no reason to write: ask once whether this generation wraps, and evaluate
-// the folded inputs or C2ME's own accordingly. The vanilla side is not a copy — it is C2ME's emitter, handed this node
-// directly, because the node's inherited inputs are C2ME's tree untouched.
-//
-// Both branches end in their own return rather than meeting at a merge point, which is what lets the vanilla side be
-// delegated whole: its emitter ends every method it writes.
 public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedNoiseNode> {
     public static final C2meFoldedNoiseEmitter INSTANCE = new C2meFoldedNoiseEmitter();
 
@@ -41,8 +35,7 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
 
     private static final String GENERATION_LOCAL = "toroidalGeneration";
 
-    // The result array of a multi method doubles as the buffer for the first input that needs one — C2ME's own
-    // arrangement, kept here because the loop reads every input before it writes the result back over the first.
+    // C2ME's own arrangement: the result array doubles as the buffer for the first input that needs one.
     private static final int RESULT_ARRAY_LOCAL = 1;
 
     private static final int OBJECT_CACHE_LOCAL = 6;
@@ -86,7 +79,6 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
         GenericShiftedNoiseNodeBytecodeEmitter.INSTANCE.doBytecodeGenMulti(node, context, m, localVarConsumer);
     }
 
-    // The one lookup, kept in a local so the sample can be handed the same context the branch was decided on.
     private static int emitWrappedContext(InstructionAdapter m, BytecodeGen.Context.LocalVarConsumer localVarConsumer,
             Label vanilla) {
         int generationLocal = localVarConsumer.createLocalVariable(GENERATION_LOCAL, CONTEXT_DESC);
@@ -97,9 +89,6 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
         return generationLocal;
     }
 
-    // C2ME's array plumbing for a three-input noise node, with the folded inputs in place of the scaled ones and the
-    // scale riding into the call. An input that folded to a constant carries no array at all, which is the case for
-    // every ShiftB — its third input is the constant zero.
     private static void emitFoldedMulti(C2meFoldedNoiseNode node, BytecodeGen.Context context, InstructionAdapter m,
             BytecodeGen.Context.LocalVarConsumer localVarConsumer, int generationLocal) {
         String noiseField = context.newField(NoiseHolder.class, node.noise);

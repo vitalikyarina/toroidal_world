@@ -10,11 +10,6 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 import com.mojang.logging.LogUtils;
 
-// Gates the Xaero compat mixins on the respective mod actually being installed — the two Xaero mods ship
-// separately, so each has its own probe: HudMod is the minimap's entry class, WorldMap the world map's, and the
-// mixins under the .map subpackage belong to the latter. Detection is a classpath resource probe rather than a
-// loader API or Class.forName: mixin config plugins run before mod initialization on both loaders, and looking a
-// .class resource up loads nothing.
 public class XaeroMixinPlugin implements IMixinConfigPlugin {
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -33,7 +28,6 @@ public class XaeroMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        // The world-map bridge class lives in the minimap jar but leans on world-map types — it needs both mods.
         if (mixinClassName.endsWith("SupportXaeroWorldmapMixin")) {
             return XAERO_MINIMAP_PRESENT && XAERO_WORLDMAP_PRESENT;
         }

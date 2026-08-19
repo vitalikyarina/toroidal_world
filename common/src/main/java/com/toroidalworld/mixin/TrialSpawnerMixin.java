@@ -13,9 +13,6 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.trialspawner.TrialSpawner;
 
-// The spawner keeps its trial mobs on a leash of raw distance: one that chases a player across the seam reads a world
-// away and is silently dropped from tracking, so the wave never completes — the direct analogue of the raid's
-// updateRaiders. The leash is measured through the seam instead; a mob that genuinely wanders off still drops.
 @Mixin(TrialSpawner.class)
 public class TrialSpawnerMixin {
     @WrapOperation(

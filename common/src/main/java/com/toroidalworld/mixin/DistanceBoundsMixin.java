@@ -15,17 +15,6 @@ import net.minecraft.advancements.triggers.FallAfterExplosionTrigger;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
-// Three readers of a distance bound, one arithmetic (see SeamDistanceBounds): each hands DistancePredicate two
-// absolute positions and the predicate subtracts them raw. A kill five blocks away through the seam then measures
-// half a world, which awards adventure/sniper_duel and adventure/bullseye to someone standing next to their target;
-// the same reading in the other direction makes the at-most bound of the lightning criteria unreachable.
-//
-// Written on the call rather than on the method it sits in, because two of these three read the same position again
-// through a LocationPredicate beforehand — that one asks the world about a place, which already folds, and it stays on
-// the coordinates it was given.
-//
-// DistanceToPlayerPredicate is here for the entity predicate rather than for a criterion of its own: it is the
-// `distance` field of every EntityPredicate, so it carries the bound of a loot table or a predicate file as well.
 @Mixin({
         DistanceTrigger.TriggerInstance.class,
         FallAfterExplosionTrigger.TriggerInstance.class,

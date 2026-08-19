@@ -20,10 +20,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 
-// Vanilla builds ONE light packet and hands the same instance to every player bordering the chunk. The translator
-// rewrites packet headers in place, and each player needs their own coordinates — so on a wrapped level the shared
-// broadcast is split into a fresh packet per player. The filters are still set at this call and only cleared after
-// it, so the extra packets read the same changes the first one did.
 @Mixin(ChunkHolder.class)
 public class ChunkHolderMixin {
     @Shadow

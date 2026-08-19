@@ -14,16 +14,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 
-// The two guards persisted bounds pass through. The codec is the gate every saved world enters by: it must accept
-// exactly the three written shapes — a real span, an absent pair, the legacy sentinel — and refuse a degenerate span
-// before it can become a WrapDomain with no positive width. isSquare is the claim guard of the Re-Create restore
-// path: it must accept exactly the shapes the creation flow builds, and refuse every codec-valid shape the settings
-// screen cannot represent — those are the ones whose chunkWidth() would throw or lie.
 class WorldLoopBoundsTest {
-    // The sentinel the retired model wrote for a non-looping axis: 1883191 chunks, kept as the frozen literal rather
-    // than re-derived from the constants it once came from. The number already sits in legacy files, so the codec owes
-    // acceptance of exactly this value forever — and if the game constants behind the production copy ever move, the
-    // derivation drifts away from the files while a test deriving the same way would drift with it and stay green.
     private static final int LEGACY_DISABLED_AXIS_RADIUS = 1883191;
 
     @Test
@@ -65,9 +56,6 @@ class WorldLoopBoundsTest {
         assertTrue(error.contains("both chunk bounds or neither"), error);
     }
 
-    // The write path is what every one of the accepted shapes above comes back through on the next save: a looped span
-    // keeps its two bounds, an unbounded axis goes out as the absent pair — never the sentinel it may have been read
-    // from.
     @Test
     void codecWritesALoopedSpanAsItsTwoBounds() {
         assertEquals(JsonParser.parseString("{\"min_chunk\":-32,\"max_chunk\":32}"),

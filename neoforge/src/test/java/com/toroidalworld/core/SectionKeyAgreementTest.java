@@ -14,25 +14,12 @@ import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 
-// Storage keyed by section is written by folding the position it was addressed with and letting vanilla name the
-// section from that — which is what the POI manager does with the positions it is handed. Two things have to hold for
-// that fold to be a rename rather than a move: the section it names must be one the world actually has, or the storage
-// grows a section for ground that does not exist and then saves it; and the slot the position takes inside that section
-// must be the one it arrived with, or a folded record lands on top of another one.
-//
-// Both go through vanilla's own SectionPos packing rather than arithmetic of our own, so a change to how a section is
-// named, or to how a position is packed inside one, fails here rather than in a world. The per-axis fold underneath is
-// BlockChunkAgreementTest's; what this test alone guards is what vanilla makes of a whole BlockPos after it.
 class SectionKeyAgreementTest {
     private static final long SEED = 0x5EC7L;
     private static final int SAMPLES = 2000;
 
-    // Heights either side of a section floor and at both ends of the vanilla column — Y carries no seam and must come
-    // through the fold untouched, packing included.
     private static final int[] HEIGHTS = {-64, -1, 0, 319};
 
-    // The suite's standard shapes — even centered, odd, uneven split with unequal axis widths, one chunk wide, a
-    // looped axis beside an unbounded one, and the fully disabled transformer.
     private static final List<WorldLoopTransformer> TRANSFORMERS = List.of(
             transformer(-32, 32, -32, 32),
             transformer(-2, 3, -2, 3),
@@ -93,8 +80,6 @@ class SectionKeyAgreementTest {
         return random.nextInt(384) - 64;
     }
 
-    // The block edges with their neighbours, and the same spots whole worlds out — where a lap miscount or an
-    // off-by-one lands first.
     private static int[] edges(WrapDomain blockDomain) {
         int width = blockDomain.domainLength;
         return new int[] {

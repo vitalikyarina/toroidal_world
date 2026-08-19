@@ -15,11 +15,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.server.commands.LocateCommand;
 
-// The search itself already answers with a place inside the world; what it says about that place is the problem. The
-// distance is straight-line arithmetic on two raw coordinates, so a stronghold thirty blocks away over the seam is
-// announced as five hundred — the one number the player uses to decide whether to walk there.
-//
-// Two readings, one for each shape of the message: with the height included and without it.
 @Mixin(LocateCommand.class)
 public class LocateCommandMixin {
     @Unique

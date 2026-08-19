@@ -19,10 +19,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
 
-// Boxes and regions across the seam are stated as invariants and checked against brute force over the lattice of
-// translated world copies — the reference stays dumber than the code under test, and the seed is fixed so a failure
-// reproduces. BoundingBox is inclusive on both ends, which the int references account for; unwrap takes an
-// already-wrapped coordinate, matching the contract of its production call sites.
 class SeamRegionTest {
     private static final long SEED = 0xB0C5L;
     private static final int SAMPLES = 800;
@@ -41,8 +37,6 @@ class SeamRegionTest {
         return new WorldLoopTransformer(new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax));
     }
 
-    // Sampling reach is capped on wide worlds and stays clear of the packed-BlockPos 26-bit horizontal range; an
-    // unbounded axis has no width to derive it from, so its samples cover a plain span around the origin.
     private static int reachCap(WrapDomain domain, int cap) {
         return domain instanceof WrapDomain.Noop ? cap : Math.min(domain.domainLength, cap);
     }
@@ -100,7 +94,6 @@ class SeamRegionTest {
             return new AABB(minX, minY, minZ, minX + sizeX, minY + random.nextDouble() * 16, minZ + sizeZ);
         }
 
-        // A looped axis covers at most one world width; an unbounded axis has no width to cap the box at.
         private double coveredSize(WrapDomain domain, double size) {
             return domain instanceof WrapDomain.Noop ? size : Math.min(size, domain.domainLength);
         }
@@ -133,7 +126,6 @@ class SeamRegionTest {
                 for (int i = 0; i < SAMPLES; i++) {
                     AABB box = sampleBox(random, transformer);
                     for (AABB part : transformer.splitAcrossBounds(box)) {
-                        // An unbounded axis has no bounds for a part to leave.
                         if (!(transformer.coords.x instanceof WrapDomain.Noop)) {
                             assertTrue(part.minX >= transformer.coords.x.lowerBound - 1e-9
                                             && part.maxX <= transformer.coords.x.upperBound + 1e-9,
@@ -214,8 +206,6 @@ class SeamRegionTest {
                     minZ + random.nextInt(2 * reachCap(transformer.coords.z, 16_000) + 1));
         }
 
-        // spansSeam / foldAcrossSeam speak about a pair of corner positions inside the world — the corners are wrapped
-        // first, mirroring how WrapDomainTest exercises the scalar fold.
         private BoundingBox sampleWrappedCornerRegion(Random random, WorldLoopTransformer transformer) {
             int x1 = transformer.coords.x.wrap(sampleBlockInt(random, transformer.coords.x));
             int x2 = transformer.coords.x.wrap(sampleBlockInt(random, transformer.coords.x));
@@ -340,7 +330,6 @@ class SeamRegionTest {
             }
             assertEquals(best, Math.abs((long) unwrapped - ref),
                     () -> axis + ": unwrap(" + ref + ", " + wrapped + ") is not the nearest copy " + in(transformer));
-            // The half-a-world bound is a looped-axis promise; an unbounded axis returns the position as it came.
             if (!(domain instanceof WrapDomain.Noop)) {
                 assertTrue(2L * Math.abs((long) unwrapped - ref) <= domain.domainLength,
                         () -> axis + ": unwrap(" + ref + ", " + wrapped + ") is over half a world away " + in(transformer));

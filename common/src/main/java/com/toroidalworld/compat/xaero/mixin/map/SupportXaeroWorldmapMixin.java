@@ -15,13 +15,6 @@ import xaero.map.WorldMapSession;
 import xaero.map.region.MapRegion;
 import xaero.map.region.MapTileChunk;
 
-// With both Xaero mods installed the minimap does not paint its own canvas — it renders tiles out of the world
-// map's storage, looked up by the mirror grid slot and placed by the tile's own stored coordinate. With canonical
-// storage that breaks twice: slots beyond the canonical edge find nothing (blank past the seam), and a player past
-// a seam crossing has every tile displaced a world width (canonical tile coordinate minus mirror player). The glue:
-// the SOURCE of each tile folds canonical (each mirror slot fetches its canonical copy — seamless, unbounded), the
-// PLACEMENT stays the mirror slot. The redirects share per-iteration state; safe because the render thread walks
-// the loop strictly in call order — region fetch, then chunk fetch, then placement reads.
 @Mixin(value = SupportXaeroWorldmap.class, remap = false)
 public abstract class SupportXaeroWorldmapMixin {
     @Unique
@@ -53,7 +46,7 @@ public abstract class SupportXaeroWorldmapMixin {
             return original;
         }
 
-        // A candidate so the null-guarded chunk fetch runs at all; the chunk redirect re-fetches precisely.
+        // A candidate value only, so the null-guarded chunk fetch runs at all; the chunk redirect re-fetches precisely.
         return processor.getMinimapMapRegion(
                 Math.floorDiv(XaeroWorldMapFold.foldTileChunk(Direction.Axis.X, regX * 8), 8),
                 Math.floorDiv(XaeroWorldMapFold.foldTileChunk(Direction.Axis.Z, regZ * 8), 8));
@@ -121,7 +114,6 @@ public abstract class SupportXaeroWorldmapMixin {
         return foldedRegion.getChunk(foldedTileX & 7, foldedTileZ & 7);
     }
 
-    // Placement: the tile draws in its mirror grid slot, not at its canonical coordinate — the glue's other half.
     @Redirect(
             method = "renderChunks",
             at = @At(value = "INVOKE", target = "Lxaero/map/region/MapTileChunk;getX()I"))

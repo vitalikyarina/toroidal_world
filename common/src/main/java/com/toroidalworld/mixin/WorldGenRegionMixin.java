@@ -27,15 +27,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
-// Once ChunkGenerationTaskMixin has folded a slot, a write addressed one chunk past the bounds lands in the real chunk
-// on the other side of the world — but it still carries the position it was addressed with. Whatever indexes by the low
-// bits survives that untouched (block states, heightmaps, the post-processing shorts), so those are deliberately left
-// alone. What does NOT survive is every use of the position as a KEY: a block entity is filed under its whole BlockPos,
-// and a chest keyed a world away from the chunk holding it is the corruption this card exists to avoid.
-//
-// The rule is not "wrap out-of-bounds positions" but "state the key in the frame of the chunk that received the write".
-// Those coincide when a slot was folded and are identical when it was not, so a fallback slot stays exactly vanilla
-// without this mixin having to know why the fold declined.
 @Mixin(WorldGenRegion.class)
 public abstract class WorldGenRegionMixin implements LevelHolder {
     @Shadow
@@ -47,8 +38,6 @@ public abstract class WorldGenRegionMixin implements LevelHolder {
         return this.level;
     }
 
-    // The key as the receiving chunk would file it. Equal to the argument whenever the write went where its coordinates
-    // said, so the ordinary path allocates nothing.
     @Unique
     private BlockPos toroidal$keyIn(ChunkAccess chunk, BlockPos pos) {
         ChunkPos chunkPos = chunk.getPos();
@@ -65,7 +54,6 @@ public abstract class WorldGenRegionMixin implements LevelHolder {
         return key;
     }
 
-    // A block entity is created at the position it was asked for and then filed under its own getBlockPos.
     @WrapOperation(
             method = "setBlock",
             at = @At(
@@ -85,8 +73,6 @@ public abstract class WorldGenRegionMixin implements LevelHolder {
         original.call(chunk, this.toroidal$keyIn(chunk, pos));
     }
 
-    // The placeholder a proto-chunk stores instead of a live block entity carries the coordinates in its own tag, and
-    // getBlockEntity later rebuilds the block entity from them.
     @WrapOperation(
             method = "setBlock",
             at = @At(
@@ -99,8 +85,6 @@ public abstract class WorldGenRegionMixin implements LevelHolder {
         original.call(chunk, tag);
     }
 
-    // POI records are filed by section. PoiManagerMixin folds the searches, not the writes, so a record stored at a raw
-    // out-of-bounds position sits in a section nothing will ever look at.
     @WrapOperation(
             method = "setBlock",
             at = @At(
@@ -131,10 +115,6 @@ public abstract class WorldGenRegionMixin implements LevelHolder {
         return original.call(chunk, this.toroidal$keyIn(chunk, pos));
     }
 
-    // Reading a block entity is also where one gets BUILT: the placeholder a proto-chunk stored is materialised here and
-    // filed straight back into the chunk under the position it was built with. Rebasing only the lookup left the build
-    // itself on the raw position, so the block entity landed in the right chunk under a key a world away from it — two
-    // per generated world, every time, always on the seam. Both constructors have to be rebased, not just the read.
     @WrapOperation(
             method = "getBlockEntity",
             at = @At(
@@ -160,7 +140,6 @@ public abstract class WorldGenRegionMixin implements LevelHolder {
         return original.call(this.toroidal$keyIn(chunk, pos), state, tag, registries);
     }
 
-    // An entity carries world coordinates of its own; the chunk it is filed in does not correct them.
     @WrapOperation(
             method = "addFreshEntity",
             at = @At(

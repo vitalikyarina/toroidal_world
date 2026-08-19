@@ -19,21 +19,6 @@ import xaero.map.MapWriter;
 import xaero.map.region.LeveledRegion;
 import xaero.map.region.MapRegion;
 
-// The world map's persistence is keyed by the client's mirror coordinates, which run a world width per lap — the
-// stored map would grow a fresh strip forever. Two cuts fix the write side:
-//
-// 1. The writeChunk dispatch carries the storage keys (tile chunk + its in-region slot) and the level-access keys
-//    (chunk coords) as separate arguments — the storage keys fold canonical, the level reads stay in mirror space
-//    where the client's chunks actually are. The in-region slot is recomputed from the folded tile chunk rather
-//    than folded itself: a nether world is narrower than a region, so the slot is not fold-invariant.
-// 2. The region visit/load tail enumerates regions straight off the mirror window, and regions cannot be folded
-//    as indices (the canonical world covers parts of two regions per axis) — the region fetch inside the loop is
-//    redirected to drain a queue of the canonical regions the folded window covers. When the window holds fewer
-//    slots than the queue, the rest carries over to the next frame — onRender runs per frame, so coverage
-//    completes within a few frames. Without this the writer would wait forever on canonical regions nothing
-//    requests the loading of. The tail is redirected rather than cancelled: the whole method body sits inside
-//    synchronized(renderThreadPauseSync), and a cancellation would return past the monitor exit
-//    (IllegalMonitorStateException — found the hard way).
 @Mixin(value = MapWriter.class, remap = false)
 public abstract class MapWriterMixin {
     @Shadow

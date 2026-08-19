@@ -19,10 +19,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.gameevent.GameEventDispatcher;
 
-// A listener that asks to be served by distance is queued and the queue is sorted before delivery, on a raw Vec3
-// distance each record froze at construction. Across the seam that key carries the width of the world, so the nearest
-// listener is served last — and for the one kind of listener that asks for this order, the sculk catalyst, the order is
-// the whole prize: the first one served takes the dead mob's experience and every later one finds it already spent.
 @Mixin(GameEventDispatcher.class)
 public class GameEventDispatcherMixin {
     @Shadow

@@ -32,9 +32,6 @@ public class PerlinNoiseMixin {
     @Final
     private double lowestFreqInputFactor;
 
-    // X and Z go in raw: the wrapped ImprovedNoise maps them onto a circle spanning the world, so scaling them by the
-    // octave factor (or folding them through PerlinNoise.wrap) would shift the phase and tear the seam open. The octave
-    // factor travels through the context instead, where it becomes the radius of that circle.
     @WrapMethod(method = "getValue(DDDDD)D")
     private double toroidal$periodicValue(double x, double y, double z, double yScale, double yFudge, Operation<Double> original) {
         Context generation = GenerationTransformerContext.context();

@@ -24,9 +24,6 @@ import com.mojang.logging.LogUtils;
 
 import net.minecraft.server.level.ChunkMap;
 
-// One chunk system per level, so the transformer is resolved once and read off a field afterwards — the dependency
-// sets this feeds are recomputed on every status transition of every chunk, which is no place for an attachment
-// lookup. The level itself comes through the mod's own duck on ChunkMap.
 @Mixin(TheChunkSystem.class)
 public class TheChunkSystemMixin implements TransformerSource {
     @Shadow
@@ -37,9 +34,6 @@ public class TheChunkSystemMixin implements TransformerSource {
     @Final
     private SchedulingManager schedulingManager;
 
-    // The worldgen write lock is taken with nothing but this manager in hand, so it is given the one object per level
-    // that answers the question — bound here rather than resolved there, because the answer is still lazy and this is
-    // where the two meet.
     @Inject(method = "<init>", at = @At("TAIL"))
     private void toroidal$bindLockFoldSource(ChunkMap tacs, CallbackInfo ci) {
         ((TransformerSourceBindable) this.schedulingManager).toroidal$bindTransformerSource(this);
@@ -65,9 +59,7 @@ public class TheChunkSystemMixin implements TransformerSource {
     @Unique
     private static final Logger toroidal$LOGGER = LogUtils.getLogger();
 
-    // Diagnostic. C2ME logs this failure with three placeholders and three arguments plus the throwable, so slf4j
-    // consumes the throwable as an argument and the stack is never printed — the run says "NullPointerException" and
-    // nothing about where. This prints it properly.
+    // C2ME passes the throwable as a third slf4j argument, so the stack is swallowed; this prints it.
     @Inject(method = "handleTransactionException", at = @At("HEAD"))
     private void toroidal$logTransactionFailure(
             ItemHolder<?, ?, ?, ?> holder,

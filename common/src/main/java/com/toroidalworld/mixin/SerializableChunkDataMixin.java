@@ -29,27 +29,18 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import net.minecraft.world.level.levelgen.structure.Structure;
 
-// A chunk read back from disk has every structure reference sitting further than the scan radius thrown away as
-// corrupt. The distance is measured between the two canonical positions, and a reference folded across the seam is
-// canonically a whole world away — so the load path quietly deletes exactly the references this dimension went to the
-// trouble of establishing, and writes the chunk back without them the next time it saves.
-//
-// Restated rather than filtered afterwards: by the time the original returns, the discarded entries are gone. The
-// threshold stays vanilla's, only the metric is folded — a reference genuinely too far is still corrupt and still goes.
 @Mixin(SerializableChunkData.class)
 public class SerializableChunkDataMixin {
+    // Vanilla's own literal, restated because the code it lives in is not reachable from here.
     @Unique
     private static final Logger toroidal$LOGGER = LogUtils.getLogger();
 
-    // Vanilla's own literal, restated because the code it lives in is not reachable from here. It is the reference scan
-    // radius: no chunk can hold a reference to a start further out than the scan that files them reaches.
     @Unique
     private static final int toroidal$MAX_REFERENCE_DISTANCE = 8;
 
     @Unique
     private static final String toroidal$REFERENCES_KEY = "References";
 
-    // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.
     @WrapOperation(
             method = "read",
             at = @At(

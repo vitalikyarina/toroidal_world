@@ -17,12 +17,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-// The operations that build a position return the argument when it already names the ground it means. Two things have
-// to hold for that to be an optimisation rather than a change: the value must be what the always-allocating form would
-// have produced, and where that form would have produced a copy of the argument, the argument itself must come back.
-//
-// Both are asserted against a reference computed the old way — per axis, straight from the domains — so a fast path
-// that ever disagrees with the arithmetic behind it fails here rather than in a world.
 class IdentityFastPathTest {
     private static final long SEED = 0x1DEA5L;
     private static final int SAMPLES = 600;
@@ -138,9 +132,6 @@ class IdentityFastPathTest {
         });
     }
 
-    // The block twin owes the same identity, and owes it in the case that separates the two ways of writing it: a
-    // target out of bounds whose nearest copy is itself. Composing wrap with unwrap answers that one with a fresh
-    // position, because neither half alone can see that the pair cancelled.
     @Test
     void blockNearestCopyKeepsItsValueAndReturnsTheTargetUntouched() {
         forEachTransformer((transformer, random) -> {
@@ -160,8 +151,6 @@ class IdentityFastPathTest {
         });
     }
 
-    // The two are one decision spoken twice — LevelMixin asks the predicate to avoid the list the splitter would have
-    // returned — so they are pinned to each other rather than each to its own expectation.
     @Test
     void crossesBoundsAgreesWithWhetherTheSplitChangesAnything() {
         forEachTransformer((transformer, random) -> {
@@ -181,8 +170,6 @@ class IdentityFastPathTest {
         assertSame(box, EVEN.splitAcrossBounds(box).getFirst());
     }
 
-    // No width to rest on the boundary with: the one point it covers is the excluded upper bound, which is ground on the
-    // far side of the world, so this one does have to fold.
     @Test
     void aBoxOfNoWidthOnTheUpperBoundStillFolds() {
         AABB box = new AABB(512.0, 60.0, 512.0, 512.0, 60.0, 512.0);
@@ -200,12 +187,6 @@ class IdentityFastPathTest {
         assertEquals(2, EVEN.splitAcrossBounds(box).size());
     }
 
-    // The copy of a coordinate nearest a reference, taken as arithmetic on the sample's own numbers: every reading of
-    // it is a whole number of world widths away, and the nearest of those is what the fold owes. Where two are equally
-    // near — the antipode — the reading fewest laps from the coordinate wins, which is the coordinate itself whenever
-    // it is one of the two. Asking unwrapAround for the same answer would fold the baseline into the subject — a
-    // primitive that drifts drifts the expectation with it, reference.equals(target) turns false, and the assertion
-    // that the argument comes back untouched is skipped rather than failed.
     private static double nearestCopy(WrapDomain domain, double ref, double coord) {
         if (domain instanceof WrapDomain.Noop) {
             return coord;
@@ -246,8 +227,6 @@ class IdentityFastPathTest {
         return new WorldLoopTransformer(new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax));
     }
 
-    // Several laps out on a looped axis, so in-bounds and out-of-bounds samples both land often; an axis with no width
-    // to derive a reach from gets a plain span around the origin.
     private static int reach(WrapDomain domain, int cap) {
         return domain instanceof WrapDomain.Noop ? cap : Math.min(3 * domain.domainLength, cap);
     }

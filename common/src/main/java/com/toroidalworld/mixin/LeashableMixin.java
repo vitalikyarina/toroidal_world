@@ -14,9 +14,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Leashable;
 import net.minecraft.world.phys.Vec3;
 
-// A lead measures its length by plain distance, so a mob a step away across the seam read as a whole world off: the
-// lead snapped the moment its holder crossed, and a fence on the far side refused the knot outright. One primitive
-// carries all of it — the break check, the attach check and the elastic threshold — so it is fixed once, here.
 @Mixin(Leashable.class)
 public interface LeashableMixin {
     @WrapMethod(method = "leashDistanceTo")
@@ -31,9 +28,6 @@ public interface LeashableMixin {
         return Math.sqrt(transformer.coords.sqrDistToBounds(from.x, from.y, from.z, to.x, to.y, to.z));
     }
 
-    // The elastic pull is a spring toward the holder's absolute position; across the seam the raw vector aims the long
-    // way round, with a world of magnitude. The holder is read at its representation nearest the leashed entity, so
-    // the spring pulls the short way the lead visually hangs.
     @WrapOperation(
             method = "computeElasticInteraction",
             at = @At(

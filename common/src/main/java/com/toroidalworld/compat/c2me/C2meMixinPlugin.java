@@ -9,17 +9,6 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 import com.bawnorton.mixinsquared.MixinSquaredBootstrap;
 
-// Gates each C2ME compat mixin on C2ME actually owning the code it attaches to, and brings up MixinSquared before any
-// of them is prepared.
-//
-// A gate per module, because the modules are switched independently: the aquifer fold rides on an option a player can
-// turn off (C2meAquifer), while the chunk-system rewrite, the no-tick view distance, the octave loop and the density
-// function compiler carry no option and are answered by presence alone. Reading one condition for all of them would
-// attach a fold to code that is not there.
-//
-// The bootstrap call is here rather than left to the library's own platform config: it registers the @MixinSquared
-// selector, and a selector that is not registered does not fail — the injection simply matches nothing, which for a
-// fold means a seam that splits with nothing in the log. init() is idempotent, so making sure costs one call.
 public class C2meMixinPlugin implements IMixinConfigPlugin {
     private static final String AQUIFER_MIXIN = "AquiferSeamMixin";
 

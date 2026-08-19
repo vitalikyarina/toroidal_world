@@ -11,13 +11,6 @@ import net.minecraft.world.entity.monster.breeze.Breeze;
 import net.minecraft.world.entity.monster.breeze.Slide;
 import net.minecraft.world.phys.Vec3;
 
-// Where the breeze puts itself when it is not backing away: a point on the line to its target, a few blocks short of it.
-// The line is a raw difference between the two positions, and it is read twice — a length that sets how far along to
-// stand, and a normalized heading that says which way. Through the seam the length is nearly the width of the world and
-// the heading points the long way round, so the breeze takes its stance on the wrong side of what it is fighting.
-//
-// Folding the difference leaves both readings vanilla's own arithmetic, correct because their input now names the copy
-// of the target the breeze is actually standing next to.
 @Mixin(Slide.class)
 public class BreezeSlideMixin {
     @ModifyExpressionValue(

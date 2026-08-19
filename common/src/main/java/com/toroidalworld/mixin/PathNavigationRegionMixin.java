@@ -16,15 +16,6 @@ import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
 
-// Every walkability read a pathfind makes funnels through this one snapshot: it grabs the chunks in a cube around the mob
-// and answers the whole A* search from them. Past the seam those chunks are ungenerated, so the snapshot stores an empty
-// (all-air) chunk there and the search finds no floor to step on — a job site a few blocks across the seam is judged
-// unreachable and the villager abandons it.
-//
-// The fold is one line, and at chunk granularity: the bounds are chunk-aligned, so a chunk index past the seam maps to
-// the real chunk on the opposite side, and a block read against it lands on the same in-chunk offset (x & 15) either way.
-// So the phantom slot is filled with the real opposite-side chunk, stored under its raw index, and every downstream read
-// — block, fluid, collision — comes back correct with nothing else to change.
 @Mixin(PathNavigationRegion.class)
 public class PathNavigationRegionMixin {
     @Shadow

@@ -15,10 +15,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.waypoints.WaypointTransmitter;
 
-// The locator bar's far-range connection: the server computes the azimuth itself, from the raw difference of the two
-// players' positions, so a source across the seam is aimed the long way around the torus. The source is read at its
-// representation nearest the receiver — the same treatment the leash spring got — and the angle comes out pointing
-// across the seam. The constructor and update() take the angle from the same source.position() call, one wrap covers both.
 @Mixin(WaypointTransmitter.EntityAzimuthConnection.class)
 public class WaypointAzimuthConnectionMixin {
     @Shadow

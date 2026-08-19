@@ -15,16 +15,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
-// The seam outline for one wrapped dimension: the world's bounds rectangle plus its eight period-shifted copies —
-// one outline per copy of the 3x3 patch the tile compat draws, so every glued copy shows where the world closes.
-// The rectangle's edges lie exactly on the boundary coordinate (maxBlock is the first block past the world, which
-// is the same line as the neighbouring copy's minBlock).
-//
-// Only a world looped on both axes has a closed boundary to outline. A single-axis shape (a future cylinder) has
-// two seam lines and no corners for a rectangle — that geometry is drawn when such a shape exists, not guessed at
-// now.
 public final class SeamOverlays {
-    // A quiet white hairline that reads as part of the map grid rather than an alert.
     private static final int STROKE_RGB = 0xFFFFFF;
     private static final float STROKE_OPACITY = 0.35f;
     private static final float STROKE_WIDTH = 1.5f;
