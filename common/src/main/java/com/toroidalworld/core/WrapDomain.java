@@ -206,6 +206,19 @@ public class WrapDomain {
                 new double[] {lowerBound, lowerBound + (end - upperBound)});
     }
 
+    public List<int[]> cellSpans(int min, int max) {
+        int length = (int) Math.min((long) max - min + 1, domainLength);
+        int start = wrap(min);
+        int end = start + length - 1;
+        if (end < upperBound) {
+            return List.of(new int[] {start, end});
+        }
+
+        return List.of(
+                new int[] {start, upperBound - 1},
+                new int[] {lowerBound, lowerBound + (end - upperBound)});
+    }
+
     public double sqrDistToBounds(double dist) {
         double folded = foldDelta(dist);
         return folded * folded;
@@ -344,6 +357,11 @@ public class WrapDomain {
         @Override
         public List<double[]> spans(double min, double max) {
             return List.of(new double[] {min, max});
+        }
+
+        @Override
+        public List<int[]> cellSpans(int min, int max) {
+            return List.of(new int[] {min, max});
         }
 
         @Override
