@@ -13,20 +13,6 @@ import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-// Where a signal or a station asks which piece of track it is attached to. The answer is decided by direction: the
-// offset from the block's own centre to each end of its rail says whether that end lies forward or backward along the
-// targeted axis, and the walk that follows compares each step's own offset the same way. Near the seam one of those
-// two coordinates is canonical and the other names the far side of the world, so the offset points the opposite way,
-// neither test passes and the block reports no track at all — a signal one block from the bounds with a rail running
-// through it.
-//
-// Both subtractions are the same statement — the position being measured, brought to the copy of itself nearest the
-// one it is measured from — so one handler serves the ends of the rail and every step of the walk, and the distance
-// the walk accumulates comes out in blocks travelled rather than worlds. The level is the method's own parameter,
-// which is what makes this work on a client with no server to ask.
-//
-// What the walk does with those ends once it has them is ITrackBlockClientMixin: the ends are graph keys and the
-// steps between them are block reads, and on a client those are two different frames.
 @Mixin(value = TrackGraphHelper.class, remap = false)
 public abstract class TrackGraphHelperMixin {
     @WrapOperation(method = "getGraphLocationAt",
@@ -37,7 +23,6 @@ public abstract class TrackGraphHelperMixin {
         return original.call(CreateTrackFold.nearestCopy(level, anchor, target), anchor);
     }
 
-    // The single-piece case, where the position along the edge is half the distance between its two nodes.
     @WrapOperation(method = "getGraphLocationAt",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))

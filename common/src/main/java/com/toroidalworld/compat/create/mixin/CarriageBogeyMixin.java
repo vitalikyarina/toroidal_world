@@ -15,16 +15,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-// Folding each edge is not folding what is built out of two of them. A bogey rides on two travelling points a wheel's
-// spacing apart, and while it sits over a node those two points are on different edges — each answering in the frame of
-// its own first node, which across the seam are a world apart. Everything the bogey then computes from the pair reads
-// that world: its anchor is their midpoint, so a bogey astride the seam lands in the middle of the map; its angles come
-// from their difference, so it points the wrong way; and its stress is their distance, which the train reads as a
-// carriage torn apart.
-//
-// So the second point is brought to the copy nearest the first at each of the three, which is the one place the pair
-// stops being two independent answers and becomes one quantity. Inside a single edge nothing folds and the arithmetic
-// is Create's own, untouched.
 @Mixin(value = CarriageBogey.class, remap = false)
 public abstract class CarriageBogeyMixin {
     @Shadow
@@ -37,7 +27,6 @@ public abstract class CarriageBogeyMixin {
         return original.call(leading, toroidal$nearest(leading, trailing));
     }
 
-    // The trailing point's own answer, brought to the leading one already standing in a local above it.
     @ModifyExpressionValue(method = "updateAngles",
             at = @At(value = "INVOKE",
                     target = "Lcom/simibubi/create/content/trains/entity/TravellingPoint;getPosition(Lcom/simibubi/create/content/trains/graph/TrackGraph;)Lnet/minecraft/world/phys/Vec3;",

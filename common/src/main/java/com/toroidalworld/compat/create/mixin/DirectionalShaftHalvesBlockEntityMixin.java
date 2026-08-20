@@ -11,14 +11,6 @@ import com.toroidalworld.compat.create.CreateSeamFold;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 
-// The second delta of the family, and the one the propagator's own fold cannot reach: getSourceFacing subtracts in its
-// own class, from the stored source field rather than from a neighbour handed to it. Across the seam that field names
-// a block a world away, the derived facing is the opposite side, and getAxisModifier reads it to decide which way each
-// half of a gearbox turns — so every output comes out inverted, and a clutch, gearshift or sequenced gearshift
-// compares an incoming face against it and answers backwards too.
-//
-// Folded at the read. The field itself stays canonical: handleRemoved and propagateMissingSource compare it with
-// equals against real block positions, and it is resolved through Level.getBlockEntity, which already folds.
 @Mixin(value = DirectionalShaftHalvesBlockEntity.class, remap = false)
 public class DirectionalShaftHalvesBlockEntityMixin {
     @WrapOperation(

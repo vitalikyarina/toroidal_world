@@ -12,9 +12,6 @@ import com.toroidalworld.compat.create.CreateTrackFold;
 
 import net.minecraft.world.phys.Vec3;
 
-// The carriage's own reading of how far its two ends have drifted apart, which the train uses to decide it is being
-// stretched. The two anchors come from two bogeys, each already folded within itself, and across the seam they are still
-// named from two frames — so the untouched distance is a world and the train reads a carriage torn in half.
 @Mixin(value = Carriage.class, remap = false)
 public abstract class CarriagePairMixin {
     @Shadow

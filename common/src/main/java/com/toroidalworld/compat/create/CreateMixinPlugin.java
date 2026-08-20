@@ -7,9 +7,6 @@ import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
-// Gates the Create compat mixins on Create actually being installed. One condition for the whole config: every fold
-// this module will carry attaches to a coordinate decision Create makes in its own code, so there is nothing to
-// switch on beyond the mod itself.
 public class CreateMixinPlugin implements IMixinConfigPlugin {
     @Override
     public void onLoad(String mixinPackage) {

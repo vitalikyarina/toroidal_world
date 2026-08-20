@@ -12,15 +12,6 @@ import com.toroidalworld.compat.create.CreateSeamFold;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 
-// The whole direction-named kinetic family reads through one subtraction. getRotationSpeedModifier derives the
-// direction between two blocks from it, and then every other question in the method is asked of that same diff: the
-// axis alignment, both shaft lookups, the custom hook Create hands to the block entity, both large-cog tests and the
-// small-cog branch. Across the seam the diff reads a world wide, Direction.getNearest names the opposite side, and a
-// block that describes its shaft by a signed face — drill, encased fan, hand crank — is asked about its solid side
-// and refuses. One fold here answers for all of them.
-//
-// The propagator is a plain class with a plain method, so the subtraction sits in the method body and is the only one
-// there; no lambda hides it and no ordinal has to be counted.
 @Mixin(value = RotationPropagator.class, remap = false)
 public class RotationPropagatorMixin {
     @WrapOperation(
