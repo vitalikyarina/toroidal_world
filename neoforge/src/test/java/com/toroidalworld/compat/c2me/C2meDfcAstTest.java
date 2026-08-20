@@ -1,5 +1,12 @@
 package com.toroidalworld.compat.c2me;
 
+import static com.toroidalworld.noise.DensityFunctionFixture.NOISE_DATA;
+import static com.toroidalworld.noise.DensityFunctionFixture.SEED;
+import static com.toroidalworld.noise.DensityFunctionFixture.SQUARE;
+import static com.toroidalworld.noise.DensityFunctionFixture.WORLDS;
+import static com.toroidalworld.noise.DensityFunctionFixture.blockIn;
+import static com.toroidalworld.noise.DensityFunctionFixture.blockY;
+import static com.toroidalworld.noise.DensityFunctionFixture.withLiveNoise;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -11,11 +18,8 @@ import java.util.Random;
 import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.noise.ContextScaledNoise;
 import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.noise.NoiseRouterBuild;
-import com.toroidalworld.options.WorldLoopBounds;
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
 import com.ishland.c2me.opts.dfc.common.ast.McToAst;
 import com.ishland.c2me.opts.dfc.common.ast.binary.AddNode;
@@ -23,27 +27,11 @@ import com.ishland.c2me.opts.dfc.common.ast.binary.MulNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.ConstantNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.CoordinateNode;
 
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import net.minecraft.core.Holder;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunctions;
-import net.minecraft.world.level.levelgen.LegacyRandomSource;
-import net.minecraft.world.level.levelgen.synth.NormalNoise;
 
 class C2meDfcAstTest {
-    private static final long SEED = 0x0153EL;
-
-    private static final WorldLoopTransformer WRAPPED =
-            new WorldLoopTransformer(new WorldLoopBounds(-16, 16, -16, 16));
-
-    private static final WorldLoopTransformer RECTANGULAR =
-            new WorldLoopTransformer(new WorldLoopBounds(-16, 16, -8, 8));
-
-    private static final List<WorldLoopTransformer> WORLDS = List.of(WRAPPED, RECTANGULAR);
-
     private static final int PERIODICITY_SAMPLES = 32;
-    private static final int WORLD_HEIGHT = 384;
-    private static final int LOWEST_Y = -64;
 
     private static final int SAMPLE_X = 137;
     private static final int SAMPLE_Y = 61;
@@ -54,14 +42,6 @@ class C2meDfcAstTest {
     private static final double SHIFT_X = 3.0;
     private static final double SHIFT_Y = 7.0;
     private static final double SHIFT_Z = -5.0;
-
-    private static final NormalNoise.NoiseParameters PARAMETERS =
-            new NormalNoise.NoiseParameters(-6, DoubleArrayList.of(1.0, 1.0, 1.0));
-
-    private static final Holder<NormalNoise.NoiseParameters> NOISE_DATA = Holder.direct(PARAMETERS);
-
-    private static final DensityFunction.NoiseHolder NOISE = new DensityFunction.NoiseHolder(
-            NOISE_DATA, NormalNoise.create(new LegacyRandomSource(SEED), PARAMETERS));
 
     @Test
     void noiseFoldsToTheSameSample() {
@@ -97,13 +77,13 @@ class C2meDfcAstTest {
                 withLiveNoise(DensityFunctions.shiftA(NOISE_DATA)),
                 withLiveNoise(DensityFunctions.shiftB(NOISE_DATA)))) {
             for (WorldLoopTransformer transformer : WORLDS) {
-                AstNode folded = NoiseRouterBuild.withTransformer(transformer, () -> McToAst.toAst(source));
+                AstNode folded = GenerationTransformerContext.withRouterBuild(transformer, () -> McToAst.toAst(source));
                 int xWidth = transformer.coords.x.domainLength;
                 int zWidth = transformer.coords.z.domainLength;
 
                 for (int i = 0; i < PERIODICITY_SAMPLES; i++) {
                     int x = blockIn(random, transformer.coords.x);
-                    int y = LOWEST_Y + random.nextInt(WORLD_HEIGHT);
+                    int y = blockY(random);
                     int z = blockIn(random, transformer.coords.z);
 
                     assertEquals(sampleFolded(folded, x, y, z), sampleFolded(folded, x + xWidth, y, z),
@@ -127,7 +107,7 @@ class C2meDfcAstTest {
     void unexpectedNodeShapeFailsTheCompile() {
         DensityFunction source = withLiveNoise(DensityFunctions.noise(NOISE_DATA, XZ_SCALE, Y_SCALE));
 
-        assertThrows(IllegalStateException.class, () -> NoiseRouterBuild.withTransformer(WRAPPED,
+        assertThrows(IllegalStateException.class, () -> GenerationTransformerContext.withRouterBuild(SQUARE,
                 () -> C2meDfcAst.fold(source, new ConstantNode(0.0))));
     }
 
@@ -142,11 +122,11 @@ class C2meDfcAstTest {
     }
 
     private static void assertFoldMatchesVanilla(DensityFunction source) {
-        AstNode folded = NoiseRouterBuild.withTransformer(WRAPPED, () -> McToAst.toAst(source));
+        AstNode folded = GenerationTransformerContext.withRouterBuild(SQUARE, () -> McToAst.toAst(source));
         DensityFunction.FunctionContext at = new DensityFunction.SinglePointContext(SAMPLE_X, SAMPLE_Y, SAMPLE_Z);
 
-        double vanilla = GenerationTransformerContext.withTransformer(WRAPPED, () -> source.compute(at));
-        double compiled = GenerationTransformerContext.withTransformer(WRAPPED,
+        double vanilla = GenerationTransformerContext.withTransformer(SQUARE, () -> source.compute(at));
+        double compiled = GenerationTransformerContext.withTransformer(SQUARE,
                 () -> sampleFolded(folded, SAMPLE_X, SAMPLE_Y, SAMPLE_Z));
 
         assertEquals(vanilla, compiled);
@@ -180,24 +160,6 @@ class C2meDfcAstTest {
             case AddNode add -> evaluate(add.left, x, y, z) + evaluate(add.right, x, y, z);
             default -> throw new IllegalStateException("no interpreter for " + node.getClass().getName());
         };
-    }
-
-    private static int blockIn(Random random, WrapDomain domain) {
-        return domain.lowerBound + random.nextInt(domain.domainLength);
-    }
-
-    private static DensityFunction withLiveNoise(DensityFunction function) {
-        return function.mapAll(new DensityFunction.Visitor() {
-            @Override
-            public DensityFunction apply(DensityFunction input) {
-                return input;
-            }
-
-            @Override
-            public DensityFunction.NoiseHolder visitNoise(DensityFunction.NoiseHolder noise) {
-                return NOISE;
-            }
-        });
     }
 
     private static DensityFunction withShiftY(DensityFunction function) {
