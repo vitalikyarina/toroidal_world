@@ -1,6 +1,7 @@
 package com.toroidalworld.compat.c2me;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.noise.ContextScaledNoise;
 import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.noise.NoiseRouterBuild;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
 import com.ishland.c2me.opts.dfc.common.ast.McToAst;
@@ -86,11 +88,22 @@ class C2meDfcAstTest {
     void unexpectedNodeShapeFailsTheCompile() {
         DensityFunction source = withLiveNoise(DensityFunctions.noise(NOISE_DATA, XZ_SCALE, Y_SCALE));
 
-        assertThrows(IllegalStateException.class, () -> C2meDfcAst.fold(source, new ConstantNode(0.0)));
+        assertThrows(IllegalStateException.class, () -> NoiseRouterBuild.withTransformer(WRAPPED,
+                () -> C2meDfcAst.fold(source, new ConstantNode(0.0))));
+    }
+
+    @Test
+    void routerThatWrapsNothingIsNotFolded() {
+        DensityFunction source = withLiveNoise(DensityFunctions.noise(NOISE_DATA, XZ_SCALE, Y_SCALE));
+
+        AstNode produced = McToAst.toAst(source);
+
+        assertFalse(produced instanceof C2meFoldedNoiseNode,
+                "a router built for a generator that wraps nothing must carry no toroidal node");
     }
 
     private static void assertFoldMatchesVanilla(DensityFunction source) {
-        AstNode folded = McToAst.toAst(source);
+        AstNode folded = NoiseRouterBuild.withTransformer(WRAPPED, () -> McToAst.toAst(source));
         DensityFunction.FunctionContext at = new DensityFunction.SinglePointContext(SAMPLE_X, SAMPLE_Y, SAMPLE_Z);
 
         double vanilla = GenerationTransformerContext.withTransformer(WRAPPED, () -> source.compute(at));
@@ -109,7 +122,7 @@ class C2meDfcAstTest {
 
         C2meFoldedNoiseNode fold = assertInstanceOf(C2meFoldedNoiseNode.class, node);
 
-        return ContextScaledNoise.sample(GenerationTransformerContext.context(), fold.noise,
+        return ContextScaledNoise.sampleWrapped(fold.transformer, fold.noise,
                 evaluate(fold.foldedX), evaluate(fold.inputY), evaluate(fold.foldedZ), fold.horizontalScale)
                 * amplitude;
     }

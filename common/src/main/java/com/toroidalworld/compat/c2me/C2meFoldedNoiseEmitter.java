@@ -1,14 +1,12 @@
 package com.toroidalworld.compat.c2me;
 
-import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.InstructionAdapter;
 
+import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.noise.ContextScaledNoise;
-import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.BytecodeEmitter;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.BytecodeGen;
-import com.ishland.c2me.opts.dfc.common.gen.jvm.emitters.misc.GenericShiftedNoiseNodeBytecodeEmitter;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.util.DfcObjectCache;
 import com.ishland.c2me.opts.dfc.common.gen.meta.ValuesMethodDefF64;
 
@@ -17,25 +15,21 @@ import net.minecraft.world.level.levelgen.DensityFunction.NoiseHolder;
 public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedNoiseNode> {
     public static final C2meFoldedNoiseEmitter INSTANCE = new C2meFoldedNoiseEmitter();
 
-    private static final String FOLD_CLASS = Type.getInternalName(C2meDfcFold.class);
     private static final String SAMPLE_CLASS = Type.getInternalName(ContextScaledNoise.class);
-    private static final String CONTEXT_DESC = Type.getDescriptor(Context.class);
+    private static final String TRANSFORMER_DESC = Type.getDescriptor(WorldLoopTransformer.class);
     private static final String NOISE_HOLDER_DESC = Type.getDescriptor(NoiseHolder.class);
 
-    private static final String WRAPPED_CONTEXT_METHOD = "wrappedContext";
-    private static final String WRAPPED_CONTEXT_DESC = Type.getMethodDescriptor(Type.getType(Context.class));
-
-    private static final String SAMPLE_METHOD = "sample";
+    private static final String SAMPLE_METHOD = "sampleWrapped";
     private static final String SAMPLE_DESC = Type.getMethodDescriptor(
             Type.DOUBLE_TYPE,
-            Type.getType(Context.class),
+            Type.getType(WorldLoopTransformer.class),
             Type.getType(NoiseHolder.class),
             Type.DOUBLE_TYPE,
             Type.DOUBLE_TYPE,
             Type.DOUBLE_TYPE,
             Type.DOUBLE_TYPE);
 
-    private static final String GENERATION_LOCAL = "toroidalGeneration";
+    private static final String TRANSFORMER_LOCAL = "toroidalTransformer";
 
     // C2ME's own arrangement: the result array doubles as the buffer for the first input that needs one.
     private static final int RESULT_ARRAY_LOCAL = 1;
@@ -49,14 +43,13 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
     public void doBytecodeGenSingle(C2meFoldedNoiseNode node, BytecodeGen.Context context, InstructionAdapter m,
             BytecodeGen.Context.LocalVarConsumer localVarConsumer) {
         String noiseField = context.newField(NoiseHolder.class, node.noise);
+        String transformerField = context.newField(WorldLoopTransformer.class, node.transformer);
         ValuesMethodDefF64 foldedXMethod = context.newSingleMethodF64(node.foldedX);
         ValuesMethodDefF64 inputYMethod = context.newSingleMethodF64(node.inputY);
         ValuesMethodDefF64 foldedZMethod = context.newSingleMethodF64(node.foldedZ);
 
-        Label vanilla = new Label();
-        int generationLocal = emitWrappedContext(m, localVarConsumer, vanilla);
-
-        m.load(generationLocal, InstructionAdapter.OBJECT_TYPE);
+        m.load(0, InstructionAdapter.OBJECT_TYPE);
+        m.getfield(context.className, transformerField, TRANSFORMER_DESC);
         m.load(0, InstructionAdapter.OBJECT_TYPE);
         m.getfield(context.className, noiseField, NOISE_HOLDER_DESC);
         context.callDelegateSingle(m, foldedXMethod);
@@ -65,35 +58,20 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
         m.dconst(node.horizontalScale);
         m.invokestatic(SAMPLE_CLASS, SAMPLE_METHOD, SAMPLE_DESC, false);
         m.areturn(Type.DOUBLE_TYPE);
-
-        m.visitLabel(vanilla);
-        GenericShiftedNoiseNodeBytecodeEmitter.INSTANCE.doBytecodeGenSingle(node, context, m, localVarConsumer);
     }
 
     @Override
     public void doBytecodeGenMulti(C2meFoldedNoiseNode node, BytecodeGen.Context context, InstructionAdapter m,
             BytecodeGen.Context.LocalVarConsumer localVarConsumer) {
-        Label vanilla = new Label();
-        int generationLocal = emitWrappedContext(m, localVarConsumer, vanilla);
-        emitFoldedMulti(node, context, m, localVarConsumer, generationLocal);
-
-        m.visitLabel(vanilla);
-        GenericShiftedNoiseNodeBytecodeEmitter.INSTANCE.doBytecodeGenMulti(node, context, m, localVarConsumer);
-    }
-
-    private static int emitWrappedContext(InstructionAdapter m, BytecodeGen.Context.LocalVarConsumer localVarConsumer,
-            Label vanilla) {
-        int generationLocal = localVarConsumer.createLocalVariable(GENERATION_LOCAL, CONTEXT_DESC);
-        m.invokestatic(FOLD_CLASS, WRAPPED_CONTEXT_METHOD, WRAPPED_CONTEXT_DESC, false);
-        m.store(generationLocal, InstructionAdapter.OBJECT_TYPE);
-        m.load(generationLocal, InstructionAdapter.OBJECT_TYPE);
-        m.ifnull(vanilla);
-        return generationLocal;
-    }
-
-    private static void emitFoldedMulti(C2meFoldedNoiseNode node, BytecodeGen.Context context, InstructionAdapter m,
-            BytecodeGen.Context.LocalVarConsumer localVarConsumer, int generationLocal) {
         String noiseField = context.newField(NoiseHolder.class, node.noise);
+        String transformerField = context.newField(WorldLoopTransformer.class, node.transformer);
+
+        // Hoisted out of the counted loop: one field read per array fill rather than one per element.
+        int transformerLocal = localVarConsumer.createLocalVariable(TRANSFORMER_LOCAL, TRANSFORMER_DESC);
+        m.load(0, InstructionAdapter.OBJECT_TYPE);
+        m.getfield(context.className, transformerField, TRANSFORMER_DESC);
+        m.store(transformerLocal, InstructionAdapter.OBJECT_TYPE);
+
         ValuesMethodDefF64 foldedXMethod = context.newMultiMethodF64(node.foldedX);
         ValuesMethodDefF64 inputYMethod = context.newMultiMethodF64(node.inputY);
         ValuesMethodDefF64 foldedZMethod = context.newMultiMethodF64(node.foldedZ);
@@ -137,7 +115,7 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
         context.doCountedLoop(m, localVarConsumer, idx -> {
             m.load(RESULT_ARRAY_LOCAL, InstructionAdapter.OBJECT_TYPE);
             m.load(idx, Type.INT_TYPE);
-            m.load(generationLocal, InstructionAdapter.OBJECT_TYPE);
+            m.load(transformerLocal, InstructionAdapter.OBJECT_TYPE);
             m.load(0, InstructionAdapter.OBJECT_TYPE);
             m.getfield(context.className, noiseField, NOISE_HOLDER_DESC);
 
