@@ -15,9 +15,11 @@ public final class GenerationTransformerContext {
         private WorldLoopTransformer transformer = WorldLoopTransformer.NOOP;
         private double horizontalScale = UNSCALED;
         private double horizontalDivisor = UNDIVIDED;
+        private SlotAxes slotAxes = SlotAxes.DEFAULT;
         private final ScaleScope scaleScope = new ScaleScope();
         private final DivisorScope divisorScope = new DivisorScope();
         private final TransformerScope transformerScope = new TransformerScope();
+        private final SlotAxesScope slotAxesScope = new SlotAxesScope();
 
         public WorldLoopTransformer transformer() {
             return this.transformer;
@@ -35,6 +37,10 @@ public final class GenerationTransformerContext {
             return this.horizontalDivisor;
         }
 
+        public SlotAxes slotAxes() {
+            return this.slotAxes;
+        }
+
         public ScaleScope withScale(double scale) {
             this.scaleScope.push();
             this.horizontalScale = scale;
@@ -50,6 +56,12 @@ public final class GenerationTransformerContext {
         public ScaleScope openScale() {
             this.scaleScope.push();
             return this.scaleScope;
+        }
+
+        public SlotAxesScope withSlotAxes(SlotAxes axes) {
+            this.slotAxesScope.push();
+            this.slotAxes = axes;
+            return this.slotAxesScope;
         }
 
         public TransformerScope bindTransformer(WorldLoopTransformer bound) {
@@ -105,6 +117,27 @@ public final class GenerationTransformerContext {
             @Override
             public void close() {
                 horizontalScale = this.previousScales[--this.depth];
+            }
+        }
+
+        public final class SlotAxesScope implements AutoCloseable {
+            private SlotAxes[] previousAxes = new SlotAxes[8];
+            private int depth;
+
+            private SlotAxesScope() {
+            }
+
+            private void push() {
+                if (this.depth == this.previousAxes.length) {
+                    this.previousAxes = Arrays.copyOf(this.previousAxes, this.depth * 2);
+                }
+
+                this.previousAxes[this.depth++] = slotAxes;
+            }
+
+            @Override
+            public void close() {
+                slotAxes = this.previousAxes[--this.depth];
             }
         }
 

@@ -40,6 +40,6 @@ public class ImprovedNoiseMixin {
         }
 
         return PeriodicNoiseSampler.sample(this.p, this.xo, this.yo, this.zo, transformer,
-                context.horizontalScale(), x, y, z, yScale, yFudge);
+                context.slotAxes(), context.horizontalScale(), x, y, z, yScale, yFudge);
     }
 }

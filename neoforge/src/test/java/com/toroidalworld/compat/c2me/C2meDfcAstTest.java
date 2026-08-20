@@ -5,9 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.List;
+import java.util.Random;
+
 import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.noise.ContextScaledNoise;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.NoiseRouterBuild;
@@ -31,6 +35,15 @@ class C2meDfcAstTest {
 
     private static final WorldLoopTransformer WRAPPED =
             new WorldLoopTransformer(new WorldLoopBounds(-16, 16, -16, 16));
+
+    private static final WorldLoopTransformer RECTANGULAR =
+            new WorldLoopTransformer(new WorldLoopBounds(-16, 16, -8, 8));
+
+    private static final List<WorldLoopTransformer> WORLDS = List.of(WRAPPED, RECTANGULAR);
+
+    private static final int PERIODICITY_SAMPLES = 32;
+    private static final int WORLD_HEIGHT = 384;
+    private static final int LOWEST_Y = -64;
 
     private static final int SAMPLE_X = 137;
     private static final int SAMPLE_Y = 61;
@@ -77,6 +90,32 @@ class C2meDfcAstTest {
     }
 
     @Test
+    void everyCompiledShiftFunctionIsPeriodicInBothAxes() {
+        Random random = new Random(SEED);
+        for (DensityFunction source : List.of(
+                withLiveNoise(DensityFunctions.shift(NOISE_DATA)),
+                withLiveNoise(DensityFunctions.shiftA(NOISE_DATA)),
+                withLiveNoise(DensityFunctions.shiftB(NOISE_DATA)))) {
+            for (WorldLoopTransformer transformer : WORLDS) {
+                AstNode folded = NoiseRouterBuild.withTransformer(transformer, () -> McToAst.toAst(source));
+                int xWidth = transformer.coords.x.domainLength;
+                int zWidth = transformer.coords.z.domainLength;
+
+                for (int i = 0; i < PERIODICITY_SAMPLES; i++) {
+                    int x = blockIn(random, transformer.coords.x);
+                    int y = LOWEST_Y + random.nextInt(WORLD_HEIGHT);
+                    int z = blockIn(random, transformer.coords.z);
+
+                    assertEquals(sampleFolded(folded, x, y, z), sampleFolded(folded, x + xWidth, y, z),
+                            "x lap of " + source + " in " + transformer + " at (" + x + ", " + y + ", " + z + ")");
+                    assertEquals(sampleFolded(folded, x, y, z), sampleFolded(folded, x, y, z + zWidth),
+                            "z lap of " + source + " in " + transformer + " at (" + x + ", " + y + ", " + z + ")");
+                }
+            }
+        }
+    }
+
+    @Test
     void unknownDensityFunctionIsPassedThrough() {
         DensityFunction source = DensityFunctions.constant(1.0);
         AstNode produced = new ConstantNode(1.0);
@@ -107,38 +146,44 @@ class C2meDfcAstTest {
         DensityFunction.FunctionContext at = new DensityFunction.SinglePointContext(SAMPLE_X, SAMPLE_Y, SAMPLE_Z);
 
         double vanilla = GenerationTransformerContext.withTransformer(WRAPPED, () -> source.compute(at));
-        double compiled = GenerationTransformerContext.withTransformer(WRAPPED, () -> sampleFolded(folded));
+        double compiled = GenerationTransformerContext.withTransformer(WRAPPED,
+                () -> sampleFolded(folded, SAMPLE_X, SAMPLE_Y, SAMPLE_Z));
 
         assertEquals(vanilla, compiled);
     }
 
-    private static double sampleFolded(AstNode folded) {
+    private static double sampleFolded(AstNode folded, int x, int y, int z) {
         AstNode node = folded;
         double amplitude = 1.0;
         if (node instanceof MulNode amplified) {
-            amplitude = evaluate(amplified.right);
+            amplitude = evaluate(amplified.right, x, y, z);
             node = amplified.left;
         }
 
         C2meFoldedNoiseNode fold = assertInstanceOf(C2meFoldedNoiseNode.class, node);
 
-        return ContextScaledNoise.sampleWrapped(fold.transformer, fold.noise,
-                evaluate(fold.foldedX), evaluate(fold.inputY), evaluate(fold.foldedZ), fold.horizontalScale)
+        return ContextScaledNoise.sampleWrapped(fold.transformer, fold.slotAxes, fold.noise,
+                evaluate(fold.foldedX, x, y, z), evaluate(fold.foldedY, x, y, z), evaluate(fold.foldedZ, x, y, z),
+                fold.horizontalScale)
                 * amplitude;
     }
 
-    private static double evaluate(AstNode node) {
+    private static double evaluate(AstNode node, int x, int y, int z) {
         return switch (node) {
             case ConstantNode constant -> constant.getValue();
             case CoordinateNode coordinate -> switch (coordinate.axis) {
-                case X -> SAMPLE_X;
-                case Y -> SAMPLE_Y;
-                case Z -> SAMPLE_Z;
+                case X -> x;
+                case Y -> y;
+                case Z -> z;
             };
-            case MulNode mul -> evaluate(mul.left) * evaluate(mul.right);
-            case AddNode add -> evaluate(add.left) + evaluate(add.right);
+            case MulNode mul -> evaluate(mul.left, x, y, z) * evaluate(mul.right, x, y, z);
+            case AddNode add -> evaluate(add.left, x, y, z) + evaluate(add.right, x, y, z);
             default -> throw new IllegalStateException("no interpreter for " + node.getClass().getName());
         };
+    }
+
+    private static int blockIn(Random random, WrapDomain domain) {
+        return domain.lowerBound + random.nextInt(domain.domainLength);
     }
 
     private static DensityFunction withLiveNoise(DensityFunction function) {

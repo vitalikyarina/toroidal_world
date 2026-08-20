@@ -72,7 +72,12 @@ class PeriodicNoiseSamplerTest {
 
         double sample(WorldLoopTransformer transformer, double scale,
                 double x, double y, double z, double yScale, double yFudge) {
-            return PeriodicNoiseSampler.sample(permutations, xo, yo, zo, transformer, scale,
+            return sample(transformer, SlotAxes.DEFAULT, scale, x, y, z, yScale, yFudge);
+        }
+
+        double sample(WorldLoopTransformer transformer, SlotAxes axes, double scale,
+                double x, double y, double z, double yScale, double yFudge) {
+            return PeriodicNoiseSampler.sample(permutations, xo, yo, zo, transformer, axes, scale,
                     x, y, z, yScale, yFudge);
         }
     }
