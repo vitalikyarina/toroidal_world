@@ -40,7 +40,6 @@ public class BiomeMixin {
         return toroidal$boundToLevel(level, () -> original.call(level, pos));
     }
 
-    // A reader naming no level leaves the binding untouched rather than replacing it with NOOP.
     @Unique
     private <T> T toroidal$boundToLevel(LevelReader level, Supplier<T> action) {
         WorldLoopTransformer transformer = WorldLoopAttachments.noiseTransformerOf(level);

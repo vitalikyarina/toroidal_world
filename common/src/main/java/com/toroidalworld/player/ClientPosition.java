@@ -17,7 +17,7 @@ import net.minecraft.world.level.Level;
 public final class ClientPosition {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    // One record because the two coordinates and their space are one fact: written on the server thread, read on the network thread.
+    // Written on the server thread and read on the network thread, so the four values change together or not at all.
     private record Mirror(double x, double z, @Nullable ResourceKey<Level> space, WorldLoopTransformer transformer) {
     }
 

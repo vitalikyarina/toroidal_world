@@ -182,9 +182,6 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
     @Final
     private TicketStorage ticketStorage;
 
-    // The wrap has the periodicity of a compiled router, not of a sample: C2ME turns every density function of this
-    // level into bytecode inside RandomState's constructor, and this is the only place that knows which generator it
-    // is being built for.
     @WrapOperation(
             method = "<init>",
             at = @At(

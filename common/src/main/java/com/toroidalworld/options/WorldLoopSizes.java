@@ -5,7 +5,6 @@ import com.toroidalworld.core.CoordinateConstants;
 import net.minecraft.world.level.border.WorldBorder;
 
 public final class WorldLoopSizes {
-    // The smallest view distance still worth playing at; below it the world is technically fine and practically not.
     private static final int MIN_PLAYABLE_VIEW_DISTANCE = 5;
 
     private static final int MIN_CHUNK_RADIUS = CoordinateConstants.VIEW_DISTANCE_MARGIN + MIN_PLAYABLE_VIEW_DISTANCE;

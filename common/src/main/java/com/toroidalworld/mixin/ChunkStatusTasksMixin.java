@@ -18,7 +18,6 @@ import net.minecraft.world.level.chunk.status.ChunkStatusTasks;
 import net.minecraft.world.level.chunk.status.ChunkStep;
 import net.minecraft.world.level.chunk.status.WorldGenContext;
 
-// The steps run on the shared background pool, which also runs samplers with no binding of their own.
 @Mixin(ChunkStatusTasks.class)
 public class ChunkStatusTasksMixin {
     @WrapMethod(

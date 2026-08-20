@@ -14,8 +14,6 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
     public final AstNode foldedX;
     public final AstNode foldedZ;
 
-    // Neither is a child of the tree, but both are part of equality all the same: two nodes differing only by scale,
-    // or built for levels of different widths, must not collapse onto one field.
     public final double horizontalScale;
 
     public final WorldLoopTransformer transformer;
