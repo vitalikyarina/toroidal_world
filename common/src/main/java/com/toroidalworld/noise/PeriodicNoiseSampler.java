@@ -34,17 +34,37 @@ public final class PeriodicNoiseSampler {
             double x, double y, double z, double yScale, double yFudge) {
         SlotAxes axes = context.slotAxes();
         double scale = context.horizontalScale();
-        double xSlotScale = scale / axes.x().divisorIn(context);
-        double ySlotScale = scale / axes.y().divisorIn(context);
-        double zSlotScale = scale / axes.z().divisorIn(context);
 
-        long xPeriod = period(axes.x().domainOf(transformer), xSlotScale);
-        long yPeriod = period(axes.y().domainOf(transformer), ySlotScale);
-        long zPeriod = period(axes.z().domainOf(transformer), zSlotScale);
+        long xPeriod;
+        long yPeriod;
+        long zPeriod;
+        double xs;
+        double ys;
+        double zs;
+        if (axes == SlotAxes.DEFAULT && context.xDivisor() == 1.0 && context.zDivisor() == 1.0) {
+            WrapDomain xDomain = transformer.coords.x;
+            WrapDomain zDomain = transformer.coords.z;
+            xPeriod = period(xDomain, scale);
+            yPeriod = UNBOUNDED_PERIOD;
+            zPeriod = period(zDomain, scale);
+            xs = foldAndScale(xDomain, xPeriod, scale, x) + xOffset;
+            ys = y + yOffset;
+            zs = foldAndScale(zDomain, zPeriod, scale, z) + zOffset;
+        } else {
+            WrapDomain xDomain = axes.x().domainOf(transformer);
+            WrapDomain yDomain = axes.y().domainOf(transformer);
+            WrapDomain zDomain = axes.z().domainOf(transformer);
+            double xSlotScale = scale / axes.x().divisorIn(context);
+            double ySlotScale = scale / axes.y().divisorIn(context);
+            double zSlotScale = scale / axes.z().divisorIn(context);
+            xPeriod = period(xDomain, xSlotScale);
+            yPeriod = period(yDomain, ySlotScale);
+            zPeriod = period(zDomain, zSlotScale);
+            xs = slotCoord(axes.x(), xDomain, xPeriod, xSlotScale, x) + xOffset;
+            ys = slotCoord(axes.y(), yDomain, yPeriod, ySlotScale, y) + yOffset;
+            zs = slotCoord(axes.z(), zDomain, zPeriod, zSlotScale, z) + zOffset;
+        }
 
-        double xs = slotCoord(axes.x(), transformer, xPeriod, xSlotScale, x) + xOffset;
-        double ys = slotCoord(axes.y(), transformer, yPeriod, ySlotScale, y) + yOffset;
-        double zs = slotCoord(axes.z(), transformer, zPeriod, zSlotScale, z) + zOffset;
         int xCell = Mth.floor(xs);
         int yCell = Mth.floor(ys);
         int zCell = Mth.floor(zs);
@@ -65,13 +85,12 @@ public final class PeriodicNoiseSampler {
     }
 
     // A slot carrying no world axis arrives already scaled by its caller, so scaling it again would move the lattice.
-    private static double slotCoord(SlotAxis axis, WorldLoopTransformer transformer,
-            long period, double scale, double coord) {
+    private static double slotCoord(SlotAxis axis, WrapDomain domain, long period, double scale, double coord) {
         if (!axis.carriesWorldAxis()) {
             return coord;
         }
 
-        return foldAndScale(axis.domainOf(transformer), period, scale, coord);
+        return foldAndScale(domain, period, scale, coord);
     }
 
     static long period(WrapDomain domain, double scale) {

@@ -19,8 +19,7 @@ public final class GenerationTransformerContext {
         private SlotAxes slotAxes = SlotAxes.DEFAULT;
         private final ScaleScope scaleScope = new ScaleScope();
         private final DivisorScope divisorScope = new DivisorScope();
-        private final TransformerScope transformerScope = new TransformerScope();
-        private final SlotAxesScope slotAxesScope = new SlotAxesScope();
+        private final BindingScope bindingScope = new BindingScope();
 
         public WorldLoopTransformer transformer() {
             return this.transformer;
@@ -64,36 +63,42 @@ public final class GenerationTransformerContext {
             return this.scaleScope;
         }
 
-        public SlotAxesScope withSlotAxes(SlotAxes axes) {
-            this.slotAxesScope.push();
-            this.slotAxes = axes;
-            return this.slotAxesScope;
+        public BindingScope bind(WorldLoopTransformer boundTransformer, SlotAxes boundAxes, double boundScale) {
+            this.bindingScope.push();
+            this.transformer = boundTransformer;
+            this.slotAxes = boundAxes;
+            this.horizontalScale = boundScale;
+            return this.bindingScope;
         }
 
-        public TransformerScope bindTransformer(WorldLoopTransformer bound) {
-            this.transformerScope.push();
-            this.transformer = bound;
-            return this.transformerScope;
-        }
-
-        public final class TransformerScope implements AutoCloseable {
+        public final class BindingScope implements AutoCloseable {
             private WorldLoopTransformer[] previousTransformers = new WorldLoopTransformer[8];
+            private SlotAxes[] previousAxes = new SlotAxes[8];
+            private double[] previousScales = new double[8];
             private int depth;
 
-            private TransformerScope() {
+            private BindingScope() {
             }
 
             private void push() {
                 if (this.depth == this.previousTransformers.length) {
                     this.previousTransformers = Arrays.copyOf(this.previousTransformers, this.depth * 2);
+                    this.previousAxes = Arrays.copyOf(this.previousAxes, this.depth * 2);
+                    this.previousScales = Arrays.copyOf(this.previousScales, this.depth * 2);
                 }
 
-                this.previousTransformers[this.depth++] = transformer;
+                this.previousTransformers[this.depth] = transformer;
+                this.previousAxes[this.depth] = slotAxes;
+                this.previousScales[this.depth] = horizontalScale;
+                this.depth++;
             }
 
             @Override
             public void close() {
-                transformer = this.previousTransformers[--this.depth];
+                this.depth--;
+                transformer = this.previousTransformers[this.depth];
+                slotAxes = this.previousAxes[this.depth];
+                horizontalScale = this.previousScales[this.depth];
             }
         }
 
@@ -123,27 +128,6 @@ public final class GenerationTransformerContext {
             @Override
             public void close() {
                 horizontalScale = this.previousScales[--this.depth];
-            }
-        }
-
-        public final class SlotAxesScope implements AutoCloseable {
-            private SlotAxes[] previousAxes = new SlotAxes[8];
-            private int depth;
-
-            private SlotAxesScope() {
-            }
-
-            private void push() {
-                if (this.depth == this.previousAxes.length) {
-                    this.previousAxes = Arrays.copyOf(this.previousAxes, this.depth * 2);
-                }
-
-                this.previousAxes[this.depth++] = slotAxes;
-            }
-
-            @Override
-            public void close() {
-                slotAxes = this.previousAxes[--this.depth];
             }
         }
 

@@ -80,8 +80,7 @@ class ShiftNoiseSlotScalingTest {
     private static double folded(SlotAxes axes, double x, double y, double z) {
         Context generation = GenerationTransformerContext.context();
 
-        try (Context.TransformerScope _ = generation.bindTransformer(SQUARE);
-                Context.SlotAxesScope _ = generation.withSlotAxes(axes)) {
+        try (Context.BindingScope _ = generation.bind(SQUARE, axes, generation.horizontalScale())) {
             return SHIFT_NOISE.compute(x, y, z);
         }
     }
@@ -89,8 +88,7 @@ class ShiftNoiseSlotScalingTest {
     private static double reference(SlotAxes axes, double x, double y, double z) {
         Context generation = GenerationTransformerContext.context();
 
-        try (Context.TransformerScope _ = generation.bindTransformer(SQUARE);
-                Context.SlotAxesScope _ = generation.withSlotAxes(axes)) {
+        try (Context.BindingScope _ = generation.bind(SQUARE, axes, generation.horizontalScale())) {
             return ContextScaledNoise.sample(generation, NOISE, x, y, z, NoiseConstants.SHIFT_SCALE)
                     * NoiseConstants.SHIFT_AMPLITUDE;
         }
