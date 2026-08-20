@@ -173,11 +173,11 @@ public class PoiManagerMixin {
         return original.call(transformer.chunks.wrapSection(sectionPos));
     }
 
-    // The searches are only half of what the manager is asked. add, remove, release, exists, getType and
-    // getDebugPoiInfo each name a section with SectionPos.asLong(pos) and hand the very same position on to it, and
-    // vanilla never needs any of them folded: a write arrives under a setBlock this mod already wraps, a read carries a
-    // position taken off a record or a mob memory. A mod addressing the manager directly carries neither, and add then
-    // builds a POI section for a chunk the world does not have and files the record where no folded search will ask.
+    // The searches are only half of what the manager is asked. add, remove, release, exists and getType each name a
+    // section with SectionPos.asLong(pos) and hand the very same position on to it, and vanilla never needs any of them
+    // folded: a write arrives under a setBlock this mod already wraps, a read carries a position taken off a record or
+    // a mob memory. A mod addressing the manager directly carries neither, and add then builds a POI section for a
+    // chunk the world does not have and files the record where no folded search will ask.
     //
     // The fold is taken on the position and not on the section key, because the record keeps the whole BlockPos it was
     // built with and that is what every search hands back to its caller. Taking it here disturbs nothing inside the
@@ -185,7 +185,7 @@ public class PoiManagerMixin {
     // Folding the writes alone would be worse than folding nothing at all — a record filed physically and then released
     // by the raw name it was written with finds no section there and throws.
     @ModifyVariable(
-            method = {"add", "remove", "release", "exists", "getType", "getDebugPoiInfo"},
+            method = {"add", "remove", "release", "exists", "getType"},
             at = @At("HEAD"),
             ordinal = 0,
             argsOnly = true)
