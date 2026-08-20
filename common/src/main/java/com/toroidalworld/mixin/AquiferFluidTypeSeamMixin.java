@@ -13,24 +13,25 @@ import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
 
-@Mixin(targets = "net.minecraft.world.level.levelgen.Aquifer$NoiseBasedAquifer")
-public class AquiferFluidLevelSeamMixin {
+// C2ME @Overwrites computeFluidType at priority 1100; applying below that loses this wrap under C2ME.
+@Mixin(targets = "net.minecraft.world.level.levelgen.Aquifer$NoiseBasedAquifer", priority = 1200)
+public class AquiferFluidTypeSeamMixin {
     @Unique
-    private @Nullable CanonicalCellSampler toroidal$levelSampler;
+    private @Nullable CanonicalCellSampler toroidal$typeSampler;
 
     @WrapOperation(
-            method = "computeRandomizedFluidSurfaceLevel",
+            method = "computeFluidType",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/levelgen/DensityFunction;compute(Lnet/minecraft/world/level/levelgen/DensityFunction$FunctionContext;)D"))
-    private double toroidal$fluidLevelFromCanonicalCell(
+    private double toroidal$fluidTypeFromCanonicalCell(
             DensityFunction noise, DensityFunction.FunctionContext cell, Operation<Double> original,
             @Local(argsOnly = true, ordinal = 0) int blockX,
             @Local(argsOnly = true, ordinal = 2) int blockZ) {
-        if (this.toroidal$levelSampler == null) {
-            this.toroidal$levelSampler = new CanonicalCellSampler(NoiseConstants.AQUIFER_FLUID_LEVEL_CELL_WIDTH);
+        if (this.toroidal$typeSampler == null) {
+            this.toroidal$typeSampler = new CanonicalCellSampler(NoiseConstants.AQUIFER_FLUID_TYPE_CELL_WIDTH);
         }
 
-        return this.toroidal$levelSampler.sample(cell, blockX, blockZ, folded -> original.call(noise, folded));
+        return this.toroidal$typeSampler.sample(cell, blockX, blockZ, folded -> original.call(noise, folded));
     }
 }
