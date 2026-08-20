@@ -9,6 +9,7 @@
     "AirRandomPosMixin",
     "AllayMixin",
     "AquiferFluidLevelSeamMixin",
+    "AquiferFluidTypeSeamMixin",
     "AquiferSeamMixin",
     "AssignProfessionFromJobSiteMixin",
     "BatMixin",
