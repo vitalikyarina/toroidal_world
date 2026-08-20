@@ -13,6 +13,7 @@ public final class GenerationTransformerContext {
 
     public static final class Context {
         private WorldLoopTransformer transformer = WorldLoopTransformer.NOOP;
+        private @Nullable WorldLoopTransformer routerBuild;
         private double horizontalScale = UNSCALED;
         private double xDivisor = UNDIVIDED;
         private double zDivisor = UNDIVIDED;
@@ -27,6 +28,10 @@ public final class GenerationTransformerContext {
 
         public @Nullable WorldLoopTransformer wrappedTransformer() {
             return this.transformer.isWrapped() ? this.transformer : null;
+        }
+
+        public @Nullable WorldLoopTransformer routerBuildTransformer() {
+            return this.routerBuild;
         }
 
         public double horizontalScale() {
@@ -182,6 +187,18 @@ public final class GenerationTransformerContext {
             action.run();
             return null;
         });
+    }
+
+    public static <T> T withRouterBuild(@Nullable WorldLoopTransformer transformer, Supplier<T> action) {
+        Context context = CONTEXT.get();
+        WorldLoopTransformer previous = context.routerBuild;
+        context.routerBuild = transformer;
+
+        try {
+            return action.get();
+        } finally {
+            context.routerBuild = previous;
+        }
     }
 
     private GenerationTransformerContext() {

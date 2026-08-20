@@ -1,16 +1,13 @@
 package com.toroidalworld.compat.c2me;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.noise.DensityFunctionSlotAxes;
+import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.NoiseConstants;
-import com.toroidalworld.noise.NoiseRouterBuild;
 import com.toroidalworld.noise.SlotAxes;
 import com.toroidalworld.noise.SlotAxis;
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
@@ -24,16 +21,17 @@ import net.minecraft.world.level.levelgen.DensityFunctions;
 public final class C2meDfcAst {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private static final Set<String> REPORTED = ConcurrentHashMap.newKeySet();
-
     public static AstNode fold(DensityFunction source, AstNode produced) {
         Fold fold = foldOf(source);
         if (fold == null) {
-            reportOnce(source);
+            if (produced instanceof GenericShiftedNoiseNode) {
+                LOGGER.warn("[c2me-compat] dfc_ast noise_not_folded type={}", source.getClass().getName());
+            }
+
             return produced;
         }
 
-        WorldLoopTransformer transformer = NoiseRouterBuild.wrappedTransformer();
+        WorldLoopTransformer transformer = GenerationTransformerContext.context().routerBuildTransformer();
         if (transformer == null) {
             return produced;
         }
@@ -84,13 +82,6 @@ public final class C2meDfcAst {
             case Z -> CoordinateNode.AXIS_Z;
             case NONE -> ownInput;
         };
-    }
-
-    private static void reportOnce(DensityFunction source) {
-        String type = source.getClass().getName();
-        if (REPORTED.add(type)) {
-            LOGGER.debug("[c2me-compat] dfc_ast not_folded type={}", type);
-        }
     }
 
     private static IllegalStateException brokenShape(DensityFunction source, AstNode produced) {

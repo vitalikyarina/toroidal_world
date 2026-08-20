@@ -1,5 +1,12 @@
 package com.toroidalworld.noise;
 
+import static com.toroidalworld.noise.DensityFunctionFixture.NOISE_DATA;
+import static com.toroidalworld.noise.DensityFunctionFixture.SEED;
+import static com.toroidalworld.noise.DensityFunctionFixture.SQUARE;
+import static com.toroidalworld.noise.DensityFunctionFixture.WORLDS;
+import static com.toroidalworld.noise.DensityFunctionFixture.blockIn;
+import static com.toroidalworld.noise.DensityFunctionFixture.blockY;
+import static com.toroidalworld.noise.DensityFunctionFixture.withLiveNoise;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -9,38 +16,13 @@ import java.util.Random;
 import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.core.WrapDomain;
-import com.toroidalworld.options.WorldLoopBounds;
 
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import net.minecraft.core.Holder;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunctions;
-import net.minecraft.world.level.levelgen.LegacyRandomSource;
-import net.minecraft.world.level.levelgen.synth.NormalNoise;
 
 class ShiftFunctionPeriodicityTest {
-    private static final long SEED = 0x0153EL;
     private static final int SAMPLES = 64;
-    private static final int WORLD_HEIGHT = 384;
-    private static final int LOWEST_Y = -64;
     private static final double MIN_SPREAD = 0.1;
-
-    private static final NormalNoise.NoiseParameters PARAMETERS =
-            new NormalNoise.NoiseParameters(-6, DoubleArrayList.of(1.0, 1.0, 1.0));
-
-    private static final Holder<NormalNoise.NoiseParameters> NOISE_DATA = Holder.direct(PARAMETERS);
-
-    private static final DensityFunction.NoiseHolder NOISE = new DensityFunction.NoiseHolder(
-            NOISE_DATA, NormalNoise.create(new LegacyRandomSource(SEED), PARAMETERS));
-
-    private static final WorldLoopTransformer SQUARE =
-            new WorldLoopTransformer(new WorldLoopBounds(-16, 16, -16, 16));
-
-    private static final WorldLoopTransformer RECTANGULAR =
-            new WorldLoopTransformer(new WorldLoopBounds(-16, 16, -8, 8));
-
-    private static final List<WorldLoopTransformer> WORLDS = List.of(SQUARE, RECTANGULAR);
 
     private record ShiftFunction(String name, DensityFunction function) {
     }
@@ -110,31 +92,9 @@ class ShiftFunctionPeriodicityTest {
         return GenerationTransformerContext.withTransformer(transformer, () -> shift.function().compute(at));
     }
 
-    private static int blockIn(Random random, WrapDomain domain) {
-        return domain.lowerBound + random.nextInt(domain.domainLength);
-    }
-
-    private static int blockY(Random random) {
-        return LOWEST_Y + random.nextInt(WORLD_HEIGHT);
-    }
-
     private static String at(ShiftFunction shift, WorldLoopTransformer transformer,
             String axis, int from, int to, int firstOther, int secondOther) {
         return shift.name() + " in " + transformer + " at " + axis + "=" + from + " vs " + axis + "=" + to
                 + " (" + firstOther + ", " + secondOther + ")";
-    }
-
-    private static DensityFunction withLiveNoise(DensityFunction function) {
-        return function.mapAll(new DensityFunction.Visitor() {
-            @Override
-            public DensityFunction apply(DensityFunction input) {
-                return input;
-            }
-
-            @Override
-            public DensityFunction.NoiseHolder visitNoise(DensityFunction.NoiseHolder noise) {
-                return NOISE;
-            }
-        });
     }
 }
