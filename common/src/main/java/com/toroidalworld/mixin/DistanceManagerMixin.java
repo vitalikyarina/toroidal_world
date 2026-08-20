@@ -33,8 +33,7 @@ public class DistanceManagerMixin implements LevelBindable {
     @Unique
     private @Nullable ServerLevel toroidal$level;
 
-    // The loading tracker is absent here on purpose: its class is package-private, so it registers itself with the
-    // TicketStorage at construction and receives this same bind through TicketStorageMixin.
+    // The loading tracker is missing on purpose: its class is package-private, so it takes this bind through TicketStorageMixin.
     @Override
     public void toroidal$bindLevel(ServerLevel level) {
         this.toroidal$level = level;

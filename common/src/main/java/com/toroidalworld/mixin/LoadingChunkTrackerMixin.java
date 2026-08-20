@@ -11,9 +11,6 @@ import com.toroidalworld.accessors.LevelBindRegistry;
 import net.minecraft.server.level.DistanceManager;
 import net.minecraft.world.level.TicketStorage;
 
-// The loading graph must fold like every other ChunkTracker, but its class is package-private, so DistanceManagerMixin
-// cannot shadow the field to bind it. The tracker instead registers itself with the TicketStorage it listens to, and
-// TicketStorageMixin forwards its own level bind to it.
 @Mixin(targets = "net.minecraft.server.level.LoadingChunkTracker")
 public class LoadingChunkTrackerMixin {
     @Inject(method = "<init>", at = @At("RETURN"))

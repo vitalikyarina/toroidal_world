@@ -19,13 +19,8 @@ public final class C2meDfcAst {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public static AstNode fold(DensityFunction source, AstNode produced) {
-        // The cave sampler is handed back to vanilla rather than folded here. It divides the coordinate by a rarity the
-        // function itself computes, so a fold has to sit inside that division — which DensityFunctionsWeirdScaledSamplerMixin
-        // already does, and which C2ME's own emitter writes past by inlining the whole division. Compiling a second copy of
-        // that fold would put the same statement in two places that must agree block for block, and a disagreement between
-        // them shows up only as terrain that differs with C2ME's compiler on or off. So the node goes back to the
-        // interpreter, exactly as C2ME does with the End islands, and the one fold stays the one fold. Costs the compiled
-        // path for the three router uses on this game version; 26.2 retired the function, so main has nothing here.
+        // The cave sampler folds inside its own rarity division, in DensityFunctionsWeirdScaledSamplerMixin; a second
+        // fold compiled here would have to agree with that one block for block.
         if (produced instanceof DFTWeirdScaledSamplerNode) {
             return new DelegateNode(source);
         }

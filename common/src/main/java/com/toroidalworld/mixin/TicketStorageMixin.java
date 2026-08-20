@@ -23,8 +23,6 @@ public class TicketStorageMixin implements LevelBindable, LevelBindRegistry {
     @Unique
     private @Nullable ServerLevel toroidal$level;
 
-    // The loading graph registers itself here at construction (LoadingChunkTrackerMixin) — its class is
-    // package-private, so the bind cannot reach it through a shadowed field the way the public trackers are reached.
     @Unique
     private final List<LevelBindable> toroidal$registeredBindables = new ArrayList<>();
 

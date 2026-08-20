@@ -13,9 +13,6 @@ import net.minecraft.advancements.criterion.EntityPredicate;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
-// The third reader of a distance bound (see DistanceBoundsMixin): the `distance` field of every EntityPredicate, so it
-// carries the bound of a loot table or a predicate file as well. Kept apart from the trigger pair because matches()
-// has a player-flavoured overload that never touches DistancePredicate — the wrap needs the exact descriptor.
 @Mixin(EntityPredicate.class)
 public class EntityPredicateDistanceMixin {
     @WrapOperation(
