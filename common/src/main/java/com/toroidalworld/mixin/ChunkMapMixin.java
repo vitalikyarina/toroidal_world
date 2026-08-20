@@ -17,7 +17,7 @@ import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.gen.SeamDriveRequest;
 import com.toroidalworld.gen.ShapedChunkGenerator;
-import com.toroidalworld.noise.NoiseRouterBuild;
+import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -196,7 +196,7 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
             long seed,
             Operation<RandomState> original,
             @Local(argsOnly = true) ChunkGenerator generator) {
-        return NoiseRouterBuild.withTransformer(ShapedChunkGenerator.wrappedTransformerOf(generator),
+        return GenerationTransformerContext.withRouterBuild(ShapedChunkGenerator.wrappedTransformerOf(generator),
                 () -> original.call(settings, noiseParameters, seed));
     }
 
