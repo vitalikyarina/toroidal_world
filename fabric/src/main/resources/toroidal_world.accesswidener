@@ -14,3 +14,4 @@ accessible class net/minecraft/world/level/levelgen/DensityFunctions$ShiftedNois
 accessible class net/minecraft/world/level/levelgen/DensityFunctions$Shift
 accessible class net/minecraft/world/level/levelgen/DensityFunctions$ShiftA
 accessible class net/minecraft/world/level/levelgen/DensityFunctions$ShiftB
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$WeirdScaledSampler

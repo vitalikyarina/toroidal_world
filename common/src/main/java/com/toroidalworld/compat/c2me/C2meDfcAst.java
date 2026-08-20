@@ -13,7 +13,6 @@ import com.ishland.c2me.opts.dfc.common.ast.binary.MulNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.ConstantNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.CoordinateNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.DelegateNode;
-import com.ishland.c2me.opts.dfc.common.ast.noise.DFTWeirdScaledSamplerNode;
 import com.ishland.c2me.opts.dfc.common.ast.noise.GenericShiftedNoiseNode;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
@@ -27,6 +26,12 @@ public final class C2meDfcAst {
     private static final Set<String> REPORTED = ConcurrentHashMap.newKeySet();
 
     public static AstNode fold(DensityFunction source, AstNode produced) {
+        // The cave sampler folds inside its own rarity division, in DensityFunctionsWeirdScaledSamplerMixin; a second
+        // fold compiled here would have to agree with that one block for block.
+        if (source instanceof DensityFunctions.WeirdScaledSampler) {
+            return new DelegateNode(source);
+        }
+
         Fold fold = foldOf(source);
         if (fold == null) {
             reportOnce(source);
