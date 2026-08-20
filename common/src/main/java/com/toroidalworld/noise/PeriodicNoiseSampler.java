@@ -2,6 +2,7 @@ package com.toroidalworld.noise;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.core.WrapDomain;
+import com.toroidalworld.noise.GenerationTransformerContext.Context;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.synth.PerlinNoise;
@@ -29,15 +30,21 @@ public final class PeriodicNoiseSampler {
     private static final long UNBOUNDED_PERIOD = 0L;
 
     public static double sample(byte[] permutations, double xOffset, double yOffset, double zOffset,
-            WorldLoopTransformer transformer, SlotAxes axes, double scale,
+            WorldLoopTransformer transformer, Context context,
             double x, double y, double z, double yScale, double yFudge) {
-        long xPeriod = period(axes.x().domainOf(transformer), scale);
-        long yPeriod = period(axes.y().domainOf(transformer), scale);
-        long zPeriod = period(axes.z().domainOf(transformer), scale);
+        SlotAxes axes = context.slotAxes();
+        double scale = context.horizontalScale();
+        double xSlotScale = scale / axes.x().divisorIn(context);
+        double ySlotScale = scale / axes.y().divisorIn(context);
+        double zSlotScale = scale / axes.z().divisorIn(context);
 
-        double xs = slotCoord(axes.x(), transformer, xPeriod, scale, x) + xOffset;
-        double ys = slotCoord(axes.y(), transformer, yPeriod, scale, y) + yOffset;
-        double zs = slotCoord(axes.z(), transformer, zPeriod, scale, z) + zOffset;
+        long xPeriod = period(axes.x().domainOf(transformer), xSlotScale);
+        long yPeriod = period(axes.y().domainOf(transformer), ySlotScale);
+        long zPeriod = period(axes.z().domainOf(transformer), zSlotScale);
+
+        double xs = slotCoord(axes.x(), transformer, xPeriod, xSlotScale, x) + xOffset;
+        double ys = slotCoord(axes.y(), transformer, yPeriod, ySlotScale, y) + yOffset;
+        double zs = slotCoord(axes.z(), transformer, zPeriod, zSlotScale, z) + zOffset;
         int xCell = Mth.floor(xs);
         int yCell = Mth.floor(ys);
         int zCell = Mth.floor(zs);

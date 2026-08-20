@@ -8,7 +8,7 @@ import net.minecraft.world.level.levelgen.DensityFunction;
 public final class ContextScaledNoise {
     public static double sample(Context context, DensityFunction.NoiseHolder noise,
             double x, double y, double z, double horizontalScale) {
-        try (Context.ScaleScope _ = context.withScale(horizontalScale / context.horizontalDivisor())) {
+        try (Context.ScaleScope _ = context.withScale(horizontalScale)) {
             return noise.getValue(x, y, z);
         }
     }
@@ -21,7 +21,7 @@ public final class ContextScaledNoise {
 
         try (Context.TransformerScope _ = context.bindTransformer(transformer);
                 Context.SlotAxesScope _ = context.withSlotAxes(axes);
-                Context.ScaleScope _ = context.withScale(horizontalScale / context.horizontalDivisor())) {
+                Context.ScaleScope _ = context.withScale(horizontalScale)) {
             return noise.getValue(x, y, z);
         }
     }
