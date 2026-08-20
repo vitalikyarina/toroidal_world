@@ -17,6 +17,10 @@ public enum SlotAxis {
         return this != NONE;
     }
 
+    public double samplerInput(double coord, double uniformScale) {
+        return carriesWorldAxis() ? coord : coord * uniformScale;
+    }
+
     public WrapDomain domainOf(WorldLoopTransformer transformer) {
         return switch (this) {
             case X -> transformer.coords.x;
