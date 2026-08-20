@@ -13,13 +13,6 @@ import net.minecraft.core.Position;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.behavior.SleepInBed;
 
-// Two blocks to lie down, and 1.14 to stay asleep — both raw differences against the bed the villager claimed, which is
-// remembered at the position it occupies in the world while the villager is wherever the wrap funnel left it. A bed
-// across the seam is therefore never reached: the villager walks to it, stands on it, and the behaviour refuses to
-// start, so it stays up all night with the door open behind it.
-//
-// The second reading is the one that would wake it again. Folding only the first would have a villager go to sleep and
-// be thrown out of bed on the very next tick, which is why both are taken here.
 @Mixin(SleepInBed.class)
 public class SleepInBedMixin {
     @WrapOperation(

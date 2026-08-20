@@ -10,8 +10,6 @@ import com.toroidalworld.core.WorldLoopTransformer;
 import com.ishland.c2me.rewrites.chunksystem.common.NewChunkHolderVanillaInterface;
 import com.ishland.c2me.rewrites.chunksystem.common.TheChunkSystem;
 
-// The dependency sets are computed from a flowsched ItemHolder, which knows its key and its user data and nothing
-// about any level. This is the step from that user data back to the level the holder belongs to.
 @Mixin(NewChunkHolderVanillaInterface.class)
 public class NewChunkHolderVanillaInterfaceMixin implements TransformerSource {
     @Shadow

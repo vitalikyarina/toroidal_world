@@ -25,15 +25,6 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 
-// /place is imperative and post-generation, so it never runs applyBiomeDecoration and the natural-gen structure fold
-// does not touch it. Neither the loaded check nor the block writes need anything from here: checkLoaded asks
-// level.isLoaded, which ServerChunkCacheMixin folds onto the physical chunk for every asker, and setBlock resolves its
-// chunk through Level.getChunk, which LevelMixin already wraps — so a raw out-of-bounds write lands in the wrapped
-// chunk at the correct local coordinate (world width is a multiple of 16).
-//
-// What is left is placeStructure, wrapped whole: its placement sits in a lambda a handler scoped to placeStructure
-// cannot match, and each slice of the start has to be framed into the chunk that really holds it. Non-looped levels
-// take the original untouched.
 @Mixin(PlaceCommand.class)
 public class PlaceCommandMixin {
     @Shadow
@@ -90,8 +81,6 @@ public class PlaceCommandMixin {
             for (int chunkZ = chunkMin.z(); chunkZ <= chunkMax.z(); chunkZ++) {
                 ChunkPos wrapped = transformer.chunks.wrap(new ChunkPos(chunkX, chunkZ));
 
-                // The slice belongs in the real chunk, so the start is moved into that chunk's frame first; an in-bounds
-                // chunk has a zero shift and gets the start itself, byte-for-byte vanilla.
                 StructureStart framed = framable.toroidal$framedBy(level, wrapped.x() - chunkX, wrapped.z() - chunkZ);
                 if (framed == null) {
                     continue;

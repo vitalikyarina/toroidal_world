@@ -5,7 +5,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import net.minecraft.world.level.ChunkPos;
 
-// Same role as Vec3iWaypointAccessor, for the chunk-grained waypoint.
 @Mixin(targets = "net.minecraft.world.waypoints.TrackedWaypoint$ChunkWaypoint")
 public interface ChunkWaypointAccessor {
     @Accessor("chunkPos")

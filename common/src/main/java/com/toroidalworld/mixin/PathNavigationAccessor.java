@@ -6,9 +6,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 
-// Navigations keep the mob they steer protected and offer no reader, and the one that needs folding is a subclass,
-// where the field is inherited rather than declared. The accessor sits on the class that declares it, so there is one
-// unambiguous answer to where it comes from.
 @Mixin(PathNavigation.class)
 public interface PathNavigationAccessor {
     @Accessor("mob")

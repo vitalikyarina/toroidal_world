@@ -13,10 +13,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
 import net.minecraft.world.level.levelgen.synth.ImprovedNoise;
 
-// The single choke point of the swap: every noise the worldgen router uses funnels into noise(DDDDD) — the 3-arg
-// overload delegates here, and noiseWithDerivative has no vanilla callers in 26.2. The sampler runs vanilla's own
-// algorithm against this instance's permutation table and offsets, with only the lattice cell index wrapped by the
-// loop period.
 @Mixin(ImprovedNoise.class)
 public class ImprovedNoiseMixin {
     @Shadow
@@ -44,6 +40,6 @@ public class ImprovedNoiseMixin {
         }
 
         return PeriodicNoiseSampler.sample(this.p, this.xo, this.yo, this.zo, transformer,
-                context.horizontalScale(), x, y, z, yScale, yFudge);
+                context, x, y, z, yScale, yFudge);
     }
 }

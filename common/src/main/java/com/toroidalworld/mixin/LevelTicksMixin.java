@@ -4,7 +4,9 @@ import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.WorldLoopTransformer;
@@ -12,29 +14,10 @@ import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.ticks.LevelTicks;
 import net.minecraft.world.ticks.ScheduledTick;
 
-// A scheduled tick is filed in a container keyed by its own position, and the container is only ever drained for a
-// chunk the world holds — so a tick named a step past the bounds is filed under a chunk nothing ticks, and simply
-// never runs. Wrapping the position as the tick enters makes that the level's one invariant: every tick it holds is
-// filed against the ground it really means. A level keeps one of these for blocks and one for fluids, and both are
-// this class, so the same wrap serves lava creeping across the seam and a repeater alike.
-//
-// This is the single way in. Everything scheduled the ordinary way goes through ScheduledTickAccess.scheduleTick,
-// which ends at schedule() below; and so does /clone's copyAreaFrom, which builds each copied tick itself from a
-// source position plus an offset and hands it straight here — a destination running across the seam would otherwise
-// file its far half where nothing will ever drain it: a cloned clock that never wakes.
-//
-// What copyAreaFrom *reads* is not covered, deliberately. It gathers the ticks to copy through
-// allContainers.get(ChunkPos.pack(x, z)) on the raw source region, and a key past the bounds is never in that map, so
-// a source crossing the seam offers up only the sliver of itself that falls inside its own numeric range. An ordinary
-// /clone loses nothing to that: blocks land with UPDATE_CLIENTS alone, onPlace runs, and whatever wanted a pending
-// tick arms a fresh one. Only /clone … strict does, which places with UPDATE_SKIP_ALL_SIDEEFFECTS precisely so that
-// nothing wakes up — and even there the loss is a remaining delay, on the crossing of two rare things. Covering it
-// would mean cutting the source region into the pieces the world really holds and copying from each in turn.
-//
-// The level is bound rather than looked up: vanilla's tick container never sees the world it belongs to.
 @Mixin(LevelTicks.class)
 public class LevelTicksMixin<T> implements LevelBindable {
     @Unique
@@ -68,9 +51,26 @@ public class LevelTicksMixin<T> implements LevelBindable {
                 tick.subTickOrder());
     }
 
-    // Every fluid step and every redstone delay passes through here, and a level's transformer never changes.
-    // Deliberately not volatile: resolution is idempotent — transformerOf hands back the level's one attachment
-    // instance — so a race can only cost a repeated lookup, never a second transformer.
+    @Inject(method = "clearArea", at = @At("HEAD"), cancellable = true)
+    private void toroidal$clearEachCopyOfTheArea(BoundingBox area, CallbackInfo ci) {
+        if (this.toroidal$level == null) {
+            return;
+        }
+
+        WorldLoopTransformer transformer = toroidal$transformer();
+        if (!transformer.isWrapped() || !transformer.crossesBounds(area)) {
+            return;
+        }
+
+        ci.cancel();
+
+        @SuppressWarnings("unchecked")
+        LevelTicks<T> ticks = (LevelTicks<T>) (Object) this;
+        for (BoundingBox piece : transformer.splitAcrossBounds(area)) {
+            ticks.clearArea(piece);
+        }
+    }
+
     @Unique
     private WorldLoopTransformer toroidal$transformer() {
         if (this.toroidal$transformer == null) {

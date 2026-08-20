@@ -13,10 +13,6 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.behavior.SetClosestHomeAsWalkTarget;
 
-// The POI search that finds the nearest home already measures through the seam, so what it hands back may sit just past
-// the boundary — and the very next line, which asks whether the mob is already standing on it, does not. A mob home
-// across the seam is therefore never "already here": every second it pays for a fresh POI sweep, a batch of candidate
-// paths and a walk target set to the ground under its own feet.
 @Mixin(SetClosestHomeAsWalkTarget.class)
 public class SetClosestHomeAsWalkTargetMixin {
     @WrapOperation(

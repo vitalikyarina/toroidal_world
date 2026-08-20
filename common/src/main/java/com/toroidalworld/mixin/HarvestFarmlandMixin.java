@@ -13,13 +13,6 @@ import net.minecraft.core.Position;
 import net.minecraft.world.entity.ai.behavior.HarvestFarmland;
 import net.minecraft.world.entity.npc.villager.Villager;
 
-// The plot is chosen from the block cube around the farmer, so at the moment it is picked the two positions share one
-// frame and no seam can lie between them. What separates them is time: the plot is remembered across a whole working
-// session, and a farmer working the ground at the boundary steps over it and is wrapped to the other side of the world.
-//
-// From that tick on the gate reads its own plot a world out, and the gate is the entire body of the tick — nothing is
-// harvested, nothing replanted, no further plot is chosen. The farmer stands over the crop until the session times out
-// and starts again, which near the seam is every session.
 @Mixin(HarvestFarmland.class)
 public class HarvestFarmlandMixin {
     @WrapOperation(

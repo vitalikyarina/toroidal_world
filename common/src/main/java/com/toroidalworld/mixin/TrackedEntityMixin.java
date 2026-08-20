@@ -17,8 +17,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
-// Whether a player is shown an entity at all is decided by the distance between them. Across the seam that distance is
-// a whole world, so a mob two steps away is never tracked — and a packet that is never sent cannot be translated.
 @Mixin(targets = "net/minecraft/server/level/ChunkMap$TrackedEntity")
 public class TrackedEntityMixin {
     @Shadow
@@ -42,10 +40,6 @@ public class TrackedEntityMixin {
                 transformer.coords.z.deltaFromBounds(this.entity.getZ(), player.getZ()));
     }
 
-    // The visibility check asks whether the player holds the chunk the entity stands in — the physical chunk. Mid-tick
-    // an entity that just crossed the seam still sits at its raw out-of-bounds coordinate (our wrap runs at tick end),
-    // and that raw chunk is a phantom the view rightly refuses — so the tracker briefly lost the entity and told the
-    // client to remove it. For a ridden vehicle that remove-and-re-add is the crossing jolt.
     @WrapOperation(
             method = "updatePlayer",
             at = @At(

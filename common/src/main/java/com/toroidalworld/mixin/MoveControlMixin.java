@@ -14,9 +14,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.phys.Vec3;
 
-// Knowing how far the target is does not tell a mob which way to walk. The direction is worked out from the absolute
-// positions, and across the seam that points the long way round the world — a chicken that correctly sees you two steps
-// away sets off in the opposite direction. The target is unwrapped around the mob, so it becomes the copy next door.
 @Mixin(MoveControl.class)
 public class MoveControlMixin implements NavigationShifter {
     @Shadow
@@ -42,8 +39,6 @@ public class MoveControlMixin implements NavigationShifter {
         original.call(nearest.x, nearest.y, nearest.z, speedModifier);
     }
 
-    // A pending wanted point is consumed by tick() as a plain difference one tick later — after a wrap that is a
-    // world-away turn and a step back across the line. The wrap funnel shifts it with the mob (see NavigationShifter).
     @Override
     public void toroidal$shiftBy(int shiftX, int shiftZ) {
         this.wantedX += shiftX;

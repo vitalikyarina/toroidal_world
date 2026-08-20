@@ -10,8 +10,6 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
 import net.minecraft.world.entity.monster.Ghast;
 
-// The fireball is aimed from four blocks ahead of the ghast rather than from the ghast, but that offset is a step, not
-// a place of its own: the copy of the target nearest the ghast is the copy nearest the point it fires from.
 @Mixin(targets = "net.minecraft.world.entity.monster.Ghast$GhastShootFireballGoal")
 public class GhastFireballAimMixin {
     @Shadow

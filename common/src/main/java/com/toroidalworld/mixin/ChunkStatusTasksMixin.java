@@ -18,11 +18,6 @@ import net.minecraft.world.level.chunk.status.ChunkStatusTasks;
 import net.minecraft.world.level.chunk.status.ChunkStep;
 import net.minecraft.world.level.chunk.status.WorldGenContext;
 
-// Binds the level's transformer around every generation step — scoped, for every level, NOOP included. The steps
-// run on the shared background pool, and that pool also runs samplers with no binder of their own (the stronghold ring
-// search among them): a binding left on the thread would be read by whatever lands there next, so each step restores
-// what it found. An unwrapped level's step binding NOOP is not redundant either — it is what shields the step from
-// someone else's leftover ever mattering again.
 @Mixin(ChunkStatusTasks.class)
 public class ChunkStatusTasksMixin {
     @WrapMethod(

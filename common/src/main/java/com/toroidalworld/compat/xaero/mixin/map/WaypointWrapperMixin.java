@@ -10,12 +10,6 @@ import com.toroidalworld.compat.xaero.XaeroWorldMapFold;
 
 import net.minecraft.core.Direction;
 
-// The full map's waypoint wrapper delegates to the minimap waypoint's raw stored coordinates — the ones the
-// minimap side deliberately leaves unfolded for persistence. Everything the FULL MAP derives from the wrapper
-// reads through these two getters: the render position (getRenderX/Z divide these), the right-click tooltip
-// string, the sort order. Folded canonical here, all of it lands on the canonical map; the stored minimap
-// waypoint stays untouched. Foreign-dimension waypoints (dimDiv != 1) pass through — their coordinates live in
-// another dimension's space, which this level's shape does not describe.
 @Mixin(value = xaero.map.mods.gui.Waypoint.class, remap = false)
 public abstract class WaypointWrapperMixin {
     @Shadow

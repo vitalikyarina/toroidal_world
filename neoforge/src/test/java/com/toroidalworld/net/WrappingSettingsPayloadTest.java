@@ -15,11 +15,6 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 
-// The payload is the client's only source of a level's wrap bounds, so the wire format is a contract: every axis shape
-// the bounds model allows must come back exactly, and reading must consume exactly what writing produced — a codec
-// that leaves bytes behind desyncs every payload after it in the buffer. The round trip alone cannot see the two
-// halves drift together — a codec that consistently swapped its two bounds would round-trip clean — so one looped
-// shape is also pinned to the literal bytes it owes the wire.
 class WrappingSettingsPayloadTest {
     private static final RegistryAccess.Frozen REGISTRIES =
             RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
@@ -46,10 +41,6 @@ class WrappingSettingsPayloadTest {
         }
     }
 
-    // Hand-assembled from the declared layout: a looped flag byte, then min and max chunk as protocol VarInts (7 data
-    // bits per byte, low bits first, high bit as continuation) — so -16 is the five-byte F0 FF FF FF 0F and 16 is the
-    // single byte 10. Asserted in both directions against the same bytes: encode must lay down exactly these, decode
-    // must read exactly these back, so encode and decode drifting together fails instead of round-tripping clean.
     @Test
     void aLoopedAxisLaysDownItsExactBytes() {
         WorldLoopBounds bounds =

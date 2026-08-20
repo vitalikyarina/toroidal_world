@@ -3,9 +3,7 @@ package com.toroidalworld.compat.c2me;
 import com.ishland.c2me.opts.dfc.common.gen.dot.DotEmitter;
 import com.ishland.c2me.opts.dfc.common.gen.dot.DotGen;
 
-// Not a debugging nicety: C2ME writes a graph of every function it compiles at the end of each compilation, without
-// asking, and its emitter registry throws on a node class it does not know. A folded node with no drawing is a world
-// that fails to create.
+// C2ME draws every function it compiles and its registry throws on an unknown node, so a folded node with no drawing fails world creation.
 public final class C2meFoldedNoiseDotEmitter implements DotEmitter<C2meFoldedNoiseNode> {
     public static final C2meFoldedNoiseDotEmitter INSTANCE = new C2meFoldedNoiseDotEmitter();
 
@@ -15,12 +13,12 @@ public final class C2meFoldedNoiseDotEmitter implements DotEmitter<C2meFoldedNoi
     @Override
     public int doDotGen(C2meFoldedNoiseNode node, DotGen.Context context, DotGen.Context.Builder builder) {
         return builder.hexagonShape()
-                .label("ToroidalFoldedNoise\\nscale=" + node.horizontalScale)
+                .label("ToroidalFoldedNoise\\nscale=" + node.horizontalScale + "\\naxes=" + node.slotAxes)
                 .edge(context.generate(node.foldedX))
                 .label("foldedX")
                 .finish()
-                .edge(context.generate(node.inputY))
-                .label("inputY")
+                .edge(context.generate(node.foldedY))
+                .label("foldedY")
                 .finish()
                 .edge(context.generate(node.foldedZ))
                 .label("foldedZ")

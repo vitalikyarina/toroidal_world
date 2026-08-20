@@ -6,13 +6,6 @@ import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.world.level.levelgen.synth.ImprovedNoise;
 import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 
-// The octave walk of a periodic PerlinNoise, in one place because it now has two callers: vanilla's five-argument
-// getValue, which this mod wraps, and the three-argument one C2ME overwrites with an octave loop of its own.
-//
-// X and Z go to ImprovedNoise raw: the wrapped sampler maps them onto a circle spanning the world, so scaling them by
-// the octave factor — or folding them through PerlinNoise.wrap, as vanilla and C2ME both do — would shift the phase
-// and tear the seam open. The octave factor travels through the context instead, where it becomes the radius of that
-// circle. Y keeps vanilla's treatment exactly: it is scaled and wrapped, having no seam.
 public final class PeriodicOctaveSampler {
     @SuppressWarnings("deprecation")
     public static double sample(
@@ -27,6 +20,7 @@ public final class PeriodicOctaveSampler {
             double yScale,
             double yFudge) {
         double baseScale = generation.horizontalScale();
+        boolean yCarriesWorldAxis = generation.slotAxes().y().carriesWorldAxis();
         double value = 0.0;
         double factor = lowestFreqInputFactor;
         double valueFactor = lowestFreqValueFactor;
@@ -36,7 +30,8 @@ public final class PeriodicOctaveSampler {
                 ImprovedNoise noise = noiseLevels[i];
                 if (noise != null) {
                     scope.rescale(baseScale * factor);
-                    double noiseValue = noise.noise(x, PerlinNoise.wrap(y * factor), z, yScale * factor, yFudge * factor);
+                    double slotY = yCarriesWorldAxis ? y : PerlinNoise.wrap(y * factor);
+                    double noiseValue = noise.noise(x, slotY, z, yScale * factor, yFudge * factor);
                     value += amplitudes.getDouble(i) * noiseValue * valueFactor;
                 }
 

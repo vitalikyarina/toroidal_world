@@ -4,6 +4,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
+import com.toroidalworld.noise.ContextScaledNoise;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -11,8 +12,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
 
-// The horizontal coordinate reaches ImprovedNoise raw, where it is mapped onto the world circle; xzScale travels
-// through the context instead and sizes that circle.
 @Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$Noise")
 public class DensityFunctionsNoiseMixin {
     @Shadow
@@ -34,8 +33,7 @@ public class DensityFunctionsNoiseMixin {
             return original.call(context);
         }
 
-        try (Context.ScaleScope _ = generation.withScale(this.xzScale)) {
-            return this.noise.getValue(context.blockX(), context.blockY() * this.yScale, context.blockZ());
-        }
+        return ContextScaledNoise.sample(generation, this.noise,
+                context.blockX(), context.blockY() * this.yScale, context.blockZ(), this.xzScale);
     }
 }

@@ -14,14 +14,9 @@ import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.core.WrapDomain;
 
-// Checked against references dumber than the grid: the cells of an axis are collected by walking every chunk of the
-// world and naming its cell with floorDiv, and a folded ring distance is the minimum over the neighbouring world
-// copies. The seed is fixed so a failure reproduces.
 class SectorGridAxisTest {
     private static final long SEED = 0x5EEDL;
 
-    // The world shapes WrapDomainTest sweeps — even centered, odd, one chunk wide, uneven split, zero-based — crossed
-    // with spacings that divide the width, don't divide it, equal it, and exceed it.
     private static final List<WrapDomain> DOMAINS = List.of(
             new WrapDomain(-32, 32),
             new WrapDomain(-2, 3),

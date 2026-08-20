@@ -31,6 +31,7 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
@@ -95,37 +96,29 @@ import net.minecraft.world.level.gameevent.EntityPositionSource;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.BlockEntityTypes;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.waypoints.Waypoint;
 
-// The rewriters run against a hand-built TranslationContext — the same shape production resolves from the player, with
-// the live pieces (own vehicle, entity lookup, rebase) stubbed. One fixed world of 64×64 chunks and one mirror parked a
-// lap past the +X seam drive every case: X is where translation must move a coordinate a whole world, Z is where it
-// must leave it alone. Packets whose position hides behind a private field cannot be constructed directly; they are
-// decoded from a buffer written the way vanilla's own write() lays them out, which the codec then validates.
 class PacketTranslatorTest {
     private static final WorldLoopTransformer TRANSFORMER =
             new WorldLoopTransformer(new WorldLoopBounds(-32, 32, -32, 32));
     private static final RegistryAccess.Frozen REGISTRIES =
             RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
 
-    // The world spans blocks [-512, 512); the client has circled past the +X seam, so its mirror stands at x 580 — a
-    // lap out — while Z sits inside the first lap.
     private static final double MIRROR_X = 580.0;
     private static final double MIRROR_Z = -700.0;
 
-    // A block at the far -X edge of the server's world. The copy the client holds is the one nearest its mirror: one
-    // world up on X (chunk -32 → 32), the same lap on Z.
     private static final BlockPos SERVER_BLOCK = new BlockPos(-510, 64, -505);
     private static final BlockPos CLIENT_BLOCK = new BlockPos(514, 64, -505);
+    private static final BlockPos SERVER_CARRIED_BLOCK = new BlockPos(-510, 64, -100);
+    private static final BlockPos CLIENT_CARRIED_BLOCK = new BlockPos(514, 64, -100);
+    private static final BlockPos MIRROR_CARRIED_BLOCK = new BlockPos(514, 64, -1124);
     private static final ChunkPos SERVER_CHUNK = new ChunkPos(-32, -32);
     private static final ChunkPos CLIENT_CHUNK = new ChunkPos(32, -32);
 
-    // Continuous coordinates: X unwraps a lap up (-500.5 → 523.5), Z unwraps a lap down (500 → -524).
     private static final double SERVER_X = -500.5;
     private static final double CLIENT_X = 523.5;
     private static final double SERVER_Z = 500.0;
@@ -135,8 +128,6 @@ class PacketTranslatorTest {
         return context(entityId -> false, entityId -> null);
     }
 
-    // Wide enough that the fixed coordinates above sit inside every reach a rewriter guards them by, and well under
-    // the 29 chunks this world's shape would allow — the two are separate bounds and the tests must not conflate them.
     private static final int VIEW_DISTANCE = 16;
 
     private static final IntFunction<RegistryFriendlyByteBuf> BUFFERS =
@@ -312,8 +303,6 @@ class PacketTranslatorTest {
             assertEquals(CLIENT_CHUNK, translated.pos());
         }
 
-        // A forget landing past the view's reach cannot be trusted to the nearest copy — the anchor has outrun the
-        // coordinate — so it fans out to every copy the client might hold; the unheld ones are client-side no-ops.
         @Test
         void antipodalForgetSplitsIntoBothCopies() {
             Packet<?> translated = PacketTranslator.toClient(
@@ -332,7 +321,6 @@ class PacketTranslatorTest {
                     new ChunkPos(68, -12), new ChunkPos(4, -12)), forgetPositions(translated));
         }
 
-        // An axis that does not wrap has no second copy — a far coordinate there is ordinary, not ambiguous.
         @Test
         void unboundedAxisNeverSplitsHoweverFarTheForget() {
             WorldLoopTransformer singleAxis = new WorldLoopTransformer(new WorldLoopBounds(
@@ -360,23 +348,21 @@ class PacketTranslatorTest {
         }
     }
 
-    // Which copy a chunk packet lands in is decided by where the client's cache stands, not by where the player is.
-    // The two are the same coordinate except for the tick between a teleport and the tracking view re-centring, which
-    // is the window every case here stages: the mirror parked at chunk 36 while the cache centre is still back at 8.
     @Nested
     class ChunkAnchor {
-        // The mirror's own chunk, from MIRROR_X / MIRROR_Z.
         private static final ChunkPos MIRROR_CHUNK = new ChunkPos(36, -44);
 
         private static final ChunkPos HELD_CENTER = new ChunkPos(8, -44);
 
-        // A chunk the two anchors disagree about: 28 chunks from the cache centre, so its copy sits where the cache
-        // does, while the mirror's nearest copy of it is a whole world further on.
         private static final ChunkPos DISPUTED_CHUNK = new ChunkPos(0, -44);
         private static final BlockPos DISPUTED_BLOCK = new BlockPos(5, 64, -700);
         private static final BlockPos MIRROR_ANCHORED_BLOCK = new BlockPos(1029, 64, -700);
 
         private static TranslationContext contextWith(ChunkPos heldCacheCenter) {
+            return contextWith(heldCacheCenter, entityId -> null);
+        }
+
+        private static TranslationContext contextWith(ChunkPos heldCacheCenter, IntFunction<Vec3> entityPosition) {
             ClientPosition mirror = new ClientPosition();
             mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, TRANSFORMER);
             if (heldCacheCenter != null) {
@@ -384,7 +370,7 @@ class PacketTranslatorTest {
             }
 
             return new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS, Level.OVERWORLD,
-                    VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
+                    VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityPosition, () -> {});
         }
 
         @Test
@@ -396,8 +382,6 @@ class PacketTranslatorTest {
             assertEquals(DISPUTED_BLOCK, translated.getPos());
         }
 
-        // Before the client has ever been told where its cache stands there is no cache to stand anywhere: the first
-        // chunks of a login are built around the player, so the mirror is the anchor and the same key folds elsewhere.
         @Test
         void chunkTrafficFallsBackToTheMirrorBeforeTheFirstCacheCenter() {
             ClientboundBlockUpdatePacket translated = (ClientboundBlockUpdatePacket) PacketTranslator.toClient(
@@ -407,8 +391,6 @@ class PacketTranslatorTest {
             assertEquals(MIRROR_ANCHORED_BLOCK, translated.getPos());
         }
 
-        // The centre packet is what moves the anchor, so it is read out of the packet stream itself: the traffic behind
-        // it folds around the centre the client has just been given.
         @Test
         void theCacheCenterPacketMovesTheAnchorForWhatFollows() {
             TranslationContext context = contextWith(null);
@@ -421,8 +403,6 @@ class PacketTranslatorTest {
             assertEquals(DISPUTED_BLOCK, translated.getPos());
         }
 
-        // The centre packet does not ride on the anchor it delivers: a stale centre must not fold it, or the client
-        // would be sent a cache centre in a copy it is on its way out of.
         @Test
         void theCacheCenterPacketFoldsAroundTheMirrorNotTheStaleCenter() {
             ClientboundSetChunkCacheCenterPacket translated =
@@ -434,7 +414,17 @@ class PacketTranslatorTest {
             assertEquals(MIRROR_CHUNK.z(), translated.getZ());
         }
 
-        // A new space makes the stored centre meaningless — it names a chunk in a different world.
+        @Test
+        void synchedBlockPosFollowsTheEntityNotTheHeldChunkCopy() {
+            ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
+                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.BLOCK_POS, DISPUTED_BLOCK)));
+
+            ClientboundSetEntityDataPacket translated = (ClientboundSetEntityDataPacket) PacketTranslator.toClient(
+                    packet, contextWith(HELD_CENTER, entityId -> Vec3.atCenterOf(DISPUTED_BLOCK)));
+
+            assertEquals(MIRROR_ANCHORED_BLOCK, translated.packedItems().getFirst().value());
+        }
+
         @Test
         void rebaseClearsTheHeldCacheCenter() {
             ClientPosition mirror = new ClientPosition();
@@ -476,11 +466,6 @@ class PacketTranslatorTest {
         }
     }
 
-    // Both border packets keep their centre in private fields and are only ever built from a live WorldBorder, so they
-    // are decoded from a buffer laid out the way vanilla's own write() lays it — and rebuilt the same way, by swapping
-    // the two doubles in front of a tail nobody decoded. The tail is what these cases are really about: the initialize
-    // packet carries a var-long and three var-ints after the centre, whose widths depend on their values, so a tail
-    // copied by anything but bytes comes back as different numbers.
     @Nested
     class BorderPackets {
         private static final double OLD_SIZE = 3000.0;
@@ -545,8 +530,6 @@ class PacketTranslatorTest {
             assertEquals(new BorderCenter(CLIENT_X, CLIENT_Z), context.clientPosition().heldBorderCenter());
         }
 
-        // Before the first rebase, and on the way into another dimension, the mirror names a place in a different
-        // world — there is nothing to fold against, and the watcher sends a fresh centre once it has been rebased.
         @Test
         void unseededMirrorPassesThrough() {
             ClientPosition mirror = new ClientPosition();
@@ -577,7 +560,6 @@ class PacketTranslatorTest {
             assertEquals(CLIENT_BLOCK, context.clientPosition().heldSpawn());
         }
 
-        // The respawn data may name another dimension's spawn — a coordinate this world's wrap knows nothing about.
         @Test
         void foreignDimensionSpawnPassesThrough() {
             ClientboundSetDefaultSpawnPositionPacket packet = new ClientboundSetDefaultSpawnPositionPacket(
@@ -637,9 +619,6 @@ class PacketTranslatorTest {
         }
     }
 
-    // A particle payload may carry a second, absolute position of its own. The packet coordinate it rides on has just
-    // been moved a whole world, so the payload has to move with it — the assertions below all check that the two stay
-    // the few blocks apart they physically are, rather than the world width the raw numbers would put between them.
     @Nested
     class ParticlePayloads {
         @Test
@@ -672,8 +651,6 @@ class PacketTranslatorTest {
             assertEquals(12, vibration.getArrivalInTicks());
         }
 
-        // A vibration travelling to a warden or an allay names the entity by id, which the client resolves to its own
-        // copy — already in client space, and nothing to move.
         @Test
         void vibrationEntityDestinationPassesThrough() {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -690,8 +667,6 @@ class PacketTranslatorTest {
             assertSame(particle, translated.getParticle());
         }
 
-        // The block position names a block whose model data the client looks up, so it takes the chunk-anchored fold
-        // rather than the nearest copy: it has to land in the copy of the chunk the client actually holds.
         @Test
         void blockParticlePositionMovesToTheHeldCopy() {
             BlockState state = Blocks.STONE.defaultBlockState();
@@ -750,8 +725,6 @@ class PacketTranslatorTest {
             assertEquals(0.5F, info.speed());
         }
 
-        // Every explosion vanilla itself throws carries positionless block particles, and those keep the very list they
-        // arrived in rather than paying for a rebuild.
         @Test
         void positionlessBlockParticlesKeepTheirList() {
             WeightedList<ExplosionParticleInfo> blockParticles =
@@ -769,8 +742,6 @@ class PacketTranslatorTest {
 
     @Nested
     class PlayerPosition {
-        // A relative hop of exactly one world width names the same physical point; folded, the client is not moved and
-        // the mirror stays put — nothing it holds has to be re-anchored.
         @Test
         void relativeLapFoldsToNoMove() {
             ClientPosition mirror = new ClientPosition();
@@ -865,25 +836,67 @@ class PacketTranslatorTest {
         }
 
         @Test
-        void synchedBlockPosIsTranslatedOtherValuesPassThrough() {
+        void synchedBlockPosFollowsTheEntityOtherValuesPassThrough() {
             ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
-                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.OPTIONAL_BLOCK_POS, Optional.of(SERVER_BLOCK)),
+                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.OPTIONAL_BLOCK_POS, Optional.of(SERVER_CARRIED_BLOCK)),
                     new SynchedEntityData.DataValue<>(1, EntityDataSerializers.BYTE, (byte) 6),
                     new SynchedEntityData.DataValue<>(2, EntityDataSerializers.OPTIONAL_BLOCK_POS, Optional.empty()),
-                    new SynchedEntityData.DataValue<>(3, EntityDataSerializers.BLOCK_POS, SERVER_BLOCK)));
+                    new SynchedEntityData.DataValue<>(3, EntityDataSerializers.BLOCK_POS, SERVER_CARRIED_BLOCK)));
+
+            ClientboundSetEntityDataPacket translated = (ClientboundSetEntityDataPacket) PacketTranslator.toClient(
+                    packet, context(entityId -> false, entityId -> new Vec3(SERVER_X, 70.0, SERVER_Z)));
+
+            assertEquals(Optional.of(CLIENT_CARRIED_BLOCK), translated.packedItems().get(0).value());
+            assertEquals((byte) 6, translated.packedItems().get(1).value());
+            assertEquals(Optional.empty(), translated.packedItems().get(2).value());
+            assertEquals(CLIENT_CARRIED_BLOCK, translated.packedItems().get(3).value());
+        }
+
+        @Test
+        void synchedBlockPosWithoutTheEntityFoldsAroundTheMirror() {
+            ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
+                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.OPTIONAL_BLOCK_POS, Optional.of(SERVER_CARRIED_BLOCK)),
+                    new SynchedEntityData.DataValue<>(1, EntityDataSerializers.BLOCK_POS, SERVER_CARRIED_BLOCK)));
 
             ClientboundSetEntityDataPacket translated =
                     (ClientboundSetEntityDataPacket) PacketTranslator.toClient(packet, context());
 
-            assertEquals(Optional.of(CLIENT_BLOCK), translated.packedItems().get(0).value());
-            assertEquals((byte) 6, translated.packedItems().get(1).value());
-            assertEquals(Optional.empty(), translated.packedItems().get(2).value());
-            assertEquals(CLIENT_BLOCK, translated.packedItems().get(3).value());
+            assertEquals(Optional.of(MIRROR_CARRIED_BLOCK), translated.packedItems().get(0).value());
+            assertEquals(MIRROR_CARRIED_BLOCK, translated.packedItems().get(1).value());
         }
 
-        // An area effect cloud sprays its payload around itself, so the position inside it is folded to the copy of the
-        // cloud the client holds — not the copy nearest the player. The mirror this fixture runs on stands a lap past
-        // the +X seam, which is the lapped-world case the payload has to survive.
+        @Test
+        void synchedGlobalPosWithoutTheEntityFoldsAroundTheMirrorInItsOwnDimension() {
+            GlobalPos elsewhere = GlobalPos.of(Level.NETHER, SERVER_CARRIED_BLOCK);
+            ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
+                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.OPTIONAL_GLOBAL_POS,
+                            Optional.of(GlobalPos.of(Level.OVERWORLD, SERVER_CARRIED_BLOCK))),
+                    new SynchedEntityData.DataValue<>(1, EntityDataSerializers.OPTIONAL_GLOBAL_POS, Optional.of(elsewhere))));
+
+            ClientboundSetEntityDataPacket translated =
+                    (ClientboundSetEntityDataPacket) PacketTranslator.toClient(packet, context());
+
+            assertEquals(Optional.of(GlobalPos.of(Level.OVERWORLD, MIRROR_CARRIED_BLOCK)),
+                    translated.packedItems().get(0).value());
+            assertEquals(Optional.of(elsewhere), translated.packedItems().get(1).value());
+        }
+
+        @Test
+        void synchedGlobalPosFollowsTheEntityOnlyInItsOwnDimension() {
+            GlobalPos elsewhere = GlobalPos.of(Level.NETHER, SERVER_CARRIED_BLOCK);
+            ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
+                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.OPTIONAL_GLOBAL_POS,
+                            Optional.of(GlobalPos.of(Level.OVERWORLD, SERVER_CARRIED_BLOCK))),
+                    new SynchedEntityData.DataValue<>(1, EntityDataSerializers.OPTIONAL_GLOBAL_POS, Optional.of(elsewhere))));
+
+            ClientboundSetEntityDataPacket translated = (ClientboundSetEntityDataPacket) PacketTranslator.toClient(
+                    packet, context(entityId -> false, entityId -> new Vec3(SERVER_X, 70.0, SERVER_Z)));
+
+            assertEquals(Optional.of(GlobalPos.of(Level.OVERWORLD, CLIENT_CARRIED_BLOCK)),
+                    translated.packedItems().get(0).value());
+            assertEquals(Optional.of(elsewhere), translated.packedItems().get(1).value());
+        }
+
         @Test
         void synchedParticlePayloadFollowsTheEntity() {
             TrailParticleOption particle =
@@ -900,8 +913,6 @@ class PacketTranslatorTest {
             assertEquals(30, trail.duration());
         }
 
-        // The effect particles a mob shows travel as a list of the same erased shape, and each element is folded around
-        // the same entity.
         @Test
         void synchedParticleListFollowsTheEntity() {
             TrailParticleOption particle =
@@ -918,10 +929,8 @@ class PacketTranslatorTest {
             assertEquals(new Vec3(CLIENT_X + 3.0, 71.0, CLIENT_Z + 3.0), ((TrailParticleOption) particles.get(1)).target());
         }
 
-        // Without the entity there is nothing to fold the payload around — it despawned mid-flight, and the packet
-        // describes something the client is about to drop anyway.
         @Test
-        void synchedParticleWithoutTheEntityPassesThrough() {
+        void synchedParticleWithoutTheEntityFoldsAroundTheMirror() {
             TrailParticleOption particle =
                     new TrailParticleOption(new Vec3(SERVER_X + 3.0, 71.0, SERVER_Z + 3.0), 16545810, 30);
             ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
@@ -930,7 +939,16 @@ class PacketTranslatorTest {
             ClientboundSetEntityDataPacket translated =
                     (ClientboundSetEntityDataPacket) PacketTranslator.toClient(packet, context());
 
-            assertSame(particle, translated.packedItems().getFirst().value());
+            TrailParticleOption trail = (TrailParticleOption) translated.packedItems().getFirst().value();
+            assertEquals(new Vec3(CLIENT_X + 3.0, 71.0, CLIENT_Z + 3.0), trail.target());
+        }
+
+        @Test
+        void positionlessValuesReturnTheSamePacket() {
+            ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
+                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.BYTE, (byte) 6)));
+
+            assertSame(packet, PacketTranslator.toClient(packet, context()));
         }
 
         @Test
@@ -973,7 +991,6 @@ class PacketTranslatorTest {
 
         @Test
         void useItemOnCarriesTheHitOffsetWithTheBlock() {
-            // A hit on the far Z face sits at exactly z+1 — wrapped on its own it would part ways with its block.
             Vec3 location = Vec3.atLowerCornerOf(CLIENT_BLOCK).add(0.3, 0.5, 1.0);
             BlockHitResult hit = new BlockHitResult(location, Direction.SOUTH, CLIENT_BLOCK, false);
 
@@ -1018,8 +1035,6 @@ class PacketTranslatorTest {
 
         @Test
         void interactFoldsTheHitTowardTheEntity() {
-            // The entity stands on the +X seam; the client's hit point lies just past the bounds. A plain wrap would
-            // put the point a whole world from the entity — folding keeps it beside the copy the entity occupies.
             Vec3 entityPosition = new Vec3(511.5, 64.0, 0.0);
             ServerboundInteractPacket translated = (ServerboundInteractPacket) PacketTranslator.toServer(
                     new ServerboundInteractPacket(21, InteractionHand.MAIN_HAND, new Vec3(516.0, 64.5, 0.25), false),

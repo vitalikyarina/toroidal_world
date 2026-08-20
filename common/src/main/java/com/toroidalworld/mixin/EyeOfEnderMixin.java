@@ -13,18 +13,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.world.entity.projectile.EyeOfEnder;
 import net.minecraft.world.phys.Vec3;
 
-// The eye is aimed once, at throw time, from the raw difference between the thrower and the stronghold — across the
-// seam that points the long way round the world. The target is folded to its nearest copy in both places that read it:
-//
-// signalTo bakes the direction into a steering point at most 12 blocks out, so the fold must happen before that bake —
-// afterwards the wrong direction is all that is left. The folded steering point may sit a few blocks past the bounds;
-// it is only a point to fly toward, never ground that is read.
-//
-// The per-tick steering is folded too, because the eye itself can cross the seam mid-flight: ServerLevelMixin wraps
-// every non-player entity back into the world at the end of its tick, which moves the eye a whole world while the
-// stored target stays put. The raw per-tick delta would then read a world long — turning the eye around and, because
-// the wanted speed chases the delta's length, launching it. Folding the target around the current position each tick
-// keeps the delta short no matter which side of the seam the eye woke up on.
 @Mixin(EyeOfEnder.class)
 public class EyeOfEnderMixin {
     @Unique

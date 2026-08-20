@@ -10,9 +10,6 @@ import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-// The reference walks every candidate up to the width: a scale is allowed when it divides the width evenly and leaves
-// a nether no narrower than the smallest working looped world. The production divisor-pair walk must agree with it on
-// every width shape — the minimum itself, odd, prime, and comfortably large.
 class NetherScalesTest {
     private static final List<Integer> WIDTHS = List.of(16, 17, 20, 32, 64, 81, 128, 160, 1009, 4096);
 

@@ -13,9 +13,6 @@ import net.minecraft.advancements.triggers.LevitationTrigger;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
-// The fourth reader of a distance bound (see DistanceBoundsMixin), apart only in naming its level through the player
-// it is asked about rather than taking one. Vanilla's own levitation bound is vertical and folds to nothing here; the
-// horizontal and absolute components a datapack may put on the same criterion are what this is for.
 @Mixin(LevitationTrigger.TriggerInstance.class)
 public class LevitationBoundsMixin {
     @WrapOperation(
