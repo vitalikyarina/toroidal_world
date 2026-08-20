@@ -157,6 +157,7 @@
     "RamTargetMixin",
     "RandomPosMixin",
     "RangedAttackAimMixin",
+    "RavagerKnockbackMixin",
     "RingBellMixin",
     "SectionBlocksUpdatePacketAccessor",
     "SectionStorageAccessor",
