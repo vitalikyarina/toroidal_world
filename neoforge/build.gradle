@@ -131,8 +131,7 @@ test {
     useJUnitPlatform()
 }
 
-// The fold test compiles against C2ME's AST classes and runs against C2ME itself. The module jars are jar-in-jar
-// payloads FML cannot load, so they serve the compile alone; the outer artifact goes on the test runtime as a mod.
+// C2ME's module jars are jar-in-jar payloads FML cannot load: fold-test compile only, the outer artifact runs as a mod.
 configurations {
     c2meModules
 }
@@ -155,8 +154,7 @@ dependencies {
     testCompileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
 }
 
-// C2ME bundles its own MixinSquared. JarJar picks one of the two in a real installation; the test runtime has no
-// JarJar, so both land on the module path and the launcher refuses two modules exporting one package.
+// The test runtime has no JarJar to drop one of the two MixinSquared copies, and the launcher refuses the duplicate.
 configurations.testRuntimeClasspath {
     exclude group: 'com.github.bawnorton.mixinsquared'
 }
