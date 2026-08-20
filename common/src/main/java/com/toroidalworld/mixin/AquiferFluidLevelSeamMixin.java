@@ -3,7 +3,6 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.noise.NoiseConstants;
@@ -11,40 +10,23 @@ import com.toroidalworld.noise.QuantizedCoordinates;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.DensityFunction;
-import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 
 @Mixin(targets = "net.minecraft.world.level.levelgen.Aquifer$NoiseBasedAquifer")
-public class AquiferSeamMixin {
+public class AquiferFluidLevelSeamMixin {
     @WrapOperation(
-            method = "computeSubstance",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/levelgen/PositionalRandomFactory;at(III)Lnet/minecraft/util/RandomSource;"))
-    private RandomSource toroidal$seedAquiferCellFromCanonical(
-            PositionalRandomFactory factory, int gridX, int gridY, int gridZ, Operation<RandomSource> original) {
-        WorldLoopTransformer transformer = GenerationTransformerContext.context().wrappedTransformer();
-        if (transformer == null) {
-            return original.call(factory, gridX, gridY, gridZ);
-        }
-
-        return original.call(factory, transformer.chunks.x.wrap(gridX), gridY, transformer.chunks.z.wrap(gridZ));
-    }
-
-    @WrapOperation(
-            method = "computeFluidType",
+            method = "computeRandomizedFluidSurfaceLevel",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/levelgen/DensityFunction;compute(Lnet/minecraft/world/level/levelgen/DensityFunction$FunctionContext;)D"))
-    private double toroidal$fluidTypeFromCanonicalCell(
+    private double toroidal$fluidLevelFromCanonicalCell(
             DensityFunction noise, DensityFunction.FunctionContext cell, Operation<Double> original) {
         Context generation = GenerationTransformerContext.context();
         if (!generation.transformer().isWrapped()) {
             return original.call(noise, cell);
         }
 
-        int cellWidth = NoiseConstants.AQUIFER_FLUID_TYPE_CELL_WIDTH;
+        int cellWidth = NoiseConstants.AQUIFER_FLUID_LEVEL_CELL_WIDTH;
 
         try (Context.DivisorScope divisorScope = generation.withDivisor(cellWidth)) {
             return original.call(noise, QuantizedCoordinates.inBlocks(cell, cellWidth));

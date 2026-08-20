@@ -10,7 +10,7 @@ public final class ContextScaledNoise {
     // lookup per sample that measured ~9% over a chunk's noise fill.
     public static double sample(Context context, DensityFunction.NoiseHolder noise,
             double x, double y, double z, double horizontalScale) {
-        try (Context.ScaleScope scope = context.withScale(horizontalScale)) {
+        try (Context.ScaleScope scope = context.withScale(horizontalScale / context.horizontalDivisor())) {
             return noise.getValue(x, y, z);
         }
     }
@@ -23,7 +23,7 @@ public final class ContextScaledNoise {
         Context context = GenerationTransformerContext.context();
 
         try (Context.TransformerScope transformerScope = context.bindTransformer(transformer);
-                Context.ScaleScope scaleScope = context.withScale(horizontalScale)) {
+                Context.ScaleScope scaleScope = context.withScale(horizontalScale / context.horizontalDivisor())) {
             return noise.getValue(x, y, z);
         }
     }

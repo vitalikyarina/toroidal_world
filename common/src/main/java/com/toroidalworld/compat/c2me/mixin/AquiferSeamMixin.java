@@ -5,11 +5,15 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.noise.GenerationTransformerContext.Context;
+import com.toroidalworld.noise.NoiseConstants;
+import com.toroidalworld.noise.QuantizedCoordinates;
 import com.bawnorton.mixinsquared.TargetHandler;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 
 @Mixin(targets = "net.minecraft.world.level.levelgen.Aquifer$NoiseBasedAquifer")
@@ -36,5 +40,24 @@ public class AquiferSeamMixin {
         }
 
         original.call(factory, random, transformer.chunks.x.wrap(gridX), gridY, transformer.chunks.z.wrap(gridZ));
+    }
+
+    @WrapOperation(
+            method = "computeFluidType",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/level/levelgen/DensityFunction;compute(Lnet/minecraft/world/level/levelgen/DensityFunction$FunctionContext;)D"))
+    private double toroidal$fluidTypeFromCanonicalCell(
+            DensityFunction noise, DensityFunction.FunctionContext cell, Operation<Double> original) {
+        Context generation = GenerationTransformerContext.context();
+        if (!generation.transformer().isWrapped()) {
+            return original.call(noise, cell);
+        }
+
+        int cellWidth = NoiseConstants.AQUIFER_FLUID_TYPE_CELL_WIDTH;
+
+        try (Context.DivisorScope divisorScope = generation.withDivisor(cellWidth)) {
+            return original.call(noise, QuantizedCoordinates.inBlocks(cell, cellWidth));
+        }
     }
 }

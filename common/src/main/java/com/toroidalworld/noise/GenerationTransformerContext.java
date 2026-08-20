@@ -9,11 +9,14 @@ import com.toroidalworld.core.WorldLoopTransformer;
 
 public final class GenerationTransformerContext {
     private static final double UNSCALED = 1.0;
+    private static final double UNDIVIDED = 1.0;
 
     public static final class Context {
         private WorldLoopTransformer transformer = WorldLoopTransformer.NOOP;
         private double horizontalScale = UNSCALED;
+        private double horizontalDivisor = UNDIVIDED;
         private final ScaleScope scaleScope = new ScaleScope();
+        private final DivisorScope divisorScope = new DivisorScope();
         private final TransformerScope transformerScope = new TransformerScope();
 
         public WorldLoopTransformer transformer() {
@@ -28,10 +31,20 @@ public final class GenerationTransformerContext {
             return this.horizontalScale;
         }
 
+        public double horizontalDivisor() {
+            return this.horizontalDivisor;
+        }
+
         public ScaleScope withScale(double scale) {
             this.scaleScope.push();
             this.horizontalScale = scale;
             return this.scaleScope;
+        }
+
+        public DivisorScope withDivisor(double divisor) {
+            this.divisorScope.push();
+            this.horizontalDivisor = divisor;
+            return this.divisorScope;
         }
 
         public ScaleScope openScale() {
@@ -92,6 +105,27 @@ public final class GenerationTransformerContext {
             @Override
             public void close() {
                 horizontalScale = this.previousScales[--this.depth];
+            }
+        }
+
+        public final class DivisorScope implements AutoCloseable {
+            private double[] previousDivisors = new double[8];
+            private int depth;
+
+            private DivisorScope() {
+            }
+
+            private void push() {
+                if (this.depth == this.previousDivisors.length) {
+                    this.previousDivisors = Arrays.copyOf(this.previousDivisors, this.depth * 2);
+                }
+
+                this.previousDivisors[this.depth++] = horizontalDivisor;
+            }
+
+            @Override
+            public void close() {
+                horizontalDivisor = this.previousDivisors[--this.depth];
             }
         }
     }
