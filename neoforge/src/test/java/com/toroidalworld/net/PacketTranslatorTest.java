@@ -96,7 +96,6 @@ import net.minecraft.world.level.gameevent.EntityPositionSource;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.BlockEntityTypes;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
