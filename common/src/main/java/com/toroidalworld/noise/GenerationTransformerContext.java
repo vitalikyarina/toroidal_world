@@ -14,6 +14,7 @@ public final class GenerationTransformerContext {
         private WorldLoopTransformer transformer = WorldLoopTransformer.NOOP;
         private double horizontalScale = UNSCALED;
         private final ScaleScope scaleScope = new ScaleScope();
+        private final TransformerScope transformerScope = new TransformerScope();
 
         public WorldLoopTransformer transformer() {
             return this.transformer;
@@ -36,6 +37,33 @@ public final class GenerationTransformerContext {
         public ScaleScope openScale() {
             this.scaleScope.push();
             return this.scaleScope;
+        }
+
+        public TransformerScope bindTransformer(WorldLoopTransformer bound) {
+            this.transformerScope.push();
+            this.transformer = bound;
+            return this.transformerScope;
+        }
+
+        public final class TransformerScope implements AutoCloseable {
+            private WorldLoopTransformer[] previousTransformers = new WorldLoopTransformer[8];
+            private int depth;
+
+            private TransformerScope() {
+            }
+
+            private void push() {
+                if (this.depth == this.previousTransformers.length) {
+                    this.previousTransformers = Arrays.copyOf(this.previousTransformers, this.depth * 2);
+                }
+
+                this.previousTransformers[this.depth++] = transformer;
+            }
+
+            @Override
+            public void close() {
+                transformer = this.previousTransformers[--this.depth];
+            }
         }
 
         public final class ScaleScope implements AutoCloseable {
