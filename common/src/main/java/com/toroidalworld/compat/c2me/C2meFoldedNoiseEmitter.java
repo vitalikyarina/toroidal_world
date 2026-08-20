@@ -32,8 +32,22 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
             Type.DOUBLE_TYPE,
             Type.DOUBLE_TYPE);
 
-    private static final String TRANSFORMER_LOCAL = "toroidalTransformer";
-    private static final String SLOT_AXES_LOCAL = "toroidalSlotAxes";
+    private static final String LOOP_CLASS = Type.getInternalName(C2meFoldedNoiseLoop.class);
+
+    private static final String FILL_METHOD = "fill";
+    private static final String FILL_DESC = Type.getMethodDescriptor(
+            Type.VOID_TYPE,
+            Type.getType(WorldLoopTransformer.class),
+            Type.getType(SlotAxes.class),
+            Type.getType(NoiseHolder.class),
+            Type.getType(double[].class),
+            Type.getType(double[].class),
+            Type.DOUBLE_TYPE,
+            Type.getType(double[].class),
+            Type.DOUBLE_TYPE,
+            Type.getType(double[].class),
+            Type.DOUBLE_TYPE,
+            Type.DOUBLE_TYPE);
 
     // C2ME's own arrangement: the result array doubles as the buffer for the first input that needs one.
     private static final int RESULT_ARRAY_LOCAL = 1;
@@ -73,16 +87,6 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
         String noiseField = context.newField(NoiseHolder.class, node.noise);
         String transformerField = context.newField(WorldLoopTransformer.class, node.transformer);
         String slotAxesField = context.newField(SlotAxes.class, node.slotAxes);
-
-        int transformerLocal = localVarConsumer.createLocalVariable(TRANSFORMER_LOCAL, TRANSFORMER_DESC);
-        m.load(0, InstructionAdapter.OBJECT_TYPE);
-        m.getfield(context.className, transformerField, TRANSFORMER_DESC);
-        m.store(transformerLocal, InstructionAdapter.OBJECT_TYPE);
-
-        int slotAxesLocal = localVarConsumer.createLocalVariable(SLOT_AXES_LOCAL, SLOT_AXES_DESC);
-        m.load(0, InstructionAdapter.OBJECT_TYPE);
-        m.getfield(context.className, slotAxesField, SLOT_AXES_DESC);
-        m.store(slotAxesLocal, InstructionAdapter.OBJECT_TYPE);
 
         ValuesMethodDefF64 foldedXMethod = context.newMultiMethodF64(node.foldedX);
         ValuesMethodDefF64 foldedYMethod = context.newMultiMethodF64(node.foldedY);
@@ -124,23 +128,21 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
             context.callDelegateMulti(m, foldedZMethod, arrays[filledArrays++]);
         }
 
-        context.doCountedLoop(m, localVarConsumer, idx -> {
-            m.load(RESULT_ARRAY_LOCAL, InstructionAdapter.OBJECT_TYPE);
-            m.load(idx, Type.INT_TYPE);
-            m.load(transformerLocal, InstructionAdapter.OBJECT_TYPE);
-            m.load(slotAxesLocal, InstructionAdapter.OBJECT_TYPE);
-            m.load(0, InstructionAdapter.OBJECT_TYPE);
-            m.getfield(context.className, noiseField, NOISE_HOLDER_DESC);
+        m.load(0, InstructionAdapter.OBJECT_TYPE);
+        m.getfield(context.className, transformerField, TRANSFORMER_DESC);
+        m.load(0, InstructionAdapter.OBJECT_TYPE);
+        m.getfield(context.className, slotAxesField, SLOT_AXES_DESC);
+        m.load(0, InstructionAdapter.OBJECT_TYPE);
+        m.getfield(context.className, noiseField, NOISE_HOLDER_DESC);
+        m.load(RESULT_ARRAY_LOCAL, InstructionAdapter.OBJECT_TYPE);
 
-            int readArrays = 0;
-            readArrays = loadInput(m, idx, arrays, readArrays, foldedXMethod, constantX);
-            readArrays = loadInput(m, idx, arrays, readArrays, foldedYMethod, constantY);
-            loadInput(m, idx, arrays, readArrays, foldedZMethod, constantZ);
+        int readArrays = 0;
+        readArrays = loadAxis(m, arrays, readArrays, foldedXMethod, constantX);
+        readArrays = loadAxis(m, arrays, readArrays, foldedYMethod, constantY);
+        loadAxis(m, arrays, readArrays, foldedZMethod, constantZ);
 
-            m.dconst(node.horizontalScale);
-            m.invokestatic(SAMPLE_CLASS, SAMPLE_METHOD, SAMPLE_DESC, false);
-            m.astore(Type.DOUBLE_TYPE);
-        });
+        m.dconst(node.horizontalScale);
+        m.invokestatic(LOOP_CLASS, FILL_METHOD, FILL_DESC, false);
 
         for (int arrayIdx = 1; arrayIdx < arrays.length; arrayIdx++) {
             m.load(OBJECT_CACHE_LOCAL, InstructionAdapter.OBJECT_TYPE);
@@ -154,16 +156,16 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
         m.areturn(Type.VOID_TYPE);
     }
 
-    private static int loadInput(InstructionAdapter m, int idx, int[] arrays, int readArrays,
+    private static int loadAxis(InstructionAdapter m, int[] arrays, int readArrays,
             ValuesMethodDefF64 method, boolean constant) {
         if (constant) {
+            m.aconst(null);
             m.dconst(method.constValue());
             return readArrays;
         }
 
         m.load(arrays[readArrays], InstructionAdapter.OBJECT_TYPE);
-        m.load(idx, Type.INT_TYPE);
-        m.aload(Type.DOUBLE_TYPE);
+        m.dconst(0.0);
         return readArrays + 1;
     }
 }
