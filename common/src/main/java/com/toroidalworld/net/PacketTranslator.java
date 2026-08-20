@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import org.jspecify.annotations.Nullable;
@@ -398,39 +399,16 @@ public final class PacketTranslator {
 
     private static ClientboundSetEntityDataPacket setEntityData(ClientboundSetEntityDataPacket packet, TranslationContext context) {
         List<SynchedEntityData.DataValue<?>> items = packet.packedItems();
-        if (!needsEntityAnchor(items)) {
-            return packet;
-        }
-
-        Vec3 anchor = entityAnchor(packet.id(), context);
-        if (anchor == null) {
-            return packet;
-        }
-
+        Supplier<Vec3> anchor = entityAnchor(packet.id(), context);
         List<SynchedEntityData.DataValue<?>> translated = new ArrayList<>(items.size());
+        boolean changed = false;
         for (SynchedEntityData.DataValue<?> item : items) {
-            translated.add(toClientData(item, anchor, context));
+            SynchedEntityData.DataValue<?> clientItem = toClientData(item, anchor, context);
+            changed |= clientItem != item;
+            translated.add(clientItem);
         }
 
-        return new ClientboundSetEntityDataPacket(packet.id(), translated);
-    }
-
-    private static boolean needsEntityAnchor(List<SynchedEntityData.DataValue<?>> items) {
-        for (SynchedEntityData.DataValue<?> item : items) {
-            Object value = item.value() instanceof Optional<?> optional ? optional.orElse(null) : item.value();
-            if (isAnchored(value)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static boolean isAnchored(@Nullable Object value) {
-        return value instanceof BlockPos
-                || value instanceof GlobalPos
-                || value instanceof ParticleOptions
-                || value instanceof List<?> values && isParticleList(values);
+        return changed ? new ClientboundSetEntityDataPacket(packet.id(), translated) : packet;
     }
 
     private static boolean isParticleList(List<?> values) {
@@ -447,13 +425,33 @@ public final class PacketTranslator {
         return true;
     }
 
-    private static @Nullable Vec3 entityAnchor(int entityId, TranslationContext context) {
+    private static Supplier<Vec3> entityAnchor(int entityId, TranslationContext context) {
+        return new Supplier<>() {
+            private @Nullable Vec3 anchor;
+
+            @Override
+            public Vec3 get() {
+                if (anchor == null) {
+                    anchor = resolveEntityAnchor(entityId, context);
+                }
+
+                return anchor;
+            }
+        };
+    }
+
+    private static Vec3 resolveEntityAnchor(int entityId, TranslationContext context) {
         Vec3 serverPosition = context.entityPosition().apply(entityId);
-        return serverPosition == null ? null : context.toClient(serverPosition, context.trackedReach());
+        if (serverPosition == null) {
+            ClientPosition mirror = context.clientPosition();
+            return new Vec3(mirror.x(), 0.0, mirror.z());
+        }
+
+        return context.toClient(serverPosition, context.trackedReach());
     }
 
     private static SynchedEntityData.DataValue<?> toClientData(SynchedEntityData.DataValue<?> item,
-            Vec3 anchor, TranslationContext context) {
+            Supplier<Vec3> anchor, TranslationContext context) {
         Object value = item.value();
         if (value instanceof Optional<?> optional) {
             Object held = optional.orElse(null);
@@ -469,22 +467,22 @@ public final class PacketTranslator {
         return clientValue == value ? item : withValue(item, clientValue);
     }
 
-    private static Object toClientValue(Object value, Vec3 anchor, TranslationContext context) {
+    private static Object toClientValue(Object value, Supplier<Vec3> anchor, TranslationContext context) {
         return switch (value) {
-            case BlockPos pos -> nearestCopyBlock(context, anchor, pos);
+            case BlockPos pos -> nearestCopyBlock(context, anchor.get(), pos);
             case GlobalPos globalPos -> toClientGlobal(globalPos, anchor, context);
-            case ParticleOptions particle -> toClientParticle(context, particle, anchor);
-            case List<?> values when isParticleList(values) -> toClientParticles(values, anchor, context);
+            case ParticleOptions particle -> toClientParticle(context, particle, anchor.get());
+            case List<?> values when isParticleList(values) -> toClientParticles(values, anchor.get(), context);
             default -> value;
         };
     }
 
-    private static GlobalPos toClientGlobal(GlobalPos globalPos, Vec3 anchor, TranslationContext context) {
+    private static GlobalPos toClientGlobal(GlobalPos globalPos, Supplier<Vec3> anchor, TranslationContext context) {
         if (!globalPos.dimension().equals(context.dimension())) {
             return globalPos;
         }
 
-        BlockPos clientPos = nearestCopyBlock(context, anchor, globalPos.pos());
+        BlockPos clientPos = nearestCopyBlock(context, anchor.get(), globalPos.pos());
         return clientPos == globalPos.pos() ? globalPos : GlobalPos.of(globalPos.dimension(), clientPos);
     }
 

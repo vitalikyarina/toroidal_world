@@ -115,6 +115,7 @@ class PacketTranslatorTest {
     private static final BlockPos CLIENT_BLOCK = new BlockPos(514, 64, -505);
     private static final BlockPos SERVER_CARRIED_BLOCK = new BlockPos(-510, 64, -100);
     private static final BlockPos CLIENT_CARRIED_BLOCK = new BlockPos(514, 64, -100);
+    private static final BlockPos MIRROR_CARRIED_BLOCK = new BlockPos(514, 64, -1124);
     private static final ChunkPos SERVER_CHUNK = new ChunkPos(-32, -32);
     private static final ChunkPos CLIENT_CHUNK = new ChunkPos(32, -32);
 
@@ -358,6 +359,10 @@ class PacketTranslatorTest {
         private static final BlockPos MIRROR_ANCHORED_BLOCK = new BlockPos(1029, 64, -700);
 
         private static TranslationContext contextWith(ChunkPos heldCacheCenter) {
+            return contextWith(heldCacheCenter, entityId -> null);
+        }
+
+        private static TranslationContext contextWith(ChunkPos heldCacheCenter, IntFunction<Vec3> entityPosition) {
             ClientPosition mirror = new ClientPosition();
             mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, TRANSFORMER);
             if (heldCacheCenter != null) {
@@ -365,7 +370,7 @@ class PacketTranslatorTest {
             }
 
             return new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS, Level.OVERWORLD,
-                    VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
+                    VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityPosition, () -> {});
         }
 
         @Test
@@ -407,6 +412,17 @@ class PacketTranslatorTest {
 
             assertEquals(44, translated.getX());
             assertEquals(MIRROR_CHUNK.z(), translated.getZ());
+        }
+
+        @Test
+        void synchedBlockPosFollowsTheEntityNotTheHeldChunkCopy() {
+            ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
+                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.BLOCK_POS, DISPUTED_BLOCK)));
+
+            ClientboundSetEntityDataPacket translated = (ClientboundSetEntityDataPacket) PacketTranslator.toClient(
+                    packet, contextWith(HELD_CENTER, entityId -> Vec3.atCenterOf(DISPUTED_BLOCK)));
+
+            assertEquals(MIRROR_ANCHORED_BLOCK, translated.packedItems().getFirst().value());
         }
 
         @Test
@@ -837,6 +853,35 @@ class PacketTranslatorTest {
         }
 
         @Test
+        void synchedBlockPosWithoutTheEntityFoldsAroundTheMirror() {
+            ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
+                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.OPTIONAL_BLOCK_POS, Optional.of(SERVER_CARRIED_BLOCK)),
+                    new SynchedEntityData.DataValue<>(1, EntityDataSerializers.BLOCK_POS, SERVER_CARRIED_BLOCK)));
+
+            ClientboundSetEntityDataPacket translated =
+                    (ClientboundSetEntityDataPacket) PacketTranslator.toClient(packet, context());
+
+            assertEquals(Optional.of(MIRROR_CARRIED_BLOCK), translated.packedItems().get(0).value());
+            assertEquals(MIRROR_CARRIED_BLOCK, translated.packedItems().get(1).value());
+        }
+
+        @Test
+        void synchedGlobalPosWithoutTheEntityFoldsAroundTheMirrorInItsOwnDimension() {
+            GlobalPos elsewhere = GlobalPos.of(Level.NETHER, SERVER_CARRIED_BLOCK);
+            ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
+                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.OPTIONAL_GLOBAL_POS,
+                            Optional.of(GlobalPos.of(Level.OVERWORLD, SERVER_CARRIED_BLOCK))),
+                    new SynchedEntityData.DataValue<>(1, EntityDataSerializers.OPTIONAL_GLOBAL_POS, Optional.of(elsewhere))));
+
+            ClientboundSetEntityDataPacket translated =
+                    (ClientboundSetEntityDataPacket) PacketTranslator.toClient(packet, context());
+
+            assertEquals(Optional.of(GlobalPos.of(Level.OVERWORLD, MIRROR_CARRIED_BLOCK)),
+                    translated.packedItems().get(0).value());
+            assertEquals(Optional.of(elsewhere), translated.packedItems().get(1).value());
+        }
+
+        @Test
         void synchedGlobalPosFollowsTheEntityOnlyInItsOwnDimension() {
             GlobalPos elsewhere = GlobalPos.of(Level.NETHER, SERVER_CARRIED_BLOCK);
             ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
@@ -885,7 +930,7 @@ class PacketTranslatorTest {
         }
 
         @Test
-        void synchedParticleWithoutTheEntityPassesThrough() {
+        void synchedParticleWithoutTheEntityFoldsAroundTheMirror() {
             TrailParticleOption particle =
                     new TrailParticleOption(new Vec3(SERVER_X + 3.0, 71.0, SERVER_Z + 3.0), 16545810, 30);
             ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
@@ -894,7 +939,16 @@ class PacketTranslatorTest {
             ClientboundSetEntityDataPacket translated =
                     (ClientboundSetEntityDataPacket) PacketTranslator.toClient(packet, context());
 
-            assertSame(particle, translated.packedItems().getFirst().value());
+            TrailParticleOption trail = (TrailParticleOption) translated.packedItems().getFirst().value();
+            assertEquals(new Vec3(CLIENT_X + 3.0, 71.0, CLIENT_Z + 3.0), trail.target());
+        }
+
+        @Test
+        void positionlessValuesReturnTheSamePacket() {
+            ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
+                    new SynchedEntityData.DataValue<>(0, EntityDataSerializers.BYTE, (byte) 6)));
+
+            assertSame(packet, PacketTranslator.toClient(packet, context()));
         }
 
         @Test
