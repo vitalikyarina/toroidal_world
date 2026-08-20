@@ -24,7 +24,6 @@ import net.minecraft.world.phys.Vec2;
 
 @Mixin(SpreadPlayersCommand.class)
 public class SpreadPlayersCommandMixin {
-    // Vanilla's clamp, except where the square is the whole world: there the two edges are the same ground.
     @Unique
     private static final int MAX_ITERATION_COUNT = 10000;
 
@@ -48,6 +47,7 @@ public class SpreadPlayersCommandMixin {
             return;
         }
 
+        // Vanilla's clamp, except where the square is the whole world: there the two edges are the same ground.
         boolean freeX = transformer.coords.x.coversWorld(maxX - minX);
         boolean freeZ = transformer.coords.z.coversWorld(maxZ - minZ);
         double randomMinX = freeX ? transformer.coords.x.lowerBound : minX;

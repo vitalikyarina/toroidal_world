@@ -66,7 +66,6 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
         String noiseField = context.newField(NoiseHolder.class, node.noise);
         String transformerField = context.newField(WorldLoopTransformer.class, node.transformer);
 
-        // Hoisted out of the counted loop: one field read per array fill rather than one per element.
         int transformerLocal = localVarConsumer.createLocalVariable(TRANSFORMER_LOCAL, TRANSFORMER_DESC);
         m.load(0, InstructionAdapter.OBJECT_TYPE);
         m.getfield(context.className, transformerField, TRANSFORMER_DESC);

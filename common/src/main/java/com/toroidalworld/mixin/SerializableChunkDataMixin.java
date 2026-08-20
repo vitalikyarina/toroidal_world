@@ -31,10 +31,10 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 
 @Mixin(SerializableChunkData.class)
 public class SerializableChunkDataMixin {
-    // Vanilla's own literal, restated because the code it lives in is not reachable from here.
     @Unique
     private static final Logger toroidal$LOGGER = LogUtils.getLogger();
 
+    // Vanilla's own literal, restated because the code it lives in is not reachable from here.
     @Unique
     private static final int toroidal$MAX_REFERENCE_DISTANCE = 8;
 

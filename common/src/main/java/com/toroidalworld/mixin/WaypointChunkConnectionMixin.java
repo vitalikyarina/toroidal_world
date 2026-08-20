@@ -15,13 +15,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.waypoints.WaypointTransmitter;
 
-// Created on first use: a mixin's @Unique field initialisers never run.
 @Mixin(WaypointTransmitter.EntityChunkConnection.class)
 public class WaypointChunkConnectionMixin {
     @Shadow
     @Final
     private ServerPlayer receiver;
 
+    // Created on first use: a mixin's @Unique field initialisers never run.
     @Unique
     private @Nullable WaypointLapGate toroidal$lapGate;
 

@@ -19,7 +19,6 @@ public final class JourneyMapFold {
     // JourneyMap's own unit: one region tile is 512 blocks of ground.
     private static final double REGION_BLOCKS = 512.0;
 
-    // Capped: an extreme zoom-out would otherwise ask for hundreds of re-renders per tile.
     private static final int COPY_RANGE_CAP = 5;
 
     private static final LogRateGate capGate = new LogRateGate();
