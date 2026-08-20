@@ -19,9 +19,7 @@ public final class ContextScaledNoise {
             double x, double y, double z, double horizontalScale) {
         Context context = GenerationTransformerContext.context();
 
-        try (Context.TransformerScope transformerScope = context.bindTransformer(transformer);
-                Context.SlotAxesScope slotAxesScope = context.withSlotAxes(axes);
-                Context.ScaleScope scope = context.withScale(horizontalScale)) {
+        try (Context.BindingScope bindingScope = context.bind(transformer, axes, horizontalScale)) {
             return noise.getValue(x, y, z);
         }
     }

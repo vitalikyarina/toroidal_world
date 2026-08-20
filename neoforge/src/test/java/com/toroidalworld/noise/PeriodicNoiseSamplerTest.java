@@ -79,8 +79,7 @@ class PeriodicNoiseSamplerTest {
                 double x, double y, double z, double yScale, double yFudge) {
             GenerationTransformerContext.Context context = GenerationTransformerContext.context();
 
-            try (GenerationTransformerContext.Context.SlotAxesScope slotAxesScope = context.withSlotAxes(axes);
-                    GenerationTransformerContext.Context.ScaleScope scope = context.withScale(scale)) {
+            try (GenerationTransformerContext.Context.BindingScope bindingScope = context.bind(transformer, axes, scale)) {
                 return PeriodicNoiseSampler.sample(permutations, xo, yo, zo, transformer, context,
                         x, y, z, yScale, yFudge);
             }
