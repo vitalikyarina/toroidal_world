@@ -32,7 +32,6 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(ServerLevel.class)
 public class ServerLevelMixin {
-    // Shared with the packet translation, which holds a particle to the very radius this gate let it through by.
     @Unique
     private static final double PARTICLE_RANGE = PacketReach.PARTICLE.blocks();
 

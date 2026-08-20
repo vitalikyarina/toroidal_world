@@ -9,7 +9,6 @@ import com.toroidalworld.compat.c2me.C2meFoldedNoiseDotEmitter;
 import com.toroidalworld.compat.c2me.C2meFoldedNoiseNode;
 import com.ishland.c2me.opts.dfc.common.gen.dot.DotGenRegistry;
 
-// The graph half of the same registration, as required as the bytecode: C2ME's registry throws on an unknown node class.
 @Mixin(DotGenRegistry.class)
 public class DotGenRegistryMixin {
     @Inject(method = "<clinit>", at = @At("TAIL"))

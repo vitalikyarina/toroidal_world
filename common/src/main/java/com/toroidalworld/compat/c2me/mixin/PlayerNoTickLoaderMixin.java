@@ -87,7 +87,6 @@ public class PlayerNoTickLoaderMixin {
         return C2meSeamFold.canonical(transformer, pos.x, pos.z);
     }
 
-    // The other writer of the radius the client's mapping depends on, held to the same half-a-world bound as the ticking distance.
     @ModifyVariable(method = "setViewDistance", at = @At("HEAD"), argsOnly = true)
     private int toroidal$clampNoTickViewDistance(int viewDistance) {
         WorldLoopTransformer transformer = this.toroidal$transformer();

@@ -22,7 +22,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 @Mixin(WorldBorder.class)
 public class WorldBorderMixin implements TransformerHolder {
-    // Vanilla's own reading, x >= min - margin && x < max + margin, restated so the offset can be the folded one.
     @Unique
     private WorldLoopTransformer toroidal$transformer = WorldLoopTransformer.NOOP;
 
@@ -149,6 +148,7 @@ public class WorldBorderMixin implements TransformerHolder {
                 : new double[] {-domain.domainLength, 0.0, domain.domainLength};
     }
 
+    // Vanilla's own reading, x >= min - margin && x < max + margin, restated so the offset can be the folded one.
     @Unique
     private static boolean toroidal$insideAxis(WrapDomain domain, double min, double max, double coord, double margin) {
         if (domain.coversWorld(max - min)) {

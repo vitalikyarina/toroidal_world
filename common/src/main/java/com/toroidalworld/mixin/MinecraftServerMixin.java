@@ -26,7 +26,6 @@ import net.minecraft.world.level.storage.ServerLevelData;
 
 @Mixin(MinecraftServer.class)
 public class MinecraftServerMixin {
-    // Published before initServer loads the first level and cleared only when the server thread unwinds.
     @Inject(method = "runServer", at = @At("HEAD"))
     private void toroidal$publishCurrentServer(CallbackInfo ci) {
         CurrentServer.set((MinecraftServer) (Object) this);

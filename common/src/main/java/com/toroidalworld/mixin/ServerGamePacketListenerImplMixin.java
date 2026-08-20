@@ -57,7 +57,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         return this.toroidal$clientPosition;
     }
 
-    // Seeded here so the field can be final: the getter is reached from the server thread and the network thread alike.
     @Inject(method = "<init>", at = @At("TAIL"))
     private void toroidal$seedMirror(MinecraftServer server, Connection connection, ServerPlayer player,
             CommonListenerCookie cookie, CallbackInfo ci) {

@@ -40,7 +40,6 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
                     WorldLoopBounds.CODEC.fieldOf(WRAPPING_KEY).forGetter(LoopedChunkGenerator::wrapping)
             ).apply(instance, instance.stable(LoopedChunkGenerator::new)));
 
-    // One /locate over the full search radius touches tens of thousands of columns, so the cache is dropped whole past this.
     private static final int BASE_HEIGHT_CACHE_CAP = 1 << 18;
 
     private final WorldLoopBounds wrapping;
