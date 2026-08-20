@@ -22,14 +22,14 @@ public class LivingEntityMixin {
     }
 
     @ModifyVariable(
-            method = "knockback(DDDLnet/minecraft/world/damagesource/DamageSource;FZ)V",
+            method = "knockback(DDD)V",
             at = @At("HEAD"), argsOnly = true, ordinal = 1)
     private double toroidal$knockbackDirX(double xd) {
         return SeamAim.foldX((LivingEntity) (Object) this, xd);
     }
 
     @ModifyVariable(
-            method = "knockback(DDDLnet/minecraft/world/damagesource/DamageSource;FZ)V",
+            method = "knockback(DDD)V",
             at = @At("HEAD"), argsOnly = true, ordinal = 2)
     private double toroidal$knockbackDirZ(double zd) {
         return SeamAim.foldZ((LivingEntity) (Object) this, zd);
