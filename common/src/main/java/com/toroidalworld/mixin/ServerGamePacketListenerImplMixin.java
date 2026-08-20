@@ -43,9 +43,6 @@ import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
-// The player moves in the unbounded space the client believes in; the server keeps them inside the world. Each movement
-// packet is therefore read twice: once as the client's own coordinate (remembered), once as the nearest continuous
-// position around the player (so vanilla's distance checks still see a normal step, not a jump across the world).
 @Mixin(ServerGamePacketListenerImpl.class)
 public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
     @Shadow
@@ -67,11 +64,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         WorldLoopAttachments.rebaseClientPositionOf(player);
     }
 
-    // The use-on ack names the clicked block's neighbour, and vanilla steps to it with a plain BlockPos.relative. The
-    // clicked block itself arrives wrapped — the inbound rewriter saw to that — so the step lands outside the world
-    // exactly when the block is the last one on its axis and the hit face points outward, which is the face reachable
-    // only from across the seam. Wrapped here, at the step that produces it, rather than where it is read: the same
-    // coordinate feeds the packet the client is sent, and a server truth outside the bounds has no other owner.
     @ModifyExpressionValue(
             method = "handleUseItemOn",
             at = @At(
@@ -82,22 +74,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         return transformer == null ? neighbour : transformer.blocks.wrap(neighbour);
     }
 
-    // Every player teleport funnels through here, so this is also where the server's own truth is kept inside the
-    // world. A cross-seam portal exit is computed in unwrapped space and can name a position past the bounds; placed
-    // there, the player stands in a phantom chunk until the next move packet wraps them back — and in that window the
-    // arrival packet (sent raw) and the mirror seed (wrapped) disagree by a whole world width, so the chunk-cache
-    // centre and the chunks go to a frame the client is not in, and the post-teleport screen holds for its full 30 s.
-    // Wrapped here, before the entity is placed and the packet is built, the entity, the packet and the
-    // mirror describe the same in-bounds place from the first packet of the new dimension. On a non-wrapped level
-    // wrap() is the identity.
-    //
-    // Both axes are wrapped, with no relative case to skip: this version's teleport takes absolute arguments whatever
-    // the relative set says, and hands them straight to absMoveTo — the set only decides what the packet carries, and
-    // the delta for it is computed here from these same arguments. That leaves a relative axis a wire delta a whole
-    // world wide whenever the wrap moved the value; the position rewriter folds it modulo the width, back to the step
-    // the client would have received untouched.
-    //
-    // The ordinals count the double arguments, not the slots: x is the first, z the third.
     @ModifyVariable(method = "teleport(DDDFFLjava/util/Set;)V", at = @At("HEAD"), argsOnly = true, ordinal = 0)
     private double toroidal$wrapTeleportX(double x) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
@@ -171,18 +147,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         refresher.toroidal$refreshTrackedEntities(this.player);
     }
 
-    // Which held chunks the mirror's jump moves to a different client-space copy. The destination is absolute on every
-    // axis here, so the predicted landing is the nearest copy of it around the mirror, with no relative case to
-    // predict separately — for a relative axis the client applies the packet's delta to its own coordinate, and that
-    // lands on the same chunk: the mirror and the server position describe one physical place, so mirror plus folded
-    // delta and nearest-copy-of-destination differ by no whole world. unwrapAround counts whole laps off the
-    // difference between its two arguments, so a destination a world out folds to the same copy as one already inside
-    // the bounds — which is what lets this run at HEAD without caring whether the wrap hook above has gone first.
-    //
-    // Each view position is folded to its physical chunk before comparing (the view square may run past the bounds)
-    // and compared through the same unwrap the packet translator applies, so the verdict matches what the client would
-    // actually be sent; the collected list keeps the raw view coordinate, the same one vanilla's own view difference
-    // feeds to its forget and send.
     @Unique
     private List<ChunkPos> toroidal$flippedChunks(double destinationX, double destinationZ, ClientPosition mirror) {
         WorldLoopTransformer transformer = WorldLoopAttachments.transformerOf(this.player.level());
@@ -251,8 +215,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             return clamped;
         }
 
-        // The mirror lives on this very listener — this.player.connection is this — so the move path reads the field
-        // instead of routing through the holder cast, once per axis per packet.
         ClientPosition mirror = this.toroidal$clientPosition;
         mirror.setX(clamped, MirrorWriter.PLAYER_MOVE);
         double unwrapped = transformer.coords.x.unwrapAround(this.player.getX(), clamped);
@@ -280,7 +242,6 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         mirror.setZ(clamped, MirrorWriter.PLAYER_MOVE);
         double unwrapped = transformer.coords.z.unwrapAround(this.player.getZ(), clamped);
 
-        // Same fold as X: the reference the check measures from must name the copy the player is actually standing in.
         this.firstGoodZ = transformer.coords.z.unwrapAround(unwrapped, this.firstGoodZ);
         this.lastGoodZ = transformer.coords.z.unwrapAround(unwrapped, this.lastGoodZ);
         return unwrapped;

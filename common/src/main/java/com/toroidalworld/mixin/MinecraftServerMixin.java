@@ -24,19 +24,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.storage.ServerLevelData;
 
-// The world spawn at both ends: where vanilla chooses it, and where it is written down.
-//
-// Vanilla picks the world spawn by asking the climate sampler for the best-fitting spot, then walking a square spiral of
-// chunks around it looking for somewhere to stand. Two things in that break in a looped world, and both are single
-// calls rather than the shape of the method: the sampler runs before any chunk step has bound the transformer, so it
-// reads non-periodic noise and answers for terrain that will never exist; and neither it nor the spiral knows about the
-// bounds, so in a 512-wide world the search happily wanders out to X=400.
-//
-// Wrapping those two calls is what makes the search honest, and the write below is what makes its answer keepable.
-// Replacing the whole method — which is what cancelling LevelEvent.CreateSpawnPosition amounted to — also threw away
-// everything vanilla does *after* the spawn is chosen: the bonus chest, and the load-listener stages for the
-// spawn-preparation screen. That is how a world created with Bonus Chest ticked quietly produced no chest. Leave
-// vanilla's method running and only correct what it asks the world.
 @Mixin(MinecraftServer.class)
 public class MinecraftServerMixin {
     // Published before initServer loads the first level and cleared only when the server thread unwinds.
@@ -88,13 +75,6 @@ public class MinecraftServerMixin {
         return original.call(level, transformer.chunks.wrap(chunkPos));
     }
 
-    // The world spawn a new world starts with never passes ServerLevel.setDefaultSpawnPos: setInitialSpawn writes it
-    // into the level data directly, three times over as the search narrows, and the last write is the one that
-    // survives. So the bounds are settled here, at the write itself — not on the two searches above, which are wrapped
-    // so that the search reads real ground rather than to keep a coordinate in the world, and which are not the only
-    // way one can arrive. ServerLevelData.setSpawn is the true sink underneath all three, but it is handed neither a
-    // server nor a level and so cannot tell which dimension's bounds it is holding; this is the innermost point that
-    // still knows.
     @WrapOperation(
             method = "setInitialSpawn",
             at = @At(

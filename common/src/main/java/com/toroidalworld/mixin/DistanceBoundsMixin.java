@@ -14,18 +14,6 @@ import net.minecraft.advancements.critereon.FallAfterExplosionTrigger;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
-// Two readers of a distance bound, one arithmetic (see SeamDistanceBounds): each hands DistancePredicate two absolute
-// positions and the predicate subtracts them raw. A kill five blocks away through the seam then measures half a world,
-// which awards adventure/sniper_duel and adventure/bullseye to someone standing next to their target; the same reading
-// in the other direction makes the at-most bound of the lightning criteria unreachable.
-//
-// Written on the call rather than on the method it sits in, because both of these read the same position again through
-// a LocationPredicate beforehand — that one asks the world about a place, which already folds, and it stays on the
-// coordinates it was given.
-//
-// The third reader, the `distance` field of every EntityPredicate, is in EntityPredicateDistanceMixin: its matches has
-// a player-flavoured overload that never touches DistancePredicate, so the wrap needs the exact descriptor and cannot
-// share this one's plain method name.
 @Mixin({DistanceTrigger.TriggerInstance.class, FallAfterExplosionTrigger.TriggerInstance.class})
 public class DistanceBoundsMixin {
     @WrapOperation(

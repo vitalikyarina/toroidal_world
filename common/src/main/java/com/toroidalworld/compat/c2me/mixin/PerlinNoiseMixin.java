@@ -15,7 +15,6 @@ import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.world.level.levelgen.synth.ImprovedNoise;
 import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 
-//
 // The three-argument method is wrapped directly rather than through MixinSquared, the way EndIslandSeamMixin wraps its
 // own: an overwrite leaves no handler to target, only the method carrying someone else's body, and this config's 1200
 // lands after C2ME's inherited 1100. Naming C2ME's handler instead would be a name from a foreign jar, and on this game

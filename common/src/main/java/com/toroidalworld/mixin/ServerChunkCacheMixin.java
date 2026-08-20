@@ -53,17 +53,11 @@ public class ServerChunkCacheMixin {
         return toroidal$transformer().chunks.z.wrap(chunkZ);
     }
 
-    // Writing a block past the bounds already lands in the real chunk on the other side, but the notification looks up
-    // its chunk holder by the raw position — an out-of-bounds one, which no player tracks. The block would change on the
-    // server and never be heard of again: the far half of a bed, the crater of an explosion across the seam.
     @ModifyVariable(method = "blockChanged", at = @At("HEAD"), argsOnly = true)
     private BlockPos toroidal$wrapChangedBlock(BlockPos pos) {
         return toroidal$transformer().blocks.wrap(pos);
     }
 
-    // getChunkNow is one of the hottest paths in the server, and the cache's level never changes. Deliberately not
-    // volatile: resolution is idempotent — transformerOf hands back the level's one attachment instance — so a race can
-    // only cost a repeated lookup, never a second transformer.
     @Unique
     private WorldLoopTransformer toroidal$transformer() {
         if (this.toroidal$transformer == null) {

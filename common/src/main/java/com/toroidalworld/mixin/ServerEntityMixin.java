@@ -23,7 +23,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerPlayerConnection;
 import net.minecraft.world.entity.Entity;
 
-//
 // Filtered where the batch is still a list rather than at each acceptor call inside sendPairingData: that method is the
 // one frame NeoForge patches, swapping the vanilla Consumer for its own PacketAndPayloadAcceptor, so an anchor there
 // has to be written twice and kept in step with a loader. The bundle is built identically on both, and the list is the

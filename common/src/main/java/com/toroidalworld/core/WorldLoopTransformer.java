@@ -21,16 +21,11 @@ public class WorldLoopTransformer {
     public final VectorOps vectors;
     public final BlockOps blocks;
 
-    // Chunk widths of the world, 0 on an unbounded axis — a world that does not close has no width there. Every
-    // consumer of these stands on a wrapped path whose axes really loop; a question that must hold on any axis goes
-    // through the domain's semantic methods instead.
     public final int xWidth;
     public final int zWidth;
 
     public final WorldLoopBounds bounds;
 
-    // Read on every wrapped-path gate in the mod, so it is a plain precomputed flag rather than a settings comparison
-    // per call. True when at least one axis really wraps — a loop whose every operation is the identity says no.
     private final boolean wrapped;
 
     private final int maxViewDistance;
@@ -156,8 +151,6 @@ public class WorldLoopTransformer {
                     z.unwrap(fromChunkPos.z, toChunkPos.z));
         }
 
-        // How far past the world a chunk lies, chessboard-wise — the same metric the generation pyramid measures its
-        // radii in, so a chunk this far out is directly comparable to a chunk that far from a full one.
         public int overshoot(int chunkX, int chunkZ) {
             return Math.max(x.overshoot(chunkX), z.overshoot(chunkZ));
         }
@@ -281,22 +274,12 @@ public class WorldLoopTransformer {
         return shiftX == 0.0 && shiftZ == 0.0 ? box : box.move(shiftX, 0.0, shiftZ);
     }
 
-    // A position carried in from another world: each horizontal axis stretched by the ratio the two worlds' widths set
-    // on it, then folded into these bounds. Height crosses as it is — no dimension holds a different amount of it than
-    // its neighbour.
-    //
-    // Where an axis closes in both worlds their widths are the mapping, whatever coordinate scale the dimensions
-    // themselves declare; where either does not close there is no width to read a ratio from, and what the dimensions
-    // declare is the only mapping there is — which is the one vanilla would have applied to the whole position.
     public Vec3 mapFrom(WorldLoopTransformer source, Vec3 position, double declaredScale) {
         double mappedX = coords.x.mapFrom(source.coords.x, position.x, declaredScale);
         double mappedZ = coords.z.mapFrom(source.coords.z, position.z, declaredScale);
         return mappedX == position.x && mappedZ == position.z ? position : new Vec3(mappedX, position.y, mappedZ);
     }
 
-    // A region named by two corners is ambiguous the moment either horizontal axis reads shorter through the seam: the
-    // same pair then bounds two different regions, and the corners carry nothing that says which one was meant. An axis
-    // that does not wrap answers no outright — it has no seam for a region to span.
     public boolean spansSeam(BoundingBox region) {
         return coords.x.spansSeam(region.minX(), region.maxX()) || coords.z.spansSeam(region.minZ(), region.maxZ());
     }

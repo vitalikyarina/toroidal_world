@@ -36,7 +36,6 @@ public class SpreadPlayersCommandMixin {
     @Final
     private static Dynamic4CommandExceptionType ERROR_FAILED_TO_SPREAD_ENTITIES;
 
-    // Vanilla-body re-implementation — verified against 1.21.1; re-diff on a platform bump.
     @WrapMethod(method = "spreadPositions(Lnet/minecraft/world/phys/Vec2;DLnet/minecraft/server/level/ServerLevel;"
             + "Lnet/minecraft/util/RandomSource;DDDDI[Lnet/minecraft/server/commands/SpreadPlayersCommand$Position;Z)V")
     private static void toroidal$spreadPositionsAcrossSeam(Vec2 center, double spreadDist, ServerLevel level,
@@ -151,16 +150,11 @@ public class SpreadPlayersCommandMixin {
         return Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
     }
 
-    // No pair inside a square this narrow is closer the other way round, so plain subtraction is already the truth and
-    // vanilla needs no help. A disabled axis has no seam and answers yes to any width.
     @Unique
     private static boolean toroidal$fitsInHalfTheWorld(WorldLoopTransformer transformer, double xSpan, double zSpan) {
         return transformer.coords.x.fitsInHalf(xSpan) && transformer.coords.z.fitsInHalf(zSpan);
     }
 
-    // Vanilla's clamp, except on an axis whose square is the whole world: there the two edges are one and the same
-    // ground, so a position leaving one belongs at the other rather than pressed against it. Wrapping settles a position
-    // rather than moving it off something, so unlike a clamp it does not ask for another iteration.
     @Unique
     private static boolean toroidal$confine(SpreadPositionAccessor position, WorldLoopTransformer transformer,
             boolean freeX, boolean freeZ, double minX, double minZ, double maxX, double maxZ) {

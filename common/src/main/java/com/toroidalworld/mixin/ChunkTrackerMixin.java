@@ -46,18 +46,6 @@ public class ChunkTrackerMixin implements LevelBindable, TransformerCache {
         return original.call(transformer.chunks.x.wrap(chunkX), transformer.chunks.z.wrap(chunkZ));
     }
 
-    // Every graph folds. Cycles through the seam cannot self-sustain for the same reason the plane's own cycles
-    // cannot: a level is the shortest distance to a source, and L = L + 2 has no solution — remove the sources and
-    // the recompute drives every level past the unload threshold, on the torus exactly as on the plane.
-    //
-    // Resolved on first use and kept: a tracker belongs to one level for its whole life, and a level's transformer is
-    // decided once by its generator. An unbound tracker answers NOOP without storing it — memoizing that would pin the
-    // graph to an unwrapped world for good, which is the same trap as resolving at construction.
-    //
-    // Exposed as TransformerCache because the subclasses that own ticket maps of their own — TickingTracker — have to
-    // fold their keys with the same transformer, and MUST NOT bind a level of their own to get it: LevelBindable is
-    // implemented here, so a subclass implementing it again would override this one, leave toroidal$level unset for
-    // that tracker, and silently unfold its neighbour walk.
     @Override
     public WorldLoopTransformer toroidal$transformer() {
         WorldLoopTransformer transformer = this.toroidal$boundTransformer;

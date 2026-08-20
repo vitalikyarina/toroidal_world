@@ -31,16 +31,6 @@ import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.level.ChunkPos;
 
-// The POI search is a primitive, not a portal detail: portals, lightning rods, raids, villagers looking for a bed and
-// /locate all reach the world through it. Unwrapped it walks raw chunk coordinates, so past the bounds it visits chunks
-// that do not exist instead of the real ones on the other side — a bed ten blocks away across the seam is simply not
-// there, and the caller concludes there is none.
-//
-// It comes in two layers, and both measure the seam here. The square (getInSquare) decides which chunks are looked at
-// and which records survive the band filter; the range and "closest" queries (getInRange and the four rankers) then
-// filter and order by distance to the centre. Vanilla measures that distance absolutely, so a record across the seam is
-// scored a whole world away — included by the fixed square, then dropped by the range filter or beaten in the ranking.
-// Every distance here goes through the transformer instead, so the nearest *copy* wins.
 @Mixin(PoiManager.class)
 public class PoiManagerMixin {
     @WrapMethod(method = "getInSquare")

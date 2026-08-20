@@ -40,10 +40,6 @@ public class ServerPlayerMixin {
     @Unique
     private static final double BED_REACH_VERTICAL = 2.0;
 
-    //
-    // The bounds come from the dimension the point names, which is a separate argument here and need not be the level
-    // the player stands in — a bed slept in before a nether trip is still an overworld coordinate, and it is the
-    // overworld's width it has to be folded into.
     @ModifyVariable(method = "setRespawnPosition(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/BlockPos;FZZ)V",
             at = @At("HEAD"), argsOnly = true)
     private @Nullable BlockPos toroidal$storeRespawnInsideBounds(@Nullable BlockPos respawnPos,
@@ -61,10 +57,6 @@ public class ServerPlayerMixin {
         return SeamRespawnData.insideBounds(level, respawnPos);
     }
 
-    // The second of the two moments the client's space changes and it needs the wrap bounds: arriving in another
-    // dimension (the overworld and the nether wrap at different widths). TAIL lands on the method's last return —
-    // the end of the cross-dimension branch; the same-dimension branch and every null bail-out return earlier
-    // and change no space, so they are rightly passed by.
     @Inject(method = "changeDimension(Lnet/minecraft/world/level/portal/DimensionTransition;)Lnet/minecraft/world/entity/Entity;",
             at = @At("TAIL"))
     private void toroidal$sendBoundsOnDimensionChange(DimensionTransition transition,
@@ -87,10 +79,6 @@ public class ServerPlayerMixin {
         oldViewDistance.set(((ServerPlayer) (Object) this).requestedViewDistance());
     }
 
-    // The client's render distance is the outer bound the tracker gates entity visibility on, and vanilla's writer
-    // touches nothing else: the radius every translated coordinate is judged against follows it on the very next
-    // packet, while the tracker's standing decision still stands on the radius before it. Re-taking that decision here
-    // is what keeps the two from ever naming different numbers.
     @Inject(method = "updateOptions", at = @At("TAIL"))
     private void toroidal$refreshTrackingOnViewChange(ClientInformation information, CallbackInfo ci,
             @Share("oldViewDistance") LocalIntRef oldViewDistance) {

@@ -64,23 +64,16 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
         throw new AssertionError();
     }
 
-    // Forget everything the player currently holds: difference(current, EMPTY) is all-removals, so every tracked chunk
-    // gets a ClientboundForgetLevelChunkPacket — translated around the mirror as it stands now, which is why the teleport
-    // hook calls this before the move, while that mirror still names the copies the client is actually holding.
     @Override
     public void toroidal$dropTrackedChunks(ServerPlayer player) {
         this.applyChunkTrackingView(player, ChunkTrackingView.EMPTY);
     }
 
-    // Re-queue every chunk in the player's view: with the view left EMPTY by the drop above, difference(EMPTY, next) is
-    // all-additions, so all are sent again — now around the new mirror, once the teleport has moved it.
     @Override
     public void toroidal$resendTrackedChunks(ServerPlayer player) {
         this.updateChunkTracking(player);
     }
 
-    // The named chunks only, through the same per-chunk forget and send the view difference uses — the client keeps
-    // everything else it holds.
     @Override
     public void toroidal$dropChunks(ServerPlayer player, List<ChunkPos> chunks) {
         for (ChunkPos chunkPos : chunks) {
@@ -177,18 +170,11 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
         return this.level;
     }
 
-    // The ticket graphs are built without any reference to the level they serve; this is the first moment both exist.
-    // The distance manager passes the level on to every graph it owns.
     @Inject(method = "<init>", at = @At("TAIL"))
     private void toroidal$bindLevelToTickets(CallbackInfo ci) {
         ((LevelBindable) this.getDistanceManager()).toroidal$bindLevel(this.level);
     }
 
-    // The tracking layer must never be stamped with a raw out-of-bounds position. Mid-tick, an entity that has just
-    // crossed the seam still sits at its pre-wrap coordinate (the wrap runs at tick end), and a section or view centre
-    // taken from it seeds tickets, the section memory and the view in the phantom frame — on the next move the whole
-    // tracking state then relocates a world over, and every crossing churns. Projecting the reads onto the wrapped
-    // position keeps every tracking key canonical no matter when the tracker happens to run.
     @WrapOperation(
             method = "updatePlayerStatus",
             at = @At(
@@ -254,9 +240,6 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
         return transformer == null ? vanilla : transformer.limitViewDistance(vanilla);
     }
 
-    // Mob spawning asks how far a chunk is from a player; across the seam the plain distance is a whole world wide, so
-    // a chunk right behind the player would never spawn anything. The player arrives as the entity rather than as a
-    // position on this game version, which changes only where the two coordinates are read from.
     @WrapOperation(
             method = "playerIsCloseEnoughForSpawning",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ChunkMap;euclideanDistanceSquared(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/entity/Entity;)D"))

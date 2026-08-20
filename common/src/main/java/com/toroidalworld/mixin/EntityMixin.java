@@ -78,18 +78,6 @@ public class EntityMixin implements TransformerSource {
         return Mth.lengthSquared(deltaX, deltaZ) < Mth.square(distanceXZ) && Mth.square(deltaY) < Mth.square(distanceY);
     }
 
-    // Turning to face a point is yet another copy of the same arithmetic, this one on the entity itself — the same six
-    // lines CommandSourceStack.facing carries for a source with no entity behind it, and folded the same way: the point
-    // becomes its copy nearest the turning body before vanilla subtracts, so the yaw, the pitch and the horizontal leg
-    // all fall out of vanilla's own arithmetic already naming one world copy.
-    //
-    // The nearest copy rather than a fold of the two deltas, which only ever subtracts a single width: /tp lands the
-    // body before the tick tail wraps it, so `/tp @s ~300 ~ ~ facing entity <e>` turns from a position laps outside the
-    // world and one width off it is still one width wrong. nearestCopy wraps both ends first.
-    //
-    // Entity.lookAt is the choke point: ServerPlayer overrides it twice and LivingEntity once, and every one of them
-    // reaches this method by super. The packet those overrides then send the client is moved separately, in
-    // PacketTranslator.playerLookAt.
     @ModifyVariable(method = "lookAt(Lnet/minecraft/commands/arguments/EntityAnchorArgument$Anchor;Lnet/minecraft/world/phys/Vec3;)V",
             at = @At("HEAD"), argsOnly = true)
     private Vec3 toroidal$lookAtNearestCopy(Vec3 pos) {

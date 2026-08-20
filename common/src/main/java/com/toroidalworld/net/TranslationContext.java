@@ -42,8 +42,6 @@ public record TranslationContext(
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    // How far past the capped view distance legitimate chunk traffic still reaches: one chunk of lighting border
-    // vanilla tracks beyond the view, and one more where it forgets what fell out.
     private static final int VIEW_REACH_SLACK = 2;
 
     // Vanilla's own floor for a client's requested view distance, below which ChunkMap will not go.
@@ -67,10 +65,6 @@ public record TranslationContext(
                 () -> WorldLoopAttachments.rebaseClientPositionOf(player));
     }
 
-    // What the entity tracker measures with, resolved the way it resolves it: TrackedEntity.updatePlayer re-reads
-    // ChunkMap.getPlayerViewDistance on every pass, so this number is the live one by construction — the client's own
-    // request, held to the server's setting and then to the world's ceiling. Not the ceiling on its own — that is half
-    // the world, which is exactly the distance a fold can never exceed, so a guard standing on it can never fire.
     private static int trackedViewDistanceOf(ServerPlayer player, WorldLoopTransformer transformer) {
         int serverViewDistance = player.level().getServer().getPlayerList().getViewDistance();
         return transformer.limitViewDistance(
@@ -105,31 +99,17 @@ public record TranslationContext(
         return clientPos;
     }
 
-    // Where the client's chunk cache stands, which is not always where the player does. Vanilla gates chunk traffic on
-    // the tracking view and announces that view's centre with the cache-centre packet, so the centre the client last
-    // received is both the copy its cache is built around and the point the traffic was measured from. The mirror is a
-    // different thing: it follows the player, and a teleport moves it a tick before the view re-centres — a window this
-    // door used to fold and judge traffic in, from a point the client's cache had not reached. Reading the centre out
-    // of the packet stream keeps the two in step by construction: the anchor changes exactly where the client's own
-    // cache changes, in the same order, because both are that one packet. Before it has ever arrived — the first
-    // chunks of a login or a dimension change — the mirror is the only anchor there is, and it is right, because the
-    // client's cache is empty and about to be built around the player.
     private ChunkPos chunkAnchor() {
         ChunkPos heldCacheCenter = clientPosition.heldCacheCenter();
         return heldCacheCenter == null ? clientPosition.chunk() : heldCacheCenter;
     }
 
-    // The cache-centre packet sets the anchor rather than riding on it, so it takes its own door. It folds around the
-    // mirror — the centre vanilla computed is the player's own chunk, and the client is about to move its cache there —
-    // and it is not held to the view reach, which measures traffic against a centre this packet is still delivering.
     public ChunkPos toClientCacheCenter(ChunkPos chunkPos) {
         ChunkPos clientPos = transformer.chunks.unwrap(clientPosition.chunk(), chunkPos);
         clientPosition.setHeldCacheCenter(clientPos);
         return clientPos;
     }
 
-    // The plain nearest-copy unwrap, outside the view-reach backstop — for packets that name a chunk as a directional
-    // hint (a far player's waypoint) rather than a chunk the client holds.
     public ChunkPos nearestCopy(ChunkPos chunkPos) {
         return transformer.chunks.unwrap(clientPosition.chunk(), chunkPos);
     }
@@ -160,17 +140,10 @@ public record TranslationContext(
         return other == nearest ? new int[] {nearest} : new int[] {nearest, other};
     }
 
-    // How far a chunk the client is holding may sit from the anchor: as far as the view it was admitted through
-    // reaches, and no further. ChunkTrackingView.Positioned.contains puts that bound at viewDistance + 1 chunks on an
-    // axis; the slack above carries the one more this door owes.
     private int viewReach() {
         return heldViewDistance + VIEW_REACH_SLACK;
     }
 
-    // A different question, which the same number used to answer. Which copy of a chunk lies nearest the anchor stops
-    // being decidable only at the antipode, so what a forget has to fan out past is half the world — the ceiling the
-    // world's shape sets on any view, not the view a particular client asked for. Reading the narrower one here would
-    // fan out ordinary forgets that are not ambiguous at all, doubling that traffic for nothing.
     private int copyAmbiguityReach() {
         return transformer.maxViewDistance() + VIEW_REACH_SLACK;
     }
@@ -199,8 +172,6 @@ public record TranslationContext(
         }
     }
 
-    // The verdict on its own, so the bound can be asserted against the terms each family's slack was derived from
-    // rather than read back off the numbers that state it.
     static boolean withinReach(double clientValue, double anchor, PacketReach reach) {
         return Math.abs(clientValue - anchor) <= reach.blocks() + reach.slackBlocks();
     }

@@ -90,15 +90,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-// Every packet that carries a position crosses the boundary between the server's wrapped world and the client's
-// unbounded one, so it is rewritten in flight. Packets not in the tables pass through untouched.
-//
-// The two directions are not symmetric. Outgoing, a world coordinate is unwrapped around where the player believes they
-// are — which of the infinitely many copies of a chunk to show them depends on where they stand. Incoming, a client
-// coordinate is simply wrapped back into the world: it names exactly one block, whichever copy they clicked.
-//
-// Rewriters read the world only through the TranslationContext, never a live player — the ServerPlayer entry points
-// below resolve one, a test builds one by hand.
 public final class PacketTranslator {
     private static final StreamCodec<FriendlyByteBuf, BorderCenter> BORDER_CENTER_CODEC = StreamCodec.of(
             (buffer, center) -> {
@@ -113,8 +104,6 @@ public final class PacketTranslator {
             (buffer, section) -> buffer.writeLong(section.asLong()),
             buffer -> SectionPos.of(buffer.readLong()));
 
-    // Three plain doubles — how a position sits on the wire in the packets that offer no way to rebuild them from
-    // values: the entity teleport and the vehicle correction.
     private static final StreamCodec<FriendlyByteBuf, Vec3> POSITION_CODEC = StreamCodec.of(
             (buffer, position) -> {
                 buffer.writeDouble(position.x);
@@ -123,7 +112,6 @@ public final class PacketTranslator {
             },
             buffer -> new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()));
 
-    // The hit point on an entity travels as three floats, not the doubles a position usually takes.
     private static final StreamCodec<FriendlyByteBuf, Vec3> HIT_LOCATION_CODEC = StreamCodec.of(
             (buffer, location) -> {
                 buffer.writeFloat((float) location.x);
@@ -132,9 +120,6 @@ public final class PacketTranslator {
             },
             buffer -> new Vec3(buffer.readFloat(), buffer.readFloat(), buffer.readFloat()));
 
-    // What opens a serverbound interact, in front of the hit point: the entity, then which of the three actions
-    // follows. The entity is the reason this is decoded at all — the packet exposes no getter for it, and the hit
-    // point has to fold around the entity it names.
     private record InteractHeader(int entityId, int actionType) {
     }
 
@@ -145,7 +130,6 @@ public final class PacketTranslator {
             },
             buffer -> new InteractHeader(buffer.readVarInt(), buffer.readVarInt()));
 
-    // Nothing in front of the position: decodes without touching the buffer, so the prefix comes out zero bytes wide.
     private static final StreamCodec<FriendlyByteBuf, Unit> NO_PREFIX_CODEC = StreamCodec.unit(Unit.INSTANCE);
 
     private static final Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> TO_CLIENT = Map.ofEntries(
@@ -321,8 +305,6 @@ public final class PacketTranslator {
         return new ClientboundBundlePacket(forgets);
     }
 
-    // The one packet that moves the anchor every other chunk packet is folded and judged against, so it takes the
-    // door's own entry point: folded around the mirror and outside the view-reach check.
     private static ClientboundSetChunkCacheCenterPacket chunkCacheCenter(ClientboundSetChunkCacheCenterPacket packet, TranslationContext context) {
         ChunkPos clientPos = context.toClientCacheCenter(new ChunkPos(packet.getX(), packet.getZ()));
         return new ClientboundSetChunkCacheCenterPacket(clientPos.x, clientPos.z);
@@ -339,22 +321,6 @@ public final class PacketTranslator {
         return rewritten == packet.payload() ? packet : new ClientboundCustomPayloadPacket(rewritten);
     }
 
-    // The client's own position. A relative move is a delta the client applies to itself, so it already lands in the
-    // right space and only the mirror has to follow; an absolute one is a server coordinate and has to be moved into
-    // the client's space, or the client would be flung back a whole world and take its chunk cache with it.
-    //
-    // That move takes the plain nearest-copy door. A teleport names any point in the world it likes, the antipode
-    // included, and every one of them is a legal target; the guarded door's band is there for coordinates that only
-    // reach the client because the player is near them, which this is not. The step the move makes is still checked —
-    // by the mirror itself, one line below, where both ends of it are known.
-    //
-    // This is where an arrival in another dimension is noticed, and it is the right place for it because every absolute
-    // position a player is given on the way into a new world passes through here — portal, command, login — before any
-    // packet that depends on the mirror. An event would fire after them.
-    //
-    // It does not cover a move the server makes without changing dimension: a respawn lands in the same world, so the
-    // mirror still describes it and the branch below does not fire. That case is caught at the placement itself, in
-    // PlayerListMixin's respawn hook — the two together are what make every change of space seed the mirror.
     private static ClientboundPlayerPositionPacket playerPosition(ClientboundPlayerPositionPacket packet, TranslationContext context) {
         ClientPosition clientPosition = context.clientPosition();
 
@@ -363,11 +329,6 @@ public final class PacketTranslator {
             return packet;
         }
 
-        //
-        // That fold is load-bearing here rather than a nicety. The teleport funnel takes absolute arguments on this
-        // version and subtracts the player's position itself, so a destination the wrap hook pulled back inside the
-        // bounds reaches the wire as a delta a whole world wide. Folding is modulo that width, so it comes back out as
-        // the step the client would have been sent had nothing been wrapped.
         Set<RelativeMovement> relatives = packet.getRelativeArguments();
         boolean relativeX = relatives.contains(RelativeMovement.X);
         boolean relativeZ = relatives.contains(RelativeMovement.Z);
@@ -397,7 +358,6 @@ public final class PacketTranslator {
                 new Vec3(packet.getXa(), packet.getYa(), packet.getZa()), packet.getYHeadRot());
     }
 
-    //
     // An entity teleport carries no relative flags on this version — it is always an absolute position — so there is no
     // axis to leave alone. The packet also offers no constructor to rebuild from values, so the position is swapped on
     // the wire, behind the entity id that opens it.
@@ -414,9 +374,6 @@ public final class PacketTranslator {
                 packet, context, (entityId, position) -> context.toClient(position, reach));
     }
 
-    // The correction only ever names the vehicle the recipient is riding, so it arrives from no distance at all; the
-    // tracking reach is a generous bound rather than a tight one, and the tight one would be zero. It cannot be rebuilt
-    // from values either, but here the position opens the packet, so nothing precedes it.
     private static Packet<?> moveVehicle(ClientboundMoveVehiclePacket packet, TranslationContext context) {
         PacketReach reach = context.trackedReach();
         return rewritePosition(
@@ -450,11 +407,6 @@ public final class PacketTranslator {
                 packet.getProgress());
     }
 
-    // An ordinary level event happens in a chunk the listener holds, so it takes the chunk-anchored fold. A global one
-    // — a wither waking, a dragon dying, the end portal opening — goes to everyone in the world at its true position,
-    // and the client keeps only the direction to it (it plays the sound two blocks from its own camera along that
-    // line). So it names a place the client does not hold, like a look-at target, and takes the plain nearest-copy
-    // fold, outside the view-reach backstop that would otherwise call a legitimate packet a break.
     private static ClientboundLevelEventPacket levelEvent(ClientboundLevelEventPacket packet, TranslationContext context) {
         BlockPos clientPos = packet.isGlobalEvent()
                 ? nearestCopyBlock(context, packet.getPos())
@@ -546,8 +498,6 @@ public final class PacketTranslator {
                 packet.getBlock(), packet.getB0(), packet.getB1());
     }
 
-    // The editor the client opens must name the sign in its own space, or the text it sends back would name a block a
-    // world away from the one it is showing.
     private static ClientboundOpenSignEditorPacket openSignEditor(ClientboundOpenSignEditorPacket packet, TranslationContext context) {
         return new ClientboundOpenSignEditorPacket(
                 toClientBlock(context, packet.getPos(), ChunkTraffic.SIGN_EDITOR), packet.isFrontText());
@@ -586,13 +536,6 @@ public final class PacketTranslator {
                 packet.getExplosionSound());
     }
 
-    // The blocks the blast destroyed are absolute positions, but they travel as signed byte deltas from the packet's
-    // own centre and the client rebuilds them by adding those deltas back to the centre it was handed. Moving the
-    // centre and leaving them would make every delta a world wide, which does not fit in a byte: the client would tear
-    // out blocks scattered anywhere but under the explosion. They move by exactly the offset the centre moved, the same
-    // offset for all of them, so every delta keeps the width it already had — a blast reaches a few blocks, so a centre
-    // that folded folded its blocks the same way. The shift is taken between the floored centres because those are the
-    // very numbers the packet writes its deltas against.
     private static List<BlockPos> toClientBlown(List<BlockPos> blown, Vec3 serverCenter, Vec3 clientCenter) {
         int shiftX = Mth.floor(clientCenter.x) - Mth.floor(serverCenter.x);
         int shiftZ = Mth.floor(clientCenter.z) - Mth.floor(serverCenter.z);
@@ -739,11 +682,6 @@ public final class PacketTranslator {
                 packet.getTransactionId(), context.toServer(packet.getPos()));
     }
 
-    //
-    // The packet keeps all three of the entity, the hand and the point inside a private action object, and the only
-    // ways in are three factories that want a live Entity. So it is rewritten on the wire instead: the two varints
-    // that open it are copied across and the point behind them re-encoded, which leaves the hand and the action
-    // untouched by construction.
     private static ServerboundInteractPacket interact(ServerboundInteractPacket packet, TranslationContext context) {
         if (!carriesLocation(packet)) {
             return packet;
@@ -763,9 +701,6 @@ public final class PacketTranslator {
                 : context.transformer().vectors.nearestCopy(targetPosition, location);
     }
 
-    // Whether this interact carries a point at all — only the at-location form does, and an attack or a plain
-    // interaction has a boolean where the point would be, so reading one would be reading the wrong bytes. The packet
-    // is asked through the same dispatch the server itself uses, because the action enum behind it is not public.
     private static boolean carriesLocation(ServerboundInteractPacket packet) {
         boolean[] atLocation = new boolean[1];
         packet.dispatch(new ServerboundInteractPacket.Handler() {
@@ -812,14 +747,10 @@ public final class PacketTranslator {
                 packet.isShowBoundingBox(), packet.getIntegrity(), packet.getSeed());
     }
 
-    // A block update has to land on the copy of the chunk the client is actually holding, which is the one it was sent
-    // under — not the one this position would map to now that the player has moved.
     static BlockPos toClientBlock(TranslationContext context, BlockPos pos, ChunkTraffic traffic) {
         return blockInChunkCopy(context.toClient(new ChunkPos(pos), traffic), pos);
     }
 
-    // A global event, a world spawn, a look-at target: a directional hint, not a block in a held chunk — so it is
-    // translated outside the view-reach backstop, which only bounds traffic the client's own nearness put on the wire.
     private static BlockPos nearestCopyBlock(TranslationContext context, BlockPos pos) {
         return nearestCopyBlock(context.transformer(), context.clientPosition().chunk(), pos);
     }

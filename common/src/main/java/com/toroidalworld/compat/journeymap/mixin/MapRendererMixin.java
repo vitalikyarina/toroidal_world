@@ -116,18 +116,6 @@ public abstract class MapRendererMixin {
         }
     }
 
-    // Glues the map together across the seam: after a tile draws itself, it is drawn again at every world-width
-    // period that still lands in the viewport, so the torus reads as the endlessly repeating ground it is — on the
-    // minimap at the seam and on the fullscreen map alike. This is also what swallows the fullscreen pan jump: the
-    // folded center moves by exactly one period, and a picture periodic in that period looks identical. The tile
-    // renders by (tile.x + pixelOffset), so a copy is one re-invocation with shifted offsets — no matrix work.
-    // Wrapped at the renderer's single dispatch rather than inside RegionTile: on this game version the tile
-    // carries no UI context — the renderer it belongs to does. Webmap tiles are left alone: their offsets are
-    // web-tile space, not the on-screen grid.
-    //
-    // The map type and shader index that 6.0.5 added to the tile signature travel through untouched — a copy is the
-    // same layer drawn with the same shader. The type is taken as @Coerce Object rather than named: nothing here reads
-    // it, and naming it would put JourneyMap's own jar on the compile classpath for a value that only passes by.
     @WrapOperation(
             method = "render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;DDFZ)V",
             at = @At(
@@ -146,9 +134,6 @@ public abstract class MapRendererMixin {
         double periodZ = JourneyMapFold.worldPixelPeriod(Direction.Axis.Z, this.zoom);
         int rangeX = JourneyMapFold.copyRange(periodX, graphics.guiWidth());
         int rangeZ = JourneyMapFold.copyRange(periodZ, graphics.guiHeight());
-        // The fullscreen map caps at one copy per side (at most 3x3) — the canonical world in the middle, its glued
-        // neighbours around it; zoomed far out the ground past those copies is left empty rather than repeated to
-        // the horizon.
         if (this.contextUi == Context.UI.Fullscreen) {
             rangeX = Math.min(rangeX, 1);
             rangeZ = Math.min(rangeZ, 1);

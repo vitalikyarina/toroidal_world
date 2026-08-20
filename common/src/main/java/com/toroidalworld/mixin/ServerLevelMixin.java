@@ -30,8 +30,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import net.minecraft.world.phys.Vec3;
 
-// Deciding who is close enough to see or hear something is a distance test, and in a looped world the plain distance
-// lies: a block a step away across the seam sits a whole world apart. The packet would never even be sent.
 @Mixin(ServerLevel.class)
 public class ServerLevelMixin {
     // Shared with the packet translation, which holds a particle to the very radius this gate let it through by.
@@ -90,20 +88,11 @@ public class ServerLevelMixin {
         return ChunkPos.asLong(transformer.chunks.x.wrap(chunkX), transformer.chunks.z.wrap(chunkZ));
     }
 
-    // The one server-side sink for the world spawn: /setworldspawn goes through here, a gametest through its own level,
-    // and both end in front of level.dat and the packet that tells every client where the compass points. Settled here
-    // rather than in the command, because the coordinate that reaches the command is not the only way in —
-    // /setworldspawn without an argument reads the sender's position off the command source, so a sender standing past
-    // the bounds after an /execute positioned would slip by a guard placed on the argument.
-    //
-    // Ahead of vanilla's own "did it change" comparison rather than behind it: the stored point is what the comparison
-    // should be made against, or a spawn already at the folded coordinate would broadcast a packet saying nothing.
     @ModifyVariable(method = "setDefaultSpawnPos(Lnet/minecraft/core/BlockPos;F)V", at = @At("HEAD"), argsOnly = true)
     private BlockPos toroidal$storeWorldSpawnInsideBounds(BlockPos spawnPos) {
         return SeamRespawnData.insideBounds((ServerLevel) (Object) this, spawnPos);
     }
 
-    // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.
     @WrapMethod(method = "sendParticles(Lnet/minecraft/server/level/ServerPlayer;ZDDDLnet/minecraft/network/protocol/Packet;)Z")
     private boolean toroidal$particlesThroughSeam(ServerPlayer player, boolean overrideLimiter, double x, double y, double z,
             Packet<?> packet, Operation<Boolean> original) {

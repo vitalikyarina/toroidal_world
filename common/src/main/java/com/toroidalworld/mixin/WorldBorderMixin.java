@@ -26,9 +26,6 @@ public class WorldBorderMixin implements TransformerHolder {
     @Unique
     private WorldLoopTransformer toroidal$transformer = WorldLoopTransformer.NOOP;
 
-    // The wall is rebuilt only when the border itself moves. A shrinking border moves every tick and vanilla rebuilds
-    // its shape per call there too, but a stationary one is asked for the same nine-copy shape by every entity standing
-    // at it, on every tick it stands there.
     @Unique
     private double @Nullable [] toroidal$wallBounds;
 
@@ -89,10 +86,6 @@ public class WorldBorderMixin implements TransformerHolder {
         cir.setReturnValue(Math.min(xGap, zGap));
     }
 
-    //
-    // The whole clampToBounds family meets in this one triple-double overload, and it is the one that rounds: vanilla
-    // hands back a BlockPos, so the fold is stated in doubles and containing() is left to make the block, exactly as
-    // vanilla does.
     @Inject(method = "clampToBounds(DDD)Lnet/minecraft/core/BlockPos;", at = @At("HEAD"), cancellable = true)
     private void toroidal$clampThroughSeam(double x, double y, double z, CallbackInfoReturnable<BlockPos> cir) {
         WorldLoopTransformer transformer = this.toroidal$transformer;

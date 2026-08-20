@@ -26,10 +26,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.raid.Raid;
 import net.minecraft.world.phys.Vec3;
 
-// The raid's own housekeeping measures raw distances too. A raider that chases a villager across the seam reads a
-// world away from the centre and is silently dropped from the raid — the wave "dies" while its raiders fight on; and
-// a centre that lost its village status searches for replacement village ground in raw section coordinates, blind to
-// the half of the village lying across the seam, and declares the raid lost with the village still standing.
 @Mixin(Raid.class)
 public class RaidMixin {
     @Shadow

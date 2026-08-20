@@ -1,11 +1,5 @@
 package com.toroidalworld.net;
 
-// Which door a chunk coordinate arrived through, carried alongside it the way PacketReach is carried on the
-// loose-coordinate door. A guard that fires can then name the traffic that produced the key instead of only the number
-// it disliked — the same question the loose-coordinate guard answers with reach.kind().
-//
-// Unlike PacketReach this carries no radius of its own: every packet here reaches the client because it names a chunk
-// the client is holding, so they all answer to the one bound the view sets.
 public enum ChunkTraffic {
     CHUNK_DATA("chunk_data"),
     LIGHT_UPDATE("light_update"),

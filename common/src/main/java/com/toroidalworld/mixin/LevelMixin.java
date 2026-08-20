@@ -71,7 +71,6 @@ public class LevelMixin implements TransformerCache {
         return toroidal$wrap(pos);
     }
 
-    // A block entity is born inside the chunk's setBlockState, keyed by whatever position it was given.
     @ModifyVariable(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z",
             at = @At("HEAD"), argsOnly = true)
     private BlockPos toroidal$wrapPlacedBlockPos(BlockPos pos) {
@@ -146,34 +145,18 @@ public class LevelMixin implements TransformerCache {
         }
     }
 
-    // Asked before the box is cut rather than after, so the overwhelmingly common answer — nothing crosses — costs no
-    // list, no spans and no pieces. A level that does not wrap has no seam to cross in the first place.
     @Unique
     private boolean toroidal$crossesSeam(AABB box) {
         WorldLoopTransformer transformer = toroidal$transformer();
         return transformer.isWrapped() && transformer.crossesBounds(box);
     }
 
-    // Every block entity read, every removal and every setBlock in the game reaches this, on the client's own level as
-    // much as on the server's. A level that does not wrap has nothing here to correct, and asking the domains says so
-    // one virtual call at a time; the level knows the answer outright.
     @Unique
     private BlockPos toroidal$wrap(BlockPos pos) {
         WorldLoopTransformer transformer = toroidal$transformer();
         return transformer.isWrapped() ? transformer.blocks.wrap(pos) : pos;
     }
 
-    // The border is per-level state and never learns which level owns it — it is handed two bare doubles for a centre
-    // and measures everything against them. This is the one place the two are in the same room, so the level's shape is
-    // stamped on here, and WorldBorderMixin folds its measurements against it.
-    //
-    // At the return rather than at a creation hook: the transformer is resolved off the level's chunk generator, and a
-    // constructor has none to read yet. The identity check makes every call after the first a single reference compare.
-    //
-    // On Level rather than on ServerLevel, because that is where the game version declares getWorldBorder and an
-    // injector reaches only what its target class declares itself. No server check is needed with it: a client level
-    // resolves to the very NOOP instance the border's field already holds, so the compare fails and nothing is written
-    // — which is the requirement, the client being told the world is infinite.
     @Inject(method = "getWorldBorder", at = @At("RETURN"))
     private void toroidal$bindBorderToLevelShape(CallbackInfoReturnable<WorldBorder> cir) {
         WorldLoopTransformer transformer = toroidal$transformer();
@@ -216,10 +199,6 @@ public class LevelMixin implements TransformerCache {
                 toroidal$precipitationTransformer(), () -> original.call(pos));
     }
 
-    // A client level's own transformer is NOOP by design, so binding it here would leave the client reading the
-    // unfolded temperature field — and disagreeing with the server about the same block, worst of all near the seam
-    // where client coordinates may sit a whole world width away. What the client does know is the bounds the server
-    // told it, which is the same source the weather renderer binds.
     @Unique
     private WorldLoopTransformer toroidal$precipitationTransformer() {
         WorldLoopTransformer clientBounds =

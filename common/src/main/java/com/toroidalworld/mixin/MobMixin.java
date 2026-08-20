@@ -37,19 +37,6 @@ public class MobMixin {
         return transformer == null ? hitbox : transformer.foldBoxToward(((Mob) (Object) this).position(), hitbox);
     }
 
-    // A home is a centre and a radius, and whether something lies inside it is a raw subtraction against that centre.
-    // Anchored near the seam, the ground a few steps past the boundary reads a whole world out: the mob standing on it
-    // is judged homeless and walked back the way it came, and every stroll candidate that falls over the boundary is
-    // thrown away — the radius is a half-circle cut off at the edge of the world rather than a circle on the torus.
-    // Homes are far more widely handed out than they look: a leash gives one to whatever it holds, which is why a cow
-    // on a rope plants itself at the seam and will not follow.
-    //
-    // The centre becomes its copy nearest the position being asked about, and vanilla's own comparison runs on that.
-    // Folding the centre rather than the distance leaves the radius test exactly as it was, and keeps the reading
-    // honest about where it measures from. A home on this side comes back untouched.
-    //
-    // Wrapped before it is unwrapped, as SeamSteering does: a home is written down rather than measured, and what was
-    // written may sit any number of laps out.
     @ModifyExpressionValue(
             method = "isWithinRestriction(Lnet/minecraft/core/BlockPos;)Z",
             at = @At(value = "FIELD",

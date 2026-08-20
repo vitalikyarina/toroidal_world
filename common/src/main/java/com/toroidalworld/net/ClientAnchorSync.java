@@ -33,9 +33,6 @@ public final class ClientAnchorSync {
 
     private static void refreshSpawn(ServerPlayer player, ServerLevel level, WorldLoopTransformer transformer,
             ClientPosition clientPosition) {
-        // The world spawn is a single coordinate stored in the overworld's level data; every other dimension reads that
-        // same coordinate back through DerivedLevelData, so it names no place in their wrap and folding it against
-        // their bounds would fold it against the wrong world. There is nothing to refresh outside the overworld.
         if (!Level.OVERWORLD.equals(level.dimension())) {
             return;
         }

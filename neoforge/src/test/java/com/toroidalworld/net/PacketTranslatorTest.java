@@ -91,24 +91,15 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
-// The rewriters run against a hand-built TranslationContext — the same shape production resolves from the player, with
-// the live pieces (own vehicle, entity lookup, rebase) stubbed. One fixed world of 64×64 chunks and one mirror parked a
-// lap past the +X seam drive every case: X is where translation must move a coordinate a whole world, Z is where it
-// must leave it alone. Packets whose position hides behind a private field cannot be constructed directly; they are
-// decoded from a buffer written the way vanilla's own write() lays them out, which the codec then validates.
 class PacketTranslatorTest {
     private static final WorldLoopTransformer TRANSFORMER =
             new WorldLoopTransformer(new WorldLoopBounds(-32, 32, -32, 32));
     private static final RegistryAccess.Frozen REGISTRIES =
             RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
 
-    // The world spans blocks [-512, 512); the client has circled past the +X seam, so its mirror stands at x 580 — a
-    // lap out — while Z sits inside the first lap.
     private static final double MIRROR_X = 580.0;
     private static final double MIRROR_Z = -700.0;
 
-    // A block at the far -X edge of the server's world. The copy the client holds is the one nearest its mirror: one
-    // world up on X (chunk -32 → 32), the same lap on Z.
     private static final BlockPos SERVER_BLOCK = new BlockPos(-510, 64, -505);
     private static final BlockPos CLIENT_BLOCK = new BlockPos(514, 64, -505);
     private static final ChunkPos SERVER_CHUNK = new ChunkPos(-32, -32);
@@ -343,12 +334,8 @@ class PacketTranslatorTest {
         }
     }
 
-    // Which copy a chunk packet lands in is decided by where the client's cache stands, not by where the player is.
-    // The two are the same coordinate except for the tick between a teleport and the tracking view re-centring, which
-    // is the window every case here stages: the mirror parked at chunk 36 while the cache centre is still back at 8.
     @Nested
     class ChunkAnchor {
-        // The mirror's own chunk, from MIRROR_X / MIRROR_Z.
         private static final ChunkPos MIRROR_CHUNK = new ChunkPos(36, -44);
 
         private static final ChunkPos HELD_CENTER = new ChunkPos(8, -44);
@@ -511,8 +498,6 @@ class PacketTranslatorTest {
             assertEquals(CLIENT_BLOCK, context.clientPosition().heldSpawn());
         }
 
-        // The packet names no dimension on this version, so the spawn it carries is the overworld's by construction —
-        // a player standing anywhere else is being told about a coordinate this world's wrap knows nothing about.
         @Test
         void spawnOutsideTheOverworldPassesThrough() {
             ClientPosition mirror = new ClientPosition();
@@ -619,8 +604,6 @@ class PacketTranslatorTest {
             assertEquals(CLIENT_X, translated.getX());
         }
 
-        // Both of the explosion's own payloads are spawned around the centre client-side, so both are folded around the
-        // translated one — the small burst as well as the large.
         @Test
         void explosionParticlesFollowTheTranslatedCentre() {
             BlockState state = Blocks.STONE.defaultBlockState();
@@ -636,9 +619,6 @@ class PacketTranslatorTest {
             assertEquals(CLIENT_BLOCK, ((BlockParticleOption) translated.getLargeExplosionParticles()).getPos());
         }
 
-        // The blocks the blast destroyed travel as signed byte deltas from the packet's own centre. Moving the centre
-        // and leaving them would make every delta a world wide, which does not fit in a byte — so they move with it,
-        // and each one stays the handful of blocks from the centre it physically is.
         @Test
         void explosionBlownBlocksShiftWithTheCentre() {
             List<BlockPos> blown = List.of(
@@ -655,9 +635,6 @@ class PacketTranslatorTest {
                     blown.get(1).offset(shiftX, 0, shiftZ)), translated.getToBlow());
         }
 
-        // A blast the player is standing over needs no fold at all, and the list comes back carrying exactly the blocks
-        // it arrived with. Identity is not what is asserted: this game version's packet constructor copies the list
-        // into one of its own, so no caller can hand the same instance through it.
         @Test
         void blownBlocksAreUntouchedWhenTheCentreDoesNotMove() {
             ClientPosition mirror = new ClientPosition();
@@ -722,8 +699,6 @@ class PacketTranslatorTest {
             assertEquals(MIRROR_X - 24.0, mirror.x());
         }
 
-        // An absolute arrival is a server coordinate and takes the nearest copy instead, and the mirror follows it
-        // there — the branch the relative cases above never exercise.
         @Test
         void absolutePositionMovesToTheNearestCopy() {
             ClientPosition mirror = new ClientPosition();
@@ -742,9 +717,6 @@ class PacketTranslatorTest {
         }
     }
 
-    // Neither the entity teleport nor the vehicle correction offers a constructor to build one from values, so both are
-    // decoded from a buffer laid out the way vanilla's own write() lays it — the same route the rewriters take to put a
-    // translated position back into them.
     @Nested
     class EntityPackets {
         private static ClientboundTeleportEntityPacket teleportPacket(int entityId, double x, double z,
@@ -790,8 +762,6 @@ class PacketTranslatorTest {
             assertNull(PacketTranslator.toClient(packet, context(entityId -> entityId == 42, entityId -> null)));
         }
 
-        // The position is swapped behind the entity id without decoding the rest, so the tail — the two packed
-        // rotations and the ground flag — has to come back byte for byte.
         @Test
         void teleportTranslatesThePositionAndKeepsTheTail() {
             ClientboundTeleportEntityPacket translated = (ClientboundTeleportEntityPacket) PacketTranslator.toClient(
@@ -957,9 +927,6 @@ class PacketTranslatorTest {
             assertEquals(8, translated.getTransactionId());
         }
 
-        // The packet keeps the entity, the hand and the point inside a private action object whose only constructors
-        // want a live Entity, so it is written the way vanilla's own write() lays it and read back through the same
-        // dispatch the server uses. INTERACT_AT is the third action, and the only one that carries a point.
         private static ServerboundInteractPacket interactAtPacket(int entityId, Vec3 location) {
             RegistryFriendlyByteBuf buf = buffer();
             buf.writeVarInt(entityId);
@@ -1018,8 +985,6 @@ class PacketTranslatorTest {
             assertEquals(new Vec3(-508.0, 64.5, 0.25), hitLocation(translated));
         }
 
-        // An attack has a boolean where the at-location form keeps its point, so reading one would be reading the
-        // wrong bytes. The gate in front of the rewrite is what stops that, and it hands the packet straight back.
         @Test
         void attackCarriesNoPointAndIsNotRewritten() {
             ServerboundInteractPacket packet = attackPacket(21);

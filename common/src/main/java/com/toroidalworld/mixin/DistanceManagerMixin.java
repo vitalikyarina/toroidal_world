@@ -16,12 +16,6 @@ import net.minecraft.server.level.DistanceManager;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TickingTracker;
 
-//
-// It also owns the ticket map itself: every ticket is a source of the loading graph, and with the graph folded at the
-// seam no source may name ground past the bounds — a raw out-of-bounds key would raise the one holder the whole
-// removal exists to make impossible. All ticket traffic funnels through the two long-keyed primitives (the ChunkPos
-// and radius overloads and /forceload all call down into them), so the key is folded here once rather than at every
-// caller. The second graph those same paths feed is folded at its own primitive (TickingTrackerMixin).
 @Mixin(DistanceManager.class)
 public class DistanceManagerMixin implements LevelBindable {
     @Shadow

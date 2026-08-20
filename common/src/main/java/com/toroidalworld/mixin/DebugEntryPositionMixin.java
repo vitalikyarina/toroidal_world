@@ -19,14 +19,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
-// F3 shows the client's own coordinate, which in a looped world is the unbounded one the packet layer feeds it — x grows
-// past the seam while the player is really a few blocks the other side of it. This rewrites the three position lines to
-// the true torus coordinate and inserts the unwrapped client frame as its own labeled triple right below them: when the
-// two part ways, that is the seam being crossed, and a mismatch would show up here first.
-//
-// The three lines are found by their own prefix rather than by index: what precedes them varies (the server chunk stats
-// line is conditional), and the reduced-debug-info branch returns a list without them at all — where finding nothing and
-// passing through is exactly right, since that mode hides coordinates on purpose.
 @Mixin(DebugScreenOverlay.class)
 public class DebugEntryPositionMixin {
     @Unique
@@ -38,12 +30,6 @@ public class DebugEntryPositionMixin {
     @Unique
     private static final String CHUNK_PREFIX = "Chunk: ";
 
-    // Reads the client-only bounds store, not transformerOf: the level's own transformer is NOOP on the client by
-    // design and must stay so. The bounds reach the client only through WrappingSettingsPayload; before it arrives, and
-    // in an unwrapped world, the store is NOOP and this returns null, so the vanilla lines are left exactly as is.
-    //
-    // The list is rewritten in place and handed back: vanilla goes on adding to it after this returns, so it is a fresh
-    // mutable list every call.
     @ModifyReturnValue(method = "getGameInformation", at = @At("RETURN"))
     private List<String> toroidal$wrapPositionLines(List<String> lines) {
         Minecraft minecraft = Minecraft.getInstance();
