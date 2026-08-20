@@ -7,7 +7,9 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
+import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.noise.NoiseConstants;
+import com.toroidalworld.noise.NoiseRouterBuild;
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
 import com.ishland.c2me.opts.dfc.common.ast.binary.MulNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.ConstantNode;
@@ -42,19 +44,24 @@ public final class C2meDfcAst {
             return produced;
         }
 
+        WorldLoopTransformer transformer = NoiseRouterBuild.wrappedTransformer();
+        if (transformer == null) {
+            return produced;
+        }
+
         if (fold.amplified()) {
             if (!(produced instanceof MulNode amplified && amplified.left instanceof GenericShiftedNoiseNode noise)) {
                 throw brokenShape(source, produced);
             }
 
-            return new MulNode(foldNoise(noise, fold), amplified.right);
+            return new MulNode(foldNoise(noise, fold, transformer), amplified.right);
         }
 
         if (!(produced instanceof GenericShiftedNoiseNode noise)) {
             throw brokenShape(source, produced);
         }
 
-        return foldNoise(noise, fold);
+        return foldNoise(noise, fold, transformer);
     }
 
     private static @Nullable Fold foldOf(DensityFunction source) {
@@ -78,9 +85,9 @@ public final class C2meDfcAst {
         return noise.xzScale();
     }
 
-    private static AstNode foldNoise(GenericShiftedNoiseNode noise, Fold fold) {
+    private static AstNode foldNoise(GenericShiftedNoiseNode noise, Fold fold, WorldLoopTransformer transformer) {
         return new C2meFoldedNoiseNode(noise.inputX, noise.inputY, noise.inputZ, noise.noise,
-                fold.rawX(), fold.rawZ(), fold.horizontalScale());
+                fold.rawX(), fold.rawZ(), fold.horizontalScale(), transformer);
     }
 
     private static void reportOnce(DensityFunction source) {

@@ -16,6 +16,8 @@ import com.toroidalworld.accessors.TrackedEntityRefresher;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.gen.SeamDriveRequest;
+import com.toroidalworld.gen.ShapedChunkGenerator;
+import com.toroidalworld.noise.NoiseRouterBuild;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -25,6 +27,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import net.minecraft.core.HolderGetter;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.GenerationChunkHolder;
@@ -35,6 +38,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StaticCache2D;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.synth.NormalNoise;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.entity.EntityAccess;
 
@@ -168,6 +175,27 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
     @Override
     public ServerLevel toroidal$level() {
         return this.level;
+    }
+
+    // The wrap has the periodicity of a compiled router, not of a sample: C2ME turns every density function of this
+    // level into bytecode inside RandomState's constructor, and this is the only place that knows which generator it
+    // is being built for.
+    @WrapOperation(
+            method = "<init>",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/level/levelgen/RandomState;create("
+                            + "Lnet/minecraft/world/level/levelgen/NoiseGeneratorSettings;"
+                            + "Lnet/minecraft/core/HolderGetter;J)"
+                            + "Lnet/minecraft/world/level/levelgen/RandomState;"))
+    private RandomState toroidal$bindRouterBuild(
+            NoiseGeneratorSettings settings,
+            HolderGetter<NormalNoise.NoiseParameters> noiseParameters,
+            long seed,
+            Operation<RandomState> original,
+            @Local(argsOnly = true) ChunkGenerator generator) {
+        return NoiseRouterBuild.withTransformer(ShapedChunkGenerator.wrappedTransformerOf(generator),
+                () -> original.call(settings, noiseParameters, seed));
     }
 
     @Inject(method = "<init>", at = @At("TAIL"))
