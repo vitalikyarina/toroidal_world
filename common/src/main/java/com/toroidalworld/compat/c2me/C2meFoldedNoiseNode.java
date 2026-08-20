@@ -3,6 +3,7 @@ package com.toroidalworld.compat.c2me;
 import java.util.Objects;
 
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.noise.SlotAxes;
 
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
 import com.ishland.c2me.opts.dfc.common.ast.AstTransformer;
@@ -12,24 +13,30 @@ import net.minecraft.world.level.levelgen.DensityFunction;
 
 public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
     public final AstNode foldedX;
+    public final AstNode foldedY;
     public final AstNode foldedZ;
+
+    public final SlotAxes slotAxes;
 
     public final double horizontalScale;
 
     public final WorldLoopTransformer transformer;
 
     public C2meFoldedNoiseNode(AstNode inputX, AstNode inputY, AstNode inputZ, DensityFunction.NoiseHolder noise,
-            AstNode foldedX, AstNode foldedZ, double horizontalScale, WorldLoopTransformer transformer) {
+            AstNode foldedX, AstNode foldedY, AstNode foldedZ, SlotAxes slotAxes,
+            double horizontalScale, WorldLoopTransformer transformer) {
         super(inputX, inputY, inputZ, noise);
         this.foldedX = Objects.requireNonNull(foldedX);
+        this.foldedY = Objects.requireNonNull(foldedY);
         this.foldedZ = Objects.requireNonNull(foldedZ);
+        this.slotAxes = Objects.requireNonNull(slotAxes);
         this.horizontalScale = horizontalScale;
         this.transformer = Objects.requireNonNull(transformer);
     }
 
     @Override
     public AstNode[] getChildren() {
-        return new AstNode[]{this.inputX, this.inputY, this.inputZ, this.foldedX, this.foldedZ};
+        return new AstNode[]{this.inputX, this.inputY, this.inputZ, this.foldedX, this.foldedY, this.foldedZ};
     }
 
     @Override
@@ -38,17 +45,20 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
         AstNode transformedInputY = this.inputY.transform(transformer);
         AstNode transformedInputZ = this.inputZ.transform(transformer);
         AstNode transformedFoldedX = this.foldedX.transform(transformer);
+        AstNode transformedFoldedY = this.foldedY.transform(transformer);
         AstNode transformedFoldedZ = this.foldedZ.transform(transformer);
         boolean unchanged = transformedInputX == this.inputX
                 && transformedInputY == this.inputY
                 && transformedInputZ == this.inputZ
                 && transformedFoldedX == this.foldedX
+                && transformedFoldedY == this.foldedY
                 && transformedFoldedZ == this.foldedZ;
 
         return transformer.transform(unchanged
                 ? this
                 : new C2meFoldedNoiseNode(transformedInputX, transformedInputY, transformedInputZ, this.noise,
-                        transformedFoldedX, transformedFoldedZ, this.horizontalScale, this.transformer));
+                        transformedFoldedX, transformedFoldedY, transformedFoldedZ, this.slotAxes,
+                        this.horizontalScale, this.transformer));
     }
 
     @Override
@@ -60,7 +70,9 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
         C2meFoldedNoiseNode that = (C2meFoldedNoiseNode) o;
         return Double.compare(this.horizontalScale, that.horizontalScale) == 0
                 && this.transformer == that.transformer
+                && this.slotAxes.equals(that.slotAxes)
                 && this.foldedX.equals(that.foldedX)
+                && this.foldedY.equals(that.foldedY)
                 && this.foldedZ.equals(that.foldedZ);
     }
 
@@ -68,7 +80,9 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
     public int hashCode() {
         int result = super.hashCode();
         result = 31 * result + this.foldedX.hashCode();
+        result = 31 * result + this.foldedY.hashCode();
         result = 31 * result + this.foldedZ.hashCode();
+        result = 31 * result + this.slotAxes.hashCode();
         result = 31 * result + Double.hashCode(this.horizontalScale);
         return 31 * result + System.identityHashCode(this.transformer);
     }
@@ -82,7 +96,9 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
         C2meFoldedNoiseNode that = (C2meFoldedNoiseNode) o;
         return Double.compare(this.horizontalScale, that.horizontalScale) == 0
                 && this.transformer == that.transformer
+                && this.slotAxes.equals(that.slotAxes)
                 && this.foldedX.relaxedEquals(that.foldedX)
+                && this.foldedY.relaxedEquals(that.foldedY)
                 && this.foldedZ.relaxedEquals(that.foldedZ);
     }
 
@@ -90,7 +106,9 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
     public int relaxedHashCode() {
         int result = super.relaxedHashCode();
         result = 31 * result + this.foldedX.relaxedHashCode();
+        result = 31 * result + this.foldedY.relaxedHashCode();
         result = 31 * result + this.foldedZ.relaxedHashCode();
+        result = 31 * result + this.slotAxes.hashCode();
         result = 31 * result + Double.hashCode(this.horizontalScale);
         return 31 * result + System.identityHashCode(this.transformer);
     }

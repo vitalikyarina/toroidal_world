@@ -8,11 +8,13 @@ import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.noise.DensityFunctionSlotAxes;
 import com.toroidalworld.noise.NoiseConstants;
 import com.toroidalworld.noise.NoiseRouterBuild;
+import com.toroidalworld.noise.SlotAxes;
+import com.toroidalworld.noise.SlotAxis;
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
 import com.ishland.c2me.opts.dfc.common.ast.binary.MulNode;
-import com.ishland.c2me.opts.dfc.common.ast.misc.ConstantNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.CoordinateNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.DelegateNode;
 import com.ishland.c2me.opts.dfc.common.ast.noise.DFTWeirdScaledSamplerNode;
@@ -23,8 +25,6 @@ import net.minecraft.world.level.levelgen.DensityFunctions;
 
 public final class C2meDfcAst {
     private static final Logger LOGGER = LogUtils.getLogger();
-
-    private static final AstNode ORIGIN = new ConstantNode(0.0);
 
     private static final Set<String> REPORTED = ConcurrentHashMap.newKeySet();
 
@@ -66,16 +66,12 @@ public final class C2meDfcAst {
 
     private static @Nullable Fold foldOf(DensityFunction source) {
         return switch (source) {
-            case DensityFunctions.Noise noise ->
-                    new Fold(CoordinateNode.AXIS_X, CoordinateNode.AXIS_Z, horizontalScale(noise), false);
-            case DensityFunctions.ShiftedNoise shifted ->
-                    new Fold(CoordinateNode.AXIS_X, CoordinateNode.AXIS_Z, shifted.xzScale(), false);
-            case DensityFunctions.Shift shift ->
-                    new Fold(CoordinateNode.AXIS_X, CoordinateNode.AXIS_Z, NoiseConstants.SHIFT_SCALE, true);
-            case DensityFunctions.ShiftA shiftA ->
-                    new Fold(CoordinateNode.AXIS_X, CoordinateNode.AXIS_Z, NoiseConstants.SHIFT_SCALE, true);
+            case DensityFunctions.Noise noise -> new Fold(SlotAxes.DEFAULT, horizontalScale(noise), false);
+            case DensityFunctions.ShiftedNoise shifted -> new Fold(SlotAxes.DEFAULT, shifted.xzScale(), false);
+            case DensityFunctions.Shift shift -> new Fold(SlotAxes.DEFAULT, NoiseConstants.SHIFT_SCALE, true);
+            case DensityFunctions.ShiftA shiftA -> new Fold(SlotAxes.DEFAULT, NoiseConstants.SHIFT_SCALE, true);
             case DensityFunctions.ShiftB shiftB ->
-                    new Fold(CoordinateNode.AXIS_Z, ORIGIN, NoiseConstants.SHIFT_SCALE, true);
+                    new Fold(DensityFunctionSlotAxes.SHIFT_B, NoiseConstants.SHIFT_SCALE, true);
             default -> null;
         };
     }
@@ -86,8 +82,19 @@ public final class C2meDfcAst {
     }
 
     private static AstNode foldNoise(GenericShiftedNoiseNode noise, Fold fold, WorldLoopTransformer transformer) {
+        SlotAxes axes = fold.axes();
+
         return new C2meFoldedNoiseNode(noise.inputX, noise.inputY, noise.inputZ, noise.noise,
-                fold.rawX(), fold.rawZ(), fold.horizontalScale(), transformer);
+                slotNode(axes.x(), noise.inputX), slotNode(axes.y(), noise.inputY), slotNode(axes.z(), noise.inputZ),
+                axes, fold.horizontalScale(), transformer);
+    }
+
+    private static AstNode slotNode(SlotAxis axis, AstNode ownInput) {
+        return switch (axis) {
+            case X -> CoordinateNode.AXIS_X;
+            case Z -> CoordinateNode.AXIS_Z;
+            case NONE -> ownInput;
+        };
     }
 
     private static void reportOnce(DensityFunction source) {
@@ -103,7 +110,7 @@ public final class C2meDfcAst {
                 + " — C2ME no longer compiles this function to the node the toroidal fold replaces");
     }
 
-    private record Fold(AstNode rawX, AstNode rawZ, double horizontalScale, boolean amplified) {
+    private record Fold(SlotAxes axes, double horizontalScale, boolean amplified) {
     }
 
     private C2meDfcAst() {
