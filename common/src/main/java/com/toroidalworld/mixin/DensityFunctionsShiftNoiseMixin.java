@@ -10,6 +10,7 @@ import com.toroidalworld.noise.ContextScaledNoise;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.noise.NoiseConstants;
+import com.toroidalworld.noise.SlotAxes;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
 
@@ -25,12 +26,13 @@ public interface DensityFunctionsShiftNoiseMixin {
             return;
         }
 
-        double slotY = generation.slotAxes().y().carriesWorldAxis()
-                ? localY
-                : localY * NoiseConstants.SHIFT_SCALE;
+        SlotAxes axes = generation.slotAxes();
 
         cir.setReturnValue(ContextScaledNoise.sample(generation, this.offsetNoise(),
-                localX, slotY, localZ, NoiseConstants.SHIFT_SCALE)
+                axes.x().samplerInput(localX, NoiseConstants.SHIFT_SCALE),
+                axes.y().samplerInput(localY, NoiseConstants.SHIFT_SCALE),
+                axes.z().samplerInput(localZ, NoiseConstants.SHIFT_SCALE),
+                NoiseConstants.SHIFT_SCALE)
                 * NoiseConstants.SHIFT_AMPLITUDE);
     }
 }
