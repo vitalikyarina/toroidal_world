@@ -191,6 +191,7 @@
     "StructureCheckBiomeMixin",
     "StructureManagerMixin",
     "StructureStartMixin",
+    "SulfurCubeMixin",
     "SurfaceSystemMixin",
     "TemptGoalForNonPathfindersMixin",
     "TheEndBiomeSourceMixin",
