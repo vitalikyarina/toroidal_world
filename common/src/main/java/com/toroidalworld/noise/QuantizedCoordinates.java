@@ -3,9 +3,9 @@ package com.toroidalworld.noise;
 import net.minecraft.world.level.levelgen.DensityFunction;
 
 public final class QuantizedCoordinates {
-    public static DensityFunction.FunctionContext inBlocks(DensityFunction.FunctionContext cell, int cellWidth) {
+    public static DensityFunction.FunctionContext inBlocks(TilingCellGrid grid, int blockX, int cellY, int blockZ) {
         return new DensityFunction.SinglePointContext(
-                cell.blockX() * cellWidth, cell.blockY(), cell.blockZ() * cellWidth);
+                grid.cellOriginX(blockX), cellY, grid.cellOriginZ(blockZ));
     }
 
     private QuantizedCoordinates() {

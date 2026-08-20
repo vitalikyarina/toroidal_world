@@ -14,7 +14,8 @@ public final class GenerationTransformerContext {
     public static final class Context {
         private WorldLoopTransformer transformer = WorldLoopTransformer.NOOP;
         private double horizontalScale = UNSCALED;
-        private double horizontalDivisor = UNDIVIDED;
+        private double xDivisor = UNDIVIDED;
+        private double zDivisor = UNDIVIDED;
         private SlotAxes slotAxes = SlotAxes.DEFAULT;
         private final ScaleScope scaleScope = new ScaleScope();
         private final DivisorScope divisorScope = new DivisorScope();
@@ -33,8 +34,12 @@ public final class GenerationTransformerContext {
             return this.horizontalScale;
         }
 
-        public double horizontalDivisor() {
-            return this.horizontalDivisor;
+        public double xDivisor() {
+            return this.xDivisor;
+        }
+
+        public double zDivisor() {
+            return this.zDivisor;
         }
 
         public SlotAxes slotAxes() {
@@ -47,9 +52,10 @@ public final class GenerationTransformerContext {
             return this.scaleScope;
         }
 
-        public DivisorScope withDivisor(double divisor) {
+        public DivisorScope withDivisors(double xDivisor, double zDivisor) {
             this.divisorScope.push();
-            this.horizontalDivisor = divisor;
+            this.xDivisor = xDivisor;
+            this.zDivisor = zDivisor;
             return this.divisorScope;
         }
 
@@ -142,23 +148,29 @@ public final class GenerationTransformerContext {
         }
 
         public final class DivisorScope implements AutoCloseable {
-            private double[] previousDivisors = new double[8];
+            private double[] previousXDivisors = new double[8];
+            private double[] previousZDivisors = new double[8];
             private int depth;
 
             private DivisorScope() {
             }
 
             private void push() {
-                if (this.depth == this.previousDivisors.length) {
-                    this.previousDivisors = Arrays.copyOf(this.previousDivisors, this.depth * 2);
+                if (this.depth == this.previousXDivisors.length) {
+                    this.previousXDivisors = Arrays.copyOf(this.previousXDivisors, this.depth * 2);
+                    this.previousZDivisors = Arrays.copyOf(this.previousZDivisors, this.depth * 2);
                 }
 
-                this.previousDivisors[this.depth++] = horizontalDivisor;
+                this.previousXDivisors[this.depth] = xDivisor;
+                this.previousZDivisors[this.depth] = zDivisor;
+                this.depth++;
             }
 
             @Override
             public void close() {
-                horizontalDivisor = this.previousDivisors[--this.depth];
+                this.depth--;
+                xDivisor = this.previousXDivisors[this.depth];
+                zDivisor = this.previousZDivisors[this.depth];
             }
         }
     }
