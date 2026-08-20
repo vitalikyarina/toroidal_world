@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.TrackedEntityRefresher;
 import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.entity.SeamAim;
 import com.toroidalworld.net.ClientAnchorSync;
 import com.toroidalworld.net.WrappingBoundsSync;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -47,6 +48,16 @@ public class ServerPlayerMixin {
         return respawnData == respawnConfig.respawnData()
                 ? respawnConfig
                 : new ServerPlayer.RespawnConfig(respawnData, respawnConfig.forced());
+    }
+
+    @ModifyVariable(method = "indicateDamage", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+    private double toroidal$hurtDirX(double xd) {
+        return SeamAim.foldX((ServerPlayer) (Object) this, xd);
+    }
+
+    @ModifyVariable(method = "indicateDamage", at = @At("HEAD"), argsOnly = true, ordinal = 1)
+    private double toroidal$hurtDirZ(double zd) {
+        return SeamAim.foldZ((ServerPlayer) (Object) this, zd);
     }
 
     @Inject(method = "teleport(Lnet/minecraft/world/level/portal/TeleportTransition;)Lnet/minecraft/server/level/ServerPlayer;",
