@@ -53,6 +53,7 @@
     "DefaultRandomPosMixin",
     "DensityFunctionsEndIslandMixin",
     "DensityFunctionsNoiseMixin",
+    "DensityFunctionsShiftBMixin",
     "DensityFunctionsShiftNoiseMixin",
     "DensityFunctionsShiftedNoiseMixin",
     "DistanceBoundsMixin",

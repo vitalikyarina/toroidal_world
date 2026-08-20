@@ -20,6 +20,7 @@ public final class PeriodicOctaveSampler {
             double yScale,
             double yFudge) {
         double baseScale = generation.horizontalScale();
+        boolean yCarriesWorldAxis = generation.slotAxes().y().carriesWorldAxis();
         double value = 0.0;
         double factor = lowestFreqInputFactor;
         double valueFactor = lowestFreqValueFactor;
@@ -29,7 +30,8 @@ public final class PeriodicOctaveSampler {
                 ImprovedNoise noise = noiseLevels[i];
                 if (noise != null) {
                     scope.rescale(baseScale * factor);
-                    double noiseValue = noise.noise(x, PerlinNoise.wrap(y * factor), z, yScale * factor, yFudge * factor);
+                    double slotY = yCarriesWorldAxis ? y : PerlinNoise.wrap(y * factor);
+                    double noiseValue = noise.noise(x, slotY, z, yScale * factor, yFudge * factor);
                     value += amplitudes.getDouble(i) * noiseValue * valueFactor;
                 }
 

@@ -25,8 +25,12 @@ public interface DensityFunctionsShiftNoiseMixin {
             return;
         }
 
+        double slotY = generation.slotAxes().y().carriesWorldAxis()
+                ? localY
+                : localY * NoiseConstants.SHIFT_SCALE;
+
         cir.setReturnValue(ContextScaledNoise.sample(generation, this.offsetNoise(),
-                localX, localY * NoiseConstants.SHIFT_SCALE, localZ, NoiseConstants.SHIFT_SCALE)
+                localX, slotY, localZ, NoiseConstants.SHIFT_SCALE)
                 * NoiseConstants.SHIFT_AMPLITUDE);
     }
 }
