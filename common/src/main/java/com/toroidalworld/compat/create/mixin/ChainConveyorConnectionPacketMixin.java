@@ -21,12 +21,4 @@ public class ChainConveyorConnectionPacketMixin {
     private BlockPos toroidal$foldTargetPos(BlockPos targetPos, ServerPlayer player, ChainConveyorBlockEntity be) {
         return CreateSeamFold.foldPosition(be.getLevel(), be.getBlockPos(), targetPos);
     }
-
-    @ModifyExpressionValue(
-            method = "applySettings",
-            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
-                    target = "Lcom/simibubi/create/content/kinetics/chainConveyor/ChainConveyorConnectionPacket;pos:Lnet/minecraft/core/BlockPos;"))
-    private BlockPos toroidal$foldPacketPos(BlockPos pos, ServerPlayer player, ChainConveyorBlockEntity be) {
-        return CreateSeamFold.foldPosition(be.getLevel(), be.getBlockPos(), pos);
-    }
 }

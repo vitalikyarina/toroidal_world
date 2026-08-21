@@ -41,6 +41,15 @@ public final class CreateSeamFold {
         return nearest(WorldLoopAttachments.wrappedClientBoundsTransformerOf(level), anchor, target);
     }
 
+    public static BlockPos canonical(@Nullable Level level, BlockPos position) {
+        if (level == null) {
+            return position;
+        }
+
+        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        return transformer == null ? position : transformer.blocks.wrap(position);
+    }
+
     private static BlockPos delta(@Nullable WorldLoopTransformer transformer, BlockPos anchor, BlockPos target,
             BlockPos rawDelta) {
         BlockPos nearest = nearest(transformer, anchor, target);
