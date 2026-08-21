@@ -35,10 +35,12 @@
   "client": [
     "AbstractBlockEntityVisualAccessor",
     "BeltConnectorHandlerMixin",
+    "BlockEntityDataPacketMixin",
     "FriendlyByteBufMenuPositionMixin",
     "GearboxRendererMixin",
     "GearboxVisualMixin",
     "ITrackBlockClientMixin",
+    "LogisticalStockResponsePacketMixin",
     "MenuBaseMixin",
     "TrackGraphVisualizerMixin",
     "TrackTargetingClientMixin"
