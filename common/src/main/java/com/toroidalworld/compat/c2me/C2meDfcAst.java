@@ -12,6 +12,8 @@ import com.ishland.c2me.opts.dfc.common.ast.AstNode;
 import com.ishland.c2me.opts.dfc.common.ast.binary.MulNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.ConstantNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.CoordinateNode;
+import com.ishland.c2me.opts.dfc.common.ast.misc.DelegateNode;
+import com.ishland.c2me.opts.dfc.common.ast.noise.DFTWeirdScaledSamplerNode;
 import com.ishland.c2me.opts.dfc.common.ast.noise.GenericShiftedNoiseNode;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
@@ -25,6 +27,15 @@ public final class C2meDfcAst {
     private static final Set<String> REPORTED = ConcurrentHashMap.newKeySet();
 
     public static AstNode fold(DensityFunction source, AstNode produced) {
+        // The cave sampler goes back to the interpreter instead of being folded here: it divides the coordinate by a
+        // rarity it computes itself, so the fold has to sit inside that division — which
+        // DensityFunctionsWeirdScaledSamplerMixin already does and C2ME's emitter writes past by inlining the whole
+        // division. A second copy compiled here would have to agree with that one block for block, and a disagreement
+        // shows only as terrain that differs with C2ME on or off. 26.2 retired the function, so main has nothing here.
+        if (produced instanceof DFTWeirdScaledSamplerNode) {
+            return new DelegateNode(source);
+        }
+
         Fold fold = foldOf(source);
         if (fold == null) {
             reportOnce(source);
