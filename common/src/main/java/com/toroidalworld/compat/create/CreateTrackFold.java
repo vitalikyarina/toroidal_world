@@ -14,6 +14,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class CreateTrackFold {
@@ -63,6 +64,11 @@ public final class CreateTrackFold {
 
     private static Vec3 nearestCopy(@Nullable WorldLoopTransformer transformer, Vec3 anchor, Vec3 target) {
         return transformer == null ? target : transformer.vectors.nearestCopy(anchor, target);
+    }
+
+    public static AABB foldBoxToward(@Nullable Level level, Vec3 anchor, AABB box) {
+        WorldLoopTransformer transformer = transformerOf(level, null);
+        return transformer == null ? box : transformer.foldBoxToward(anchor, box);
     }
 
     public static Vec3 wrap(@Nullable Level level, Vec3 position) {
