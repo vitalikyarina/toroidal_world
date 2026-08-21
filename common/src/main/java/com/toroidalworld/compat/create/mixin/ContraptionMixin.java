@@ -12,6 +12,10 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.StructureTransform;
 import com.toroidalworld.compat.create.CreateSeamFold;
+import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.storage.WorldLoopAttachments;
+
+import java.util.List;
 
 import net.createmod.catnip.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
@@ -20,6 +24,8 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = Contraption.class, remap = false)
 public class ContraptionMixin {
@@ -33,6 +39,12 @@ public class ContraptionMixin {
     public BlockPos anchor;
 
     @Shadow
+    public AABB bounds;
+
+    @Shadow
+    protected List<AABB> superglue;
+
+    @Shadow
     protected Multimap<BlockPos, StructureBlockInfo> capturedMultiblocks;
 
     @ModifyExpressionValue(
@@ -42,6 +54,19 @@ public class ContraptionMixin {
     private BlockPos toroidal$foldCapturedController(BlockPos stored, BlockPos localPos, StructureBlockInfo info,
             BlockEntity be) {
         return CreateSeamFold.foldPosition(be.getLevel(), localPos.offset(anchor), stored);
+    }
+
+    @Inject(method = "removeBlocksFromWorld",
+            at = @At(value = "INVOKE", shift = At.Shift.AFTER,
+                    target = "Ljava/util/Set;forEach(Ljava/util/function/Consumer;)V"))
+    private void toroidal$foldGlueIntoTheLocalFrame(Level world, BlockPos offset, CallbackInfo ci) {
+        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(world);
+        if (transformer == null) {
+            return;
+        }
+
+        Vec3 center = bounds == null ? Vec3.ZERO : bounds.getCenter();
+        superglue.replaceAll(box -> transformer.foldBoxToward(center, box));
     }
 
     @Inject(method = "addBlocksToWorld",

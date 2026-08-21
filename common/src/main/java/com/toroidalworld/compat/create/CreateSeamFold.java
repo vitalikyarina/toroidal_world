@@ -7,6 +7,8 @@ import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 public final class CreateSeamFold {
     public static BlockPos foldDelta(@Nullable Level level, BlockPos anchor, BlockPos target, BlockPos rawDelta) {
@@ -39,6 +41,15 @@ public final class CreateSeamFold {
         }
 
         return nearest(WorldLoopAttachments.wrappedClientBoundsTransformerOf(level), anchor, target);
+    }
+
+    public static Vec3 foldPointToBox(@Nullable Level level, AABB box, Vec3 point) {
+        if (level == null) {
+            return point;
+        }
+
+        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        return transformer == null ? point : transformer.vectors.nearestCopy(box.getCenter(), point);
     }
 
     public static BlockPos canonical(@Nullable Level level, BlockPos position) {
