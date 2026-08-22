@@ -46,7 +46,8 @@
     "TrackNodeLocationMixin",
     "TrackPlacementMixin",
     "TrackTargetingBlockItemMixin",
-    "TrainCollisionSpanMixin"
+    "TrainCollisionSpanMixin",
+    "TrainMigrationMixin"
   ],
   "client": [
     "AbstractBlockEntityVisualAccessor",
