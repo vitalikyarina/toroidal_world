@@ -34,6 +34,7 @@
     "GlueCommandMixin",
     "ITrackBlockMixin",
     "InventoryIdentifierMixin",
+    "NavigationMixin",
     "OrientedContraptionEntityMixin",
     "PackagePortPlacementPacketMixin",
     "PortableStorageInterfaceMovementMixin",
