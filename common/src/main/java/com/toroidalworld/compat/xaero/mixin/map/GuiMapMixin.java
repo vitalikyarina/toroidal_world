@@ -240,8 +240,8 @@ public abstract class GuiMapMixin {
         float v1 = (float) (clippedMinZ - slotMinZ) / slotSize;
         float v2 = (float) (clippedMaxZ - slotMinZ) / slotSize;
         // The quad is emitted directly: calling GuiMap's own helper would drag its xaerolib superclass onto the compile classpath.
-        for (int periodX = -1; periodX <= 1; periodX++) {
-            for (int periodZ = -1; periodZ <= 1; periodZ++) {
+        for (int periodX = -XaeroWorldMapFold.COPIES_EACH_SIDE; periodX <= XaeroWorldMapFold.COPIES_EACH_SIDE; periodX++) {
+            for (int periodZ = -XaeroWorldMapFold.COPIES_EACH_SIDE; periodZ <= XaeroWorldMapFold.COPIES_EACH_SIDE; periodZ++) {
                 float copyX = clippedX + periodX * xBounds[1];
                 float copyY = clippedY + periodZ * zBounds[1];
                 BufferBuilder quad = renderer.begin(texture);

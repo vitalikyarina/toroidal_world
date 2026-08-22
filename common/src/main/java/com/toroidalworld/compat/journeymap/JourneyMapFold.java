@@ -21,6 +21,8 @@ public final class JourneyMapFold {
 
     private static final int COPY_RANGE_CAP = 5;
 
+    private static final int FULLSCREEN_COPIES_EACH_SIDE = 1;
+
     private static final LogRateGate capGate = new LogRateGate();
 
     private static ToroidalShape shape() {
@@ -90,6 +92,11 @@ public final class JourneyMapFold {
         }
 
         return needed;
+    }
+
+    public static int fullscreenCopyRange(Direction.Axis axis) {
+        ToroidalShape shape = shape();
+        return shape != null && shape.loops(axis) ? FULLSCREEN_COPIES_EACH_SIDE : 0;
     }
 
     public static void gridDropped(String fromDimension, String toDimension) {

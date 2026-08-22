@@ -54,6 +54,7 @@
     "TrackTargetingBlockItemMixin",
     "TrackTargetingMapMarkerMixin",
     "TrainCollisionMixin",
+    "TrainMapSyncMixin",
     "TrainMigrationMixin"
   ],
   "client": [
@@ -71,6 +72,12 @@
     "MenuBaseMixin",
     "PackagePortPlacementRequestMixin",
     "TrackGraphVisualizerMixin",
+    "FTBChunksTrainMapMixin",
+    "JourneyTrainMapMixin",
+    "TrainMapManagerMixin",
+    "TrainMapRendererMixin",
+    "TrainMapSyncEntryMixin",
+    "XaeroTrainMapMixin",
     "TrackTargetingClientMixin"
   ],
   "injectors": {
