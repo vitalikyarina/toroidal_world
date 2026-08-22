@@ -38,6 +38,7 @@
     "PackagePortPlacementPacketMixin",
     "PortableStorageInterfaceMovementMixin",
     "RotationPropagatorMixin",
+    "SearchCacheMixin",
     "SuperGlueEntityMixin",
     "SuperGlueHandlerMixin",
     "TrackBlockEntityMixin",
