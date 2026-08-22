@@ -41,6 +41,7 @@
     "RotationPropagatorMixin",
     "SearchCacheMixin",
     "StationBlockEntityMixin",
+    "StationMapMarkerMixin",
     "SuperGlueEntityMixin",
     "SuperGlueHandlerMixin",
     "TrackBlockEntityMixin",
@@ -50,6 +51,7 @@
     "TrackNodeLocationMixin",
     "TrackPlacementMixin",
     "TrackTargetingBlockItemMixin",
+    "TrackTargetingMapMarkerMixin",
     "TrainCollisionMixin",
     "TrainMigrationMixin"
   ],
