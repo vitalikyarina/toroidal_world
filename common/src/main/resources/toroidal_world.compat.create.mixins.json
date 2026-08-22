@@ -49,6 +49,7 @@
     "TrackEdgeMixin",
     "TrackGraphHelperMixin",
     "TrackNodeLocationMixin",
+    "TrackPaverV2Mixin",
     "TrackPlacementMixin",
     "TrackTargetingBlockItemMixin",
     "TrackTargetingMapMarkerMixin",
