@@ -49,7 +49,7 @@
     "TrackNodeLocationMixin",
     "TrackPlacementMixin",
     "TrackTargetingBlockItemMixin",
-    "TrainCollisionSpanMixin",
+    "TrainCollisionMixin",
     "TrainMigrationMixin"
   ],
   "client": [
