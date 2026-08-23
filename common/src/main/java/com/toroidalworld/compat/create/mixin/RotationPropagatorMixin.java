@@ -14,6 +14,9 @@ import net.minecraft.core.Vec3i;
 
 @Mixin(value = RotationPropagator.class, remap = false)
 public class RotationPropagatorMixin {
+    // isLargeCogToSpeedController accepts only the vertical one-block diff (0,-1,0) and Y never wraps, so the raw
+    // subtracts feeding it from getConveyedSpeed and isConnected cannot change its answer — the family's seam
+    // coverage ends here.
     @WrapOperation(
             method = "getRotationSpeedModifier",
             at = @At(value = "INVOKE",

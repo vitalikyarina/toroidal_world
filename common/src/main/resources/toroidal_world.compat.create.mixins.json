@@ -6,6 +6,7 @@
   "plugin": "com.toroidalworld.compat.create.CreateMixinPlugin",
   "mixins": [
     "AbstractContraptionEntityMixin",
+    "AirCurrentMixin",
     "AutoRequestDataMixin",
     "BeltBlockEntityControllerMixin",
     "BeltConnectorItemMixin",
@@ -42,6 +43,7 @@
     "LecternControllerBlockEntityMixin",
     "LinearActuatorBlockEntityMixin",
     "NavigationMixin",
+    "NozzleBlockEntityMixin",
     "OrientedContraptionEntityMixin",
     "PackagePortPlacementPacketMixin",
     "PortableStorageInterfaceMovementMixin",
@@ -90,6 +92,7 @@
     "FactoryPanelEffectPacketMixin",
     "FluidSplashPacketMixin",
     "FriendlyByteBufMenuPositionMixin",
+    "GantryShaftBlockEntityMixin",
     "GantryContraptionEntityClientMixin",
     "GearboxRendererMixin",
     "GearboxVisualMixin",
