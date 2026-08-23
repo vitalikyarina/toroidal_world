@@ -8,7 +8,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.simibubi.create.content.contraptions.StructureTransform;
 import com.toroidalworld.compat.create.CreateTrackFold;
 
 import net.minecraft.world.entity.Entity;
@@ -44,6 +47,16 @@ public abstract class AbstractContraptionEntityMixin {
         }
 
         return CreateTrackFold.nearestCopy(toroidal$self().level(), actorPosition, previousPosition);
+    }
+
+    @WrapOperation(method = "moveCollidedEntitiesOnDisassembly",
+            at = @At(value = "INVOKE",
+                    target = "Lcom/simibubi/create/content/contraptions/StructureTransform;"
+                            + "apply(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"))
+    private Vec3 toroidal$disassemblyLandingInTheAnchorFrame(StructureTransform transform, Vec3 localVec,
+            Operation<Vec3> original) {
+        return CreateTrackFold.nearestCopy(toroidal$self().level(), getAnchorVec(),
+                original.call(transform, localVec));
     }
 
     private Entity toroidal$self() {
