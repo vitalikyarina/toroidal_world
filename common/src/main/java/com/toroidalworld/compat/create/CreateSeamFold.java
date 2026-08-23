@@ -9,6 +9,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class CreateSeamFold {
@@ -59,6 +61,29 @@ public final class CreateSeamFold {
 
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         return transformer == null ? point : transformer.vectors.nearestCopy(box.getCenter(), point);
+    }
+
+    public static Vec3 foldPoint(@Nullable Level level, Vec3 anchor, Vec3 target) {
+        if (level == null) {
+            return target;
+        }
+
+        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        return transformer == null ? target : transformer.vectors.nearestCopy(anchor, target);
+    }
+
+    public static BlockHitResult canonical(@Nullable Level level, BlockHitResult hit) {
+        BlockPos raw = hit.getBlockPos();
+        BlockPos wrapped = canonical(level, raw);
+        if (wrapped.equals(raw)) {
+            return hit;
+        }
+
+        Vec3 offsetInBlock = hit.getLocation().subtract(Vec3.atLowerCornerOf(raw));
+        Vec3 location = Vec3.atLowerCornerOf(wrapped).add(offsetInBlock);
+        return hit.getType() == HitResult.Type.MISS
+                ? BlockHitResult.miss(location, hit.getDirection(), wrapped)
+                : new BlockHitResult(location, hit.getDirection(), wrapped, hit.isInside());
     }
 
     public static BlockPos canonical(@Nullable Level level, BlockPos position) {
