@@ -76,3 +76,6 @@ config="toroidal_world.compat.c2me.mixins.json"
 
 [[mixins]]
 config="toroidal_world.compat.create.mixins.json"
+
+[[mixins]]
+config="toroidal_world.neoforge.mixins.json"

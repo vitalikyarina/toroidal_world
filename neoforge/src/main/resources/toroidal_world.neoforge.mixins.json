@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.toroidalworld.platform.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ServerLevelCapabilityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
