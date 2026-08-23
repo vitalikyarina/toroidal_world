@@ -306,6 +306,11 @@ public class WorldLoopTransformer {
         return coords.x.spansSeam(region.minX(), region.maxX()) || coords.z.spansSeam(region.minZ(), region.maxZ());
     }
 
+    public boolean exceedsWorld(BoundingBox region) {
+        return coords.x.exceedsWorld(region.minX(), region.maxX())
+                || coords.z.exceedsWorld(region.minZ(), region.maxZ());
+    }
+
     public BoundingBox foldAcrossSeam(BoundingBox region) {
         if (!spansSeam(region)) {
             return region;

@@ -4,10 +4,16 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.contraptions.glue.SuperGlueEntity;
+import com.toroidalworld.compat.create.CreateSchematicFold;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = SuperGlueEntity.class, remap = false)
@@ -19,5 +25,15 @@ public class SuperGlueEntityMixin {
     private Vec3 toroidal$foldBlockIntoTheBondFrame(Vec3 blockCenter) {
         Entity glue = (Entity) (Object) this;
         return CreateSeamFold.foldPointToBox(glue.level(), glue.getBoundingBox(), blockCenter);
+    }
+
+    @WrapOperation(
+            method = "collectCropped",
+            at = @At(value = "INVOKE",
+                    target = "Lnet/minecraft/world/phys/AABB;intersect(Lnet/minecraft/world/phys/AABB;)"
+                            + "Lnet/minecraft/world/phys/AABB;"))
+    private static AABB toroidal$cropGlueInScanFrame(AABB scanBox, AABB glueBox, Operation<AABB> original,
+            @Local(argsOnly = true) Level level) {
+        return original.call(scanBox, CreateSchematicFold.glueInScanFrame(level, scanBox, glueBox));
     }
 }

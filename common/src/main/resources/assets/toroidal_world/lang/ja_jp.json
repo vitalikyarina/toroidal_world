@@ -1,6 +1,7 @@
 {
   "argument.toroidal_world.pos.outside_world": "%s はこのワールドの外にあります — %s と %s の間でなければなりません",
   "commands.toroidal_world.region.across_seam": "この範囲はワールドの継ぎ目をまたいでおり、どちら側とも解釈できます — 片側ずつコマンドを実行してください",
+  "message.toroidal_world.schematic.selection_wider_than_world": "この選択範囲はワールドより広く、一部のブロックを二重に含めてしまいます — 2つ目の角を最初の角の近くに置いてください",
 
   "gui.toroidal_world.world_shape": "ワールドの形状",
   "gui.toroidal_world.world_shape.normal": "通常",

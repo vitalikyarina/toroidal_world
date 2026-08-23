@@ -135,6 +135,10 @@ public class WrapDomain {
         return Math.abs((long) toCoord - fromCoord) > seamRadius;
     }
 
+    public boolean exceedsWorld(int fromCoord, int toCoord) {
+        return Math.abs((long) toCoord - fromCoord) >= domainLength;
+    }
+
     public int foldSpanStart(int minCoord, int maxCoord) {
         return spansSeam(minCoord, maxCoord) ? maxCoord : minCoord;
     }
@@ -291,6 +295,11 @@ public class WrapDomain {
 
         @Override
         public boolean spansSeam(int fromCoord, int toCoord) {
+            return false;
+        }
+
+        @Override
+        public boolean exceedsWorld(int fromCoord, int toCoord) {
             return false;
         }
 
