@@ -72,7 +72,8 @@
     "TrackTargetingMapMarkerMixin",
     "TrainCollisionMixin",
     "TrainMapSyncMixin",
-    "TrainMigrationMixin"
+    "TrainMigrationMixin",
+    "TrainRelocatorMixin"
   ],
   "client": [
     "AbstractBlockEntityVisualAccessor",
@@ -93,11 +94,13 @@
     "GlueEffectPacketMixin",
     "ITrackBlockClientMixin",
     "JourneyTrainMapMixin",
+    "KineticDebuggerMixin",
     "LimbSwingUpdatePacketMixin",
     "LogisticalStockResponsePacketMixin",
     "MenuBaseMixin",
     "PackagePortPlacementRequestMixin",
     "RedstoneRequesterEffectPacketMixin",
+    "ScheduleScreenMixin",
     "SchematicAndQuillHandlerMixin",
     "SchematicHandlerMixin",
     "SchematicTransformationMixin",
@@ -105,6 +108,7 @@
     "SoulPulseEffectPacketMixin",
     "SymmetryEffectPacketMixin",
     "SymmetryHandlerMixin",
+    "TableClothOverlayRendererMixin",
     "ToolboxHandlerClientMixin",
     "TrackGraphVisualizerMixin",
     "TrackTargetingClientMixin",
