@@ -2,13 +2,10 @@ package com.toroidalworld.compat.create.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
-import com.toroidalworld.compat.create.CreateConnectivityProbe;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.core.BlockPos;
@@ -41,11 +38,5 @@ public class ConnectivityHandlerMixin {
         }
 
         return CreateSeamFold.foldPosition(blockLevel, new BlockPos(minX, next.getY(), minZ), next);
-    }
-
-    @Inject(method = "isConnected", at = @At("RETURN"))
-    private static void toroidal$probeConnected(BlockGetter level, BlockPos pos, BlockPos other,
-            CallbackInfoReturnable<Boolean> cir) {
-        CreateConnectivityProbe.reportConnected(level, pos, other, cir.getReturnValueZ());
     }
 }

@@ -8,7 +8,7 @@ import com.toroidalworld.storage.WorldLoopAttachments;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
-public final class BeltControllerFold {
+public final class ControllerFrameFold {
     public static BlockPos inFrameOf(@Nullable Level level, BlockPos worldPosition, BlockPos controller) {
         if (level == null) {
             return controller;
@@ -25,6 +25,6 @@ public final class BeltControllerFold {
         return transformer == null ? controller : transformer.blocks.wrap(controller);
     }
 
-    private BeltControllerFold() {
+    private ControllerFrameFold() {
     }
 }

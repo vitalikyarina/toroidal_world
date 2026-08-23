@@ -51,6 +51,7 @@
     "SchematicSyncPacketMixin",
     "SchematicannonPrinterMixin",
     "SearchCacheMixin",
+    "SmartBlockEntityControllerMixin",
     "StationBlockEntityMixin",
     "StationMapMarkerMixin",
     "SuperGlueEntityMixin",

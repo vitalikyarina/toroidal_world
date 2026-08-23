@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.simibubi.create.content.kinetics.belt.BeltBlockEntity;
 import com.toroidalworld.accessors.SeamKeyedBlockEntity;
-import com.toroidalworld.compat.create.BeltControllerFold;
+import com.toroidalworld.compat.create.ControllerFrameFold;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup.Provider;
@@ -29,7 +29,7 @@ public abstract class BeltBlockEntityControllerMixin implements SeamKeyedBlockEn
     @ModifyVariable(method = "setController", at = @At("HEAD"), argsOnly = true)
     private BlockPos toroidal$foldIncomingController(BlockPos stored) {
         BlockEntity self = (BlockEntity) (Object) this;
-        return BeltControllerFold.inFrameOf(self.getLevel(), self.getBlockPos(), stored);
+        return ControllerFrameFold.inFrameOf(self.getLevel(), self.getBlockPos(), stored);
     }
 
     @Inject(method = "read", at = @At("RETURN"))
@@ -51,6 +51,6 @@ public abstract class BeltBlockEntityControllerMixin implements SeamKeyedBlockEn
         }
 
         BlockEntity self = (BlockEntity) (Object) this;
-        this.controller = BeltControllerFold.inFrameOf(self.getLevel(), self.getBlockPos(), stored);
+        this.controller = ControllerFrameFold.inFrameOf(self.getLevel(), self.getBlockPos(), stored);
     }
 }
