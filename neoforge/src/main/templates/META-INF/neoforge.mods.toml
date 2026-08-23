@@ -66,3 +66,6 @@ config="toroidal_world.compat.xaero.mixins.json"
 
 [[mixins]]
 config="toroidal_world.compat.c2me.mixins.json"
+
+[[mixins]]
+config="toroidal_world.neoforge.mixins.json"
