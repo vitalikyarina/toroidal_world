@@ -47,6 +47,17 @@ public abstract class TrackEdgeMixin {
         return toroidal$nearestToFirstNode(target, original.call(target));
     }
 
+    @WrapOperation(method = "getPositionSmoothed",
+            at = @At(value = "INVOKE",
+                    target = "Lnet/createmod/catnip/math/VecHelper;lerp(FLnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"))
+    private Vec3 toroidal$foldSmoothedEnds(float t, Vec3 fromNode1, Vec3 fromNode2, Operation<Vec3> original) {
+        TrackNodeLocation location = this.node1.getLocation();
+        Vec3 anchor = location.getLocation();
+        Vec3 nearEnd = CreateTrackFold.nearestCopy(location.getDimension(), anchor, fromNode1);
+        Vec3 farEnd = CreateTrackFold.nearestCopy(location.getDimension(), nearEnd, fromNode2);
+        return original.call(t, nearEnd, farEnd);
+    }
+
     @WrapOperation(method = "getIntersection",
             at = @At(value = "INVOKE",
                     target = "Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;getLocation()Lnet/minecraft/world/phys/Vec3;",
