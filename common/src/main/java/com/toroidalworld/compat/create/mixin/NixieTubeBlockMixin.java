@@ -13,7 +13,6 @@ import com.toroidalworld.compat.create.CreateWalkClosure;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 @Mixin(value = NixieTubeBlock.class, remap = false)
@@ -31,16 +30,6 @@ public abstract class NixieTubeBlockMixin {
     private static BlockState toroidal$closeTheRing(LevelAccessor world, BlockPos pos, Operation<BlockState> original,
             @Share("walkClosure") LocalRef<CreateWalkClosure> closureRef,
             @Share("walkClosureResolved") LocalBooleanRef resolved) {
-        if (!resolved.get()) {
-            closureRef.set(CreateWalkClosure.of(world));
-            resolved.set(true);
-        }
-
-        CreateWalkClosure closure = closureRef.get();
-        if (closure == null || !closure.closes(pos)) {
-            return original.call(world, pos);
-        }
-
-        return Blocks.AIR.defaultBlockState();
+        return CreateWalkClosure.read(world, pos, original, closureRef, resolved);
     }
 }

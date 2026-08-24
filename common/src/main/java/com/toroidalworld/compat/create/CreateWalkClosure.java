@@ -2,12 +2,17 @@ package com.toroidalworld.compat.create;
 
 import org.jspecify.annotations.Nullable;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 public final class CreateWalkClosure {
     private final WorldLoopTransformer transformer;
@@ -20,6 +25,21 @@ public final class CreateWalkClosure {
     public static @Nullable CreateWalkClosure of(LevelAccessor world) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOfReader(world);
         return transformer == null ? null : new CreateWalkClosure(transformer);
+    }
+
+    public static BlockState read(LevelAccessor world, BlockPos pos, Operation<BlockState> original,
+            LocalRef<CreateWalkClosure> closureRef, LocalBooleanRef resolved) {
+        if (!resolved.get()) {
+            closureRef.set(of(world));
+            resolved.set(true);
+        }
+
+        CreateWalkClosure closure = closureRef.get();
+        if (closure == null || !closure.closes(pos)) {
+            return original.call(world, pos);
+        }
+
+        return Blocks.AIR.defaultBlockState();
     }
 
     CreateWalkClosure(WorldLoopTransformer transformer) {

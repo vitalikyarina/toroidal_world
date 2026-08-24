@@ -33,12 +33,12 @@ public final class WorldLoopAttachments {
     }
 
     public static @Nullable Level levelOf(LevelReader reader) {
-        if (reader instanceof Level level) {
-            return level;
-        }
-
         if (reader instanceof ServerLevelAccessor accessor) {
             return accessor.getLevel();
+        }
+
+        if (reader instanceof Level level) {
+            return level;
         }
 
         return null;
