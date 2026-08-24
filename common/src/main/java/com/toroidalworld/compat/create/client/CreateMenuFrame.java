@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.compat.create.ThreadScope;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -16,24 +17,17 @@ import net.minecraft.world.level.Level;
 // blocks in its own frame; they are folded as they are read rather than where they are looked up, because
 // FactoryPanelBehaviour.at refuses a canonical position at its isLoaded gate before any lookup happens.
 public final class CreateMenuFrame {
-    private static final ThreadLocal<@Nullable Frame> PAYLOAD_FRAME = new ThreadLocal<>();
+    private static final ThreadScope<Frame> PAYLOAD_FRAME = new ThreadScope<>();
 
     private record Frame(WorldLoopTransformer transformer, BlockPos anchor) {
     }
 
     public static <T> T readingPayload(Supplier<T> read) {
-        Frame previous = PAYLOAD_FRAME.get();
-        PAYLOAD_FRAME.set(resolve());
-
-        try {
-            return read.get();
-        } finally {
-            PAYLOAD_FRAME.set(previous);
-        }
+        return PAYLOAD_FRAME.with(resolve(), read);
     }
 
     public static BlockPos fold(BlockPos canonical) {
-        Frame frame = PAYLOAD_FRAME.get();
+        Frame frame = PAYLOAD_FRAME.current();
         if (frame == null) {
             return canonical;
         }

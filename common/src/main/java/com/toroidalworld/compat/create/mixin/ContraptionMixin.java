@@ -2,7 +2,6 @@ package com.toroidalworld.compat.create.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -14,6 +13,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.StructureTransform;
 import com.toroidalworld.compat.create.ChassisWalkFrame;
+import com.toroidalworld.compat.create.CreateMultiblockFold;
 import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -36,12 +36,6 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = Contraption.class, remap = false)
 public class ContraptionMixin {
-    @Unique
-    private static final String CONTROLLER_KEY = "Controller";
-
-    @Unique
-    private static final String LAST_KNOWN_POS_KEY = "LastKnownPos";
-
     @Shadow
     public BlockPos anchor;
 
@@ -98,14 +92,15 @@ public class ContraptionMixin {
             CompoundTag nbt = info.nbt();
             // The rotation branch leaves Controller as the capture-time local and marks the part with LastKnownPos,
             // and addBlocksToWorld drops that Controller outright — canonicalizing a local would corrupt it.
-            if (nbt == null || !nbt.contains(CONTROLLER_KEY) || nbt.contains(LAST_KNOWN_POS_KEY)) {
+            if (nbt == null || !nbt.contains(CreateMultiblockFold.CONTROLLER_KEY)
+                    || nbt.contains(CreateMultiblockFold.LAST_KNOWN_POS_KEY)) {
                 continue;
             }
 
-            BlockPos stored = NBTHelper.readBlockPos(nbt, CONTROLLER_KEY);
+            BlockPos stored = NBTHelper.readBlockPos(nbt, CreateMultiblockFold.CONTROLLER_KEY);
             BlockPos canonical = CreateSeamFold.canonical(serverLevel, stored);
             if (canonical != stored) {
-                nbt.put(CONTROLLER_KEY, NbtUtils.writeBlockPos(canonical));
+                nbt.put(CreateMultiblockFold.CONTROLLER_KEY, NbtUtils.writeBlockPos(canonical));
             }
         }
     }
