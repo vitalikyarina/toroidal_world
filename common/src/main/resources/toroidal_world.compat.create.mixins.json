@@ -70,6 +70,7 @@
     "SteamEngineBlockEntityMixin",
     "SuperGlueEntityMixin",
     "SuperGlueHandlerMixin",
+    "SuperGlueSelectionHelperMixin",
     "SymmetryWandItemMixin",
     "ToolboxDisposeAllPacketMixin",
     "ToolboxEquipPacketMixin",

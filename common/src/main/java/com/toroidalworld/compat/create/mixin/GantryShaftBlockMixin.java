@@ -13,7 +13,6 @@ import com.toroidalworld.compat.create.CreateWalkClosure;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 @Mixin(value = GantryShaftBlock.class, remap = false)
@@ -24,16 +23,6 @@ public abstract class GantryShaftBlockMixin {
     private BlockState toroidal$closeTheRing(Level world, BlockPos pos, Operation<BlockState> original,
             @Share("walkClosure") LocalRef<CreateWalkClosure> closureRef,
             @Share("walkClosureResolved") LocalBooleanRef resolved) {
-        if (!resolved.get()) {
-            closureRef.set(CreateWalkClosure.of(world));
-            resolved.set(true);
-        }
-
-        CreateWalkClosure closure = closureRef.get();
-        if (closure == null || !closure.closes(pos)) {
-            return original.call(world, pos);
-        }
-
-        return Blocks.AIR.defaultBlockState();
+        return CreateWalkClosure.read(world, pos, original, closureRef, resolved);
     }
 }
