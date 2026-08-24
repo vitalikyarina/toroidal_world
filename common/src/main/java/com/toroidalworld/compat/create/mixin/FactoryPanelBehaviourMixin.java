@@ -41,7 +41,6 @@ public abstract class FactoryPanelBehaviourMixin {
     @Shadow
     public abstract FactoryPanelBlockEntity panelBE();
 
-    // Neither hook covers the other: on chunk load read has no level yet, and a reload that has one never initializes.
     @Inject(method = "initialize", at = @At("RETURN"))
     private void toroidal$canonicaliseOnInitialize(CallbackInfo ci) {
         toroidal$canonicaliseStoredConnections();

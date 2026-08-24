@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlockEntity;
+import com.toroidalworld.accessors.SeamKeyedBlockEntity;
 import com.toroidalworld.compat.create.CrafterGroupFold;
 
 import net.minecraft.core.HolderLookup;
@@ -14,34 +15,25 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 
 @Mixin(value = MechanicalCrafterBlockEntity.class, remap = false)
-public abstract class MechanicalCrafterBlockEntityMixin {
-    @Unique
-    private boolean toroidal$deltasNormalized;
-
+public abstract class MechanicalCrafterBlockEntityMixin implements SeamKeyedBlockEntity {
     @Inject(method = "read", at = @At("RETURN"))
     private void toroidal$normalizeOnRead(CompoundTag compound, HolderLookup.Provider registries,
             boolean clientPacket, CallbackInfo ci) {
         toroidal$normalizeWithLevel();
     }
 
-    // Neither hook covers the other: on chunk load read has no level yet, and a loaded reload never re-ticks first.
-    @Inject(method = "tick", at = @At("HEAD"))
-    private void toroidal$normalizeOnFirstTick(CallbackInfo ci) {
+    @Override
+    public void toroidal$rekey() {
         toroidal$normalizeWithLevel();
     }
 
     @Unique
     private void toroidal$normalizeWithLevel() {
-        if (toroidal$deltasNormalized) {
-            return;
-        }
-
         MechanicalCrafterBlockEntity crafter = (MechanicalCrafterBlockEntity) (Object) this;
         if (!(crafter.getLevel() instanceof ServerLevel serverLevel)) {
             return;
         }
 
-        toroidal$deltasNormalized = true;
         CrafterGroupFold.normalizeOwn(serverLevel, crafter);
     }
 }

@@ -9,22 +9,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.kinetics.steamEngine.PoweredShaftBlockEntity;
+import com.toroidalworld.accessors.SeamKeyedBlockEntity;
 import com.toroidalworld.compat.create.RelativeKeyFold;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 
 @Mixin(value = PoweredShaftBlockEntity.class, remap = false)
-public abstract class PoweredShaftBlockEntityMixin {
+public abstract class PoweredShaftBlockEntityMixin implements SeamKeyedBlockEntity {
     @Unique
     private static final String SUBTRACT =
             "Lnet/minecraft/core/BlockPos;subtract(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos;";
-
-    @Unique
-    private boolean toroidal$normalizedOnTick;
 
     @WrapOperation(method = "update", at = @At(value = "INVOKE", target = SUBTRACT))
     private BlockPos toroidal$foldStoredKey(BlockPos worldPosition, Vec3i sourcePos, Operation<BlockPos> original) {
@@ -42,17 +40,9 @@ public abstract class PoweredShaftBlockEntityMixin {
         toroidal$normalizeWithLevel();
     }
 
-    @Inject(method = "tick", at = @At("HEAD"))
-    private void toroidal$normalizeOnFirstTick(CallbackInfo ci) {
-        if (toroidal$normalizedOnTick) {
-            return;
-        }
-
-        PoweredShaftBlockEntity self = (PoweredShaftBlockEntity) (Object) this;
-        if (self.getLevel() != null) {
-            toroidal$normalizedOnTick = true;
-            toroidal$normalizeWithLevel();
-        }
+    @Override
+    public void toroidal$rekey() {
+        toroidal$normalizeWithLevel();
     }
 
     @Unique
@@ -64,13 +54,12 @@ public abstract class PoweredShaftBlockEntityMixin {
     @Unique
     private void toroidal$normalizeWithLevel() {
         PoweredShaftBlockEntity self = (PoweredShaftBlockEntity) (Object) this;
-        Level level = self.getLevel();
         BlockPos storedKey = self.enginePos;
-        if (level == null || storedKey == null) {
+        if (storedKey == null || !(self.getLevel() instanceof ServerLevel serverLevel)) {
             return;
         }
 
-        BlockPos normalizedKey = RelativeKeyFold.normalize(level, self.getBlockPos(), storedKey);
+        BlockPos normalizedKey = RelativeKeyFold.normalize(serverLevel, self.getBlockPos(), storedKey);
         if (!normalizedKey.equals(storedKey)) {
             self.enginePos = normalizedKey;
         }
