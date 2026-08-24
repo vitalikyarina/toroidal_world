@@ -39,6 +39,7 @@
     "FactoryPanelConnectionPacketMixin",
     "FluidNetworkMixin",
     "FluidPropagatorMixin",
+    "GantryShaftBlockMixin",
     "GirderPlacementHelperMixin",
     "GlueCommandMixin",
     "ITrackBlockMixin",
