@@ -4,7 +4,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
-import com.simibubi.create.compat.trainmap.TrainMapRenderer;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.toroidalworld.compat.create.CreateTrackFold;
 import com.toroidalworld.compat.create.TrainMapLaps;
@@ -15,8 +14,6 @@ import com.toroidalworld.map.MapSurfaceCopies;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.core.WrapDomain;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.phys.Vec3;
 
@@ -29,17 +26,7 @@ public final class TrainMapViewFold {
     }
 
     public static @Nullable WorldLoopTransformer transformer() {
-        ClientLevel level = Minecraft.getInstance().level;
-        if (level == null) {
-            return null;
-        }
-
-        if (TrainMapRenderer.INSTANCE.trackingDim != null
-                && TrainMapRenderer.INSTANCE.trackingDim != level.dimension()) {
-            return null;
-        }
-
-        return CreateTrackFold.transformerOf(level, null);
+        return TrainMapFrame.current();
     }
 
     public static int foldNodeKeyX(TrackNodeLocation anchor, int rawCoord) {

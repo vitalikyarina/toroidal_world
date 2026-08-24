@@ -22,7 +22,12 @@ public final class CreateTrackFold {
     // its centre, so every node coordinate is a whole number of half-blocks.
     private static final int NODE_KEY_UNITS_PER_BLOCK = 2;
 
+    private static volatile @Nullable NodeKeyMemo nodeKeyMemo;
+
     public record NodeKeyAxes(WrapDomain x, WrapDomain z) {
+    }
+
+    private record NodeKeyMemo(WorldLoopTransformer transformer, NodeKeyAxes axes) {
     }
 
     public static @Nullable WorldLoopTransformer transformerOf(@Nullable Level level,
@@ -46,7 +51,15 @@ public final class CreateTrackFold {
     }
 
     public static NodeKeyAxes nodeKeyAxes(WorldLoopTransformer transformer) {
-        return new NodeKeyAxes(nodeKeyDomain(transformer.bounds.x()), nodeKeyDomain(transformer.bounds.z()));
+        NodeKeyMemo memo = nodeKeyMemo;
+        if (memo != null && memo.transformer() == transformer) {
+            return memo.axes();
+        }
+
+        NodeKeyAxes axes =
+                new NodeKeyAxes(nodeKeyDomain(transformer.bounds.x()), nodeKeyDomain(transformer.bounds.z()));
+        nodeKeyMemo = new NodeKeyMemo(transformer, axes);
+        return axes;
     }
 
     public static Vec3 nearestCopy(@Nullable Level level, Vec3 anchor, Vec3 target) {
