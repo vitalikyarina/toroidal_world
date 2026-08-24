@@ -12,9 +12,12 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = ScheduleScreen.class, remap = false)
 public abstract class ScheduleScreenMixin {
-    @WrapOperation(method = "lambda$getViableStations$10",
+    @WrapOperation(
+            method = "*",
+            require = 1,
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
+                    target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"),
+            allow = 1)
     private static double toroidal$stationDistanceInTheViewerFrame(Vec3 station, Vec3 viewer,
             Operation<Double> original) {
         return original.call(CreateClientFrame.nearestCopy(viewer, station), viewer);

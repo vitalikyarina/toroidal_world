@@ -71,7 +71,9 @@ public class ContraptionMixin {
 
     @Inject(method = "removeBlocksFromWorld",
             at = @At(value = "INVOKE", shift = At.Shift.AFTER,
-                    target = "Ljava/util/Set;forEach(Ljava/util/function/Consumer;)V"))
+                    target = "Ljava/util/Set;forEach(Ljava/util/function/Consumer;)V"),
+            require = 1,
+            allow = 1)
     private void toroidal$foldGlueIntoTheLocalFrame(Level world, BlockPos offset, CallbackInfo ci) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(world);
         if (transformer == null) {

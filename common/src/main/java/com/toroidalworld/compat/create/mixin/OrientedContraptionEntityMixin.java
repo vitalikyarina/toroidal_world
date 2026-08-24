@@ -16,7 +16,7 @@ public class OrientedContraptionEntityMixin {
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/vehicle/AbstractMinecart;position()Lnet/minecraft/world/phys/Vec3;",
                     ordinal = 1))
-    private Vec3 toroidal$coupledCartInTheLeadingFrame(Vec3 coupledVec, @Local(index = 6) Vec3 positionVec) {
+    private Vec3 toroidal$coupledCartInTheLeadingFrame(Vec3 coupledVec, @Local(name = "positionVec") Vec3 positionVec) {
         Entity self = (Entity) (Object) this;
         return CreateTrackFold.nearestCopy(self.level(), positionVec, coupledVec);
     }

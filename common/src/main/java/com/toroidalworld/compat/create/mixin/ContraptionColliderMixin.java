@@ -27,8 +27,8 @@ public class ContraptionColliderMixin {
     @ModifyExpressionValue(method = "collideBlocks",
             at = @At(value = "INVOKE",
                     target = "Lcom/simibubi/create/content/contraptions/ControlledContraptionEntity;getBoundingBox()Lnet/minecraft/world/phys/AABB;"))
-    private static AABB toroidal$otherContraptionBoxInThisFrame(AABB otherBounds, @Local(index = 1) Level level,
-            @Local(index = 5) Vec3 position) {
+    private static AABB toroidal$otherContraptionBoxInThisFrame(AABB otherBounds, @Local(name = "world") Level level,
+            @Local(name = "position") Vec3 position) {
         return CreateTrackFold.foldBoxToward(level, position, otherBounds);
     }
 
@@ -36,7 +36,7 @@ public class ContraptionColliderMixin {
             at = @At(value = "INVOKE",
                     target = "Lcom/simibubi/create/content/contraptions/ControlledContraptionEntity;position()Lnet/minecraft/world/phys/Vec3;"))
     private static Vec3 toroidal$otherContraptionPositionInThisFrame(Vec3 otherPosition,
-            @Local(index = 1) Level level, @Local(index = 5) Vec3 position) {
+            @Local(name = "world") Level level, @Local(name = "position") Vec3 position) {
         return CreateTrackFold.nearestCopy(level, position, otherPosition);
     }
 }

@@ -38,7 +38,7 @@ public abstract class TrainMapManagerMixin {
                     target = "Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;getX()I",
                     ordinal = 1))
     private static int toroidal$foldSecondNodeX(TrackNodeLocation other, Operation<Integer> original,
-            @Local(index = 11) TrackNodeLocation anchor) {
+            @Local(name = "nodeLocation") TrackNodeLocation anchor) {
         return TrainMapViewFold.foldNodeKeyX(anchor, original.call(other));
     }
 
@@ -47,7 +47,7 @@ public abstract class TrainMapManagerMixin {
                     target = "Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;getZ()I",
                     ordinal = 1))
     private static int toroidal$foldSecondNodeZ(TrackNodeLocation other, Operation<Integer> original,
-            @Local(index = 11) TrackNodeLocation anchor) {
+            @Local(name = "nodeLocation") TrackNodeLocation anchor) {
         return TrainMapViewFold.foldNodeKeyZ(anchor, original.call(other));
     }
 

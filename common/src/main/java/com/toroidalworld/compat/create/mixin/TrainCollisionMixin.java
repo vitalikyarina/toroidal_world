@@ -22,7 +22,7 @@ public abstract class TrainCollisionMixin {
     private static final String VEC3_ADD =
             "Lnet/minecraft/world/phys/Vec3;add(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;";
 
-    private static final int OTHER_START_LOCAL_SLOT = 20;
+    private static final String OTHER_START_LOCAL = "start2";
     private static final int SPAN_END_ARGUMENT = 1;
     private static final int SPAN_START_ARGUMENT = 0;
 
@@ -42,7 +42,7 @@ public abstract class TrainCollisionMixin {
     @ModifyExpressionValue(method = COLLIDING_METHOD,
             at = @At(value = "INVOKE", target = TRAVELLING_POINT_POSITION, ordinal = 1))
     private Vec3 toroidal$foldOtherEnd(Vec3 otherEnd, @Local(argsOnly = true) Level level,
-            @Local(index = OTHER_START_LOCAL_SLOT) Vec3 otherStart) {
+            @Local(name = OTHER_START_LOCAL) Vec3 otherStart) {
         return CreateTrackFold.nearestCopy(level, otherStart, otherEnd);
     }
 
