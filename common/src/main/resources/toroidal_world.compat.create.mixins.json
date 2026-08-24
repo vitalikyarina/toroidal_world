@@ -23,6 +23,7 @@
     "ChainConveyorBlockEntityMixin",
     "ChainConveyorConnectionPacketMixin",
     "ChainConveyorFrogportTargetMixin",
+    "ChassisBlockEntityMixin",
     "ClickToLinkBlockItemMixin",
     "ConnectedInputAccessor",
     "ConnectedInputHandlerMixin",

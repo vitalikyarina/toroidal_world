@@ -9,16 +9,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.google.common.collect.Multimap;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.StructureTransform;
+import com.toroidalworld.compat.create.ChassisWalkFrame;
 import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 import net.createmod.catnip.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.level.Level;
@@ -54,6 +60,13 @@ public class ContraptionMixin {
     private BlockPos toroidal$foldCapturedController(BlockPos stored, BlockPos localPos, StructureBlockInfo info,
             BlockEntity be) {
         return CreateSeamFold.foldPosition(be.getLevel(), localPos.offset(anchor), stored);
+    }
+
+    @WrapMethod(method = "moveChassis")
+    private boolean toroidal$walkChassisInTheAssemblyFrame(Level world, BlockPos pos, Direction movementDirection,
+            Queue<BlockPos> frontier, Set<BlockPos> visited, Operation<Boolean> original) {
+        return ChassisWalkFrame.withAnchor(world, pos,
+                () -> original.call(world, pos, movementDirection, frontier, visited));
     }
 
     @Inject(method = "removeBlocksFromWorld",
