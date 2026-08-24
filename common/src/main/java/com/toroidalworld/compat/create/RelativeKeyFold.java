@@ -9,9 +9,7 @@ import net.minecraft.world.level.Level;
 public final class RelativeKeyFold {
     public static BlockPos shortWay(@Nullable Level level, BlockPos owner, Vec3i partner, BlockPos rawKey) {
         BlockPos partnerPos = new BlockPos(partner);
-        BlockPos nearest = level != null && level.isClientSide
-                ? CreateSeamFold.foldClientPosition(level, owner, partnerPos)
-                : CreateSeamFold.foldPosition(level, owner, partnerPos);
+        BlockPos nearest = CreateSeamFold.foldPosition(level, owner, partnerPos);
         if (nearest.equals(partnerPos)) {
             return rawKey;
         }

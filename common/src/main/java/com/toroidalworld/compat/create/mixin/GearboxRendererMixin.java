@@ -30,7 +30,7 @@ public class GearboxRendererMixin {
     private BlockPos toroidal$foldSourceDelta(BlockPos sourcePos, Vec3i anchorPos, Operation<BlockPos> original,
             GearboxBlockEntity be, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int light,
             int overlay) {
-        return CreateSeamFold.foldClientDelta(be.getLevel(), be.getBlockPos(), sourcePos,
+        return CreateSeamFold.foldDelta(be.getLevel(), be.getBlockPos(), sourcePos,
                 original.call(sourcePos, anchorPos));
     }
 }

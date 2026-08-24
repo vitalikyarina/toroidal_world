@@ -48,7 +48,7 @@ public final class CreateSchematicFold {
     }
 
     public static BlockPos scannedControllerNear(@Nullable Level level, BlockPos lastKnown, BlockPos controller) {
-        return CreateSeamFold.foldClientPosition(level, lastKnown, controller);
+        return CreateSeamFold.foldPosition(level, lastKnown, controller);
     }
 
     public static boolean regionExceedsWorld(@Nullable Level level, BlockPos first, BlockPos second) {
@@ -61,12 +61,7 @@ public final class CreateSchematicFold {
     }
 
     private static @Nullable WorldLoopTransformer seamTransformer(@Nullable Level level) {
-        if (level == null) {
-            return null;
-        }
-
-        WorldLoopTransformer clientBounds = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
-        return clientBounds != null ? clientBounds : WorldLoopAttachments.wrappedTransformerOf(level);
+        return level == null ? null : WorldLoopAttachments.wrappedTransformerOfReader(level);
     }
 
     private CreateSchematicFold() {

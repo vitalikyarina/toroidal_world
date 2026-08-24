@@ -20,7 +20,7 @@ public abstract class GearboxVisualMixin {
                     target = "Lnet/minecraft/core/BlockPos;subtract(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$foldSourceDelta(BlockPos sourcePos, Vec3i anchorPos, Operation<BlockPos> original) {
         BlockEntity blockEntity = ((AbstractBlockEntityVisualAccessor) this).toroidal$blockEntity();
-        return CreateSeamFold.foldClientDelta(blockEntity.getLevel(), blockEntity.getBlockPos(), sourcePos,
+        return CreateSeamFold.foldDelta(blockEntity.getLevel(), blockEntity.getBlockPos(), sourcePos,
                 original.call(sourcePos, anchorPos));
     }
 }

@@ -19,15 +19,7 @@ public final class CreateSeamFold {
             return rawDelta;
         }
 
-        return delta(WorldLoopAttachments.wrappedTransformerOf(level), anchor, target, rawDelta);
-    }
-
-    public static BlockPos foldClientDelta(@Nullable Level level, BlockPos anchor, BlockPos target, BlockPos rawDelta) {
-        if (level == null) {
-            return rawDelta;
-        }
-
-        return delta(WorldLoopAttachments.wrappedClientBoundsTransformerOf(level), anchor, target, rawDelta);
+        return delta(WorldLoopAttachments.wrappedTransformerOfReader(level), anchor, target, rawDelta);
     }
 
     public static BlockPos foldPosition(@Nullable Level level, BlockPos anchor, BlockPos target) {
@@ -35,15 +27,7 @@ public final class CreateSeamFold {
             return target;
         }
 
-        return nearest(WorldLoopAttachments.wrappedTransformerOf(level), anchor, target);
-    }
-
-    public static BlockPos foldClientPosition(@Nullable Level level, BlockPos anchor, BlockPos target) {
-        if (level == null) {
-            return target;
-        }
-
-        return nearest(WorldLoopAttachments.wrappedClientBoundsTransformerOf(level), anchor, target);
+        return nearest(WorldLoopAttachments.wrappedTransformerOfReader(level), anchor, target);
     }
 
     public static BlockPos foldPositionToBox(@Nullable Level level, BoundingBox box, BlockPos position) {
@@ -51,7 +35,7 @@ public final class CreateSeamFold {
             return position;
         }
 
-        return nearest(WorldLoopAttachments.wrappedTransformerOf(level), box.getCenter(), position);
+        return nearest(WorldLoopAttachments.wrappedTransformerOfReader(level), box.getCenter(), position);
     }
 
     public static Vec3 foldPointToBox(@Nullable Level level, AABB box, Vec3 point) {
@@ -59,7 +43,7 @@ public final class CreateSeamFold {
             return point;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOfReader(level);
         return transformer == null ? point : transformer.vectors.nearestCopy(box.getCenter(), point);
     }
 
@@ -68,7 +52,7 @@ public final class CreateSeamFold {
             return target;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOfReader(level);
         return transformer == null ? target : transformer.vectors.nearestCopy(anchor, target);
     }
 

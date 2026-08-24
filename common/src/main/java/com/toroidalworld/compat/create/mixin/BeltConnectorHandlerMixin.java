@@ -30,6 +30,6 @@ public class BeltConnectorHandlerMixin {
             return stored;
         }
 
-        return CreateSeamFold.foldClientPosition(level, player.blockPosition(), storedPulley);
+        return CreateSeamFold.foldPosition(level, player.blockPosition(), storedPulley);
     }
 }

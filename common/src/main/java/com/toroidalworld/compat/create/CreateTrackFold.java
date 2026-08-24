@@ -33,8 +33,7 @@ public final class CreateTrackFold {
     public static @Nullable WorldLoopTransformer transformerOf(@Nullable Level level,
             @Nullable ResourceKey<Level> dimension) {
         if (level != null) {
-            WorldLoopTransformer clientBounds = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
-            return clientBounds != null ? clientBounds : WorldLoopAttachments.wrappedTransformerOf(level);
+            return WorldLoopAttachments.wrappedTransformerOfReader(level);
         }
 
         if (dimension == null) {

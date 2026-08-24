@@ -26,8 +26,6 @@ public class AutoRequestDataMixin {
             return raw;
         }
 
-        return level.isClientSide()
-                ? CreateSeamFold.foldClientDelta(level, anchor, target, raw)
-                : CreateSeamFold.foldDelta(level, anchor, target, raw);
+        return CreateSeamFold.foldDelta(level, anchor, target, raw);
     }
 }
