@@ -32,17 +32,36 @@ public final class WorldLoopAttachments {
         return transformer.isWrapped() ? transformer : null;
     }
 
-    public static @Nullable WorldLoopTransformer noiseTransformerOf(LevelReader reader) {
+    public static @Nullable Level levelOf(LevelReader reader) {
         if (reader instanceof Level level) {
-            WorldLoopTransformer clientBounds = wrappedClientBoundsTransformerOf(level);
-            return clientBounds != null ? clientBounds : transformerOf(level);
+            return level;
         }
 
         if (reader instanceof ServerLevelAccessor accessor) {
-            return transformerOf(accessor.getLevel());
+            return accessor.getLevel();
         }
 
         return null;
+    }
+
+    public static @Nullable WorldLoopTransformer wrappedTransformerOfReader(LevelReader reader) {
+        Level level = levelOf(reader);
+        if (level == null) {
+            return null;
+        }
+
+        WorldLoopTransformer clientBounds = wrappedClientBoundsTransformerOf(level);
+        return clientBounds != null ? clientBounds : wrappedTransformerOf(level);
+    }
+
+    public static @Nullable WorldLoopTransformer noiseTransformerOf(LevelReader reader) {
+        Level level = levelOf(reader);
+        if (level == null) {
+            return null;
+        }
+
+        WorldLoopTransformer clientBounds = wrappedClientBoundsTransformerOf(level);
+        return clientBounds != null ? clientBounds : transformerOf(level);
     }
 
     public static ClientPosition clientPositionOf(ServerPlayer player) {

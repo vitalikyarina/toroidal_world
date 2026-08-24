@@ -46,6 +46,7 @@
     "LinearActuatorBlockEntityMixin",
     "MechanicalCrafterBlockEntityMixin",
     "NavigationMixin",
+    "NixieTubeBlockMixin",
     "NozzleBlockEntityMixin",
     "OrientedContraptionEntityMixin",
     "PackagePortPlacementPacketMixin",
