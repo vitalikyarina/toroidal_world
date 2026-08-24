@@ -14,20 +14,27 @@ import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 
 public final class CanonicalPositionKeys {
-    public static Set<BlockPos> set(@Nullable Level level) {
-        WorldLoopTransformer transformer = transformerOf(level);
+    public static Set<BlockPos> set(@Nullable BlockGetter reader) {
+        WorldLoopTransformer transformer = transformerOf(reader);
         return transformer == null ? new HashSet<>() : new CanonicalSet(transformer);
     }
 
-    public static <V> Map<BlockPos, V> map(@Nullable Level level) {
-        WorldLoopTransformer transformer = transformerOf(level);
+    public static <V> Map<BlockPos, V> map(@Nullable BlockGetter reader) {
+        WorldLoopTransformer transformer = transformerOf(reader);
         return transformer == null ? new HashMap<>() : new CanonicalMap<>(transformer);
     }
 
-    private static @Nullable WorldLoopTransformer transformerOf(@Nullable Level level) {
+    private static @Nullable WorldLoopTransformer transformerOf(@Nullable BlockGetter reader) {
+        if (!(reader instanceof LevelReader levelReader)) {
+            return null;
+        }
+
+        Level level = WorldLoopAttachments.levelOf(levelReader);
         return level == null ? null : WorldLoopAttachments.wrappedTransformerOf(level);
     }
 

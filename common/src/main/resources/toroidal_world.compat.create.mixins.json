@@ -83,7 +83,8 @@
     "TrainCollisionMixin",
     "TrainMapSyncMixin",
     "TrainMigrationMixin",
-    "TrainRelocatorMixin"
+    "TrainRelocatorMixin",
+    "TreeCutterMixin"
   ],
   "client": [
     "AbstractBlockEntityVisualAccessor",
