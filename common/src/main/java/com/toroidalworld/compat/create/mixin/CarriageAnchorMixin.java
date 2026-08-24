@@ -14,6 +14,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.toroidalworld.compat.create.CreateTrackFold;
 import com.toroidalworld.player.SeamSnap;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -77,7 +78,9 @@ public abstract class CarriageAnchorMixin {
             at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
                     target = "Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;positionAnchor:Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$anchorIntoWorldFrameOnCreate(Vec3 anchor, Level level, boolean loadPassengers) {
-        return anchor == null || level.isClientSide() ? anchor : CreateTrackFold.wrap(level, anchor);
+        return anchor != null && level instanceof ServerLevel serverLevel
+                ? CreateTrackFold.wrap(serverLevel, anchor)
+                : anchor;
     }
 
     @ModifyExpressionValue(method = "alignEntity",
@@ -95,7 +98,9 @@ public abstract class CarriageAnchorMixin {
         }
 
         Level level = carriageEntity.level();
-        return CreateTrackFold.nearestCopy(level, CreateTrackFold.wrap(level, anchor), position);
+        Vec3 worldFrameAnchor =
+                level instanceof ServerLevel serverLevel ? CreateTrackFold.wrap(serverLevel, anchor) : anchor;
+        return CreateTrackFold.nearestCopy(level, worldFrameAnchor, position);
     }
 
     @ModifyReturnValue(method = "leadingAnchor", at = @At("RETURN"))
@@ -138,7 +143,9 @@ public abstract class CarriageAnchorMixin {
         }
 
         Level level = carriageEntity.level();
-        return level.isClientSide() ? toroidal$anchorInClientFrame(anchor) : CreateTrackFold.wrap(level, anchor);
+        return level instanceof ServerLevel serverLevel
+                ? CreateTrackFold.wrap(serverLevel, anchor)
+                : toroidal$anchorInClientFrame(anchor);
     }
 
     private @Nullable Vec3 toroidal$anchorInClientFrame(@Nullable Vec3 anchor) {

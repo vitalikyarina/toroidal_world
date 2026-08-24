@@ -19,7 +19,7 @@ public class CurvedTrackDestroyPacketMixin {
             at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
                     target = "Lcom/simibubi/create/content/trains/track/CurvedTrackDestroyPacket;targetPos:Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$canonicaliseTargetPos(BlockPos targetPos, ServerPlayer player, TrackBlockEntity be) {
-        return CreateSeamFold.canonical(be.getLevel(), targetPos);
+        return CreateSeamFold.canonical(player.serverLevel(), targetPos);
     }
 
     @ModifyExpressionValue(
@@ -27,6 +27,6 @@ public class CurvedTrackDestroyPacketMixin {
             at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
                     target = "Lcom/simibubi/create/content/trains/track/CurvedTrackDestroyPacket;soundSource:Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$canonicaliseSoundSource(BlockPos soundSource, ServerPlayer player, TrackBlockEntity be) {
-        return CreateSeamFold.canonical(be.getLevel(), soundSource);
+        return CreateSeamFold.canonical(player.serverLevel(), soundSource);
     }
 }

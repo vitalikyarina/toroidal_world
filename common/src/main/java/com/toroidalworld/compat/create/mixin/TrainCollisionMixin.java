@@ -9,6 +9,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.trains.entity.Train;
 import com.toroidalworld.compat.create.CreateTrackFold;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -48,6 +49,6 @@ public abstract class TrainCollisionMixin {
 
     @ModifyExpressionValue(method = COLLIDING_METHOD, at = @At(value = "INVOKE", target = VEC3_ADD))
     private Vec3 toroidal$wrapCollisionPoint(Vec3 point, @Local(argsOnly = true) Level level) {
-        return CreateTrackFold.wrap(level, point);
+        return level instanceof ServerLevel serverLevel ? CreateTrackFold.wrap(serverLevel, point) : point;
     }
 }

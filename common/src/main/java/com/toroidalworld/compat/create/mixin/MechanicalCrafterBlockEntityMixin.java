@@ -11,7 +11,7 @@ import com.toroidalworld.compat.create.CrafterGroupFold;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 
 @Mixin(value = MechanicalCrafterBlockEntity.class, remap = false)
 public abstract class MechanicalCrafterBlockEntityMixin {
@@ -37,12 +37,11 @@ public abstract class MechanicalCrafterBlockEntityMixin {
         }
 
         MechanicalCrafterBlockEntity crafter = (MechanicalCrafterBlockEntity) (Object) this;
-        Level level = crafter.getLevel();
-        if (level == null || level.isClientSide()) {
+        if (!(crafter.getLevel() instanceof ServerLevel serverLevel)) {
             return;
         }
 
         toroidal$deltasNormalized = true;
-        CrafterGroupFold.normalizeOwn(level, crafter);
+        CrafterGroupFold.normalizeOwn(serverLevel, crafter);
     }
 }

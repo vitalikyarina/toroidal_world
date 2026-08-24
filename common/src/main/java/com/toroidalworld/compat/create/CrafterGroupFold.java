@@ -4,10 +4,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
+
 import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlockEntity;
 import com.toroidalworld.compat.create.mixin.ConnectedInputAccessor;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
 public final class CrafterGroupFold {
@@ -15,11 +18,7 @@ public final class CrafterGroupFold {
         return CreateSeamFold.foldDelta(level, owner, owner.offset(rawDelta), rawDelta);
     }
 
-    public static void normalizeGroup(Level level, MechanicalCrafterBlockEntity controller) {
-        if (level == null || level.isClientSide()) {
-            return;
-        }
-
+    public static void normalizeGroup(ServerLevel level, MechanicalCrafterBlockEntity controller) {
         normalizeOwn(level, controller);
         ConnectedInputAccessor input = (ConnectedInputAccessor) controller.getInput();
         if (!input.toroidal$isController()) {
@@ -39,11 +38,7 @@ public final class CrafterGroupFold {
         }
     }
 
-    public static void normalizeOwn(Level level, MechanicalCrafterBlockEntity crafter) {
-        if (level == null || level.isClientSide()) {
-            return;
-        }
-
+    public static void normalizeOwn(ServerLevel level, MechanicalCrafterBlockEntity crafter) {
         List<BlockPos> data = ((ConnectedInputAccessor) crafter.getInput()).toroidal$data();
         BlockPos owner = crafter.getBlockPos();
         for (int index = 0; index < data.size(); index++) {
@@ -55,7 +50,7 @@ public final class CrafterGroupFold {
         }
     }
 
-    public static Set<BlockPos> canonicalMembers(Level level, Set<BlockPos> raw) {
+    public static Set<BlockPos> canonicalMembers(@Nullable ServerLevel level, Set<BlockPos> raw) {
         Set<BlockPos> folded = new LinkedHashSet<>(raw.size());
         for (BlockPos member : raw) {
             folded.add(CreateSeamFold.canonical(level, member));

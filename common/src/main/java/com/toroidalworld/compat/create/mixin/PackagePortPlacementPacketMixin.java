@@ -29,7 +29,7 @@ public class PackagePortPlacementPacketMixin {
     @Inject(method = "handle", at = @At("HEAD"))
     private void toroidal$canonicalisePortPos(ServerPlayer player, CallbackInfo ci) {
         if (player != null) {
-            this.pos = CreateSeamFold.canonical(player.level(), this.pos);
+            this.pos = CreateSeamFold.canonical(player.serverLevel(), this.pos);
         }
     }
 

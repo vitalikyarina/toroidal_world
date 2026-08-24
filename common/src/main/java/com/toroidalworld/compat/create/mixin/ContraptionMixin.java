@@ -27,6 +27,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo;
@@ -89,6 +90,10 @@ public class ContraptionMixin {
                     target = "Lcom/simibubi/create/content/contraptions/Contraption;translateMultiblockControllers(Lcom/simibubi/create/content/contraptions/StructureTransform;)V"))
     private void toroidal$canonicalizeTranslatedControllers(Level world, StructureTransform transform,
             CallbackInfo ci) {
+        if (!(world instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
         for (StructureBlockInfo info : capturedMultiblocks.values()) {
             CompoundTag nbt = info.nbt();
             // The rotation branch leaves Controller as the capture-time local and marks the part with LastKnownPos,
@@ -98,7 +103,7 @@ public class ContraptionMixin {
             }
 
             BlockPos stored = NBTHelper.readBlockPos(nbt, CONTROLLER_KEY);
-            BlockPos canonical = CreateSeamFold.canonical(world, stored);
+            BlockPos canonical = CreateSeamFold.canonical(serverLevel, stored);
             if (canonical != stored) {
                 nbt.put(CONTROLLER_KEY, NbtUtils.writeBlockPos(canonical));
             }

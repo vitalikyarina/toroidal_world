@@ -22,6 +22,7 @@ import com.toroidalworld.compat.create.CreateSeamFold;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
 @Mixin(value = ConnectedInputHandler.class, remap = false)
@@ -29,7 +30,13 @@ public abstract class ConnectedInputHandlerMixin {
     @WrapMethod(method = "toggleConnection")
     private static void toroidal$toggleInOneFrame(Level world, BlockPos pos, BlockPos pos2,
             Operation<Void> original) {
-        original.call(world, CreateSeamFold.canonical(world, pos), CreateSeamFold.canonical(world, pos2));
+        if (!(world instanceof ServerLevel serverLevel)) {
+            original.call(world, pos, pos2);
+            return;
+        }
+
+        original.call(world, CreateSeamFold.canonical(serverLevel, pos),
+                CreateSeamFold.canonical(serverLevel, pos2));
     }
 
     @WrapOperation(method = "toggleConnection",
@@ -37,7 +44,8 @@ public abstract class ConnectedInputHandlerMixin {
                     target = "Lnet/minecraft/core/BlockPos;offset(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos;"))
     private static BlockPos toroidal$controllerInCanonicalFrame(BlockPos position, Vec3i delta,
             Operation<BlockPos> original, @Local(argsOnly = true) Level world) {
-        return CreateSeamFold.canonical(world, original.call(position, delta));
+        return CreateSeamFold.canonical(world instanceof ServerLevel serverLevel ? serverLevel : null,
+                original.call(position, delta));
     }
 
     @SuppressWarnings("unchecked")
@@ -51,7 +59,8 @@ public abstract class ConnectedInputHandlerMixin {
             return collected;
         }
 
-        return CrafterGroupFold.canonicalMembers(world, (Set<BlockPos>) members);
+        return CrafterGroupFold.canonicalMembers(world instanceof ServerLevel serverLevel ? serverLevel : null,
+                (Set<BlockPos>) members);
     }
 
     @WrapOperation(method = "toggleConnection",
@@ -59,18 +68,23 @@ public abstract class ConnectedInputHandlerMixin {
                     target = "Lnet/minecraft/core/BlockPos;relative(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;"))
     private static BlockPos toroidal$floodStepInCanonicalFrame(BlockPos current, Direction direction,
             Operation<BlockPos> original, @Local(argsOnly = true) Level world) {
-        return CreateSeamFold.canonical(world, original.call(current, direction));
+        return CreateSeamFold.canonical(world instanceof ServerLevel serverLevel ? serverLevel : null,
+                original.call(current, direction));
     }
 
     @Inject(method = "initAndAddAll", at = @At("RETURN"))
     private static void toroidal$normalizeAfterInitAndAddAll(Level world, MechanicalCrafterBlockEntity crafter,
             Collection<BlockPos> positions, CallbackInfo ci) {
-        CrafterGroupFold.normalizeGroup(world, crafter);
+        if (world instanceof ServerLevel serverLevel) {
+            CrafterGroupFold.normalizeGroup(serverLevel, crafter);
+        }
     }
 
     @Inject(method = "connectControllers", at = @At("RETURN"))
     private static void toroidal$normalizeAfterConnectControllers(Level world, MechanicalCrafterBlockEntity crafter1,
             MechanicalCrafterBlockEntity crafter2, CallbackInfo ci) {
-        CrafterGroupFold.normalizeGroup(world, crafter1);
+        if (world instanceof ServerLevel serverLevel) {
+            CrafterGroupFold.normalizeGroup(serverLevel, crafter1);
+        }
     }
 }

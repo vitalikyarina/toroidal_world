@@ -11,15 +11,15 @@ import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelConnection
 import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelPosition;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 
 public final class CreateFactoryPanelFold {
-    public static FactoryPanelPosition canonical(@Nullable Level level, FactoryPanelPosition position) {
+    public static FactoryPanelPosition canonical(@Nullable ServerLevel level, FactoryPanelPosition position) {
         BlockPos canonical = CreateSeamFold.canonical(level, position.pos());
         return canonical.equals(position.pos()) ? position : new FactoryPanelPosition(canonical, position.slot());
     }
 
-    public static void canonicalisePanels(@Nullable Level level,
+    public static void canonicalisePanels(@Nullable ServerLevel level,
             Map<FactoryPanelPosition, FactoryPanelConnection> connections) {
         if (connections.isEmpty()) {
             return;
@@ -40,7 +40,7 @@ public final class CreateFactoryPanelFold {
         }
     }
 
-    public static void canonicaliseLinks(@Nullable Level level, Map<BlockPos, FactoryPanelConnection> connections) {
+    public static void canonicaliseLinks(@Nullable ServerLevel level, Map<BlockPos, FactoryPanelConnection> connections) {
         if (connections.isEmpty()) {
             return;
         }
@@ -60,7 +60,7 @@ public final class CreateFactoryPanelFold {
         }
     }
 
-    public static void canonicaliseTargets(@Nullable Level level, Set<FactoryPanelPosition> targets) {
+    public static void canonicaliseTargets(@Nullable ServerLevel level, Set<FactoryPanelPosition> targets) {
         if (targets.isEmpty()) {
             return;
         }

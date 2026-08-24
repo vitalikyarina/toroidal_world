@@ -20,6 +20,6 @@ public class SchematicSyncPacketMixin {
                     target = "Lcom/simibubi/create/content/schematics/packet/SchematicSyncPacket;"
                             + "anchor:Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$canonicaliseAnchor(BlockPos anchor, @Local(argsOnly = true) ServerPlayer player) {
-        return player == null ? anchor : CreateSeamFold.canonical(player.level(), anchor);
+        return player == null ? anchor : CreateSeamFold.canonical(player.serverLevel(), anchor);
     }
 }

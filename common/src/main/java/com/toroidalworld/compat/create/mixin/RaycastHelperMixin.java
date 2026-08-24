@@ -8,6 +8,7 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.simibubi.create.foundation.utility.RaycastHelper;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 
@@ -15,10 +16,10 @@ import net.minecraft.world.phys.BlockHitResult;
 public class RaycastHelperMixin {
     @ModifyReturnValue(method = "rayTraceRange", at = @At("RETURN"))
     private static @Nullable BlockHitResult toroidal$canonicaliseHit(@Nullable BlockHitResult hit, Level level) {
-        if (hit == null || level.isClientSide()) {
+        if (hit == null || !(level instanceof ServerLevel serverLevel)) {
             return hit;
         }
 
-        return CreateSeamFold.canonical(level, hit);
+        return CreateSeamFold.canonical(serverLevel, hit);
     }
 }

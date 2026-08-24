@@ -24,6 +24,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
 @Mixin(value = FactoryPanelBehaviour.class, remap = false)
@@ -54,14 +55,13 @@ public abstract class FactoryPanelBehaviourMixin {
 
     @Unique
     private void toroidal$canonicaliseStoredConnections() {
-        Level level = panelBE().getLevel();
-        if (level == null || level.isClientSide()) {
+        if (!(panelBE().getLevel() instanceof ServerLevel serverLevel)) {
             return;
         }
 
-        CreateFactoryPanelFold.canonicalisePanels(level, this.targetedBy);
-        CreateFactoryPanelFold.canonicaliseLinks(level, this.targetedByLinks);
-        CreateFactoryPanelFold.canonicaliseTargets(level, this.targeting);
+        CreateFactoryPanelFold.canonicalisePanels(serverLevel, this.targetedBy);
+        CreateFactoryPanelFold.canonicaliseLinks(serverLevel, this.targetedByLinks);
+        CreateFactoryPanelFold.canonicaliseTargets(serverLevel, this.targeting);
     }
 
     @WrapOperation(method = "moveTo",

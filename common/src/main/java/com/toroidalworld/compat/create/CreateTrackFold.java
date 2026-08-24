@@ -83,7 +83,7 @@ public final class CreateTrackFold {
         return transformer == null ? box : transformer.foldBoxToward(anchor, box);
     }
 
-    public static Vec3 wrap(@Nullable Level level, Vec3 position) {
+    public static Vec3 wrap(@Nullable ServerLevel level, Vec3 position) {
         WorldLoopTransformer transformer = level == null ? null : WorldLoopAttachments.wrappedTransformerOf(level);
         return transformer == null ? position : transformer.vectors.wrap(position);
     }

@@ -6,6 +6,7 @@ import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
@@ -56,7 +57,7 @@ public final class CreateSeamFold {
         return transformer == null ? target : transformer.vectors.nearestCopy(anchor, target);
     }
 
-    public static BlockHitResult canonical(@Nullable Level level, BlockHitResult hit) {
+    public static BlockHitResult canonical(@Nullable ServerLevel level, BlockHitResult hit) {
         BlockPos raw = hit.getBlockPos();
         BlockPos wrapped = canonical(level, raw);
         if (wrapped.equals(raw)) {
@@ -70,7 +71,7 @@ public final class CreateSeamFold {
                 : new BlockHitResult(location, hit.getDirection(), wrapped, hit.isInside());
     }
 
-    public static BlockPos canonical(@Nullable Level level, BlockPos position) {
+    public static BlockPos canonical(@Nullable ServerLevel level, BlockPos position) {
         if (level == null) {
             return position;
         }

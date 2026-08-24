@@ -23,6 +23,6 @@ public class ToolboxDisposeAllPacketMixin {
 
     @Inject(method = "handle", at = @At("HEAD"))
     private void toroidal$canonicaliseToolboxPos(ServerPlayer player, CallbackInfo ci) {
-        toolboxPos = CreateEquipmentFold.canonicalisePacketPosition(player.level(), toolboxPos);
+        toolboxPos = CreateEquipmentFold.canonicalisePacketPosition(player.serverLevel(), toolboxPos);
     }
 }

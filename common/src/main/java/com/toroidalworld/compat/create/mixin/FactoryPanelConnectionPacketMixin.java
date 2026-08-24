@@ -13,8 +13,8 @@ import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelConnection
 import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelPosition;
 import com.toroidalworld.compat.create.CreateFactoryPanelFold;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.Level;
 
 @Mixin(value = FactoryPanelConnectionPacket.class, remap = false)
 public class FactoryPanelConnectionPacketMixin {
@@ -33,7 +33,7 @@ public class FactoryPanelConnectionPacketMixin {
             at = @At("HEAD"))
     private void toroidal$canonicalisePanelPositions(ServerPlayer player, FactoryPanelBlockEntity blockEntity,
             CallbackInfo ci) {
-        Level level = player.level();
+        ServerLevel level = player.serverLevel();
         this.fromPos = CreateFactoryPanelFold.canonical(level, this.fromPos);
         this.toPos = CreateFactoryPanelFold.canonical(level, this.toPos);
     }
