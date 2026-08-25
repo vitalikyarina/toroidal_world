@@ -1,4 +1,4 @@
-package com.toroidalworld.client.shape;
+package com.toroidalworld.shape;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -18,7 +18,6 @@ public final class WorldShapes {
     public static final WorldShape NORMAL = WorldShape.of(
             Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, NORMAL_ID),
             Component.translatable(NORMAL_LABEL_KEY),
-            null,
             (registries, dimensions) -> dimensions);
 
     private static final List<WorldShape> SHAPES = new ArrayList<>(List.of(NORMAL));

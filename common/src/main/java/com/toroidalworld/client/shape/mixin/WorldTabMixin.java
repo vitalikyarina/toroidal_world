@@ -1,7 +1,8 @@
 package com.toroidalworld.client.shape.mixin;
 
-import com.toroidalworld.client.shape.WorldShape;
-import com.toroidalworld.client.shape.WorldShapes;
+import com.toroidalworld.client.shape.ShapeCustomizers;
+import com.toroidalworld.shape.WorldShape;
+import com.toroidalworld.shape.WorldShapes;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.client.Minecraft;
@@ -56,12 +57,12 @@ public class WorldTabMixin {
 
     @Unique
     private void toroidal$refreshCustomizeButton() {
-        this.toroidal$customizeShapeButton.active = WorldShapes.selected().customizer() != null;
+        this.toroidal$customizeShapeButton.active = ShapeCustomizers.of(WorldShapes.selected()) != null;
     }
 
     @Unique
     private static void toroidal$openCustomizer() {
-        WorldShape.Customizer customizer = WorldShapes.selected().customizer();
+        ShapeCustomizers.Customizer customizer = ShapeCustomizers.of(WorldShapes.selected());
         if (customizer == null) {
             return;
         }

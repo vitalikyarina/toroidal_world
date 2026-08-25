@@ -13,7 +13,7 @@ import com.toroidalworld.accessors.TrackedEntityRefresher;
 import com.toroidalworld.core.WorldLoopTransformer;
 import com.toroidalworld.entity.SeamAim;
 import com.toroidalworld.net.ClientAnchorSync;
-import com.toroidalworld.net.WrappingBoundsSync;
+import com.toroidalworld.net.WorldShapeSync;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -64,7 +64,7 @@ public class ServerPlayerMixin {
             at = @At("TAIL"))
     private void toroidal$sendBoundsOnDimensionChange(TeleportTransition transition,
             CallbackInfoReturnable<@Nullable ServerPlayer> cir) {
-        WrappingBoundsSync.sendTo((ServerPlayer) (Object) this);
+        WorldShapeSync.sendTo((ServerPlayer) (Object) this);
     }
 
     @Inject(method = "doTick",
