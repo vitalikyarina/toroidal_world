@@ -7,6 +7,7 @@ import com.toroidalworld.gen.WorldLoopTicketTypes;
 import com.toroidalworld.net.WrappingSettingsPayload;
 import com.toroidalworld.platform.FabricPlatform;
 import com.toroidalworld.platform.Platforms;
+import com.toroidalworld.shape.WorldShapeSetup;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -19,6 +20,7 @@ public class ToroidalWorldFabric implements ModInitializer {
     public void onInitialize() {
         ToroidalWorld.LOGGER.info("Toroidal World initializing");
         Platforms.set(new FabricPlatform());
+        WorldShapeSetup.registerAll();
 
         Registry.register(BuiltInRegistries.CHUNK_GENERATOR,
                 Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopGenerators.TOROIDAL_ID),

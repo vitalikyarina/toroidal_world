@@ -9,6 +9,7 @@ import com.toroidalworld.net.AuxiliaryLightTranslation;
 import com.toroidalworld.net.BlockParticleTranslation;
 import com.toroidalworld.platform.NeoForgePlatform;
 import com.toroidalworld.platform.Platforms;
+import com.toroidalworld.shape.WorldShapeSetup;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.core.registries.Registries;
@@ -30,6 +31,7 @@ public final class WorldLoop {
 
     public static void init(IEventBus modEventBus, ModContainer modContainer) {
         Platforms.set(new NeoForgePlatform(modContainer));
+        WorldShapeSetup.registerAll();
 
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_ID, () -> LoopedChunkGenerator.CODEC);
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_FLAT_ID, () -> LoopedFlatChunkGenerator.CODEC);
