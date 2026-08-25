@@ -7,13 +7,14 @@ import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public class WorldLoopTransformer {
+public class WorldLoopTransformer implements WorldFold {
     public static final WorldLoopTransformer NOOP = new WorldLoopTransformer(WorldLoopBounds.UNBOUNDED);
 
     public final CoordOps coords;
@@ -34,27 +35,27 @@ public class WorldLoopTransformer {
         this.bounds = bounds;
         this.wrapped = bounds.x() instanceof AxisBounds.Looped || bounds.z() instanceof AxisBounds.Looped;
 
-        WrapDomain xChunk = chunkDomain(bounds.x());
-        WrapDomain zChunk = chunkDomain(bounds.z());
+        WrapDomain xChunk = chunkDomainFor(bounds.x());
+        WrapDomain zChunk = chunkDomainFor(bounds.z());
 
         this.xWidth = xChunk.domainLength;
         this.zWidth = zChunk.domainLength;
         this.maxViewDistance = Math.min(viewDistanceCeiling(bounds.x()), viewDistanceCeiling(bounds.z()));
 
-        this.coords = new CoordOps(blockDomain(bounds.x()), blockDomain(bounds.z()));
+        this.coords = new CoordOps(blockDomainFor(bounds.x()), blockDomainFor(bounds.z()));
         this.chunks = new ChunkOps(xChunk, zChunk);
         this.vectors = new VectorOps();
         this.blocks = new BlockOps();
     }
 
-    private static WrapDomain chunkDomain(AxisBounds axis) {
+    private static WrapDomain chunkDomainFor(AxisBounds axis) {
         return switch (axis) {
             case AxisBounds.Looped looped -> new WrapDomain(looped.minChunk(), looped.maxChunk());
             case AxisBounds.Unbounded() -> new WrapDomain.Noop();
         };
     }
 
-    private static WrapDomain blockDomain(AxisBounds axis) {
+    private static WrapDomain blockDomainFor(AxisBounds axis) {
         return switch (axis) {
             case AxisBounds.Looped looped -> new WrapDomain(
                     looped.minChunk() * CoordinateConstants.CHUNK_WIDTH,
@@ -222,6 +223,7 @@ public class WorldLoopTransformer {
         }
     }
 
+    @Override
     public boolean crossesBounds(AABB box) {
         return !coords.x.containsSpan(box.minX, box.maxX) || !coords.z.containsSpan(box.minZ, box.maxZ);
     }
@@ -243,6 +245,7 @@ public class WorldLoopTransformer {
         return pieces;
     }
 
+    @Override
     public boolean crossesBounds(BoundingBox region) {
         return coords.x.isOver(region.minX()) || coords.x.isOver(region.maxX())
                 || coords.z.isOver(region.minZ()) || coords.z.isOver(region.maxZ());
@@ -325,6 +328,7 @@ public class WorldLoopTransformer {
                 coords.z.foldSpanEnd(region.minZ(), region.maxZ()));
     }
 
+    @Override
     public boolean regionsOverlap(BoundingBox first, BoundingBox second) {
         return coords.x.overlaps(first.minX(), first.maxX(), second.minX(), second.maxX())
                 && coords.z.overlaps(first.minZ(), first.maxZ(), second.minZ(), second.maxZ())
@@ -351,7 +355,173 @@ public class WorldLoopTransformer {
         };
     }
 
+    @Override
     public boolean isWrapped() {
         return this.wrapped;
+    }
+
+    @Override
+    public WorldLoopBounds bounds() {
+        return this.bounds;
+    }
+
+    @Override
+    public boolean decomposesPerAxis() {
+        return true;
+    }
+
+    @Override
+    public boolean preservesLocalIndices() {
+        return true;
+    }
+
+    @Override
+    public WrapDomain blockDomain(Direction.Axis axis) {
+        return switch (axis) {
+            case X -> coords.x;
+            case Z -> coords.z;
+            case Y -> throw new IllegalArgumentException("The fold contract carries no Y axis");
+        };
+    }
+
+    @Override
+    public WrapDomain chunkDomain(Direction.Axis axis) {
+        return switch (axis) {
+            case X -> chunks.x;
+            case Z -> chunks.z;
+            case Y -> throw new IllegalArgumentException("The fold contract carries no Y axis");
+        };
+    }
+
+    @Override
+    public Vec3 fold(Vec3 pos) {
+        return vectors.wrap(pos);
+    }
+
+    @Override
+    public BlockPos fold(BlockPos pos) {
+        return blocks.wrap(pos);
+    }
+
+    @Override
+    public ChunkPos fold(ChunkPos pos) {
+        return chunks.wrap(pos);
+    }
+
+    @Override
+    public SectionPos fold(SectionPos pos) {
+        return chunks.wrapSection(pos);
+    }
+
+    @Override
+    public long foldBlockNode(long blockNode) {
+        return wrapBlockNode(blockNode);
+    }
+
+    @Override
+    public long foldChunkKey(long chunkKey) {
+        return chunks.wrapChunkKey(chunkKey);
+    }
+
+    @Override
+    public long foldSectionNode(long sectionNode) {
+        return chunks.wrapSectionNode(sectionNode);
+    }
+
+    @Override
+    public Folded<Vec3> foldOriented(Vec3 pos) {
+        return Folded.of(vectors.wrap(pos));
+    }
+
+    @Override
+    public Folded<BlockPos> foldOriented(BlockPos pos) {
+        return Folded.of(blocks.wrap(pos));
+    }
+
+    @Override
+    public Folded<ChunkPos> foldOriented(ChunkPos pos) {
+        return Folded.of(chunks.wrap(pos));
+    }
+
+    @Override
+    public Vec3 nearestCopy(Vec3 ref, Vec3 target) {
+        return vectors.nearestCopy(ref, target);
+    }
+
+    @Override
+    public BlockPos nearestCopy(BlockPos ref, BlockPos target) {
+        return blocks.nearestCopy(ref, target);
+    }
+
+    @Override
+    public ChunkPos nearestCopy(ChunkPos ref, ChunkPos target) {
+        return chunks.unwrap(ref, target);
+    }
+
+    @Override
+    public Folded<Vec3> nearestCopyOriented(Vec3 ref, Vec3 target) {
+        return Folded.of(vectors.nearestCopy(ref, target));
+    }
+
+    @Override
+    public Folded<BlockPos> nearestCopyOriented(BlockPos ref, BlockPos target) {
+        return Folded.of(blocks.nearestCopy(ref, target));
+    }
+
+    @Override
+    public Vec3 foldDelta(Vec3 from, Vec3 to) {
+        return vectors.nearestCopy(from, to).subtract(from);
+    }
+
+    @Override
+    public double sqrDistance(Vec3 from, Vec3 to) {
+        return sqrDistance(from.x, from.y, from.z, to.x, to.y, to.z);
+    }
+
+    @Override
+    public double sqrDistance(double xFrom, double yFrom, double zFrom, double xTo, double yTo, double zTo) {
+        double dx = coords.x.unwrapAround(xFrom, xTo) - xFrom;
+        double dy = yTo - yFrom;
+        double dz = coords.z.unwrapAround(zFrom, zTo) - zFrom;
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    @Override
+    public int sqrChunkDistance(ChunkPos from, ChunkPos to) {
+        int dx = chunks.x.unwrapAround(from.x(), to.x()) - from.x();
+        int dz = chunks.z.unwrapAround(from.z(), to.z()) - from.z();
+        return dx * dx + dz * dz;
+    }
+
+    @Override
+    public double sqrDistanceToBox(AABB box, Vec3 point) {
+        return distanceToSqrWrappedCoord(box, point);
+    }
+
+    @Override
+    public List<Folded<AABB>> split(AABB box) {
+        List<AABB> pieces = splitAcrossBounds(box);
+        List<Folded<AABB>> oriented = new ArrayList<>(pieces.size());
+        for (AABB piece : pieces) {
+            oriented.add(Folded.of(piece));
+        }
+
+        return oriented;
+    }
+
+    @Override
+    public List<Folded<BoundingBox>> split(BoundingBox region) {
+        List<BoundingBox> pieces = splitAcrossBounds(region);
+        List<Folded<BoundingBox>> oriented = new ArrayList<>(pieces.size());
+        for (BoundingBox piece : pieces) {
+            oriented.add(Folded.of(piece));
+        }
+
+        return oriented;
+    }
+
+    @Override
+    public Folded<AABB> foldBox(Vec3 ref, AABB box) {
+        return Folded.of(foldBoxToward(ref, box));
     }
 }

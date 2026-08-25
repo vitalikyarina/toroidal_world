@@ -1,4 +1,4 @@
-package com.toroidalworld.client.screen;
+package com.toroidalworld.client.shape.torus;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.client.screen.DigitsEditBox;
 import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopPresets;
@@ -23,7 +24,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
-public class WorldLoopSettingsScreen extends Screen {
+public class TorusSettingsScreen extends Screen {
     private static final Component TITLE = Component.translatable("gui.toroidal_world.toroidal_settings.title");
     private static final Component HINT = Component.translatable("gui.toroidal_world.toroidal_settings.hint");
     private static final String SIZE_LABEL_KEY = "gui.toroidal_world.toroidal_settings.size";
@@ -81,7 +82,7 @@ public class WorldLoopSettingsScreen extends Screen {
     private Button doneButton;
     private final Map<WorldLoopPresets, Button> presetButtons = new EnumMap<>(WorldLoopPresets.class);
 
-    public WorldLoopSettingsScreen(Screen parent, WorldLoopBounds current, int currentNetherScale,
+    public TorusSettingsScreen(Screen parent, WorldLoopBounds current, int currentNetherScale,
             WorldLoopBounds currentEnd, OnDone onDone) {
         super(TITLE);
         this.parent = parent;
