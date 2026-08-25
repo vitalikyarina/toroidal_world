@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.net.WrappingBoundsSync;
+import com.toroidalworld.net.WorldShapeSync;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -59,7 +59,7 @@ public class PlayerListMixin {
     @Inject(method = "placeNewPlayer", at = @At("TAIL"))
     private void toroidal$sendBoundsOnLogin(Connection connection, ServerPlayer player, CommonListenerCookie cookie,
             CallbackInfo ci) {
-        WrappingBoundsSync.sendTo(player);
+        WorldShapeSync.sendTo(player);
     }
 
     @Inject(method = "respawn",
@@ -74,7 +74,7 @@ public class PlayerListMixin {
     @Inject(method = "respawn", at = @At("TAIL"))
     private void toroidal$sendBoundsOnRespawn(ServerPlayer player, boolean keepAllPlayerData,
             Entity.RemovalReason removalReason, CallbackInfoReturnable<ServerPlayer> cir) {
-        WrappingBoundsSync.sendTo(cir.getReturnValue());
+        WorldShapeSync.sendTo(cir.getReturnValue());
     }
 
     @WrapOperation(

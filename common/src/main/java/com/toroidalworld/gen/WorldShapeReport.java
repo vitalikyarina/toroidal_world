@@ -10,6 +10,7 @@ import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.platform.Platforms;
+import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.server.MinecraftServer;
@@ -21,13 +22,15 @@ public final class WorldShapeReport {
     public static List<String> lines(MinecraftServer server) {
         List<String> lines = new ArrayList<>();
         for (ServerLevel level : server.getAllLevels()) {
-            WorldLoopBounds bounds = wrappedBoundsOf(level);
-            if (bounds == null) {
+            FlatShape shape = wrappedShapeOf(level);
+            if (shape == null) {
                 continue;
             }
 
+            WorldLoopBounds bounds = shape.bounds();
             lines.add("World shape: " + level.dimension().location()
                     + " generator=" + generatorId(level.getChunkSource().getGenerator())
+                    + " identification=" + shape.identification()
                     + " x=" + axisSpan(bounds.x()) + " z=" + axisSpan(bounds.z()) + " chunks"
                     + ", " + widths(bounds)
                     + netherScale(server, level, bounds)
@@ -39,17 +42,8 @@ public final class WorldShapeReport {
         return lines;
     }
 
-    private static @Nullable WorldLoopBounds wrappedBoundsOf(@Nullable ServerLevel level) {
-        if (level == null) {
-            return null;
-        }
-
-        ChunkGenerator generator = level.getChunkSource().getGenerator();
-        if (ShapedChunkGenerator.wrappedTransformerOf(generator) == null) {
-            return null;
-        }
-
-        return ((ShapedChunkGenerator) generator).wrapping();
+    private static @Nullable FlatShape wrappedShapeOf(@Nullable ServerLevel level) {
+        return level == null ? null : ShapedChunkGenerator.wrappedShapeOf(level.getChunkSource().getGenerator());
     }
 
     private static String generatorId(ChunkGenerator generator) {
@@ -93,12 +87,12 @@ public final class WorldShapeReport {
             return "";
         }
 
-        WorldLoopBounds overworldBounds = wrappedBoundsOf(server.overworld());
-        if (overworldBounds == null || !overworldBounds.isSquare() || !bounds.isSquare()) {
+        FlatShape overworldShape = wrappedShapeOf(server.overworld());
+        if (overworldShape == null || !overworldShape.bounds().isSquare() || !bounds.isSquare()) {
             return "";
         }
 
-        int overworldWidth = overworldBounds.chunkWidth();
+        int overworldWidth = overworldShape.bounds().chunkWidth();
         int netherWidth = bounds.chunkWidth();
         if (overworldWidth % netherWidth != 0) {
             return "";

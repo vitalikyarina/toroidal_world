@@ -3,7 +3,7 @@ package com.toroidalworld.platform;
 import java.util.function.IntFunction;
 
 import com.toroidalworld.net.WrappingSettingsPayload;
-import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.shape.FlatShape;
 
 import io.netty.buffer.Unpooled;
 
@@ -43,9 +43,9 @@ public final class NeoForgePlatform implements Platform {
     }
 
     @Override
-    public void sendWrappingBounds(ServerPlayer player, WorldLoopBounds bounds) {
+    public void sendWorldShape(ServerPlayer player, FlatShape shape) {
         if (player.connection.hasChannel(WrappingSettingsPayload.TYPE)) {
-            PacketDistributor.sendToPlayer(player, new WrappingSettingsPayload(bounds));
+            PacketDistributor.sendToPlayer(player, new WrappingSettingsPayload(shape));
         }
     }
 

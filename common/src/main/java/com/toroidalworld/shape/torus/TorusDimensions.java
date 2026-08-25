@@ -1,39 +1,32 @@
 package com.toroidalworld.shape.torus;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.gen.LoopedChunkGenerator;
-import com.toroidalworld.gen.LoopedFlatChunkGenerator;
-import com.toroidalworld.gen.ShapedChunkGenerator;
+import com.toroidalworld.gen.ShapedDimensions;
 import com.toroidalworld.options.NetherScales;
 import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.dimension.LevelStem;
-import net.minecraft.world.level.levelgen.FlatLevelSource;
-import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.WorldDimensions;
 
 public final class TorusDimensions {
 
     public static WorldDimensions apply(WorldDimensions dimensions, TorusSettings settings) {
-        WorldDimensions withLoopedOverworld =
-                withLoopedDimension(dimensions, LevelStem.OVERWORLD, settings.overworld());
-        if (withLoopedOverworld == dimensions) {
+        WorldDimensions withTorusOverworld =
+                ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD, torus(settings.overworld()));
+        if (withTorusOverworld == dimensions) {
             return dimensions;
         }
 
-        WorldDimensions withLoopedNether =
-                withLoopedDimension(withLoopedOverworld, LevelStem.NETHER, netherWrapping(settings));
-        return withLoopedDimension(withLoopedNether, LevelStem.END, settings.end());
+        WorldDimensions withTorusNether =
+                ShapedDimensions.withShape(withTorusOverworld, LevelStem.NETHER, torus(netherWrapping(settings)));
+        return ShapedDimensions.withShape(withTorusNether, LevelStem.END, torus(settings.end()));
     }
 
     public static @Nullable TorusSettings read(WorldDimensions dimensions) {
-        WorldLoopBounds overworld = loopedWrappingOf(dimensions.overworld());
+        WorldLoopBounds overworld = torusBoundsOf(dimensions, LevelStem.OVERWORLD);
         if (overworld == null) {
             return null;
         }
@@ -45,6 +38,19 @@ public final class TorusDimensions {
                 readEndWrapping(dimensions));
     }
 
+    private static FlatShape torus(WorldLoopBounds bounds) {
+        return FlatShape.latticeTorus(bounds, FlatShape.NO_SKEW);
+    }
+
+    private static @Nullable WorldLoopBounds torusBoundsOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {
+        FlatShape shape = ShapedDimensions.shapeOf(dimensions, key);
+        if (shape == null || !shape.decomposesPerAxis() || !shape.bounds().isSquare()) {
+            return null;
+        }
+
+        return shape.bounds();
+    }
+
     private static WorldLoopBounds netherWrapping(TorusSettings settings) {
         int overworldChunkWidth = settings.overworld().chunkWidth();
         int scale = NetherScales.normalize(settings.netherScale(), overworldChunkWidth);
@@ -52,60 +58,13 @@ public final class TorusDimensions {
     }
 
     private static WorldLoopBounds readEndWrapping(WorldDimensions dimensions) {
-        LevelStem end = dimensions.get(LevelStem.END).orElse(null);
-        if (end != null && end.generator() instanceof ShapedChunkGenerator endShaped) {
-            WorldLoopBounds endBounds = endShaped.wrapping();
-            return endBounds.isSquare() ? endBounds : TorusSettings.DEFAULT.end();
-        }
-
-        return TorusSettings.DEFAULT.end();
-    }
-
-    private static @Nullable WorldLoopBounds loopedWrappingOf(ChunkGenerator overworld) {
-        if (overworld instanceof ShapedChunkGenerator shaped && shaped.wrapping().isSquare()) {
-            return shaped.wrapping();
-        }
-
-        return null;
+        WorldLoopBounds end = torusBoundsOf(dimensions, LevelStem.END);
+        return end != null ? end : TorusSettings.DEFAULT.end();
     }
 
     private static int readNetherScale(WorldDimensions dimensions, int overworldChunkWidth) {
-        LevelStem nether = dimensions.get(LevelStem.NETHER).orElse(null);
-        if (nether != null && nether.generator() instanceof ShapedChunkGenerator netherShaped
-                && netherShaped.wrapping().isSquare()) {
-            return overworldChunkWidth / netherShaped.wrapping().chunkWidth();
-        }
-
-        return NetherScales.DEFAULT;
-    }
-
-    private static WorldDimensions withLoopedDimension(WorldDimensions dimensions, ResourceKey<LevelStem> key,
-            WorldLoopBounds wrapping) {
-        LevelStem stem = dimensions.get(key).orElse(null);
-        if (stem == null) {
-            return dimensions;
-        }
-
-        ChunkGenerator looped = loopedGeneratorFor(stem.generator(), wrapping);
-        if (looped == null) {
-            return dimensions;
-        }
-
-        Map<ResourceKey<LevelStem>, LevelStem> stems = new HashMap<>(dimensions.dimensions());
-        stems.put(key, new LevelStem(stem.type(), looped));
-        return new WorldDimensions(stems);
-    }
-
-    private static @Nullable ChunkGenerator loopedGeneratorFor(ChunkGenerator generator, WorldLoopBounds wrapping) {
-        if (generator instanceof NoiseBasedChunkGenerator noise) {
-            return new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), wrapping);
-        }
-
-        if (generator instanceof FlatLevelSource flat) {
-            return new LoopedFlatChunkGenerator(flat.settings(), wrapping);
-        }
-
-        return null;
+        WorldLoopBounds nether = torusBoundsOf(dimensions, LevelStem.NETHER);
+        return nether != null ? overworldChunkWidth / nether.chunkWidth() : NetherScales.DEFAULT;
     }
 
     private TorusDimensions() {
