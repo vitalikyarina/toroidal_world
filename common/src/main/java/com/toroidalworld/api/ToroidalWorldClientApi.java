@@ -24,7 +24,7 @@ public final class ToroidalWorldClientApi {
      */
     public static Optional<ToroidalShape> shapeOf(ClientLevel level) {
         WorldLoopTransformer transformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
-        return transformer == null ? Optional.empty() : Optional.of(new TransformerToroidalShape(transformer));
+        return transformer == null ? Optional.empty() : Optional.of(new WorldFoldToroidalShape(transformer));
     }
 
     private ToroidalWorldClientApi() {
