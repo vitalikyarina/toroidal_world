@@ -1,23 +1,15 @@
 package com.toroidalworld.client.shape.torus;
 
 import java.util.EnumMap;
-import java.util.List;
 import java.util.Map;
 
-import org.jspecify.annotations.Nullable;
-
-import com.toroidalworld.client.screen.DigitsEditBox;
-import com.toroidalworld.core.CoordinateConstants;
+import com.toroidalworld.client.shape.LoopSizeControls;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopPresets;
-import com.toroidalworld.options.WorldLoopSizes;
-import com.toroidalworld.options.NetherScales;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.layouts.CommonLayouts;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.screens.Screen;
@@ -26,17 +18,6 @@ import net.minecraft.network.chat.Component;
 
 public class TorusSettingsScreen extends Screen {
     private static final Component TITLE = Component.translatable("gui.toroidal_world.toroidal_settings.title");
-    private static final Component HINT = Component.translatable("gui.toroidal_world.toroidal_settings.hint");
-    private static final String SIZE_LABEL_KEY = "gui.toroidal_world.toroidal_settings.size";
-    private static final String EFFECTIVE_KEY = "gui.toroidal_world.toroidal_settings.effective";
-    private static final String TOO_SMALL_KEY = "gui.toroidal_world.toroidal_settings.too_small";
-    private static final String TOO_LARGE_KEY = "gui.toroidal_world.toroidal_settings.too_large";
-    private static final String NETHER_SCALE_KEY = "gui.toroidal_world.toroidal_settings.nether_scale";
-    private static final String NETHER_EFFECTIVE_KEY = "gui.toroidal_world.toroidal_settings.nether_effective";
-    private static final Component NETHER_HINT = Component.translatable("gui.toroidal_world.toroidal_settings.nether_hint");
-    private static final String END_SIZE_LABEL_KEY = "gui.toroidal_world.toroidal_settings.end_size";
-    private static final String END_EFFECTIVE_KEY = "gui.toroidal_world.toroidal_settings.end_effective";
-    private static final Component END_HINT = Component.translatable("gui.toroidal_world.toroidal_settings.end_hint");
 
     private static final String PRESET_KEY_PREFIX = "gui.toroidal_world.toroidal_settings.preset.";
     private static final String STRUCTURES_SCARCE_KEY = "gui.toroidal_world.toroidal_settings.consequence.structures_scarce";
@@ -49,36 +30,19 @@ public class TorusSettingsScreen extends Screen {
     private static final int MANSION_GRID_CHUNKS = 80;
     private static final int STRONGHOLD_RING_CHUNKS = 336;
 
-    private static final int FIELD_WIDTH = 310;
-    private static final int FIELD_HEIGHT = 20;
-    private static final int FIELD_MAX_LENGTH = 7;
     private static final int FOOTER_SPACING = 8;
     private static final int CONTENTS_SPACING = 8;
     private static final int PRESET_SPACING = 5;
 
     private static final int PRESET_WIDTH =
-            (FIELD_WIDTH - PRESET_SPACING * (WorldLoopPresets.values().length - 1)) / WorldLoopPresets.values().length;
+            (LoopSizeControls.FIELD_WIDTH - PRESET_SPACING * (WorldLoopPresets.values().length - 1))
+                    / WorldLoopPresets.values().length;
 
     private final Screen parent;
     private final OnDone onDone;
     private final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
+    private final LoopSizeControls controls;
 
-    private String sizeText;
-
-    private @Nullable Integer effectiveSize;
-
-    private String endSizeText;
-    private @Nullable Integer effectiveEndSize;
-
-    private int netherScale;
-
-    private int wantedNetherScale;
-
-    private int scalePickedForSize;
-
-    private EditBox sizeEdit;
-    private Button netherScaleButton;
-    private EditBox endSizeEdit;
     private Button doneButton;
     private final Map<WorldLoopPresets, Button> presetButtons = new EnumMap<>(WorldLoopPresets.class);
 
@@ -87,11 +51,8 @@ public class TorusSettingsScreen extends Screen {
         super(TITLE);
         this.parent = parent;
         this.onDone = onDone;
-        this.sizeText = String.valueOf(current.chunkWidth());
-        this.netherScale = currentNetherScale;
-        this.wantedNetherScale = currentNetherScale;
-        this.scalePickedForSize = current.chunkWidth();
-        this.endSizeText = String.valueOf(currentEnd.chunkWidth());
+        this.controls = new LoopSizeControls(current.chunkWidth(), currentNetherScale, currentEnd.chunkWidth(),
+                this::onControlsChanged);
     }
 
     @Override
@@ -103,48 +64,22 @@ public class TorusSettingsScreen extends Screen {
         LinearLayout presetRow = contents.addChild(LinearLayout.horizontal().spacing(PRESET_SPACING));
         for (WorldLoopPresets preset : WorldLoopPresets.values()) {
             Button presetButton = presetRow.addChild(Button.builder(presetLabel(preset),
-                            button -> {
-                                this.netherScale = preset.netherScale();
-                                this.wantedNetherScale = preset.netherScale();
-                                this.sizeEdit.setValue(String.valueOf(preset.chunkWidth()));
-                                this.endSizeEdit.setValue(String.valueOf(preset.endChunkWidth()));
-                            })
+                            button -> this.controls.set(preset.chunkWidth(), preset.netherScale(), preset.endChunkWidth()))
                     .width(PRESET_WIDTH)
                     .build());
             String structuresKey = structureRoomKey(preset.chunkWidth());
             presetButton.setTooltip(Tooltip.create(
-                    Component.translatable(EFFECTIVE_KEY, preset.chunkWidth(), preset.blockWidth())
+                    LoopSizeControls.effectiveLine(preset.chunkWidth()).copy()
                             .append(CommonComponents.NEW_LINE)
-                            .append(Component.translatable(NETHER_SCALE_KEY, preset.netherScale()))
+                            .append(LoopSizeControls.netherScaleLine(preset.netherScale()))
                             .append(CommonComponents.NEW_LINE)
-                            .append(Component.translatable(END_EFFECTIVE_KEY, preset.endChunkWidth(),
-                                    preset.endBlockWidth()))
+                            .append(LoopSizeControls.endEffectiveLine(preset.endChunkWidth()))
                             .append(CommonComponents.NEW_LINE)
                             .append(Component.translatable(structuresKey))));
             this.presetButtons.put(preset, presetButton);
         }
 
-        this.sizeEdit = new DigitsEditBox(this.font, FIELD_WIDTH, FIELD_HEIGHT, sizeLabel());
-        this.sizeEdit.setMaxLength(FIELD_MAX_LENGTH);
-        this.sizeEdit.setValue(this.sizeText);
-        this.sizeEdit.setResponder(value -> {
-            this.sizeText = value;
-            this.onSizeChanged();
-        });
-        contents.addChild(CommonLayouts.labeledElement(this.font, this.sizeEdit, sizeLabel()));
-
-        this.netherScaleButton = contents.addChild(Button.builder(Component.empty(), button -> this.cycleNetherScale())
-                .width(FIELD_WIDTH)
-                .build());
-
-        this.endSizeEdit = new DigitsEditBox(this.font, FIELD_WIDTH, FIELD_HEIGHT, endSizeLabel());
-        this.endSizeEdit.setMaxLength(FIELD_MAX_LENGTH);
-        this.endSizeEdit.setValue(this.endSizeText);
-        this.endSizeEdit.setResponder(value -> {
-            this.endSizeText = value;
-            this.onEndSizeChanged();
-        });
-        contents.addChild(CommonLayouts.labeledElement(this.font, this.endSizeEdit, endSizeLabel()));
+        this.controls.addTo(this.font, contents);
 
         LinearLayout footer = this.layout.addToFooter(LinearLayout.horizontal().spacing(FOOTER_SPACING));
         this.doneButton = footer.addChild(Button.builder(CommonComponents.GUI_DONE, button -> this.commit()).build());
@@ -152,8 +87,7 @@ public class TorusSettingsScreen extends Screen {
 
         this.layout.visitWidgets(this::addRenderableWidget);
         this.repositionElements();
-        this.onSizeChanged();
-        this.onEndSizeChanged();
+        this.controls.refresh();
     }
 
     @Override
@@ -164,27 +98,6 @@ public class TorusSettingsScreen extends Screen {
     @Override
     public void onClose() {
         Minecraft.getInstance().gui.setScreen(this.parent);
-    }
-
-    private void onSizeChanged() {
-        Integer sizeChunks = parseSizeChunks(this.sizeEdit.getValue());
-        this.effectiveSize = sizeChunks != null && WorldLoopSizes.isInRange(sizeChunks) ? sizeChunks : null;
-        this.refreshDoneButton();
-
-        if (this.effectiveSize == null) {
-            this.sizeEdit.setTooltip(Tooltip.create(sizeHint(sizeChunks, WorldLoopSizes.MIN_CHUNK_WIDTH, HINT)));
-            this.netherScaleButton.active = false;
-            this.refreshPresetButtons();
-            return;
-        }
-
-        this.sizeEdit.setTooltip(Tooltip.create(
-                Component.translatable(EFFECTIVE_KEY, this.effectiveSize, this.effectiveSize * CoordinateConstants.CHUNK_WIDTH)
-                        .append(CommonComponents.NEW_LINE)
-                        .append(HINT)));
-
-        this.refreshNetherScale();
-        this.refreshPresetButtons();
     }
 
     private static String structureRoomKey(int sizeChunks) {
@@ -203,107 +116,33 @@ public class TorusSettingsScreen extends Screen {
         return STRUCTURES_ALL_KEY;
     }
 
-    private void refreshNetherScale() {
-        int sizeChunks = this.effectiveSize;
-        List<Integer> allowed = NetherScales.allowedFor(sizeChunks);
-        boolean sizeChanged = sizeChunks != this.scalePickedForSize;
-        this.netherScale = NetherScales.normalize(sizeChanged ? this.wantedNetherScale : this.netherScale, allowed);
-        this.scalePickedForSize = sizeChunks;
-        this.netherScaleButton.active = allowed.size() > 1;
-
-        int netherChunks = NetherScales.netherChunkWidth(sizeChunks, this.netherScale);
-        this.netherScaleButton.setMessage(Component.translatable(NETHER_SCALE_KEY, this.netherScale));
-        this.netherScaleButton.setTooltip(Tooltip.create(
-                Component.translatable(NETHER_EFFECTIVE_KEY, netherChunks, netherChunks * CoordinateConstants.CHUNK_WIDTH)
-                        .append(CommonComponents.NEW_LINE)
-                        .append(NETHER_HINT)));
-    }
-
-    private void cycleNetherScale() {
-        if (this.effectiveSize == null) {
-            return;
-        }
-
-        this.netherScale = NetherScales.next(this.netherScale, this.effectiveSize);
-        this.wantedNetherScale = this.netherScale;
-        this.refreshNetherScale();
-        this.refreshPresetButtons();
-    }
-
-    private void onEndSizeChanged() {
-        Integer sizeChunks = parseSizeChunks(this.endSizeEdit.getValue());
-        this.effectiveEndSize = sizeChunks != null && WorldLoopSizes.isEndInRange(sizeChunks) ? sizeChunks : null;
-        this.refreshDoneButton();
-        this.refreshPresetButtons();
-
-        if (this.effectiveEndSize == null) {
-            this.endSizeEdit.setTooltip(Tooltip.create(
-                    sizeHint(sizeChunks, WorldLoopSizes.END_MIN_CHUNK_WIDTH, END_HINT)));
-            return;
-        }
-
-        this.endSizeEdit.setTooltip(Tooltip.create(
-                Component.translatable(END_EFFECTIVE_KEY, this.effectiveEndSize,
-                        this.effectiveEndSize * CoordinateConstants.CHUNK_WIDTH)
-                        .append(CommonComponents.NEW_LINE)
-                        .append(END_HINT)));
-    }
-
-    private void refreshDoneButton() {
-        this.doneButton.active = this.effectiveSize != null && this.effectiveEndSize != null;
-    }
-
-    private void refreshPresetButtons() {
+    private void onControlsChanged() {
+        this.doneButton.active = this.controls.isComplete();
         for (Map.Entry<WorldLoopPresets, Button> entry : this.presetButtons.entrySet()) {
             entry.getValue().active = !this.matchesPreset(entry.getKey());
         }
     }
 
     private boolean matchesPreset(WorldLoopPresets preset) {
-        return this.effectiveSize != null && this.effectiveSize == preset.chunkWidth()
-                && this.netherScale == preset.netherScale()
-                && this.effectiveEndSize != null && this.effectiveEndSize == preset.endChunkWidth();
+        Integer effectiveSize = this.controls.effectiveSize();
+        Integer effectiveEndSize = this.controls.effectiveEndSize();
+        return effectiveSize != null && effectiveSize == preset.chunkWidth()
+                && this.controls.netherScale() == preset.netherScale()
+                && effectiveEndSize != null && effectiveEndSize == preset.endChunkWidth();
     }
 
     private void commit() {
-        if (this.effectiveSize == null || this.effectiveEndSize == null) {
+        if (!this.controls.isComplete()) {
             return;
         }
 
-        this.onDone.accept(WorldLoopBounds.ofWidth(this.effectiveSize), this.netherScale,
-                WorldLoopBounds.ofWidth(this.effectiveEndSize));
+        this.onDone.accept(WorldLoopBounds.ofWidth(this.controls.effectiveSize()), this.controls.netherScale(),
+                WorldLoopBounds.ofWidth(this.controls.effectiveEndSize()));
         this.onClose();
     }
 
     private static Component presetLabel(WorldLoopPresets preset) {
         return Component.translatable(PRESET_KEY_PREFIX + preset.id());
-    }
-
-    private static Component sizeLabel() {
-        return Component.translatable(SIZE_LABEL_KEY, WorldLoopSizes.MIN_CHUNK_WIDTH, WorldLoopSizes.MAX_CHUNK_WIDTH);
-    }
-
-    private static Component endSizeLabel() {
-        return Component.translatable(END_SIZE_LABEL_KEY, WorldLoopSizes.END_MIN_CHUNK_WIDTH, WorldLoopSizes.MAX_CHUNK_WIDTH);
-    }
-
-    private static Component sizeHint(@Nullable Integer sizeChunks, int minChunks, Component hint) {
-        if (sizeChunks == null) {
-            return hint;
-        }
-
-        Component bound = sizeChunks < minChunks
-                ? Component.translatable(TOO_SMALL_KEY, minChunks)
-                : Component.translatable(TOO_LARGE_KEY, WorldLoopSizes.MAX_CHUNK_WIDTH);
-        return bound.copy().append(CommonComponents.NEW_LINE).append(hint);
-    }
-
-    private static @Nullable Integer parseSizeChunks(String value) {
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException ignored) {
-            return null;
-        }
     }
 
     @FunctionalInterface

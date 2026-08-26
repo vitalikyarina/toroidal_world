@@ -14,10 +14,12 @@ import net.minecraft.world.level.levelgen.WorldDimensions;
 public final class WorldShapes {
     private static final String NORMAL_ID = "normal";
     private static final String NORMAL_LABEL_KEY = "gui.toroidal_world.world_shape.normal";
+    private static final String NORMAL_HINT_KEY = "gui.toroidal_world.world_shape.normal.hint";
 
     public static final WorldShape NORMAL = WorldShape.of(
             Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, NORMAL_ID),
             Component.translatable(NORMAL_LABEL_KEY),
+            Component.translatable(NORMAL_HINT_KEY),
             (registries, dimensions) -> dimensions);
 
     private static final List<WorldShape> SHAPES = new ArrayList<>(List.of(NORMAL));
