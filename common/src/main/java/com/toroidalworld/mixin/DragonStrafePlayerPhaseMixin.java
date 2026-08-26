@@ -4,23 +4,28 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamAim;
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.phases.DragonStrafePlayerPhase;
 
 @Mixin(DragonStrafePlayerPhase.class)
 public class DragonStrafePlayerPhaseMixin {
-    @ModifyExpressionValue(
+    @WrapOperation(
             method = "doServerTick",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getX()D"))
-    private double toroidal$aimTargetX(double targetX) {
-        return SeamAim.nearX(((DragonPhaseAccessor) this).toroidal$dragon(), targetX);
+    private double toroidal$aimTargetX(LivingEntity target, Operation<Double> original) {
+        return SeamAim.nearestTo(((DragonPhaseAccessor) this).toroidal$dragon(),
+                target.position().with(Direction.Axis.X, original.call(target))).x;
     }
 
-    @ModifyExpressionValue(
+    @WrapOperation(
             method = "doServerTick",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getZ()D"))
-    private double toroidal$aimTargetZ(double targetZ) {
-        return SeamAim.nearZ(((DragonPhaseAccessor) this).toroidal$dragon(), targetZ);
+    private double toroidal$aimTargetZ(LivingEntity target, Operation<Double> original) {
+        return SeamAim.nearestTo(((DragonPhaseAccessor) this).toroidal$dragon(),
+                target.position().with(Direction.Axis.Z, original.call(target))).z;
     }
 }

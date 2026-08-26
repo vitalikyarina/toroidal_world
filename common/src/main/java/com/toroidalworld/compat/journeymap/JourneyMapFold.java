@@ -4,7 +4,8 @@ import org.slf4j.Logger;
 
 import com.toroidalworld.api.ToroidalShape;
 import com.toroidalworld.api.ToroidalWorldClientApi;
-import com.toroidalworld.core.LogRateGate;
+import com.toroidalworld.compat.AxisCopies;
+import com.toroidalworld.compat.FullscreenZoomFloor;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.client.Minecraft;
@@ -16,12 +17,11 @@ import net.minecraft.world.phys.Vec3;
 public final class JourneyMapFold {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    // JourneyMap's own unit: one region tile is 512 blocks of ground.
-    private static final double REGION_BLOCKS = 512.0;
+    private static final int REGION_BLOCKS = 512;
+    private static final int REGION_CHUNKS = 32;
 
-    private static final int COPY_RANGE_CAP = 5;
-
-    private static final LogRateGate capGate = new LogRateGate();
+    private static final int MAX_TILE_BLITS = 16_384;
+    private static final double VIEWPORT_COVER = 0.75;
 
     private static ToroidalShape shape() {
         ClientLevel level = Minecraft.getInstance().level;
@@ -67,29 +67,82 @@ public final class JourneyMapFold {
         return shape == null || pos == null ? pos : shape.fold(pos);
     }
 
+    public static AxisCopies copies(Direction.Axis axis) {
+        ToroidalShape shape = shape();
+        return shape == null ? AxisCopies.UNBOUNDED : AxisCopies.of(shape, axis);
+    }
+
     public static double worldPixelPeriod(Direction.Axis axis, int zoom) {
         ToroidalShape shape = shape();
         if (shape == null || !shape.loops(axis)) {
             return 0.0;
         }
 
-        return shape.widthBlocks(axis) * (zoom / REGION_BLOCKS);
+        return shape.widthBlocks(axis) * (zoom / (double) REGION_BLOCKS);
     }
 
-    public static int copyRange(double periodPixels, int viewportPixels) {
-        if (periodPixels <= 0.0) {
+    public static int loopedAxes() {
+        ToroidalShape shape = shape();
+        if (shape == null) {
             return 0;
         }
 
-        int needed = (int) Math.ceil(viewportPixels * 0.75 / periodPixels);
-        if (needed > COPY_RANGE_CAP) {
-            if (capGate.tryPass()) {
-                LOGGER.info("[jm-compat] tile_copies capped needed={} cap={}", needed, COPY_RANGE_CAP);
-            }
-            return COPY_RANGE_CAP;
+        return (shape.loops(Direction.Axis.X) ? 1 : 0) + (shape.loops(Direction.Axis.Z) ? 1 : 0);
+    }
+
+    public static int zoomFloor() {
+        ToroidalShape shape = shape();
+        if (shape == null) {
+            return 0;
         }
 
-        return needed;
+        int floor = 0;
+        for (Direction.Axis axis : new Direction.Axis[] {Direction.Axis.X, Direction.Axis.Z}) {
+            if (shape.loops(axis)) {
+                floor = Math.max(floor, FullscreenZoomFloor.journeyMapZoom(shape.widthBlocks(axis)));
+            }
+        }
+
+        return floor;
+    }
+
+    public static int[] viewSpan(double centerBlock, int windowPixels, int zoom) {
+        double halfSpanBlocks = windowPixels / 2.0 * REGION_BLOCKS / zoom;
+        return new int[] {(int) Math.floor(centerBlock - halfSpanBlocks), (int) Math.ceil(centerBlock + halfSpanBlocks)};
+    }
+
+    public static int tilesWithContent(int zoom, int viewportX, int viewportZ) {
+        ToroidalShape shape = shape();
+        if (shape == null) {
+            return 1;
+        }
+
+        return tilesAlong(shape, Direction.Axis.X, zoom, viewportX) * tilesAlong(shape, Direction.Axis.Z, zoom, viewportZ);
+    }
+
+    private static int tilesAlong(ToroidalShape shape, Direction.Axis axis, int zoom, int viewportPixels) {
+        return shape.loops(axis) ? regionSpan(shape, axis) : viewportTiles(zoom, viewportPixels);
+    }
+
+    public static int viewportTiles(int zoom, int viewportPixels) {
+        return zoom <= 0 ? 1 : (int) Math.ceil((double) viewportPixels / zoom) + 1;
+    }
+
+    public static int copyRangeCap(int loopedAxes, int tilesWithContent) {
+        int budget = MAX_TILE_BLITS / Math.max(1, tilesWithContent);
+        return switch (loopedAxes) {
+            case 2 -> (int) ((Math.sqrt(budget) - 1) / 2);
+            case 1 -> (budget - 1) / 2;
+            default -> 0;
+        };
+    }
+
+    public static int copyRange(int loopedAxes, int tilesWithContent, double periodPixels, int viewportPixels) {
+        return Math.min(copiesToCover(periodPixels, viewportPixels), copyRangeCap(loopedAxes, tilesWithContent));
+    }
+
+    private static int copiesToCover(double periodPixels, int viewportPixels) {
+        return periodPixels <= 0.0 ? 0 : (int) Math.ceil(viewportPixels * VIEWPORT_COVER / periodPixels);
     }
 
     public static void gridDropped(String fromDimension, String toDimension) {
@@ -111,8 +164,8 @@ public final class JourneyMapFold {
             return 0;
         }
 
-        int minRegion = Math.floorDiv(shape.minChunk(axis), 32);
-        int maxRegion = Math.floorDiv(shape.maxChunk(axis) - 1, 32);
+        int minRegion = Math.floorDiv(shape.minChunk(axis), REGION_CHUNKS);
+        int maxRegion = Math.floorDiv(shape.maxChunk(axis) - 1, REGION_CHUNKS);
         return maxRegion - minRegion + 1;
     }
 

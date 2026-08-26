@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.command.SeamCommandErrors;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -36,7 +36,7 @@ public class CloneCommandsMixin {
                     target = "Lnet/minecraft/world/level/levelgen/structure/BoundingBox;intersects(Lnet/minecraft/world/level/levelgen/structure/BoundingBox;)Z"))
     private static boolean toroidal$measureOverlapThroughSeam(BoundingBox destination, BoundingBox from,
             Operation<Boolean> original, @Local(ordinal = 0) ServerLevel fromDimension) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(fromDimension);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(fromDimension);
         return transformer == null
                 ? original.call(destination, from)
                 : transformer.regionsOverlap(destination, from);

@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
 import com.toroidalworld.entity.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -36,8 +36,8 @@ public class InteractWithDoorMixin {
                     target = "Lnet/minecraft/world/level/pathfinder/Node;asBlockPos()Lnet/minecraft/core/BlockPos;"))
     private static BlockPos toroidal$standingInDoorwayThroughSeam(BlockPos nodePos,
             @Local(argsOnly = true) LivingEntity body, @Local BlockPos doorPos) {
-        WorldLoopTransformer transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
-        return transformer == null ? nodePos : transformer.blocks.nearestCopy(doorPos, nodePos);
+        WorldFold transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
+        return transformer == null ? nodePos : transformer.nearestCopy(doorPos, nodePos);
     }
 
     @WrapOperation(

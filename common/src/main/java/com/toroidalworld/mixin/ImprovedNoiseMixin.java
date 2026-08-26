@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.noise.PeriodicNoiseSampler;
@@ -34,7 +34,7 @@ public class ImprovedNoiseMixin {
     @WrapMethod(method = "noise(DDDDD)D")
     private double toroidal$periodicNoise(double x, double y, double z, double yScale, double yFudge, Operation<Double> original) {
         Context context = GenerationTransformerContext.context();
-        WorldLoopTransformer transformer = context.wrappedTransformer();
+        WorldFold transformer = context.wrappedTransformer();
         if (transformer == null) {
             return original.call(x, y, z, yScale, yFudge);
         }

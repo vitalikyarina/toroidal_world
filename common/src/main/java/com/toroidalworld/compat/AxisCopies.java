@@ -1,0 +1,88 @@
+package com.toroidalworld.compat;
+
+import com.toroidalworld.api.ToroidalShape;
+
+import net.minecraft.core.Direction;
+
+public record AxisCopies(boolean loops, int min, int width) {
+    public static final AxisCopies UNBOUNDED = new AxisCopies(false, 0, 0);
+
+    public static AxisCopies of(ToroidalShape shape, Direction.Axis axis) {
+        return shape.loops(axis) ? looped(shape.minBlock(axis), shape.widthBlocks(axis)) : UNBOUNDED;
+    }
+
+    public static AxisCopies looped(int min, int width) {
+        if (width <= 0) {
+            throw new IllegalArgumentException("A looped axis needs a positive width, got " + width);
+        }
+
+        return new AxisCopies(true, min, width);
+    }
+
+    @Override
+    public int min() {
+        return looped().min;
+    }
+
+    public int max() {
+        return looped().min + this.width;
+    }
+
+    public int[] laps(int spanMin, int spanMax) {
+        if (!this.loops) {
+            return new int[] {0};
+        }
+
+        int first = Math.floorDiv(spanMin - this.min, this.width);
+        int last = Math.floorDiv(spanMax - 1 - this.min, this.width);
+        if (last < first) {
+            return new int[0];
+        }
+
+        int[] laps = new int[last - first + 1];
+        for (int i = 0; i < laps.length; i++) {
+            laps[i] = first + i;
+        }
+
+        return laps;
+    }
+
+    public int[] seams(int spanMin, int spanMax) {
+        if (!this.loops) {
+            return new int[0];
+        }
+
+        int[] laps = laps(spanMin, spanMax);
+        if (laps.length == 0) {
+            return laps;
+        }
+
+        int[] seams = new int[laps.length + 1];
+        for (int i = 0; i < laps.length; i++) {
+            seams[i] = this.min + offset(laps[i]);
+        }
+
+        seams[laps.length] = max() + offset(laps[laps.length - 1]);
+        return seams;
+    }
+
+    public int offset(int lap) {
+        return lap * this.width;
+    }
+
+    public int clipMin(int spanMin) {
+        return this.loops ? Math.max(spanMin, this.min) : spanMin;
+    }
+
+    public int clipMax(int spanMax) {
+        return this.loops ? Math.min(spanMax, max()) : spanMax;
+    }
+
+    private AxisCopies looped() {
+        if (!this.loops) {
+            throw new IllegalStateException("The axis does not loop — check loops() first");
+        }
+
+        return this;
+    }
+}

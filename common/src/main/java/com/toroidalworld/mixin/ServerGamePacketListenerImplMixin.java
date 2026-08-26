@@ -12,7 +12,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.toroidalworld.accessors.ChunkResender;
 import com.toroidalworld.accessors.ClientPositionHolder;
 import com.toroidalworld.accessors.TrackedEntityRefresher;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.SeamDelta;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.SeamSnap;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -67,14 +69,18 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             argsOnly = true)
     private PositionMoveRotation toroidal$wrapTeleportDestination(PositionMoveRotation destination,
             @Local(argsOnly = true) Set<Relative> relatives) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
         if (transformer == null) {
             return destination;
         }
 
         Vec3 position = destination.position();
-        double wrappedX = relatives.contains(Relative.X) ? position.x : transformer.coords.x.wrap(position.x);
-        double wrappedZ = relatives.contains(Relative.Z) ? position.z : transformer.coords.z.wrap(position.z);
+        double wrappedX = relatives.contains(Relative.X)
+                ? position.x
+                : transformer.blockDomain(Direction.Axis.X).wrap(position.x);
+        double wrappedZ = relatives.contains(Relative.Z)
+                ? position.z
+                : transformer.blockDomain(Direction.Axis.Z).wrap(position.z);
         if (wrappedX == position.x && wrappedZ == position.z) {
             return destination;
         }
@@ -137,14 +143,14 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
 
     @Unique
     private List<ChunkPos> toroidal$flippedChunks(PositionMoveRotation destination, Set<Relative> relatives, ClientPosition mirror) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.transformerOf(this.player.level());
+        WorldFold transformer = WorldLoopAttachments.transformerOf(this.player.level());
         Vec3 position = destination.position();
         double clientX = relatives.contains(Relative.X)
-                ? mirror.x() + transformer.coords.x.foldDelta(position.x)
-                : transformer.coords.x.unwrapAround(mirror.x(), position.x);
+                ? mirror.x() + SeamDelta.foldX(transformer, position.x)
+                : transformer.blockDomain(Direction.Axis.X).unwrapAround(mirror.x(), position.x);
         double clientZ = relatives.contains(Relative.Z)
-                ? mirror.z() + transformer.coords.z.foldDelta(position.z)
-                : transformer.coords.z.unwrapAround(mirror.z(), position.z);
+                ? mirror.z() + SeamDelta.foldZ(transformer, position.z)
+                : transformer.blockDomain(Direction.Axis.Z).unwrapAround(mirror.z(), position.z);
 
         ChunkPos fromAnchor = mirror.chunk();
         ChunkPos toAnchor = new ChunkPos(
@@ -153,8 +159,8 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
 
         List<ChunkPos> flipped = new ArrayList<>();
         this.player.getChunkTrackingView().forEach(viewPos -> {
-            ChunkPos physical = transformer.chunks.wrap(viewPos);
-            if (!transformer.chunks.unwrap(fromAnchor, physical).equals(transformer.chunks.unwrap(toAnchor, physical))) {
+            ChunkPos physical = transformer.fold(viewPos);
+            if (!transformer.nearestCopy(fromAnchor, physical).equals(transformer.nearestCopy(toAnchor, physical))) {
                 flipped.add(viewPos);
             }
         });
@@ -203,17 +209,17 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
     private double toroidal$continuousX(double clientX, Operation<Double> original,
             @Local(argsOnly = true) ServerboundMovePlayerPacket packet) {
         double clamped = original.call(clientX);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
         if (transformer == null || !packet.hasPosition()) {
             return clamped;
         }
 
         ClientPosition mirror = this.toroidal$clientPosition;
         mirror.setX(clamped);
-        double unwrapped = transformer.coords.x.unwrapAround(this.player.getX(), clamped);
+        double unwrapped = transformer.blockDomain(Direction.Axis.X).unwrapAround(this.player.getX(), clamped);
 
-        this.firstGoodX = transformer.coords.x.unwrapAround(unwrapped, this.firstGoodX);
-        this.lastGoodX = transformer.coords.x.unwrapAround(unwrapped, this.lastGoodX);
+        this.firstGoodX = transformer.blockDomain(Direction.Axis.X).unwrapAround(unwrapped, this.firstGoodX);
+        this.lastGoodX = transformer.blockDomain(Direction.Axis.X).unwrapAround(unwrapped, this.lastGoodX);
         return unwrapped;
     }
 
@@ -226,34 +232,33 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
     private double toroidal$continuousZ(double clientZ, Operation<Double> original,
             @Local(argsOnly = true) ServerboundMovePlayerPacket packet) {
         double clamped = original.call(clientZ);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
         if (transformer == null || !packet.hasPosition()) {
             return clamped;
         }
 
         ClientPosition mirror = this.toroidal$clientPosition;
         mirror.setZ(clamped);
-        double unwrapped = transformer.coords.z.unwrapAround(this.player.getZ(), clamped);
+        double unwrapped = transformer.blockDomain(Direction.Axis.Z).unwrapAround(this.player.getZ(), clamped);
 
-        this.firstGoodZ = transformer.coords.z.unwrapAround(unwrapped, this.firstGoodZ);
-        this.lastGoodZ = transformer.coords.z.unwrapAround(unwrapped, this.lastGoodZ);
+        this.firstGoodZ = transformer.blockDomain(Direction.Axis.Z).unwrapAround(unwrapped, this.firstGoodZ);
+        this.lastGoodZ = transformer.blockDomain(Direction.Axis.Z).unwrapAround(unwrapped, this.lastGoodZ);
         return unwrapped;
     }
 
     @Inject(method = "handleMovePlayer", at = @At("RETURN"))
     private void toroidal$wrapIntoBounds(ServerboundMovePlayerPacket packet, CallbackInfo ci) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
-        if (transformer == null || !transformer.vectors.isOver(this.player.position())) {
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
+        if (transformer == null || !transformer.isOver(this.player.position())) {
             return;
         }
 
-        Vec3 wrapped = transformer.vectors.wrap(this.player.position());
-        this.player.absSnapTo(wrapped.x, wrapped.y, wrapped.z, this.player.getYRot(), this.player.getXRot());
+        Vec3 wrapped = transformer.fold(this.player.position());
+        SeamSnap.withPassengers(this.player, wrapped.subtract(this.player.position()));
         this.firstGoodX = wrapped.x;
         this.firstGoodZ = wrapped.z;
         this.lastGoodX = wrapped.x;
         this.lastGoodZ = wrapped.z;
-        this.player.level().getChunkSource().move(this.player);
     }
 
     @WrapOperation(
@@ -264,13 +269,13 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
                     ordinal = 0))
     private double toroidal$vehicleContinuousX(double clientX, Operation<Double> original) {
         double clamped = original.call(clientX);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
         if (transformer == null) {
             return clamped;
         }
 
         WorldLoopAttachments.clientPositionOf(this.player).setX(clamped);
-        return transformer.coords.x.unwrapAround(this.player.getRootVehicle().getX(), clamped);
+        return transformer.blockDomain(Direction.Axis.X).unwrapAround(this.player.getRootVehicle().getX(), clamped);
     }
 
     @WrapOperation(
@@ -281,28 +286,28 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
                     ordinal = 1))
     private double toroidal$vehicleContinuousZ(double clientZ, Operation<Double> original) {
         double clamped = original.call(clientZ);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
         if (transformer == null) {
             return clamped;
         }
 
         WorldLoopAttachments.clientPositionOf(this.player).setZ(clamped);
-        return transformer.coords.z.unwrapAround(this.player.getRootVehicle().getZ(), clamped);
+        return transformer.blockDomain(Direction.Axis.Z).unwrapAround(this.player.getRootVehicle().getZ(), clamped);
     }
 
     @Inject(method = "handleMoveVehicle", at = @At("RETURN"))
     private void toroidal$wrapVehicleIntoBounds(ServerboundMoveVehiclePacket packet, CallbackInfo ci) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
         if (transformer == null) {
             return;
         }
 
         Entity vehicle = this.player.getRootVehicle();
-        if (vehicle == this.player || !transformer.vectors.isOver(vehicle.position())) {
+        if (vehicle == this.player || !transformer.isOver(vehicle.position())) {
             return;
         }
 
-        Vec3 wrapped = transformer.vectors.wrap(vehicle.position());
+        Vec3 wrapped = transformer.fold(vehicle.position());
         SeamSnap.withPassengers(vehicle, wrapped.subtract(vehicle.position()));
 
         this.vehicleFirstGoodX = vehicle.getX();

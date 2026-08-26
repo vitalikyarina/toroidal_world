@@ -3,7 +3,8 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.DimensionMapping;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -32,15 +33,15 @@ public class NetherPortalBlockMixin {
             boolean toNether,
             WorldBorder worldBorder,
             Operation<TeleportTransition> original) {
-        WorldLoopTransformer destination = WorldLoopAttachments.wrappedTransformerOf(newLevel);
-        WorldLoopTransformer source = WorldLoopAttachments.wrappedTransformerOf(entity.level());
+        WorldFold destination = WorldLoopAttachments.wrappedTransformerOf(newLevel);
+        WorldFold source = WorldLoopAttachments.wrappedTransformerOf(entity.level());
         if (destination == null || source == null) {
             return original.call(self, newLevel, entity, portalEntryPos, approximateExitPos, toNether, worldBorder);
         }
 
         double declaredScale = DimensionType.getTeleportationScale(
                 entity.level().dimensionType(), newLevel.dimensionType());
-        BlockPos mapped = BlockPos.containing(destination.mapFrom(source, entity.position(), declaredScale));
+        BlockPos mapped = BlockPos.containing(DimensionMapping.map(source, destination, entity.position(), declaredScale));
 
         return original.call(self, newLevel, entity, portalEntryPos, mapped, toNether, worldBorder);
     }

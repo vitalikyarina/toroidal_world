@@ -3,7 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -18,14 +18,14 @@ import net.minecraft.world.phys.Vec3;
 public interface LeashableMixin {
     @WrapMethod(method = "leashDistanceTo")
     private double toroidal$leashDistanceThroughSeam(Entity entity, Operation<Double> original) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(entity.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(entity.level());
         if (transformer == null) {
             return original.call(entity);
         }
 
         Vec3 from = ((Entity) this).getBoundingBox().getCenter();
         Vec3 to = entity.getBoundingBox().getCenter();
-        return Math.sqrt(transformer.coords.sqrDistToBounds(from.x, from.y, from.z, to.x, to.y, to.z));
+        return Math.sqrt(transformer.sqrDistance(from.x, from.y, from.z, to.x, to.y, to.z));
     }
 
     @WrapOperation(
@@ -37,11 +37,11 @@ public interface LeashableMixin {
     private static Vec3 toroidal$holderPositionThroughSeam(Entity leashHolder, Operation<Vec3> original,
             @Local(argsOnly = true, ordinal = 0) Entity entity) {
         Vec3 position = original.call(leashHolder);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(leashHolder.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(leashHolder.level());
         if (transformer == null) {
             return position;
         }
 
-        return transformer.vectors.nearestCopy(entity.position(), position);
+        return transformer.nearestCopy(entity.position(), position);
     }
 }

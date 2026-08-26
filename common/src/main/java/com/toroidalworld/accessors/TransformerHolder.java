@@ -1,12 +1,13 @@
 package com.toroidalworld.accessors;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 
 public interface TransformerHolder {
-    default WorldLoopTransformer toroidal$transformer() {
-        return WorldLoopTransformer.NOOP;
+    default WorldFold toroidal$transformer() {
+        return WorldFolds.NOOP;
     }
 
-    default void toroidal$setTransformer(WorldLoopTransformer transformer) {
+    default void toroidal$setTransformer(WorldFold transformer) {
     }
 }

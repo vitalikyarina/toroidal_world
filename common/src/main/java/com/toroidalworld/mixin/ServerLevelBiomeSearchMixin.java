@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -14,6 +14,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.biome.Biome;
@@ -28,7 +29,7 @@ public class ServerLevelBiomeSearchMixin {
             int sampleResolutionHorizontal,
             int sampleResolutionVertical,
             Operation<@Nullable Pair<BlockPos, Holder<Biome>>> original) {
-        WorldLoopTransformer transformer =
+        WorldFold transformer =
                 WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
         if (transformer == null) {
             return original.call(biomeTest, origin, maxSearchRadius, sampleResolutionHorizontal,
@@ -40,15 +41,15 @@ public class ServerLevelBiomeSearchMixin {
                 () -> original.call(biomeTest, origin, searchRadius, sampleResolutionHorizontal,
                         sampleResolutionVertical));
 
-        return found == null ? null : Pair.of(transformer.blocks.wrap(found.getFirst()), found.getSecond());
+        return found == null ? null : Pair.of(transformer.fold(found.getFirst()), found.getSecond());
     }
 
     @Unique
-    private static int toroidal$radiusToCoverTheWorld(WorldLoopTransformer transformer, int maxSearchRadius,
+    private static int toroidal$radiusToCoverTheWorld(WorldFold transformer, int maxSearchRadius,
             int sampleResolutionHorizontal) {
         int steps = Math.max(
-                transformer.coords.x.stepsToCoverTheWorld(sampleResolutionHorizontal),
-                transformer.coords.z.stepsToCoverTheWorld(sampleResolutionHorizontal));
+                transformer.blockDomain(Direction.Axis.X).stepsToCoverTheWorld(sampleResolutionHorizontal),
+                transformer.blockDomain(Direction.Axis.Z).stepsToCoverTheWorld(sampleResolutionHorizontal));
         return (int) Math.min(maxSearchRadius, (long) steps * sampleResolutionHorizontal);
     }
 }

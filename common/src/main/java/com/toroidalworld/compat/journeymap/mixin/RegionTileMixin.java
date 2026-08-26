@@ -1,5 +1,7 @@
 package com.toroidalworld.compat.journeymap.mixin;
 
+import java.util.function.ToDoubleFunction;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -8,10 +10,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.Window;
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
 
 import journeymap.api.v2.common.Context.UI;
 import journeymap.client.model.map.MapType;
+import journeymap.client.ui.UIManager;
+import journeymap.client.ui.minimap.DisplayVars;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.Direction;
 import org.joml.Matrix3x2fStack;
@@ -37,15 +43,19 @@ public abstract class RegionTileMixin {
             return;
         }
 
-        double periodX = JourneyMapFold.worldPixelPeriod(Direction.Axis.X, this.zoom);
-        double periodZ = JourneyMapFold.worldPixelPeriod(Direction.Axis.Z, this.zoom);
-        int rangeX = JourneyMapFold.copyRange(periodX, graphics.guiWidth());
-        int rangeZ = JourneyMapFold.copyRange(periodZ, graphics.guiHeight());
-        if (context == UI.Fullscreen) {
-            rangeX = Math.min(rangeX, 1);
-            rangeZ = Math.min(rangeZ, 1);
+        int loopedAxes = JourneyMapFold.loopedAxes();
+        if (loopedAxes == 0) {
+            return;
         }
 
+        double periodX = JourneyMapFold.worldPixelPeriod(Direction.Axis.X, this.zoom);
+        double periodZ = JourneyMapFold.worldPixelPeriod(Direction.Axis.Z, this.zoom);
+        Window window = Minecraft.getInstance().getWindow();
+        int viewportX = toroidal$viewportPixels(context, window.getWidth(), DisplayVars::getMinimapWidth);
+        int viewportZ = toroidal$viewportPixels(context, window.getHeight(), DisplayVars::getMinimapHeight);
+        int tiles = JourneyMapFold.tilesWithContent(this.zoom, viewportX, viewportZ);
+        int rangeX = JourneyMapFold.copyRange(loopedAxes, tiles, periodX, viewportX);
+        int rangeZ = JourneyMapFold.copyRange(loopedAxes, tiles, periodZ, viewportZ);
         if (rangeX == 0 && rangeZ == 0) {
             return;
         }
@@ -65,5 +75,15 @@ public abstract class RegionTileMixin {
         } finally {
             toroidal$drawingCopies = false;
         }
+    }
+
+    @Unique
+    private static int toroidal$viewportPixels(UI context, int windowPixels, ToDoubleFunction<DisplayVars> minimapSide) {
+        if (context != UI.Minimap) {
+            return windowPixels;
+        }
+
+        DisplayVars displayVars = UIManager.INSTANCE.getMiniMap().getDisplayVars();
+        return displayVars == null ? windowPixels : (int) Math.ceil(minimapSide.applyAsDouble(displayVars));
     }
 }

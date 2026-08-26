@@ -5,15 +5,16 @@ import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 
 public final class GenerationTransformerContext {
     private static final double UNSCALED = 1.0;
     private static final double UNDIVIDED = 1.0;
 
     public static final class Context {
-        private WorldLoopTransformer transformer = WorldLoopTransformer.NOOP;
-        private @Nullable WorldLoopTransformer routerBuild;
+        private WorldFold transformer = WorldFolds.NOOP;
+        private @Nullable WorldFold routerBuild;
         private double horizontalScale = UNSCALED;
         private double xDivisor = UNDIVIDED;
         private double zDivisor = UNDIVIDED;
@@ -22,15 +23,15 @@ public final class GenerationTransformerContext {
         private final DivisorScope divisorScope = new DivisorScope();
         private final BindingScope bindingScope = new BindingScope();
 
-        public WorldLoopTransformer transformer() {
+        public WorldFold transformer() {
             return this.transformer;
         }
 
-        public @Nullable WorldLoopTransformer wrappedTransformer() {
+        public @Nullable WorldFold wrappedTransformer() {
             return this.transformer.isWrapped() ? this.transformer : null;
         }
 
-        public @Nullable WorldLoopTransformer routerBuildTransformer() {
+        public @Nullable WorldFold routerBuildTransformer() {
             return this.routerBuild;
         }
 
@@ -68,7 +69,7 @@ public final class GenerationTransformerContext {
             return this.scaleScope;
         }
 
-        public BindingScope bind(WorldLoopTransformer boundTransformer, SlotAxes boundAxes, double boundScale) {
+        public BindingScope bind(WorldFold boundTransformer, SlotAxes boundAxes, double boundScale) {
             this.bindingScope.push();
             this.transformer = boundTransformer;
             this.slotAxes = boundAxes;
@@ -77,7 +78,7 @@ public final class GenerationTransformerContext {
         }
 
         public final class BindingScope implements AutoCloseable {
-            private WorldLoopTransformer[] previousTransformers = new WorldLoopTransformer[8];
+            private WorldFold[] previousTransformers = new WorldFold[8];
             private SlotAxes[] previousAxes = new SlotAxes[8];
             private double[] previousScales = new double[8];
             private int depth;
@@ -170,9 +171,9 @@ public final class GenerationTransformerContext {
         return CONTEXT.get();
     }
 
-    public static <T> T withTransformer(WorldLoopTransformer transformer, Supplier<T> action) {
+    public static <T> T withTransformer(WorldFold transformer, Supplier<T> action) {
         Context context = CONTEXT.get();
-        WorldLoopTransformer previous = context.transformer;
+        WorldFold previous = context.transformer;
         context.transformer = transformer;
 
         try {
@@ -182,16 +183,16 @@ public final class GenerationTransformerContext {
         }
     }
 
-    public static void runWithTransformer(WorldLoopTransformer transformer, Runnable action) {
+    public static void runWithTransformer(WorldFold transformer, Runnable action) {
         withTransformer(transformer, () -> {
             action.run();
             return null;
         });
     }
 
-    public static <T> T withRouterBuild(@Nullable WorldLoopTransformer transformer, Supplier<T> action) {
+    public static <T> T withRouterBuild(@Nullable WorldFold transformer, Supplier<T> action) {
         Context context = CONTEXT.get();
-        WorldLoopTransformer previous = context.routerBuild;
+        WorldFold previous = context.routerBuild;
         context.routerBuild = transformer;
 
         try {

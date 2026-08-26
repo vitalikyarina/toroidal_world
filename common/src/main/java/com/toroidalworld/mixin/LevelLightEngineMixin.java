@@ -9,7 +9,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -29,7 +30,7 @@ public class LevelLightEngineMixin {
 
     // The engine runs on its own thread and never changes level, so the transformer is read once from behind it.
     @Unique
-    private @Nullable WorldLoopTransformer toroidal$transformer;
+    private @Nullable WorldFold toroidal$transformer;
 
     @Inject(method = "checkBlock", at = @At("HEAD"), cancellable = true)
     private void toroidal$skipPhantomBlock(BlockPos pos, CallbackInfo ci) {
@@ -76,22 +77,22 @@ public class LevelLightEngineMixin {
 
     @Unique
     private boolean toroidal$isPhantom(ChunkPos pos) {
-        WorldLoopTransformer transformer = toroidal$transformer();
-        return transformer.isWrapped() && transformer.chunks.isOver(pos);
+        WorldFold transformer = toroidal$transformer();
+        return transformer.isWrapped() && transformer.isOver(pos);
     }
 
     @Unique
     private boolean toroidal$isPhantom(int chunkX, int chunkZ) {
-        WorldLoopTransformer transformer = toroidal$transformer();
-        return transformer.isWrapped() && (transformer.chunks.x.isOver(chunkX) || transformer.chunks.z.isOver(chunkZ));
+        WorldFold transformer = toroidal$transformer();
+        return transformer.isWrapped() && transformer.isOver(new ChunkPos(chunkX, chunkZ));
     }
 
     @Unique
-    private WorldLoopTransformer toroidal$transformer() {
+    private WorldFold toroidal$transformer() {
         if (this.toroidal$transformer == null) {
             this.toroidal$transformer = this.levelHeightAccessor instanceof Level level
                     ? WorldLoopAttachments.transformerOf(level)
-                    : WorldLoopTransformer.NOOP;
+                    : WorldFolds.NOOP;
         }
 
         return this.toroidal$transformer;

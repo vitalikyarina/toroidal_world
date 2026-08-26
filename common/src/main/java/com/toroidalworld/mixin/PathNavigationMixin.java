@@ -1,7 +1,6 @@
 package com.toroidalworld.mixin;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -15,7 +14,9 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.accessors.NavigationShifter;
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.FoldedCopies;
+import com.toroidalworld.core.SeamDelta;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -51,53 +52,29 @@ public class PathNavigationMixin implements NavigationShifter {
             method = "createPath(Ljava/util/Set;IZIF)Lnet/minecraft/world/level/pathfinder/Path;",
             at = @At("HEAD"), argsOnly = true)
     private Set<BlockPos> toroidal$targetsThroughSeam(Set<BlockPos> targets) {
-        WorldLoopTransformer transformer = toroidal$wrappedTransformer();
+        WorldFold transformer = toroidal$wrappedTransformer();
         if (transformer == null || targets.isEmpty()) {
             return targets;
         }
 
         BlockPos from = this.mob.blockPosition();
-        Set<BlockPos> unwrapped = null;
-        int identityPrefix = 0;
-        for (BlockPos target : targets) {
-            BlockPos nearest = transformer.blocks.unwrap(from, target);
-            if (unwrapped == null) {
-                if (nearest == target) {
-                    identityPrefix++;
-                    continue;
-                }
-
-                unwrapped = new LinkedHashSet<>(targets.size());
-                int copiedCount = 0;
-                for (BlockPos passedTarget : targets) {
-                    if (copiedCount++ == identityPrefix) {
-                        break;
-                    }
-
-                    unwrapped.add(passedTarget);
-                }
-            }
-
-            unwrapped.add(nearest);
-        }
-
-        return unwrapped == null ? targets : unwrapped;
+        return FoldedCopies.of(targets, target -> transformer.nearestCopy(from, target));
     }
 
     @WrapOperation(
             method = "followThePath",
             at = @At(value = "INVOKE", target = "Ljava/lang/Math;abs(D)D", ordinal = 0))
     private double toroidal$nodeDistanceX(double delta, Operation<Double> original) {
-        WorldLoopTransformer transformer = toroidal$wrappedTransformer();
-        return transformer == null ? original.call(delta) : Math.abs(transformer.coords.x.foldDelta(delta));
+        WorldFold transformer = toroidal$wrappedTransformer();
+        return transformer == null ? original.call(delta) : Math.abs(SeamDelta.foldX(transformer, delta));
     }
 
     @WrapOperation(
             method = "followThePath",
             at = @At(value = "INVOKE", target = "Ljava/lang/Math;abs(D)D", ordinal = 2))
     private double toroidal$nodeDistanceZ(double delta, Operation<Double> original) {
-        WorldLoopTransformer transformer = toroidal$wrappedTransformer();
-        return transformer == null ? original.call(delta) : Math.abs(transformer.coords.z.foldDelta(delta));
+        WorldFold transformer = toroidal$wrappedTransformer();
+        return transformer == null ? original.call(delta) : Math.abs(SeamDelta.foldZ(transformer, delta));
     }
 
     @WrapOperation(
@@ -139,7 +116,7 @@ public class PathNavigationMixin implements NavigationShifter {
     }
 
     @Unique
-    private @Nullable WorldLoopTransformer toroidal$wrappedTransformer() {
+    private @Nullable WorldFold toroidal$wrappedTransformer() {
         return ((TransformerSource) this.mob).toroidal$wrappedTransformer();
     }
 }

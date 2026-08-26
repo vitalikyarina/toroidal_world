@@ -7,95 +7,70 @@ import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public class WorldLoopTransformer {
-    public static final WorldLoopTransformer NOOP = new WorldLoopTransformer(WorldLoopBounds.UNBOUNDED);
+final class WorldLoopTransformer implements WorldFold {
+    private final CoordOps coords;
+    private final ChunkOps chunks;
+    private final VectorOps vectors;
+    private final BlockOps blocks;
 
-    public final CoordOps coords;
-    public final ChunkOps chunks;
-    public final VectorOps vectors;
-    public final BlockOps blocks;
-
-    public final int xWidth;
-    public final int zWidth;
-
-    public final WorldLoopBounds bounds;
+    private final WorldLoopBounds bounds;
 
     private final boolean wrapped;
 
     private final int maxViewDistance;
 
-    public WorldLoopTransformer(WorldLoopBounds bounds) {
+    WorldLoopTransformer(WorldLoopBounds bounds) {
         this.bounds = bounds;
         this.wrapped = bounds.x() instanceof AxisBounds.Looped || bounds.z() instanceof AxisBounds.Looped;
+        this.maxViewDistance = bounds.maxViewDistance();
 
-        WrapDomain xChunk = chunkDomain(bounds.x());
-        WrapDomain zChunk = chunkDomain(bounds.z());
-
-        this.xWidth = xChunk.domainLength;
-        this.zWidth = zChunk.domainLength;
-        this.maxViewDistance = Math.min(viewDistanceCeiling(bounds.x()), viewDistanceCeiling(bounds.z()));
-
-        this.coords = new CoordOps(blockDomain(bounds.x()), blockDomain(bounds.z()));
-        this.chunks = new ChunkOps(xChunk, zChunk);
+        this.coords = new CoordOps(blockDomainFor(bounds.x()), blockDomainFor(bounds.z()));
+        this.chunks = new ChunkOps(chunkDomainFor(bounds.x()), chunkDomainFor(bounds.z()));
         this.vectors = new VectorOps();
         this.blocks = new BlockOps();
     }
 
-    private static WrapDomain chunkDomain(AxisBounds axis) {
+    private static WrapDomain chunkDomainFor(AxisBounds axis) {
         return switch (axis) {
             case AxisBounds.Looped looped -> new WrapDomain(looped.minChunk(), looped.maxChunk());
             case AxisBounds.Unbounded() -> new WrapDomain.Noop();
         };
     }
 
-    private static WrapDomain blockDomain(AxisBounds axis) {
+    private static WrapDomain blockDomainFor(AxisBounds axis) {
         return switch (axis) {
-            case AxisBounds.Looped looped -> new WrapDomain(
-                    looped.minChunk() * CoordinateConstants.CHUNK_WIDTH,
-                    looped.maxChunk() * CoordinateConstants.CHUNK_WIDTH);
+            case AxisBounds.Looped looped -> new WrapDomain(looped.minBlock(), looped.maxBlock());
             case AxisBounds.Unbounded() -> new WrapDomain.Noop();
         };
     }
 
-    private static int viewDistanceCeiling(AxisBounds axis) {
-        return switch (axis) {
-            case AxisBounds.Looped looped ->
-                    Math.max(1, looped.chunkWidth() / 2 - CoordinateConstants.VIEW_DISTANCE_MARGIN);
-            case AxisBounds.Unbounded() -> Integer.MAX_VALUE;
-        };
-    }
-
-    public final class CoordOps {
-        public final WrapDomain x;
-        public final WrapDomain z;
+    private static final class CoordOps {
+        private final WrapDomain x;
+        private final WrapDomain z;
 
         private CoordOps(WrapDomain x, WrapDomain z) {
             this.x = x;
             this.z = z;
         }
-
-        public double sqrDistToBounds(double xFrom, double yFrom, double zFrom, double xTo, double yTo, double zTo) {
-            double dy = yTo - yFrom;
-            return x.sqrDistToBounds(xTo - xFrom) + dy * dy + z.sqrDistToBounds(zTo - zFrom);
-        }
     }
 
-    public final class ChunkOps {
-        public final WrapDomain x;
-        public final WrapDomain z;
+    private static final class ChunkOps {
+        private final WrapDomain x;
+        private final WrapDomain z;
 
         private ChunkOps(WrapDomain x, WrapDomain z) {
             this.x = x;
             this.z = z;
         }
 
-        public ChunkPos wrap(ChunkPos chunkPos) {
+        private ChunkPos wrap(ChunkPos chunkPos) {
             if (!x.isOver(chunkPos.x()) && !z.isOver(chunkPos.z())) {
                 return chunkPos;
             }
@@ -103,7 +78,7 @@ public class WorldLoopTransformer {
             return new ChunkPos(x.wrap(chunkPos.x()), z.wrap(chunkPos.z()));
         }
 
-        public SectionPos wrapSection(SectionPos sectionPos) {
+        private SectionPos wrapSection(SectionPos sectionPos) {
             if (!x.isOver(sectionPos.x()) && !z.isOver(sectionPos.z())) {
                 return sectionPos;
             }
@@ -111,7 +86,7 @@ public class WorldLoopTransformer {
             return SectionPos.of(x.wrap(sectionPos.x()), sectionPos.y(), z.wrap(sectionPos.z()));
         }
 
-        public long wrapSectionNode(long sectionNode) {
+        private long wrapSectionNode(long sectionNode) {
             int sectionX = SectionPos.x(sectionNode);
             int sectionZ = SectionPos.z(sectionNode);
             if (!x.isOver(sectionX) && !z.isOver(sectionZ)) {
@@ -121,7 +96,7 @@ public class WorldLoopTransformer {
             return SectionPos.asLong(x.wrap(sectionX), SectionPos.y(sectionNode), z.wrap(sectionZ));
         }
 
-        public long wrapChunkKey(long chunkKey) {
+        private long wrapChunkKey(long chunkKey) {
             int chunkX = ChunkPos.getX(chunkKey);
             int chunkZ = ChunkPos.getZ(chunkKey);
             if (!x.isOver(chunkX) && !z.isOver(chunkZ)) {
@@ -131,7 +106,7 @@ public class WorldLoopTransformer {
             return ChunkPos.pack(x.wrap(chunkX), z.wrap(chunkZ));
         }
 
-        public ChunkPos unwrap(ChunkPos anchor, ChunkPos wrapped) {
+        private ChunkPos unwrap(ChunkPos anchor, ChunkPos wrapped) {
             int unwrappedX = x.unwrap(anchor.x(), wrapped.x());
             int unwrappedZ = z.unwrap(anchor.z(), wrapped.z());
             if (unwrappedX == wrapped.x() && unwrappedZ == wrapped.z()) {
@@ -141,35 +116,17 @@ public class WorldLoopTransformer {
             return new ChunkPos(unwrappedX, unwrappedZ);
         }
 
-        public boolean isOver(ChunkPos chunkPos) {
+        private boolean isOver(ChunkPos chunkPos) {
             return x.isOver(chunkPos.x()) || z.isOver(chunkPos.z());
         }
 
-        public int chessboardDistance(ChunkPos fromChunkPos, ChunkPos toChunkPos) {
-            return fromChunkPos.getChessboardDistance(
-                    x.unwrap(fromChunkPos.x(), toChunkPos.x()),
-                    z.unwrap(fromChunkPos.z(), toChunkPos.z()));
-        }
-
-        public int overshoot(int chunkX, int chunkZ) {
+        private int overshoot(int chunkX, int chunkZ) {
             return Math.max(x.overshoot(chunkX), z.overshoot(chunkZ));
-        }
-
-        public int sqrDistToBounds(int xFrom, int zFrom, int xTo, int zTo) {
-            return x.sqrDistToBounds(xTo - xFrom) + z.sqrDistToBounds(zTo - zFrom);
-        }
-
-        public int sqrDistToBounds(long from, long to) {
-            return sqrDistToBounds(ChunkPos.getX(from), ChunkPos.getZ(from), ChunkPos.getX(to), ChunkPos.getZ(to));
-        }
-
-        public int sqrDistToBounds(ChunkPos from, ChunkPos to) {
-            return sqrDistToBounds(from.x(), from.z(), to.x(), to.z());
         }
     }
 
-    public final class VectorOps {
-        public Vec3 wrap(Vec3 vec) {
+    private final class VectorOps {
+        private Vec3 wrap(Vec3 vec) {
             if (!coords.x.isOver(vec.x) && !coords.z.isOver(vec.z)) {
                 return vec;
             }
@@ -177,7 +134,7 @@ public class WorldLoopTransformer {
             return new Vec3(coords.x.wrap(vec.x), vec.y, coords.z.wrap(vec.z));
         }
 
-        public Vec3 nearestCopy(Vec3 ref, Vec3 target) {
+        private Vec3 nearestCopy(Vec3 ref, Vec3 target) {
             double nearestX = coords.x.unwrapAround(ref.x, target.x);
             double nearestZ = coords.z.unwrapAround(ref.z, target.z);
             if (nearestX == target.x && nearestZ == target.z) {
@@ -187,13 +144,13 @@ public class WorldLoopTransformer {
             return new Vec3(nearestX, target.y, nearestZ);
         }
 
-        public boolean isOver(Vec3 vec) {
+        private boolean isOver(Vec3 vec) {
             return coords.x.isOver(vec.x) || coords.z.isOver(vec.z);
         }
     }
 
-    public final class BlockOps {
-        public BlockPos wrap(BlockPos blockPos) {
+    private final class BlockOps {
+        private BlockPos wrap(BlockPos blockPos) {
             if (!coords.x.isOver(blockPos.getX()) && !coords.z.isOver(blockPos.getZ())) {
                 return blockPos;
             }
@@ -201,17 +158,7 @@ public class WorldLoopTransformer {
             return new BlockPos(coords.x.wrap(blockPos.getX()), blockPos.getY(), coords.z.wrap(blockPos.getZ()));
         }
 
-        public BlockPos unwrap(BlockPos anchor, BlockPos wrapped) {
-            int unwrappedX = coords.x.unwrap(anchor.getX(), wrapped.getX());
-            int unwrappedZ = coords.z.unwrap(anchor.getZ(), wrapped.getZ());
-            if (unwrappedX == wrapped.getX() && unwrappedZ == wrapped.getZ()) {
-                return wrapped;
-            }
-
-            return new BlockPos(unwrappedX, wrapped.getY(), unwrappedZ);
-        }
-
-        public BlockPos nearestCopy(BlockPos ref, BlockPos target) {
+        private BlockPos nearestCopy(BlockPos ref, BlockPos target) {
             int nearestX = coords.x.unwrapAround(ref.getX(), target.getX());
             int nearestZ = coords.z.unwrapAround(ref.getZ(), target.getZ());
             if (nearestX == target.getX() && nearestZ == target.getZ()) {
@@ -222,11 +169,12 @@ public class WorldLoopTransformer {
         }
     }
 
+    @Override
     public boolean crossesBounds(AABB box) {
         return !coords.x.containsSpan(box.minX, box.maxX) || !coords.z.containsSpan(box.minZ, box.maxZ);
     }
 
-    public List<AABB> splitAcrossBounds(AABB box) {
+    private List<AABB> splitAcrossBounds(AABB box) {
         if (!crossesBounds(box)) {
             return List.of(box);
         }
@@ -243,12 +191,13 @@ public class WorldLoopTransformer {
         return pieces;
     }
 
+    @Override
     public boolean crossesBounds(BoundingBox region) {
         return coords.x.isOver(region.minX()) || coords.x.isOver(region.maxX())
                 || coords.z.isOver(region.minZ()) || coords.z.isOver(region.maxZ());
     }
 
-    public List<BoundingBox> splitAcrossBounds(BoundingBox region) {
+    private List<BoundingBox> splitAcrossBounds(BoundingBox region) {
         if (!crossesBounds(region)) {
             return List.of(region);
         }
@@ -265,73 +214,42 @@ public class WorldLoopTransformer {
         return pieces;
     }
 
-    public long wrapBlockNode(long blockNode) {
-        int x = BlockPos.getX(blockNode);
-        int z = BlockPos.getZ(blockNode);
-        if (!coords.x.isOver(x) && !coords.z.isOver(z)) {
-            return blockNode;
-        }
-
-        return BlockPos.asLong(coords.x.wrap(x), BlockPos.getY(blockNode), coords.z.wrap(z));
-    }
-
-    public double distanceToSqrWrappedCoord(AABB aabb, Vec3 vec) {
-        double xGap = seamGap(coords.x, aabb.minX, aabb.maxX, vec.x);
-        double yGap = Math.max(Math.max(aabb.minY - vec.y, vec.y - aabb.maxY), 0.0);
-        double zGap = seamGap(coords.z, aabb.minZ, aabb.maxZ, vec.z);
-        return xGap * xGap + yGap * yGap + zGap * zGap;
-    }
-
     private static double seamGap(WrapDomain domain, double min, double max, double coord) {
         double center = (min + max) / 2.0;
         double nearestCenter = domain.unwrapAround(coord, center);
         return Math.max(Math.abs(nearestCenter - coord) - (max - min) / 2.0, 0.0);
     }
 
-    public AABB foldBoxToward(Vec3 ref, AABB box) {
-        double centerX = (box.minX + box.maxX) / 2.0;
-        double centerZ = (box.minZ + box.maxZ) / 2.0;
-        double shiftX = coords.x.unwrapAround(ref.x, centerX) - centerX;
-        double shiftZ = coords.z.unwrapAround(ref.z, centerZ) - centerZ;
-        return shiftX == 0.0 && shiftZ == 0.0 ? box : box.move(shiftX, 0.0, shiftZ);
-    }
-
-    public Vec3 mapFrom(WorldLoopTransformer source, Vec3 position, double declaredScale) {
-        double mappedX = coords.x.mapFrom(source.coords.x, position.x, declaredScale);
-        double mappedZ = coords.z.mapFrom(source.coords.z, position.z, declaredScale);
-        return mappedX == position.x && mappedZ == position.z ? position : new Vec3(mappedX, position.y, mappedZ);
-    }
-
-    public boolean spansSeam(BoundingBox region) {
-        return coords.x.spansSeam(region.minX(), region.maxX()) || coords.z.spansSeam(region.minZ(), region.maxZ());
-    }
-
-    public BoundingBox foldAcrossSeam(BoundingBox region) {
-        if (!spansSeam(region)) {
-            return region;
-        }
-
-        return new BoundingBox(
-                coords.x.foldSpanStart(region.minX(), region.maxX()),
-                region.minY(),
-                coords.z.foldSpanStart(region.minZ(), region.maxZ()),
-                coords.x.foldSpanEnd(region.minX(), region.maxX()),
-                region.maxY(),
-                coords.z.foldSpanEnd(region.minZ(), region.maxZ()));
-    }
-
+    @Override
     public boolean regionsOverlap(BoundingBox first, BoundingBox second) {
         return coords.x.overlaps(first.minX(), first.maxX(), second.minX(), second.maxX())
                 && coords.z.overlaps(first.minZ(), first.maxZ(), second.minZ(), second.maxZ())
                 && first.minY() <= second.maxY() && second.minY() <= first.maxY();
     }
 
-    public int limitViewDistance(int viewDistance) {
-        return Math.min(viewDistance, maxViewDistance);
-    }
-
+    @Override
     public int maxViewDistance() {
         return maxViewDistance;
+    }
+
+    @Override
+    public boolean isOver(Vec3 pos) {
+        return vectors.isOver(pos);
+    }
+
+    @Override
+    public boolean isOver(BlockPos pos) {
+        return coords.x.isOver(pos.getX()) || coords.z.isOver(pos.getZ());
+    }
+
+    @Override
+    public boolean isOver(ChunkPos pos) {
+        return chunks.isOver(pos);
+    }
+
+    @Override
+    public int chunkOvershoot(ChunkPos pos) {
+        return chunks.overshoot(pos.x(), pos.z());
     }
 
     @Override
@@ -346,7 +264,217 @@ public class WorldLoopTransformer {
         };
     }
 
+    @Override
     public boolean isWrapped() {
         return this.wrapped;
+    }
+
+    @Override
+    public WorldLoopBounds bounds() {
+        return this.bounds;
+    }
+
+    @Override
+    public boolean decomposesPerAxis() {
+        return true;
+    }
+
+    @Override
+    public boolean preservesLocalIndices() {
+        return true;
+    }
+
+    @Override
+    public WrapDomain blockDomain(Direction.Axis axis) {
+        return switch (axis) {
+            case X -> coords.x;
+            case Z -> coords.z;
+            case Y -> throw new IllegalArgumentException("The fold contract carries no Y axis");
+        };
+    }
+
+    @Override
+    public WrapDomain chunkDomain(Direction.Axis axis) {
+        return switch (axis) {
+            case X -> chunks.x;
+            case Z -> chunks.z;
+            case Y -> throw new IllegalArgumentException("The fold contract carries no Y axis");
+        };
+    }
+
+    @Override
+    public Vec3 fold(Vec3 pos) {
+        return vectors.wrap(pos);
+    }
+
+    @Override
+    public BlockPos fold(BlockPos pos) {
+        return blocks.wrap(pos);
+    }
+
+    @Override
+    public ChunkPos fold(ChunkPos pos) {
+        return chunks.wrap(pos);
+    }
+
+    @Override
+    public SectionPos fold(SectionPos pos) {
+        return chunks.wrapSection(pos);
+    }
+
+    @Override
+    public long foldBlockNode(long blockNode) {
+        int x = BlockPos.getX(blockNode);
+        int z = BlockPos.getZ(blockNode);
+        if (!coords.x.isOver(x) && !coords.z.isOver(z)) {
+            return blockNode;
+        }
+
+        return BlockPos.asLong(coords.x.wrap(x), BlockPos.getY(blockNode), coords.z.wrap(z));
+    }
+
+    @Override
+    public long foldChunkKey(long chunkKey) {
+        return chunks.wrapChunkKey(chunkKey);
+    }
+
+    @Override
+    public long foldSectionNode(long sectionNode) {
+        return chunks.wrapSectionNode(sectionNode);
+    }
+
+    @Override
+    public Folded<Vec3> foldOriented(Vec3 pos) {
+        return Folded.of(vectors.wrap(pos));
+    }
+
+    @Override
+    public Folded<BlockPos> foldOriented(BlockPos pos) {
+        return Folded.of(blocks.wrap(pos));
+    }
+
+    @Override
+    public Folded<ChunkPos> foldOriented(ChunkPos pos) {
+        return Folded.of(chunks.wrap(pos));
+    }
+
+    @Override
+    public Vec3 nearestCopy(Vec3 ref, Vec3 target) {
+        return vectors.nearestCopy(ref, target);
+    }
+
+    @Override
+    public BlockPos nearestCopy(BlockPos ref, BlockPos target) {
+        return blocks.nearestCopy(ref, target);
+    }
+
+    @Override
+    public ChunkPos nearestCopy(ChunkPos ref, ChunkPos target) {
+        return chunks.unwrap(ref, target);
+    }
+
+    @Override
+    public Folded<Vec3> nearestCopyOriented(Vec3 ref, Vec3 target) {
+        return Folded.of(vectors.nearestCopy(ref, target));
+    }
+
+    @Override
+    public Folded<BlockPos> nearestCopyOriented(BlockPos ref, BlockPos target) {
+        return Folded.of(blocks.nearestCopy(ref, target));
+    }
+
+    @Override
+    public DeckTransformation deckTransformation(ChunkPos chunk, ChunkPos copy) {
+        int deltaX = copy.x() - chunk.x();
+        int deltaZ = copy.z() - chunk.z();
+        if (deltaX == 0 && deltaZ == 0) {
+            return DeckTransformation.IDENTITY;
+        }
+
+        requireCopy(chunk, copy, deltaX, deltaZ);
+        return new DeckTransformation(SeamTransform.translation(
+                SectionPos.sectionToBlockCoord(deltaX), SectionPos.sectionToBlockCoord(deltaZ)));
+    }
+
+    @Override
+    public BlockPos reseat(BlockPos pos, ChunkPos copy) {
+        int deltaX = copy.x() - SectionPos.blockToSectionCoord(pos.getX());
+        int deltaZ = copy.z() - SectionPos.blockToSectionCoord(pos.getZ());
+        if (deltaX == 0 && deltaZ == 0) {
+            return pos;
+        }
+
+        requireCopy(ChunkPos.containing(pos), copy, deltaX, deltaZ);
+        return pos.offset(SectionPos.sectionToBlockCoord(deltaX), 0, SectionPos.sectionToBlockCoord(deltaZ));
+    }
+
+    private void requireCopy(ChunkPos chunk, ChunkPos copy, int deltaX, int deltaZ) {
+        if (!chunks.x.isWholeLaps(deltaX) || !chunks.z.isWholeLaps(deltaZ)) {
+            throw new IllegalArgumentException(copy + " is not a copy of " + chunk + " in " + this);
+        }
+    }
+
+    @Override
+    public Vec3 foldDelta(Vec3 from, Vec3 to) {
+        return vectors.nearestCopy(from, to).subtract(from);
+    }
+
+    @Override
+    public double sqrDistance(Vec3 from, Vec3 to) {
+        return sqrDistance(from.x, from.y, from.z, to.x, to.y, to.z);
+    }
+
+    @Override
+    public double sqrDistance(double xFrom, double yFrom, double zFrom, double xTo, double yTo, double zTo) {
+        double dx = coords.x.unwrapAround(xFrom, xTo) - xFrom;
+        double dy = yTo - yFrom;
+        double dz = coords.z.unwrapAround(zFrom, zTo) - zFrom;
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    @Override
+    public int sqrChunkDistance(ChunkPos from, ChunkPos to) {
+        int dx = chunks.x.unwrapAround(from.x(), to.x()) - from.x();
+        int dz = chunks.z.unwrapAround(from.z(), to.z()) - from.z();
+        return dx * dx + dz * dz;
+    }
+
+    @Override
+    public double sqrDistanceToBox(AABB box, Vec3 point) {
+        double xGap = seamGap(coords.x, box.minX, box.maxX, point.x);
+        double yGap = Math.max(Math.max(box.minY - point.y, point.y - box.maxY), 0.0);
+        double zGap = seamGap(coords.z, box.minZ, box.maxZ, point.z);
+        return xGap * xGap + yGap * yGap + zGap * zGap;
+    }
+
+    @Override
+    public List<Folded<AABB>> split(AABB box) {
+        List<AABB> pieces = splitAcrossBounds(box);
+        List<Folded<AABB>> oriented = new ArrayList<>(pieces.size());
+        for (AABB piece : pieces) {
+            oriented.add(Folded.of(piece));
+        }
+
+        return oriented;
+    }
+
+    @Override
+    public List<Folded<BoundingBox>> split(BoundingBox region) {
+        List<BoundingBox> pieces = splitAcrossBounds(region);
+        List<Folded<BoundingBox>> oriented = new ArrayList<>(pieces.size());
+        for (BoundingBox piece : pieces) {
+            oriented.add(Folded.of(piece));
+        }
+
+        return oriented;
+    }
+
+    @Override
+    public Folded<AABB> foldBox(Vec3 ref, AABB box) {
+        double centerX = (box.minX + box.maxX) / 2.0;
+        double centerZ = (box.minZ + box.maxZ) / 2.0;
+        double shiftX = coords.x.unwrapAround(ref.x, centerX) - centerX;
+        double shiftZ = coords.z.unwrapAround(ref.z, centerZ) - centerZ;
+        return Folded.of(shiftX == 0.0 && shiftZ == 0.0 ? box : box.move(shiftX, 0.0, shiftZ));
     }
 }

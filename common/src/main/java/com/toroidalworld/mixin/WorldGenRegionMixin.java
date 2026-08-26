@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.LevelHolder;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -16,12 +16,10 @@ import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -40,18 +38,8 @@ public abstract class WorldGenRegionMixin implements LevelHolder {
 
     @Unique
     private BlockPos toroidal$keyIn(ChunkAccess chunk, BlockPos pos) {
-        ChunkPos chunkPos = chunk.getPos();
-        if (chunkPos.x() == SectionPos.blockToSectionCoord(pos.getX())
-                && chunkPos.z() == SectionPos.blockToSectionCoord(pos.getZ())) {
-            return pos;
-        }
-
-        BlockPos key = new BlockPos(
-                SectionPos.sectionToBlockCoord(chunkPos.x(), SectionPos.sectionRelative(pos.getX())),
-                pos.getY(),
-                SectionPos.sectionToBlockCoord(chunkPos.z(), SectionPos.sectionRelative(pos.getZ())));
-
-        return key;
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        return transformer == null ? pos : transformer.reseat(pos, chunk.getPos());
     }
 
     @WrapOperation(
@@ -146,9 +134,9 @@ public abstract class WorldGenRegionMixin implements LevelHolder {
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/chunk/ChunkAccess;addEntity(Lnet/minecraft/world/entity/Entity;)V"))
     private void toroidal$addEntityInChunkFrame(ChunkAccess chunk, Entity entity, Operation<Void> original) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
-        if (transformer != null && transformer.vectors.isOver(entity.position())) {
-            entity.setPos(transformer.vectors.wrap(entity.position()));
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        if (transformer != null && transformer.isOver(entity.position())) {
+            entity.setPos(transformer.fold(entity.position()));
         }
 
         original.call(chunk, entity);

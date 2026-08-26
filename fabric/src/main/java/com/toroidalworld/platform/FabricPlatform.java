@@ -3,7 +3,7 @@ package com.toroidalworld.platform;
 import java.util.function.IntFunction;
 
 import com.toroidalworld.net.WrappingSettingsPayload;
-import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.shape.FlatShape;
 
 import io.netty.buffer.Unpooled;
 
@@ -44,9 +44,9 @@ public final class FabricPlatform implements Platform {
     }
 
     @Override
-    public void sendWrappingBounds(ServerPlayer player, WorldLoopBounds bounds) {
+    public void sendWorldShape(ServerPlayer player, FlatShape shape) {
         if (ServerPlayNetworking.canSend(player, WrappingSettingsPayload.TYPE)) {
-            ServerPlayNetworking.send(player, new WrappingSettingsPayload(bounds));
+            ServerPlayNetworking.send(player, new WrappingSettingsPayload(shape));
         }
     }
 

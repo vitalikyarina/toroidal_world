@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -36,12 +36,12 @@ public class RaidMixin {
                     target = "Lnet/minecraft/world/phys/Vec3;atCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$raidHornThroughSeam(Vec3 raidLoc, @Local(argsOnly = true) ServerLevel level,
             @Local ServerPlayer listener) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return raidLoc;
         }
 
-        return transformer.vectors.nearestCopy(listener.position(), raidLoc);
+        return transformer.nearestCopy(listener.position(), raidLoc);
     }
 
     @WrapOperation(
@@ -60,12 +60,12 @@ public class RaidMixin {
     private Stream<SectionPos> toroidal$villageSectionsThroughSeam(SectionPos cubeCenter, int radius,
             Operation<Stream<SectionPos>> original, @Local(argsOnly = true) ServerLevel level) {
         Stream<SectionPos> sections = original.call(cubeCenter, radius);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return sections;
         }
 
-        return sections.map(transformer.chunks::wrapSection).distinct();
+        return sections.map(section -> transformer.fold(section)).distinct();
     }
 
     @ModifyArg(
@@ -74,7 +74,7 @@ public class RaidMixin {
             index = 0)
     private Comparator<BlockPos> toroidal$nearestVillageSectionThroughSeam(Comparator<BlockPos> original,
             @Local(argsOnly = true) ServerLevel level) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return original;
         }

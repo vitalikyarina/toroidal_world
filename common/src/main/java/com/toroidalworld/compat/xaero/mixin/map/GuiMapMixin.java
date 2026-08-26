@@ -12,15 +12,21 @@ import org.joml.Matrix4f;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.toroidalworld.compat.AxisCopies;
 import com.toroidalworld.compat.xaero.XaeroWorldMapFold;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 
+import xaero.lib.client.graphics.GpuTextureAndView;
 import xaero.map.MapProcessor;
 import xaero.map.graphics.MapRenderHelper;
 import xaero.map.graphics.renderer.multitexture.MultiTextureRenderTypeRenderer;
@@ -36,6 +42,17 @@ public abstract class GuiMapMixin {
     private int mouseBlockPosZ;
     @Shadow
     private double scale;
+    @Shadow
+    private double userScale;
+    @Shadow
+    private double cameraX;
+    @Shadow
+    private double cameraZ;
+    @Shadow
+    private static double destScale;
+
+    @Shadow
+    protected abstract double getScaleMultiplier(int screenShortSide);
 
     @Unique
     private MapProcessor toroidal$processor;
@@ -55,6 +72,42 @@ public abstract class GuiMapMixin {
     private int toroidal$slotViewBlockX;
     @Unique
     private int toroidal$slotViewBlockZ;
+    @Unique
+    private final LongOpenHashSet toroidal$drawnCanonicalSlots = new LongOpenHashSet();
+    @Unique
+    private int toroidal$cursorLapX;
+    @Unique
+    private int toroidal$cursorLapZ;
+
+    @Inject(method = "extractRenderState", at = @At("HEAD"))
+    private void toroidal$beginFrame(CallbackInfo ci) {
+        this.toroidal$drawnCanonicalSlots.clear();
+        double floor = toroidal$zoomFloor();
+        if (floor > 0.0) {
+            if (destScale < floor) {
+                destScale = floor;
+            }
+
+            if (this.userScale < floor) {
+                this.userScale = floor;
+            }
+        }
+    }
+
+    @Inject(method = "applyZoomLimits", at = @At("TAIL"))
+    private void toroidal$floorZoomOut(CallbackInfo ci) {
+        double floor = toroidal$zoomFloor();
+        if (floor > 0.0 && destScale < floor) {
+            destScale = floor;
+        }
+    }
+
+    @Unique
+    private double toroidal$zoomFloor() {
+        Window window = Minecraft.getInstance().getWindow();
+        return XaeroWorldMapFold.zoomFloorScale(this.getScaleMultiplier(Math.min(window.getWidth(), window.getHeight())));
+    }
+
     @WrapOperation(
             method = "extractRenderState",
             at = @At(
@@ -82,8 +135,12 @@ public abstract class GuiMapMixin {
                     ordinal = 1,
                     shift = At.Shift.AFTER))
     private void toroidal$foldCursorBlockPos(CallbackInfo ci) {
-        this.mouseBlockPosX = XaeroWorldMapFold.foldBlock(Direction.Axis.X, this.mouseBlockPosX);
-        this.mouseBlockPosZ = XaeroWorldMapFold.foldBlock(Direction.Axis.Z, this.mouseBlockPosZ);
+        int rawX = this.mouseBlockPosX;
+        int rawZ = this.mouseBlockPosZ;
+        this.mouseBlockPosX = XaeroWorldMapFold.foldBlock(Direction.Axis.X, rawX);
+        this.mouseBlockPosZ = XaeroWorldMapFold.foldBlock(Direction.Axis.Z, rawZ);
+        this.toroidal$cursorLapX = rawX - this.mouseBlockPosX;
+        this.toroidal$cursorLapZ = rawZ - this.mouseBlockPosZ;
     }
 
     @Redirect(
@@ -99,7 +156,7 @@ public abstract class GuiMapMixin {
         this.toroidal$viewCaveLayer = caveLayer;
         this.toroidal$leveledCandidate = null;
         LeveledRegion<?> original = processor.getLeveledRegion(caveLayer, regX, regZ, level);
-        if (original != null || !XaeroWorldMapFold.active() || !XaeroWorldMapFold.glueableAt(64 << level)) {
+        if (original != null || !XaeroWorldMapFold.active()) {
             return original;
         }
 
@@ -158,8 +215,17 @@ public abstract class GuiMapMixin {
         int viewBlockZ = this.toroidal$viewLeveledRegZ * side + slotZ * slotSize;
         this.toroidal$slotViewBlockX = viewBlockX;
         this.toroidal$slotViewBlockZ = viewBlockZ;
-        if (!XaeroWorldMapFold.active() || !XaeroWorldMapFold.glueableAt(slotSize)) {
+        if (!XaeroWorldMapFold.active()) {
             return isCandidate ? null : region.getTexture(slotX, slotZ);
+        }
+
+        if (!XaeroWorldMapFold.glueableAt(slotSize)) {
+            if (!isCandidate) {
+                return region.getTexture(slotX, slotZ);
+            }
+
+            this.toroidal$slotFolded = true;
+            return toroidal$anyCanonicalTexture(viewBlockX, viewBlockZ, slotSize);
         }
 
         int foldedBlockX = XaeroWorldMapFold.foldBlock(Direction.Axis.X, viewBlockX);
@@ -169,19 +235,7 @@ public abstract class GuiMapMixin {
         }
 
         this.toroidal$slotFolded = true;
-        if (!XaeroWorldMapFold.withinOnePeriod(viewBlockX, foldedBlockX, viewBlockZ, foldedBlockZ)) {
-            return null;
-        }
-
-        int canonicalRegX = Math.floorDiv(foldedBlockX, side);
-        int canonicalRegZ = Math.floorDiv(foldedBlockZ, side);
-        LeveledRegion<?> canonical = this.toroidal$processor
-                .getLeveledRegion(this.toroidal$viewCaveLayer, canonicalRegX, canonicalRegZ, level);
-        if (canonical == null || !canonical.hasTextures()) {
-            return null;
-        }
-
-        return canonical.getTexture((foldedBlockX - canonicalRegX * side) / slotSize, (foldedBlockZ - canonicalRegZ * side) / slotSize);
+        return toroidal$canonicalRegionTexture(foldedBlockX, foldedBlockZ);
     }
 
     @Redirect(
@@ -207,46 +261,105 @@ public abstract class GuiMapMixin {
             Matrix4f matrix, float x, float y, float width, float height,
             GpuTextureView texture, boolean hasLight, MultiTextureRenderTypeRenderer renderer, Operation<Void> original) {
         int slotSize = 64 << this.toroidal$viewLevel;
-        int[] xBounds;
-        int[] zBounds;
-        if (!XaeroWorldMapFold.active()
-                || XaeroWorldMapFold.glueableAt(slotSize)
-                || (xBounds = XaeroWorldMapFold.seamBounds(Direction.Axis.X)) == null
-                || (zBounds = XaeroWorldMapFold.seamBounds(Direction.Axis.Z)) == null) {
+        if (!XaeroWorldMapFold.active() || XaeroWorldMapFold.glueableAt(slotSize)) {
             original.call(matrix, x, y, width, height, texture, hasLight, renderer);
             return;
         }
 
-        int slotMinX = this.toroidal$slotViewBlockX;
-        int slotMinZ = this.toroidal$slotViewBlockZ;
-        int clippedMinX = Math.max(slotMinX, xBounds[0]);
-        int clippedMaxX = Math.min(slotMinX + slotSize, xBounds[0] + xBounds[1]);
-        int clippedMinZ = Math.max(slotMinZ, zBounds[0]);
-        int clippedMaxZ = Math.min(slotMinZ + slotSize, zBounds[0] + zBounds[1]);
-        if (clippedMinX >= clippedMaxX || clippedMinZ >= clippedMaxZ) {
-            return;
-        }
+        AxisCopies copiesX = XaeroWorldMapFold.copies(Direction.Axis.X);
+        AxisCopies copiesZ = XaeroWorldMapFold.copies(Direction.Axis.Z);
+        Window window = Minecraft.getInstance().getWindow();
+        int[] spanX = XaeroWorldMapFold.viewSpan(this.cameraX, window.getWidth(), this.scale, slotSize);
+        int[] spanZ = XaeroWorldMapFold.viewSpan(this.cameraZ, window.getHeight(), this.scale, slotSize);
+        int[] lapsX = copiesX.laps(spanX[0], spanX[1]);
+        int[] lapsZ = copiesZ.laps(spanZ[0], spanZ[1]);
+        int viewBlockX = this.toroidal$slotViewBlockX;
+        int viewBlockZ = this.toroidal$slotViewBlockZ;
+        for (int originX : toroidal$canonicalOrigins(Direction.Axis.X, copiesX, viewBlockX, slotSize)) {
+            for (int originZ : toroidal$canonicalOrigins(Direction.Axis.Z, copiesZ, viewBlockZ, slotSize)) {
+                if (!this.toroidal$drawnCanonicalSlots.add(((long) originX << 32) ^ (originZ & 0xFFFFFFFFL))) {
+                    continue;
+                }
 
-        float clippedX = x + (clippedMinX - slotMinX);
-        float clippedY = y + (clippedMinZ - slotMinZ);
-        float clippedWidth = clippedMaxX - clippedMinX;
-        float clippedHeight = clippedMaxZ - clippedMinZ;
-        float u1 = (float) (clippedMinX - slotMinX) / slotSize;
-        float u2 = (float) (clippedMaxX - slotMinX) / slotSize;
-        float v1 = (float) (clippedMinZ - slotMinZ) / slotSize;
-        float v2 = (float) (clippedMaxZ - slotMinZ) / slotSize;
-        // The quad is emitted directly: calling GuiMap's own helper would drag its xaerolib superclass onto the compile classpath.
-        for (int periodX = -1; periodX <= 1; periodX++) {
-            for (int periodZ = -1; periodZ <= 1; periodZ++) {
-                float copyX = clippedX + periodX * xBounds[1];
-                float copyY = clippedY + periodZ * zBounds[1];
-                BufferBuilder quad = renderer.begin(texture);
-                quad.addVertex(matrix, copyX, copyY + clippedHeight, 0.0F).setUv(u1, v2);
-                quad.addVertex(matrix, copyX + clippedWidth, copyY + clippedHeight, 0.0F).setUv(u2, v2);
-                quad.addVertex(matrix, copyX + clippedWidth, copyY, 0.0F).setUv(u2, v1);
-                quad.addVertex(matrix, copyX, copyY, 0.0F).setUv(u1, v1);
+                RegionTexture<?> regionTexture = toroidal$canonicalRegionTexture(originX, originZ);
+                GpuTextureAndView textureAndView = regionTexture == null ? null : regionTexture.getGlColorTexture();
+                if (textureAndView == null) {
+                    continue;
+                }
+
+                int clippedMinX = copiesX.clipMin(originX);
+                int clippedMaxX = copiesX.clipMax(originX + slotSize);
+                int clippedMinZ = copiesZ.clipMin(originZ);
+                int clippedMaxZ = copiesZ.clipMax(originZ + slotSize);
+                if (clippedMinX >= clippedMaxX || clippedMinZ >= clippedMaxZ) {
+                    continue;
+                }
+
+                float clippedX = x + (clippedMinX - viewBlockX);
+                float clippedY = y + (clippedMinZ - viewBlockZ);
+                float clippedWidth = clippedMaxX - clippedMinX;
+                float clippedHeight = clippedMaxZ - clippedMinZ;
+                float u1 = (float) (clippedMinX - originX) / slotSize;
+                float u2 = (float) (clippedMaxX - originX) / slotSize;
+                float v1 = (float) (clippedMinZ - originZ) / slotSize;
+                float v2 = (float) (clippedMaxZ - originZ) / slotSize;
+                for (int lapX : lapsX) {
+                    for (int lapZ : lapsZ) {
+                        float copyX = clippedX + copiesX.offset(lapX);
+                        float copyY = clippedY + copiesZ.offset(lapZ);
+                        BufferBuilder quad = renderer.begin(textureAndView.view);
+                        quad.addVertex(matrix, copyX, copyY + clippedHeight, 0.0F).setUv(u1, v2);
+                        quad.addVertex(matrix, copyX + clippedWidth, copyY + clippedHeight, 0.0F).setUv(u2, v2);
+                        quad.addVertex(matrix, copyX + clippedWidth, copyY, 0.0F).setUv(u2, v1);
+                        quad.addVertex(matrix, copyX, copyY, 0.0F).setUv(u1, v1);
+                    }
+                }
             }
         }
+    }
+
+    @Unique
+    private static int[] toroidal$canonicalOrigins(Direction.Axis axis, AxisCopies copies, int viewBlock, int slotSize) {
+        if (!copies.loops()) {
+            return new int[] {viewBlock};
+        }
+
+        int firstOrigin = Math.floorDiv(XaeroWorldMapFold.foldBlock(axis, viewBlock), slotSize) * slotSize;
+        int lastOrigin = Math.floorDiv(XaeroWorldMapFold.foldBlock(axis, viewBlock + slotSize - 1), slotSize) * slotSize;
+        return firstOrigin == lastOrigin ? new int[] {firstOrigin} : new int[] {firstOrigin, lastOrigin};
+    }
+
+    @Unique
+    private RegionTexture<?> toroidal$anyCanonicalTexture(int viewBlockX, int viewBlockZ, int slotSize) {
+        AxisCopies copiesX = XaeroWorldMapFold.copies(Direction.Axis.X);
+        AxisCopies copiesZ = XaeroWorldMapFold.copies(Direction.Axis.Z);
+        for (int originX : toroidal$canonicalOrigins(Direction.Axis.X, copiesX, viewBlockX, slotSize)) {
+            for (int originZ : toroidal$canonicalOrigins(Direction.Axis.Z, copiesZ, viewBlockZ, slotSize)) {
+                RegionTexture<?> regionTexture = toroidal$canonicalRegionTexture(originX, originZ);
+                if (regionTexture != null) {
+                    return regionTexture;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Unique
+    private RegionTexture<?> toroidal$canonicalRegionTexture(int canonicalBlockX, int canonicalBlockZ) {
+        int level = this.toroidal$viewLevel;
+        int slotSize = 64 << level;
+        int side = 512 << level;
+        int canonicalRegX = Math.floorDiv(canonicalBlockX, side);
+        int canonicalRegZ = Math.floorDiv(canonicalBlockZ, side);
+        LeveledRegion<?> canonical = this.toroidal$processor
+                .getLeveledRegion(this.toroidal$viewCaveLayer, canonicalRegX, canonicalRegZ, level);
+        if (canonical == null || !canonical.hasTextures()) {
+            return null;
+        }
+
+        return canonical.getTexture((canonicalBlockX - canonicalRegX * side) / slotSize,
+                (canonicalBlockZ - canonicalRegZ * side) / slotSize);
     }
 
     @WrapOperation(
@@ -260,34 +373,38 @@ public abstract class GuiMapMixin {
             int leftX, int rightX, int topZ, int bottomZ,
             float sideR, float sideG, float sideB, float sideA, float centerR, float centerG, float centerB, float centerA,
             Operation<Void> original) {
-        original.call(matrixStack, overlayBuffer, flooredCameraX, flooredCameraZ, leftX, rightX, topZ, bottomZ,
-                sideR, sideG, sideB, sideA, centerR, centerG, centerB, centerA);
         if (!XaeroWorldMapFold.active()) {
+            original.call(matrixStack, overlayBuffer, flooredCameraX, flooredCameraZ, leftX, rightX, topZ, bottomZ,
+                    sideR, sideG, sideB, sideA, centerR, centerG, centerB, centerA);
             return;
         }
 
-        int[] xBounds = XaeroWorldMapFold.seamBounds(Direction.Axis.X);
-        int[] zBounds = XaeroWorldMapFold.seamBounds(Direction.Axis.Z);
-        if (xBounds == null || zBounds == null) {
-            return;
-        }
+        int lapX = this.toroidal$cursorLapX;
+        int lapZ = this.toroidal$cursorLapZ;
+        original.call(matrixStack, overlayBuffer, flooredCameraX, flooredCameraZ,
+                leftX + lapX, rightX + lapX, topZ + lapZ, bottomZ + lapZ,
+                sideR, sideG, sideB, sideA, centerR, centerG, centerB, centerA);
 
+        AxisCopies copiesX = XaeroWorldMapFold.copies(Direction.Axis.X);
+        AxisCopies copiesZ = XaeroWorldMapFold.copies(Direction.Axis.Z);
         int thickness = Math.max(1, (int) Math.ceil(1.0 / this.scale));
-        int gridMinX = xBounds[0] - xBounds[1];
-        int gridMaxX = xBounds[0] + 2 * xBounds[1];
-        int gridMinZ = zBounds[0] - zBounds[1];
-        int gridMaxZ = zBounds[0] + 2 * zBounds[1];
+        Window window = Minecraft.getInstance().getWindow();
+        int[] spanX = XaeroWorldMapFold.viewSpan(this.cameraX, window.getWidth(), this.scale, thickness);
+        int[] spanZ = XaeroWorldMapFold.viewSpan(this.cameraZ, window.getHeight(), this.scale, thickness);
+        int[] linesX = copiesX.seams(spanX[0], spanX[1]);
+        int[] linesZ = copiesZ.seams(spanZ[0], spanZ[1]);
         Matrix4f matrix = matrixStack.last().pose();
-        for (int lineIndex = 0; lineIndex <= 3; lineIndex++) {
-            int lineX = gridMinX + lineIndex * xBounds[1];
+        for (int lineX : linesX) {
             MapRenderHelper.fillIntoExistingBuffer(matrix, overlayBuffer,
-                    lineX - flooredCameraX, gridMinZ - flooredCameraZ,
-                    lineX - flooredCameraX + thickness, gridMaxZ - flooredCameraZ,
+                    lineX - flooredCameraX, spanZ[0] - flooredCameraZ,
+                    lineX - flooredCameraX + thickness, spanZ[1] - flooredCameraZ,
                     1.0F, 1.0F, 1.0F, 0.8F);
-            int lineZ = gridMinZ + lineIndex * zBounds[1];
+        }
+
+        for (int lineZ : linesZ) {
             MapRenderHelper.fillIntoExistingBuffer(matrix, overlayBuffer,
-                    gridMinX - flooredCameraX, lineZ - flooredCameraZ,
-                    gridMaxX - flooredCameraX, lineZ - flooredCameraZ + thickness,
+                    spanX[0] - flooredCameraX, lineZ - flooredCameraZ,
+                    spanX[1] - flooredCameraX, lineZ - flooredCameraZ + thickness,
                     1.0F, 1.0F, 1.0F, 0.8F);
         }
     }

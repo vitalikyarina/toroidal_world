@@ -3,11 +3,12 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.gen.ShapedChunkGenerator;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
 
@@ -20,14 +21,15 @@ public class NoiseBasedChunkGeneratorCarversMixin {
                     target = "Lnet/minecraft/world/level/levelgen/WorldgenRandom;setLargeFeatureSeed(JII)V"))
     private void toroidal$seedCarverFromCanonicalSource(
             WorldgenRandom random, long seed, int sourceChunkX, int sourceChunkZ, Operation<Void> original) {
-        WorldLoopTransformer transformer =
+        WorldFold transformer =
                 ShapedChunkGenerator.wrappedTransformerOf((NoiseBasedChunkGenerator) (Object) this);
         if (transformer == null) {
             original.call(random, seed, sourceChunkX, sourceChunkZ);
             return;
         }
 
+        long folded = transformer.foldChunkKey(ChunkPos.pack(sourceChunkX, sourceChunkZ));
         original.call(random, seed,
-                transformer.chunks.x.wrap(sourceChunkX), transformer.chunks.z.wrap(sourceChunkZ));
+                ChunkPos.getX(folded), ChunkPos.getZ(folded));
     }
 }

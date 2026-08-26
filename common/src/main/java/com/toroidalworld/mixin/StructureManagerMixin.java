@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.FramedStructureStart;
 import com.toroidalworld.accessors.LevelHolder;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -43,7 +43,7 @@ public class StructureManagerMixin {
             return starts;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(((LevelHolder) region).toroidal$level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(((LevelHolder) region).toroidal$level());
         if (transformer != null && !starts.isEmpty()) {
             List<StructureStart> framed = new ArrayList<>(starts.size());
             for (StructureStart start : starts) {
@@ -61,16 +61,15 @@ public class StructureManagerMixin {
 
     @Unique
     private static @Nullable StructureStart toroidal$inFrameOf(
-            WorldGenRegion region, WorldLoopTransformer transformer, ChunkPos centerPos, StructureStart start) {
+            WorldGenRegion region, WorldFold transformer, ChunkPos centerPos, StructureStart start) {
         if (!start.isValid()) {
             return start;
         }
 
         ChunkPos startPos = start.getChunkPos();
+        ChunkPos nearest = transformer.nearestCopy(centerPos, startPos);
         return ((FramedStructureStart) (Object) start).toroidal$framedBy(
-                region,
-                transformer.chunks.x.unwrap(centerPos.x(), startPos.x()) - startPos.x(),
-                transformer.chunks.z.unwrap(centerPos.z(), startPos.z()) - startPos.z());
+                region, transformer.deckTransformation(startPos, nearest));
     }
 
     @WrapOperation(
@@ -84,16 +83,12 @@ public class StructureManagerMixin {
             return original.call(level, chunkX, chunkZ, status);
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(((LevelHolder) region).toroidal$level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(((LevelHolder) region).toroidal$level());
         if (transformer == null) {
             return original.call(level, chunkX, chunkZ, status);
         }
 
-        ChunkPos center = region.getCenter();
-        return original.call(
-                level,
-                transformer.chunks.x.unwrap(center.x(), chunkX),
-                transformer.chunks.z.unwrap(center.z(), chunkZ),
-                status);
+        ChunkPos nearest = transformer.nearestCopy(region.getCenter(), new ChunkPos(chunkX, chunkZ));
+        return original.call(level, nearest.x(), nearest.z(), status);
     }
 }

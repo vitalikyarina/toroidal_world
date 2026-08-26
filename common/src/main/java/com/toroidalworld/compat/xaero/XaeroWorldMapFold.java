@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.toroidalworld.api.ToroidalShape;
 import com.toroidalworld.api.ToroidalWorldClientApi;
+import com.toroidalworld.compat.AxisCopies;
+import com.toroidalworld.compat.FullscreenZoomFloor;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -88,26 +90,30 @@ public final class XaeroWorldMapFold {
         return true;
     }
 
-    public static boolean withinOnePeriod(int viewBlockX, int foldedBlockX, int viewBlockZ, int foldedBlockZ) {
+    public static AxisCopies copies(Direction.Axis axis) {
         ToroidalShape shape = shape();
-        if (shape == null) {
-            return false;
-        }
-
-        if (shape.loops(Direction.Axis.X) && Math.abs(viewBlockX - foldedBlockX) > shape.widthBlocks(Direction.Axis.X)) {
-            return false;
-        }
-
-        return !shape.loops(Direction.Axis.Z) || Math.abs(viewBlockZ - foldedBlockZ) <= shape.widthBlocks(Direction.Axis.Z);
+        return shape == null ? AxisCopies.UNBOUNDED : AxisCopies.of(shape, axis);
     }
 
-    public static int[] seamBounds(Direction.Axis axis) {
+    public static double zoomFloorScale(double scaleMultiplier) {
         ToroidalShape shape = shape();
-        if (shape == null || !shape.loops(axis)) {
-            return null;
+        if (shape == null) {
+            return 0.0;
         }
 
-        return new int[] {shape.minBlock(axis), shape.widthBlocks(axis)};
+        double floor = 0.0;
+        for (Direction.Axis axis : new Direction.Axis[] {Direction.Axis.X, Direction.Axis.Z}) {
+            if (shape.loops(axis)) {
+                floor = Math.max(floor, FullscreenZoomFloor.xaeroScale(shape.widthBlocks(axis), scaleMultiplier));
+            }
+        }
+
+        return floor;
+    }
+
+    public static int[] viewSpan(double camera, int windowPixels, double scale, int margin) {
+        double halfSpan = windowPixels / 2.0 / scale;
+        return new int[] {(int) Math.floor(camera - halfSpan) - margin, (int) Math.ceil(camera + halfSpan) + margin};
     }
 
     public static double foldCameraCoord(Direction.Axis axis, double coord) {
@@ -120,6 +126,15 @@ public final class XaeroWorldMapFold {
     }
 
     public static double foldElementCoord(Direction.Axis axis, double coord) {
+        ToroidalShape shape = shape();
+        if (shape == null) {
+            return coord;
+        }
+
+        return shape.foldCoord(axis, coord);
+    }
+
+    public static double foldFootprintCoord(Direction.Axis axis, double coord) {
         ToroidalShape shape = shape();
         if (shape == null) {
             return coord;

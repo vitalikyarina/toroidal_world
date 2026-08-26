@@ -10,16 +10,28 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.mojang.blaze3d.platform.Window;
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
+import com.toroidalworld.compat.journeymap.JourneyMapSeamPass;
 
+import journeymap.api.v2.client.util.UIState;
+import journeymap.api.v2.common.Context;
+import journeymap.client.render.JmRenderRouter;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.state.gui.ColoredRectangleRenderState;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
+import org.joml.Matrix3x2f;
+import org.joml.Matrix3x2fStack;
 
 @Mixin(targets = "journeymap.client.render.map.MapRenderer", remap = false)
-public abstract class MapRendererMixin {
+public abstract class MapRendererMixin implements JourneyMapSeamPass {
     @Shadow(remap = false)
     protected double centerBlockX;
 
@@ -27,7 +39,19 @@ public abstract class MapRendererMixin {
     protected double centerBlockZ;
 
     @Shadow(remap = false)
+    protected int zoom;
+
+    @Shadow(remap = false)
     public abstract void clear();
+
+    @Shadow(remap = false)
+    public abstract UIState getUIState();
+
+    @Shadow(remap = false)
+    public abstract Point2D.Double getBlockPixelInGrid(BlockPos pos);
+
+    @Unique
+    private static final int SEAM_ARGB = 0x59FFFFFF;
 
     // Render-thread only, like every caller of these methods.
     @Unique
@@ -100,5 +124,40 @@ public abstract class MapRendererMixin {
         if (floor > cir.getReturnValue()) {
             cir.setReturnValue(floor);
         }
+    }
+
+    @ModifyVariable(method = "setZoom(D)Z", at = @At("HEAD"), argsOnly = true)
+    private double toroidal$floorFullscreenZoom(double zoom) {
+        return Context.UI.Fullscreen.equals(this.getUIState().ui) ? Math.max(zoom, JourneyMapFold.zoomFloor()) : zoom;
+    }
+
+    @Override
+    public void toroidal$drawSeams(GuiGraphicsExtractor graphics, Matrix3x2fStack pose, double offsetX, double offsetZ) {
+        if (!Context.UI.Fullscreen.equals(this.getUIState().ui) || JourneyMapFold.loopedAxes() == 0) {
+            return;
+        }
+
+        Window window = Minecraft.getInstance().getWindow();
+        int[] spanX = JourneyMapFold.viewSpan(this.centerBlockX, window.getWidth(), this.zoom);
+        int[] spanZ = JourneyMapFold.viewSpan(this.centerBlockZ, window.getHeight(), this.zoom);
+        int[] seamsX = JourneyMapFold.copies(Direction.Axis.X).seams(spanX[0], spanX[1]);
+        int[] seamsZ = JourneyMapFold.copies(Direction.Axis.Z).seams(spanZ[0], spanZ[1]);
+
+        Matrix3x2f poseSnapshot = new Matrix3x2f(pose);
+        for (int seam : seamsX) {
+            int pixelX = (int) (this.getBlockPixelInGrid(new BlockPos(seam, 0, 0)).x + offsetX);
+            toroidal$fillSeam(graphics, poseSnapshot, pixelX, 0, pixelX + 1, window.getHeight());
+        }
+
+        for (int seam : seamsZ) {
+            int pixelZ = (int) (this.getBlockPixelInGrid(new BlockPos(0, 0, seam)).y + offsetZ);
+            toroidal$fillSeam(graphics, poseSnapshot, 0, pixelZ, window.getWidth(), pixelZ + 1);
+        }
+    }
+
+    @Unique
+    private static void toroidal$fillSeam(GuiGraphicsExtractor graphics, Matrix3x2f pose, int x0, int y0, int x1, int y1) {
+        JmRenderRouter.addGuiElement(graphics, new ColoredRectangleRenderState(
+                RenderPipelines.GUI, TextureSetup.noTexture(), pose, x0, y0, x1, y1, SEAM_ARGB, SEAM_ARGB, null));
     }
 }

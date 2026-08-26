@@ -11,7 +11,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.toroidalworld.accessors.TransformerHolder;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -26,15 +27,15 @@ public abstract class ChunkGeneratorStructureStateMixin implements TransformerHo
     private static final int toroidal$BIOME_SEARCH_REACH_CHUNKS = 7;
 
     @Unique
-    private WorldLoopTransformer toroidal$transformer = WorldLoopTransformer.NOOP;
+    private WorldFold toroidal$transformer = WorldFolds.NOOP;
 
     @Override
-    public WorldLoopTransformer toroidal$transformer() {
+    public WorldFold toroidal$transformer() {
         return this.toroidal$transformer;
     }
 
     @Override
-    public void toroidal$setTransformer(WorldLoopTransformer transformer) {
+    public void toroidal$setTransformer(WorldFold transformer) {
         this.toroidal$transformer = transformer;
     }
 
@@ -48,9 +49,9 @@ public abstract class ChunkGeneratorStructureStateMixin implements TransformerHo
             @Local(name = "i") int ringIndex,
             @Local(name = "initialX") int ringChunkX,
             @Local(name = "initialZ") int ringChunkZ) {
-        WorldLoopTransformer transformer = this.toroidal$transformer;
+        WorldFold transformer = this.toroidal$transformer;
         if (ringIndex > 0
-                && transformer.chunks.overshoot(ringChunkX, ringChunkZ) > toroidal$BIOME_SEARCH_REACH_CHUNKS) {
+                && transformer.chunkOvershoot(new ChunkPos(ringChunkX, ringChunkZ)) > toroidal$BIOME_SEARCH_REACH_CHUNKS) {
             ChunkPos beyondTheWorld = new ChunkPos(ringChunkX, ringChunkZ);
             return () -> beyondTheWorld;
         }
@@ -61,7 +62,7 @@ public abstract class ChunkGeneratorStructureStateMixin implements TransformerHo
     @ModifyReturnValue(method = "generateRingPositions", at = @At("RETURN"))
     private CompletableFuture<List<ChunkPos>> toroidal$ringsWithinTheWorld(
             CompletableFuture<List<ChunkPos>> original) {
-        WorldLoopTransformer transformer = this.toroidal$transformer;
+        WorldFold transformer = this.toroidal$transformer;
         if (!transformer.isWrapped()) {
             return original;
         }
@@ -70,10 +71,10 @@ public abstract class ChunkGeneratorStructureStateMixin implements TransformerHo
     }
 
     @Unique
-    private static List<ChunkPos> toroidal$theWorldsShare(WorldLoopTransformer transformer, List<ChunkPos> positions) {
+    private static List<ChunkPos> toroidal$theWorldsShare(WorldFold transformer, List<ChunkPos> positions) {
         List<ChunkPos> inBounds = new ArrayList<>(positions.size());
         for (ChunkPos position : positions) {
-            if (!transformer.chunks.isOver(position)) {
+            if (!transformer.isOver(position)) {
                 inBounds.add(position);
             }
         }
@@ -86,6 +87,6 @@ public abstract class ChunkGeneratorStructureStateMixin implements TransformerHo
             return List.copyOf(inBounds);
         }
 
-        return List.of(transformer.chunks.wrap(positions.getFirst()));
+        return List.of(transformer.fold(positions.getFirst()));
     }
 }

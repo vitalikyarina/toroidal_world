@@ -9,7 +9,8 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.LevelBindable;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.player.SeamSnap;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.server.level.ServerLevel;
@@ -39,18 +40,18 @@ public class EntitySectionManagerMixin implements LevelBindable {
             return;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(actualEntity.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(actualEntity.level());
         if (transformer == null) {
             return;
         }
 
         Vec3 position = actualEntity.position();
-        if (!transformer.vectors.isOver(position)) {
+        if (!transformer.isOver(position)) {
             return;
         }
 
-        Vec3 wrapped = transformer.vectors.wrap(position);
-        actualEntity.absSnapTo(wrapped.x, wrapped.y, wrapped.z);
+        Vec3 wrapped = transformer.fold(position);
+        SeamSnap.withPassengers(actualEntity, wrapped.subtract(position));
     }
 
     @ModifyArg(
@@ -63,7 +64,7 @@ public class EntitySectionManagerMixin implements LevelBindable {
             return chunkKey;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
-        return transformer == null ? chunkKey : transformer.chunks.wrapChunkKey(chunkKey);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
+        return transformer == null ? chunkKey : transformer.foldChunkKey(chunkKey);
     }
 }

@@ -2,7 +2,7 @@ package com.toroidalworld.map;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.CurrentServer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -13,7 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 
 public final class MapSeamFold {
-    public static @Nullable WorldLoopTransformer transformerFor(@Nullable LevelAccessor level, ResourceKey<Level> dimension) {
+    public static @Nullable WorldFold transformerFor(@Nullable LevelAccessor level, ResourceKey<Level> dimension) {
         if (level instanceof Level actualLevel) {
             return WorldLoopAttachments.wrappedTransformerOf(actualLevel);
         }

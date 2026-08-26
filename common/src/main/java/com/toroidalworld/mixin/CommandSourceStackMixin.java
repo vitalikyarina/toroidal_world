@@ -6,7 +6,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.DimensionMapping;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -37,15 +38,15 @@ public class CommandSourceStackMixin {
             at = @At(value = "NEW", target = "(DDD)Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$mapByWidthRatio(double x, double y, double z, Operation<Vec3> original,
             @Local(argsOnly = true) ServerLevel newLevel) {
-        WorldLoopTransformer destination = WorldLoopAttachments.wrappedTransformerOf(newLevel);
-        WorldLoopTransformer source = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        WorldFold destination = WorldLoopAttachments.wrappedTransformerOf(newLevel);
+        WorldFold source = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (destination == null || source == null) {
             return original.call(x, y, z);
         }
 
         double declaredScale = DimensionType.getTeleportationScale(
                 this.level.dimensionType(), newLevel.dimensionType());
-        Vec3 mapped = destination.mapFrom(source, this.worldPosition, declaredScale);
+        Vec3 mapped = DimensionMapping.map(source, destination, this.worldPosition, declaredScale);
         return original.call(mapped.x, y, mapped.z);
     }
 
@@ -54,12 +55,12 @@ public class CommandSourceStackMixin {
             at = @At("HEAD"),
             argsOnly = true)
     private Vec3 toroidal$faceNearestCopy(Vec3 pos) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
             return pos;
         }
 
         Vec3 from = this.anchor.apply((CommandSourceStack) (Object) this);
-        return transformer.vectors.nearestCopy(from, pos);
+        return transformer.nearestCopy(from, pos);
     }
 }

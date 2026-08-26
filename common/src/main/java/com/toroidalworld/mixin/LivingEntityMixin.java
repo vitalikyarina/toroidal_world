@@ -5,8 +5,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamAim;
 
 import net.minecraft.core.BlockPos;
@@ -17,8 +18,8 @@ import net.minecraft.world.phys.Vec3;
 public class LivingEntityMixin {
     @ModifyVariable(method = "startSleeping", at = @At("HEAD"), argsOnly = true)
     private BlockPos toroidal$wrapBedPosition(BlockPos bedPosition) {
-        WorldLoopTransformer transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? bedPosition : transformer.blocks.wrap(bedPosition);
+        WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
+        return transformer == null ? bedPosition : transformer.fold(bedPosition);
     }
 
     @ModifyVariable(
@@ -48,7 +49,39 @@ public class LivingEntityMixin {
             at = @At("STORE"), ordinal = 1)
     private Vec3 toroidal$sightTargetThroughSeam(Vec3 to) {
         LivingEntity self = (LivingEntity) (Object) this;
-        WorldLoopTransformer transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? to : transformer.vectors.nearestCopy(self.position(), to);
+        WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
+        return transformer == null ? to : transformer.nearestCopy(self.position(), to);
+    }
+
+    @ModifyExpressionValue(
+            method = "checkFallDamage(DZLnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getX()D"))
+    private double toroidal$landingXNearBlock(double x, @Local(argsOnly = true) BlockPos pos) {
+        WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
+        if (transformer == null) {
+            return x;
+        }
+
+        return transformer.nearestCopy(Vec3.atCenterOf(pos), ((LivingEntity) (Object) this).position()).x;
+    }
+
+    @ModifyExpressionValue(
+            method = "checkFallDamage(DZLnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getZ()D"))
+    private double toroidal$landingZNearBlock(double z, @Local(argsOnly = true) BlockPos pos) {
+        WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
+        if (transformer == null) {
+            return z;
+        }
+
+        return transformer.nearestCopy(Vec3.atCenterOf(pos), ((LivingEntity) (Object) this).position()).z;
+    }
+
+    @ModifyExpressionValue(
+            method = "checkFallDamage(DZLnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;blockPosition()Lnet/minecraft/core/BlockPos;"))
+    private BlockPos toroidal$landingBlockNearBlock(BlockPos entityPos, @Local(argsOnly = true) BlockPos pos) {
+        WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
+        return transformer == null ? entityPos : transformer.nearestCopy(pos, entityPos);
     }
 }

@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.noise.PeriodicSimplexSampler;
@@ -31,7 +31,7 @@ public class PerlinSimplexNoiseMixin {
     @WrapMethod(method = "getValue(DDZ)D")
     private double toroidal$periodicValue(double x, double z, boolean useNoiseStart, Operation<Double> original) {
         Context generation = GenerationTransformerContext.context();
-        WorldLoopTransformer transformer = generation.wrappedTransformer();
+        WorldFold transformer = generation.wrappedTransformer();
         if (transformer == null) {
             return original.call(x, z, useNoiseStart);
         }
