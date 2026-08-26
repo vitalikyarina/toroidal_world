@@ -211,13 +211,6 @@ public class LevelMixin implements TransformerCache {
     @WrapMethod(method = "isRainingAt")
     private boolean toroidal$bindPrecipitationTransformer(BlockPos pos, Operation<Boolean> original) {
         return GenerationTransformerContext.withTransformer(
-                toroidal$precipitationTransformer(), () -> original.call(pos));
-    }
-
-    @Unique
-    private WorldFold toroidal$precipitationTransformer() {
-        WorldFold clientBounds =
-                WorldLoopAttachments.wrappedClientBoundsTransformerOf((Level) (Object) this);
-        return clientBounds != null ? clientBounds : toroidal$transformer();
+                WorldLoopAttachments.noiseTransformerOf((Level) (Object) this), () -> original.call(pos));
     }
 }

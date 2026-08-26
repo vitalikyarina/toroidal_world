@@ -46,6 +46,20 @@ public final class WorldLoopAttachments {
         return null;
     }
 
+    public static WorldFold noiseTransformerOf(Level level) {
+        WorldFold clientBounds = wrappedClientBoundsTransformerOf(level);
+        return clientBounds != null ? clientBounds : transformerOf(level);
+    }
+
+    public static @Nullable WorldFold noiseTransformerOfReader(LevelReader reader) {
+        Level level = levelOf(reader);
+        if (level != null) {
+            return noiseTransformerOf(level);
+        }
+
+        return null;
+    }
+
     public static @Nullable WorldFold wrappedTransformerOfReader(LevelReader reader) {
         Level level = levelOf(reader);
         if (level == null) {
@@ -54,16 +68,6 @@ public final class WorldLoopAttachments {
 
         WorldFold clientBounds = wrappedClientBoundsTransformerOf(level);
         return clientBounds != null ? clientBounds : wrappedTransformerOf(level);
-    }
-
-    public static @Nullable WorldFold noiseTransformerOf(LevelReader reader) {
-        Level level = levelOf(reader);
-        if (level == null) {
-            return null;
-        }
-
-        WorldFold clientBounds = wrappedClientBoundsTransformerOf(level);
-        return clientBounds != null ? clientBounds : transformerOf(level);
     }
 
     public static ClientPosition clientPositionOf(ServerPlayer player) {
