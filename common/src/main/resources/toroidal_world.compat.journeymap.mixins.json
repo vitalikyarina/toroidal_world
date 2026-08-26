@@ -9,6 +9,7 @@
     "LayerDelegateMixin",
     "LocationFormatMixin",
     "MapRendererMixin",
+    "MapStateMixin",
     "RegionCoordMixin"
   ],
   "injectors": {

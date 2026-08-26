@@ -66,6 +66,36 @@ public abstract class GuiMapMixin {
     private int toroidal$slotViewBlockX;
     @Unique
     private int toroidal$slotViewBlockZ;
+
+    @Shadow
+    private static double destScale;
+
+    @Shadow
+    private double getScaleMultiplier(int size) {
+        throw new AssertionError();
+    }
+
+    @Inject(
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
+            at = @At("HEAD"))
+    private void toroidal$floorZoomOutOnRender(CallbackInfo ci) {
+        toroidal$floorZoomOut();
+    }
+
+    @Inject(method = "changeZoom(DI)V", at = @At("TAIL"))
+    private void toroidal$floorZoomOutOnChange(CallbackInfo ci) {
+        toroidal$floorZoomOut();
+    }
+
+    @Unique
+    private void toroidal$floorZoomOut() {
+        Window window = Minecraft.getInstance().getWindow();
+        double floor = XaeroWorldMapFold.zoomFloorScale(
+                this.getScaleMultiplier(Math.min(window.getWidth(), window.getHeight())));
+        if (floor > 0.0 && destScale < floor) {
+            destScale = floor;
+        }
+    }
     @WrapOperation(
             method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
@@ -225,14 +255,17 @@ public abstract class GuiMapMixin {
 
         AxisCopies copiesX = XaeroWorldMapFold.copies(Direction.Axis.X);
         AxisCopies copiesZ = XaeroWorldMapFold.copies(Direction.Axis.Z);
+        Window window = Minecraft.getInstance().getWindow();
+        int[] spanX = XaeroWorldMapFold.viewSpan(this.cameraX, window.getWidth(), this.scale, slotSize);
+        int[] spanZ = XaeroWorldMapFold.viewSpan(this.cameraZ, window.getHeight(), this.scale, slotSize);
+        int[] lapsX = copiesX.laps(spanX[0], spanX[1]);
+        int[] lapsZ = copiesZ.laps(spanZ[0], spanZ[1]);
         int slotMinX = this.toroidal$slotViewBlockX;
         int slotMinZ = this.toroidal$slotViewBlockZ;
         int clippedMinX = copiesX.clipMin(slotMinX);
         int clippedMaxX = copiesX.clipMax(slotMinX + slotSize);
         int clippedMinZ = copiesZ.clipMin(slotMinZ);
         int clippedMaxZ = copiesZ.clipMax(slotMinZ + slotSize);
-        XaeroWorldMapFold.logClipCopies(copiesX, copiesZ, slotSize, slotMinX, slotMinZ,
-                clippedMinX, clippedMaxX, clippedMinZ, clippedMaxZ);
         if (clippedMinX >= clippedMaxX || clippedMinZ >= clippedMaxZ) {
             return;
         }
@@ -246,8 +279,8 @@ public abstract class GuiMapMixin {
         float v1 = (float) (clippedMinZ - slotMinZ) / slotSize;
         float v2 = (float) (clippedMaxZ - slotMinZ) / slotSize;
         // The quad is emitted directly: calling GuiMap's own helper would drag its xaerolib superclass onto the compile classpath.
-        for (int lapX : copiesX.laps()) {
-            for (int lapZ : copiesZ.laps()) {
+        for (int lapX : lapsX) {
+            for (int lapZ : lapsZ) {
                 float copyX = clippedX + copiesX.offset(lapX);
                 float copyY = clippedY + copiesZ.offset(lapZ);
                 BufferBuilder quad = renderer.begin(texture);
@@ -280,21 +313,22 @@ public abstract class GuiMapMixin {
         AxisCopies copiesZ = XaeroWorldMapFold.copies(Direction.Axis.Z);
         int thickness = Math.max(1, (int) Math.ceil(1.0 / this.scale));
         Window window = Minecraft.getInstance().getWindow();
-        int[] extentX = XaeroWorldMapFold.gridExtent(copiesX, this.cameraX, window.getWidth(), this.scale, thickness);
-        int[] extentZ = XaeroWorldMapFold.gridExtent(copiesZ, this.cameraZ, window.getHeight(), this.scale, thickness);
-        XaeroWorldMapFold.logSeamGrid(copiesX, copiesZ, extentX, extentZ);
+        int[] spanX = XaeroWorldMapFold.viewSpan(this.cameraX, window.getWidth(), this.scale, thickness);
+        int[] spanZ = XaeroWorldMapFold.viewSpan(this.cameraZ, window.getHeight(), this.scale, thickness);
+        int[] linesX = copiesX.seams(spanX[0], spanX[1]);
+        int[] linesZ = copiesZ.seams(spanZ[0], spanZ[1]);
         Matrix4f matrix = matrixStack.last().pose();
-        for (int lineX : XaeroWorldMapFold.gridLines(copiesX)) {
+        for (int lineX : linesX) {
             MapRenderHelper.fillIntoExistingBuffer(matrix, overlayBuffer,
-                    lineX - flooredCameraX, extentZ[0] - flooredCameraZ,
-                    lineX - flooredCameraX + thickness, extentZ[1] - flooredCameraZ,
+                    lineX - flooredCameraX, spanZ[0] - flooredCameraZ,
+                    lineX - flooredCameraX + thickness, spanZ[1] - flooredCameraZ,
                     1.0F, 1.0F, 1.0F, 0.8F);
         }
 
-        for (int lineZ : XaeroWorldMapFold.gridLines(copiesZ)) {
+        for (int lineZ : linesZ) {
             MapRenderHelper.fillIntoExistingBuffer(matrix, overlayBuffer,
-                    extentX[0] - flooredCameraX, lineZ - flooredCameraZ,
-                    extentX[1] - flooredCameraX, lineZ - flooredCameraZ + thickness,
+                    spanX[0] - flooredCameraX, lineZ - flooredCameraZ,
+                    spanX[1] - flooredCameraX, lineZ - flooredCameraZ + thickness,
                     1.0F, 1.0F, 1.0F, 0.8F);
         }
     }

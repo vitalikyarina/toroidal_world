@@ -17,6 +17,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
 
 import journeymap.api.v2.client.display.Context;
+import journeymap.api.v2.client.util.UIState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -34,14 +35,17 @@ public abstract class MapRendererMixin {
     protected double centerBlockZ;
 
     @Shadow(remap = false)
-    public abstract void clear();
+    protected int zoom;
 
     @Shadow(remap = false)
-    protected int zoom;
+    public abstract void clear();
 
     @Shadow(remap = false)
     @Final
     protected Context.UI contextUi;
+
+    @Shadow(remap = false)
+    public abstract UIState getUIState();
 
     // Render-thread only, like every caller of these methods.
     @Unique
@@ -116,6 +120,11 @@ public abstract class MapRendererMixin {
         }
     }
 
+    @ModifyVariable(method = "setZoom(D)Z", at = @At("HEAD"), argsOnly = true)
+    private double toroidal$floorFullscreenZoom(double zoom) {
+        return Context.UI.Fullscreen.equals(this.getUIState().ui) ? Math.max(zoom, JourneyMapFold.zoomFloor()) : zoom;
+    }
+
     @WrapOperation(
             method = "render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;DDFZ)V",
             at = @At(
@@ -131,17 +140,20 @@ public abstract class MapRendererMixin {
         }
 
         int loopedAxes = JourneyMapFold.loopedAxes();
+        if (loopedAxes == 0) {
+            return;
+        }
+
         double periodX = JourneyMapFold.worldPixelPeriod(Direction.Axis.X, this.zoom);
         double periodZ = JourneyMapFold.worldPixelPeriod(Direction.Axis.Z, this.zoom);
-        int rangeX = JourneyMapFold.copyRange(loopedAxes, periodX, graphics.guiWidth());
-        int rangeZ = JourneyMapFold.copyRange(loopedAxes, periodZ, graphics.guiHeight());
+        int tiles = JourneyMapFold.tilesWithContent(this.zoom, graphics.guiWidth(), graphics.guiHeight());
+        int rangeX = JourneyMapFold.copyRange(loopedAxes, tiles, periodX, graphics.guiWidth());
+        int rangeZ = JourneyMapFold.copyRange(loopedAxes, tiles, periodZ, graphics.guiHeight());
         if (this.contextUi == Context.UI.Fullscreen) {
             rangeX = Math.min(rangeX, JourneyMapFold.fullscreenCopyRange(Direction.Axis.X));
             rangeZ = Math.min(rangeZ, JourneyMapFold.fullscreenCopyRange(Direction.Axis.Z));
         }
 
-        JourneyMapFold.logTileCopies(this.contextUi.name(), this.zoom, loopedAxes, periodX, periodZ,
-                graphics.guiWidth(), graphics.guiHeight(), graphics.guiWidth(), graphics.guiHeight());
         if (rangeX == 0 && rangeZ == 0) {
             return;
         }
