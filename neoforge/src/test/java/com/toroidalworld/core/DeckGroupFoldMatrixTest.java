@@ -49,8 +49,10 @@ class DeckGroupFoldMatrixTest {
     private static final AxisBounds UNBOUNDED = AxisBounds.Unbounded.INSTANCE;
     private static final WorldLoopBounds BOTH = new WorldLoopBounds(LOOPED, LOOPED);
     private static final WorldLoopBounds X_ONLY = new WorldLoopBounds(LOOPED, UNBOUNDED);
+    private static final WorldLoopBounds Z_ONLY = new WorldLoopBounds(UNBOUNDED, LOOPED);
 
-    private record Group(boolean xLoops, boolean zLoops, int skew, boolean mirrorsZ, int mirrorLine) {
+    private record Group(boolean xLoops, boolean zLoops, int skew, boolean mirrorsZ, boolean mirrorsX,
+            int mirrorLine) {
         int[] cell(int x, int z, int first, int second) {
             int outX = x;
             int outZ = z;
@@ -64,6 +66,9 @@ class DeckGroupFoldMatrixTest {
             if (this.zLoops) {
                 outX += second * this.skew;
                 outZ += second * WIDTH;
+                if (this.mirrorsX && (second & 1) != 0) {
+                    outX = 2 * this.mirrorLine - 1 - outX;
+                }
             }
 
             return new int[] {outX, outZ};
@@ -82,9 +87,28 @@ class DeckGroupFoldMatrixTest {
             if (this.zLoops) {
                 outX += second * this.skew;
                 outZ += second * WIDTH;
+                if (this.mirrorsX && (second & 1) != 0) {
+                    outX = 2 * this.mirrorLine - outX;
+                }
             }
 
             return new double[] {outX, outZ};
+        }
+
+        FoldOrientation mirrorOrientation() {
+            return FoldOrientation.of(this.mirrorsX, this.mirrorsZ);
+        }
+
+        int[] oneMirroredLap() {
+            return this.mirrorsX ? new int[] {0, 1} : new int[] {1, 0};
+        }
+
+        Direction.Axis mirroredAxis() {
+            return this.mirrorsX ? Direction.Axis.X : Direction.Axis.Z;
+        }
+
+        Direction.Axis keptAxis() {
+            return this.mirrorsX ? Direction.Axis.Z : Direction.Axis.X;
         }
     }
 
@@ -95,33 +119,44 @@ class DeckGroupFoldMatrixTest {
     }
 
     private static final Case RECTANGLE = new Case("rectangle",
-            FlatShape.rectangle(), new Group(false, false, 0, false, 0));
+            FlatShape.rectangle(), new Group(false, false, 0, false, false, 0));
 
     private static final Case CYLINDER = new Case("cylinder",
-            FlatShape.cylinder(X_ONLY), new Group(true, false, 0, false, 0));
+            FlatShape.cylinder(X_ONLY), new Group(true, false, 0, false, false, 0));
 
     private static final Case TORUS = new Case("torus",
-            FlatShape.latticeTorus(BOTH, 0), new Group(true, true, 0, false, 0));
+            FlatShape.latticeTorus(BOTH, 0), new Group(true, true, 0, false, false, 0));
 
     private static final Case LATTICE_TORUS = new Case("lattice torus",
-            FlatShape.latticeTorus(BOTH, SKEW_CHUNKS), new Group(true, true, SKEW, false, 0));
+            FlatShape.latticeTorus(BOTH, SKEW_CHUNKS), new Group(true, true, SKEW, false, false, 0));
 
-    private static final Case MOBIUS = new Case("mobius",
-            FlatShape.mirrored(X_ONLY, Direction.Axis.Z, 0), new Group(true, false, 0, true, 0));
+    private static final Case MOBIUS = new Case("mobius (mirror on Z)",
+            FlatShape.mirrored(X_ONLY, Direction.Axis.Z, 0), new Group(true, false, 0, true, false, 0));
 
-    private static final Case KLEIN_CENTRED = new Case("klein (mirror on the world centre)",
-            FlatShape.mirrored(BOTH, Direction.Axis.Z, 0), new Group(true, true, 0, true, 0));
+    private static final Case MOBIUS_X = new Case("mobius (mirror on X)",
+            FlatShape.mirrored(Z_ONLY, Direction.Axis.X, 0), new Group(false, true, 0, false, true, 0));
 
-    private static final Case KLEIN_OFFSET = new Case("klein (mirror off centre)",
+    private static final Case KLEIN_CENTRED = new Case("klein (mirror on Z, on the world centre)",
+            FlatShape.mirrored(BOTH, Direction.Axis.Z, 0), new Group(true, true, 0, true, false, 0));
+
+    private static final Case KLEIN_OFFSET = new Case("klein (mirror on Z, off centre)",
             FlatShape.mirrored(BOTH, Direction.Axis.Z, OFFSET_MIRROR_CHUNK),
-            new Group(true, true, 0, true, OFFSET_MIRROR_LINE));
+            new Group(true, true, 0, true, false, OFFSET_MIRROR_LINE));
+
+    private static final Case KLEIN_X_CENTRED = new Case("klein (mirror on X, on the world centre)",
+            FlatShape.mirrored(BOTH, Direction.Axis.X, 0), new Group(true, true, 0, false, true, 0));
+
+    private static final Case KLEIN_X_OFFSET = new Case("klein (mirror on X, off centre)",
+            FlatShape.mirrored(BOTH, Direction.Axis.X, OFFSET_MIRROR_CHUNK),
+            new Group(true, true, 0, false, true, OFFSET_MIRROR_LINE));
 
     private static List<Case> cases() {
-        return List.of(RECTANGLE, CYLINDER, TORUS, LATTICE_TORUS, MOBIUS, KLEIN_CENTRED, KLEIN_OFFSET);
+        return List.of(RECTANGLE, CYLINDER, TORUS, LATTICE_TORUS,
+                MOBIUS, MOBIUS_X, KLEIN_CENTRED, KLEIN_OFFSET, KLEIN_X_CENTRED, KLEIN_X_OFFSET);
     }
 
     private static List<Case> mirroredCases() {
-        return List.of(MOBIUS, KLEIN_CENTRED, KLEIN_OFFSET);
+        return List.of(MOBIUS, MOBIUS_X, KLEIN_CENTRED, KLEIN_OFFSET, KLEIN_X_CENTRED, KLEIN_X_OFFSET);
     }
 
     private static List<Case> decomposableCases() {
@@ -174,6 +209,10 @@ class DeckGroupFoldMatrixTest {
 
     private static int orbitStep(Random random) {
         return random.nextInt(2 * ORBIT_REACH + 1) - ORBIT_REACH;
+    }
+
+    private static int localIndex(BlockPos pos, Direction.Axis axis) {
+        return Math.floorMod(axis == Direction.Axis.X ? pos.getX() : pos.getZ(), UNIT);
     }
 
     private static ChunkPos chunkOf(int x, int z) {
@@ -403,6 +442,22 @@ class DeckGroupFoldMatrixTest {
                             < squared(target.getX() - ref.getX()) + squared(target.getZ() - ref.getZ()),
                     "the flipped copy is not nearer than the unflipped one");
         }
+
+        @Test
+        void aSeamMirroredOnXOffersTheFlippedCopy() {
+            DeckGroupFold fold = MOBIUS_X.fold();
+            BlockPos ref = new BlockPos(100, 64, UPPER - 1);
+            BlockPos target = new BlockPos(-100, 64, LOWER + 1);
+            Folded<BlockPos> nearest = fold.nearestCopyOriented(ref, target);
+
+            assertEquals(new BlockPos(99, 64, UPPER + 1), nearest.value(),
+                    "the copy across a seam mirrored on X is not the flipped one");
+            assertEquals(FoldOrientation.MIRROR_X, nearest.orientation(),
+                    "crossing a seam mirrored on X did not report the flip");
+            assertTrue(squared(nearest.value().getX() - ref.getX()) + squared(nearest.value().getZ() - ref.getZ())
+                            < squared(target.getX() - ref.getX()) + squared(target.getZ() - ref.getZ()),
+                    "the flipped copy is not nearer than the unflipped one");
+        }
     }
 
     @Nested
@@ -488,17 +543,20 @@ class DeckGroupFoldMatrixTest {
         void anOddMirroredLapReversesTheLocalIndexAndReportsTheFlip() {
             for (Case testCase : mirroredCases()) {
                 DeckGroupFold fold = testCase.fold();
+                Group group = testCase.group();
                 BlockPos pos = new BlockPos(LOWER + 3, 64, LOWER + 5);
                 ChunkPos chunk = chunkOf(pos.getX(), pos.getZ());
-                ChunkPos copy = copyOf(testCase.group(), chunk, 1, 0);
+                int[] lap = group.oneMirroredLap();
+                ChunkPos copy = copyOf(group, chunk, lap[0], lap[1]);
                 DeckTransformation move = fold.deckTransformation(chunk, copy);
 
-                assertEquals(FoldOrientation.MIRROR_Z, move.orientation(),
+                assertEquals(group.mirrorOrientation(), move.orientation(),
                         testCase.name() + ": one lap across the mirrored seam did not report the flip");
                 BlockPos reseated = fold.reseat(pos, copy);
-                assertEquals(Math.floorMod(pos.getX(), UNIT), Math.floorMod(reseated.getX(), UNIT),
+                assertEquals(localIndex(pos, group.keptAxis()), localIndex(reseated, group.keptAxis()),
                         testCase.name() + ": the unmirrored local index moved");
-                assertEquals(UNIT - 1 - Math.floorMod(pos.getZ(), UNIT), Math.floorMod(reseated.getZ(), UNIT),
+                assertEquals(UNIT - 1 - localIndex(pos, group.mirroredAxis()),
+                        localIndex(reseated, group.mirroredAxis()),
                         testCase.name() + ": the mirrored local index is not reversed");
             }
         }
@@ -514,7 +572,7 @@ class DeckGroupFoldMatrixTest {
                 Random random = new Random(SEED + 7);
                 for (int sample = 0; sample < SAMPLES && !sawMirror; sample++) {
                     Folded<BlockPos> folded = fold.foldOriented(new BlockPos(sample(random), 64, sample(random)));
-                    sawMirror = folded.orientation() == FoldOrientation.MIRROR_Z;
+                    sawMirror = folded.orientation() == testCase.group().mirrorOrientation();
                 }
 
                 assertTrue(sawMirror, testCase.name() + ": no sample ever folded through the mirror");
@@ -537,10 +595,12 @@ class DeckGroupFoldMatrixTest {
         void twoLapsAcrossAMirroredSeamReturnTheIdentity() {
             for (Case testCase : mirroredCases()) {
                 DeckGroupFold fold = testCase.fold();
+                Group group = testCase.group();
+                int[] lap = group.oneMirroredLap();
                 int inside = LOWER + WIDTH / 2;
-                BlockPos oneLap = new BlockPos(inside + WIDTH, 64, inside);
-                BlockPos twoLaps = new BlockPos(inside + 2 * WIDTH, 64, inside);
-                assertEquals(FoldOrientation.MIRROR_Z, fold.foldOriented(oneLap).orientation(),
+                BlockPos oneLap = new BlockPos(inside + lap[0] * WIDTH, 64, inside + lap[1] * WIDTH);
+                BlockPos twoLaps = new BlockPos(inside + 2 * lap[0] * WIDTH, 64, inside + 2 * lap[1] * WIDTH);
+                assertEquals(group.mirrorOrientation(), fold.foldOriented(oneLap).orientation(),
                         testCase.name() + ": one lap across the mirrored seam did not flip");
                 assertEquals(FoldOrientation.IDENTITY, fold.foldOriented(twoLaps).orientation(),
                         testCase.name() + ": two laps across the mirrored seam did not come back upright");
@@ -626,6 +686,39 @@ class DeckGroupFoldMatrixTest {
             int reducedX = x - xLaps * WIDTH;
             if ((xLaps & 1) != 0) {
                 reducedZ = 2 * OFFSET_MIRROR_LINE - 1 - reducedZ;
+            }
+
+            return new int[] {reducedX, reducedZ};
+        }
+
+        @Test
+        void reducingXBeforeZLeavesTheMirroredAxisOutsideTheWorld() {
+            DeckGroupFold fold = KLEIN_X_OFFSET.fold();
+            Random random = new Random(SEED + 9);
+            boolean sawTheDifference = false;
+            for (int sample = 0; sample < SAMPLES; sample++) {
+                int x = sample(random);
+                int z = sample(random);
+                BlockPos folded = fold.fold(new BlockPos(x, 64, z));
+                assertInsideWorld(KLEIN_X_OFFSET, folded.getX(), folded.getZ(), "fold");
+
+                int[] reversed = reduceXBeforeZ(x, z);
+                if (reversed[0] < LOWER || reversed[0] >= UPPER) {
+                    sawTheDifference = true;
+                }
+            }
+
+            assertTrue(sawTheDifference,
+                    "reducing X before Z never left the world — the order under test is not being exercised");
+        }
+
+        private static int[] reduceXBeforeZ(int x, int z) {
+            int xLaps = Math.floorDiv(x - LOWER, WIDTH);
+            int reducedX = x - xLaps * WIDTH;
+            int zLaps = Math.floorDiv(z - LOWER, WIDTH);
+            int reducedZ = z - zLaps * WIDTH;
+            if ((zLaps & 1) != 0) {
+                reducedX = 2 * OFFSET_MIRROR_LINE - 1 - reducedX;
             }
 
             return new int[] {reducedX, reducedZ};
@@ -784,6 +877,15 @@ class DeckGroupFoldMatrixTest {
             DeckGroupFold further = new DeckGroupFold(FlatShape.mirrored(
                     BOTH, Direction.Axis.Z, OFFSET_MIRROR_CHUNK + (MAX_CHUNK - MIN_CHUNK) / 2));
             assertSameFold(plain, further, "a mirror line half a world further is a different bottle");
+        }
+
+        @Test
+        void aMirrorLineOnXHalfAWorldFurtherIsTheSameBottle() {
+            DeckGroupFold plain = new DeckGroupFold(
+                    FlatShape.mirrored(BOTH, Direction.Axis.X, OFFSET_MIRROR_CHUNK));
+            DeckGroupFold further = new DeckGroupFold(FlatShape.mirrored(
+                    BOTH, Direction.Axis.X, OFFSET_MIRROR_CHUNK + (MAX_CHUNK - MIN_CHUNK) / 2));
+            assertSameFold(plain, further, "a mirror line on X half a world further is a different bottle");
         }
 
         private static void assertSameFold(DeckGroupFold first, DeckGroupFold second, String message) {
@@ -959,7 +1061,8 @@ class DeckGroupFoldMatrixTest {
                         testCase.name() + ": the contract answered for Y");
             }
 
-            for (Case testCase : List.of(LATTICE_TORUS, MOBIUS, KLEIN_CENTRED, KLEIN_OFFSET)) {
+            for (Case testCase : List.of(LATTICE_TORUS, MOBIUS, MOBIUS_X, KLEIN_CENTRED, KLEIN_OFFSET,
+                    KLEIN_X_CENTRED, KLEIN_X_OFFSET)) {
                 DeckGroupFold fold = testCase.fold();
                 assertFalse(fold.decomposesPerAxis(), testCase.name() + ": should not decompose per axis");
                 assertThrows(IllegalStateException.class, () -> fold.blockDomain(Direction.Axis.X),

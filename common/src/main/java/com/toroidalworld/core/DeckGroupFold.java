@@ -273,11 +273,8 @@ public final class DeckGroupFold implements WorldFold {
 
     @Override
     public double sqrDistanceToBox(AABB box, Vec3 point) {
-        AABB folded = foldBox(point, box).value();
-        double xGap = Math.max(Math.max(folded.minX - point.x, point.x - folded.maxX), 0.0);
-        double yGap = Math.max(Math.max(folded.minY - point.y, point.y - folded.maxY), 0.0);
-        double zGap = Math.max(Math.max(folded.minZ - point.z, point.z - folded.maxZ), 0.0);
-        return xGap * xGap + yGap * yGap + zGap * zGap;
+        double yGap = Math.max(Math.max(box.minY - point.y, point.y - box.maxY), 0.0);
+        return this.blocks.nearestBoxGap(point.x, point.z, box.minX, box.maxX, box.minZ, box.maxZ) + yGap * yGap;
     }
 
     @Override
@@ -577,6 +574,33 @@ public final class DeckGroupFold implements WorldFold {
             }
 
             return best;
+        }
+
+        private double nearestBoxGap(double pointX, double pointZ, double minX, double maxX, double minZ, double maxZ) {
+            SeamTransform toBox = foldCoords((minX + maxX) / 2.0, (minZ + maxZ) / 2.0);
+            SeamTransform fromPoint = foldCoords(pointX, pointZ).inverse();
+
+            double best = gapSquared(minX, maxX, minZ, maxZ, pointX, pointZ);
+            for (SeamTransform candidate : this.candidates) {
+                SeamTransform move = toBox.then(candidate).then(fromPoint);
+                double firstX = move.applyX(minX);
+                double secondX = move.applyX(maxX);
+                double firstZ = move.applyZ(minZ);
+                double secondZ = move.applyZ(maxZ);
+                best = Math.min(best, gapSquared(
+                        Math.min(firstX, secondX), Math.max(firstX, secondX),
+                        Math.min(firstZ, secondZ), Math.max(firstZ, secondZ),
+                        pointX, pointZ));
+            }
+
+            return best;
+        }
+
+        private static double gapSquared(double minX, double maxX, double minZ, double maxZ,
+                double pointX, double pointZ) {
+            double xGap = Math.max(Math.max(minX - pointX, pointX - maxX), 0.0);
+            double zGap = Math.max(Math.max(minZ - pointZ, pointZ - maxZ), 0.0);
+            return xGap * xGap + zGap * zGap;
         }
 
         private List<CoordPiece> splitCoords(double minX, double maxX, double minZ, double maxZ) {
