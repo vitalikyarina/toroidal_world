@@ -6,14 +6,18 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.util.List;
 import java.util.Random;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
+import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
@@ -23,166 +27,232 @@ class IdentityFastPathTest {
     private static final long SEED = 0x1DEA5L;
     private static final int SAMPLES = 600;
     private static final int CHUNK_BLOCKS = 16;
+    private static final int BLOCK_REACH_CAP = 16_000;
+    private static final int CHUNK_REACH_CAP = 1_000;
+    private static final int UNBOUNDED_REGION_REACH = 64;
+    private static final int WORLD_FLOOR = -64;
+    private static final int WORLD_HEIGHT = 384;
+    private static final int SECTION_FLOOR = -4;
+    private static final int SECTION_COUNT = 24;
+    private static final int SKEW_CHUNKS = 5;
+    private static final int MIRROR_LINE_CHUNK = 5;
+    private static final double NETHER_SCALE = 0.125;
+    private static final double SHIFT_TOLERANCE = 1.0e-9;
+
+    private static final WorldLoopBounds SQUARE = new WorldLoopBounds(-32, 32, -32, 32);
+    private static final WorldLoopBounds X_ONLY_BOUNDS =
+            new WorldLoopBounds(new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE);
 
     private static final WorldFold EVEN = transformer(-32, 32, -32, 32);
     private static final WorldFold ODD = transformer(-2, 3, -2, 3);
     private static final WorldFold UNEVEN = transformer(-48, 16, 0, 16);
-    private static final WorldFold X_ONLY = new WorldLoopTransformer(
-            new WorldLoopBounds(new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE));
+    private static final WorldFold X_ONLY = new WorldLoopTransformer(X_ONLY_BOUNDS);
 
-    private static final List<WorldFold> TRANSFORMERS =
-            List.of(EVEN, ODD, UNEVEN, X_ONLY, WorldFolds.NOOP);
+    private static final List<WorldFold> PER_AXIS = List.of(EVEN, ODD, UNEVEN, X_ONLY, WorldFolds.NOOP);
+
+    private static final List<WorldFold> DECK_GROUP = List.of(
+            new DeckGroupFold(FlatShape.latticeTorus(SQUARE, FlatShape.NO_SKEW)),
+            new DeckGroupFold(FlatShape.latticeTorus(SQUARE, SKEW_CHUNKS)),
+            new DeckGroupFold(FlatShape.mirrored(X_ONLY_BOUNDS, Direction.Axis.Z, 0)),
+            new DeckGroupFold(FlatShape.mirrored(SQUARE, Direction.Axis.Z, MIRROR_LINE_CHUNK)));
+
+    private static final List<WorldFold> FOLDS = Stream.concat(PER_AXIS.stream(), DECK_GROUP.stream()).toList();
 
     @Test
-    void blockWrapKeepsItsValueAndReturnsTheArgumentUntouched() {
-        forEachTransformer((transformer, random) -> {
-            BlockPos pos = sampleBlockPos(random, transformer);
-            BlockPos reference = new BlockPos(
-                    blockX(transformer).wrap(pos.getX()), pos.getY(), blockZ(transformer).wrap(pos.getZ()));
-            BlockPos wrapped = transformer.fold(pos);
+    void blockFoldKeepsItsValueAndReturnsAnInBoundsArgumentUntouched() {
+        forEach(FOLDS, (fold, random) -> {
+            BlockPos pos = sampleBlockPos(random, fold);
+            BlockPos folded = fold.fold(pos);
 
-            assertEquals(reference, wrapped, () -> "blocks.wrap(" + pos + ") " + in(transformer));
-            if (reference.equals(pos)) {
-                assertSame(pos, wrapped, () -> "an in-bounds " + pos + " must come back as itself " + in(transformer));
+            if (fold.decomposesPerAxis()) {
+                assertEquals(new BlockPos(blockX(fold).wrap(pos.getX()), pos.getY(), blockZ(fold).wrap(pos.getZ())),
+                        folded, () -> "fold(" + pos + ") " + in(fold));
             }
+
+            assertUntouched(pos, folded, !fold.isOver(pos), fold);
         });
     }
 
     @Test
-    void blockUnwrapKeepsItsValueAndReturnsTheArgumentUntouched() {
-        forEachTransformer((transformer, random) -> {
-            BlockPos anchor = sampleBlockPos(random, transformer);
-            BlockPos wrapped = insideBlockPos(random, transformer);
-            BlockPos reference = new BlockPos(
-                    blockX(transformer).unwrap(anchor.getX(), wrapped.getX()), wrapped.getY(),
-                    blockZ(transformer).unwrap(anchor.getZ(), wrapped.getZ()));
-            BlockPos unwrapped = transformer.nearestCopy(anchor, wrapped);
+    void blockNearestCopyOfAnInsidePositionKeepsItsValueAndReturnsAnUnshiftedArgumentUntouched() {
+        forEach(FOLDS, (fold, random) -> {
+            BlockPos anchor = sampleBlockPos(random, fold);
+            BlockPos inside = insideBlockPos(random, fold);
+            BlockPos nearest = fold.nearestCopy(anchor, inside);
 
-            assertEquals(reference, unwrapped,
-                    () -> "blocks.unwrap(" + anchor + ", " + wrapped + ") " + in(transformer));
-            if (reference.equals(wrapped)) {
-                assertSame(wrapped, unwrapped, () -> "an unshifted " + wrapped + " must come back as itself "
-                        + in(transformer));
+            if (fold.decomposesPerAxis()) {
+                assertEquals(new BlockPos(
+                        blockX(fold).unwrap(anchor.getX(), inside.getX()), inside.getY(),
+                        blockZ(fold).unwrap(anchor.getZ(), inside.getZ())),
+                        nearest, () -> "nearestCopy(" + anchor + ", " + inside + ") " + in(fold));
             }
+
+            assertUntouched(inside, nearest, fold);
         });
     }
 
     @Test
-    void chunkWrapKeepsItsValueAndReturnsTheArgumentUntouched() {
-        forEachTransformer((transformer, random) -> {
-            ChunkPos pos = sampleChunkPos(random, transformer);
-            ChunkPos reference = new ChunkPos(
-                    chunkX(transformer).wrap(pos.x), chunkZ(transformer).wrap(pos.z));
-            ChunkPos wrapped = transformer.fold(pos);
+    void chunkFoldKeepsItsValueAndReturnsAnInBoundsArgumentUntouched() {
+        forEach(FOLDS, (fold, random) -> {
+            ChunkPos pos = sampleChunkPos(random, fold);
+            ChunkPos folded = fold.fold(pos);
 
-            assertEquals(reference, wrapped, () -> "chunks.wrap(" + pos + ") " + in(transformer));
-            if (reference.equals(pos)) {
-                assertSame(pos, wrapped, () -> "an in-bounds " + pos + " must come back as itself " + in(transformer));
+            if (fold.decomposesPerAxis()) {
+                assertEquals(new ChunkPos(chunkX(fold).wrap(pos.x()), chunkZ(fold).wrap(pos.z())), folded,
+                        () -> "fold(" + pos + ") " + in(fold));
             }
+
+            assertUntouched(pos, folded, !fold.isOver(pos), fold);
         });
     }
 
     @Test
-    void chunkUnwrapKeepsItsValueAndReturnsTheArgumentUntouched() {
-        forEachTransformer((transformer, random) -> {
-            ChunkPos anchor = sampleChunkPos(random, transformer);
-            ChunkPos wrapped = insideChunkPos(random, transformer);
-            ChunkPos reference = new ChunkPos(
-                    chunkX(transformer).unwrap(anchor.x, wrapped.x),
-                    chunkZ(transformer).unwrap(anchor.z, wrapped.z));
-            ChunkPos unwrapped = transformer.nearestCopy(anchor, wrapped);
+    void chunkNearestCopyOfAnInsideChunkKeepsItsValueAndReturnsAnUnshiftedArgumentUntouched() {
+        forEach(FOLDS, (fold, random) -> {
+            ChunkPos anchor = sampleChunkPos(random, fold);
+            ChunkPos inside = insideChunkPos(random, fold);
+            ChunkPos nearest = fold.nearestCopy(anchor, inside);
 
-            assertEquals(reference, unwrapped,
-                    () -> "chunks.unwrap(" + anchor + ", " + wrapped + ") " + in(transformer));
-            if (reference.equals(wrapped)) {
-                assertSame(wrapped, unwrapped, () -> "an unshifted " + wrapped + " must come back as itself "
-                        + in(transformer));
+            if (fold.decomposesPerAxis()) {
+                assertEquals(new ChunkPos(
+                        chunkX(fold).unwrap(anchor.x(), inside.x()), chunkZ(fold).unwrap(anchor.z(), inside.z())),
+                        nearest, () -> "nearestCopy(" + anchor + ", " + inside + ") " + in(fold));
             }
+
+            assertUntouched(inside, nearest, fold);
         });
     }
 
     @Test
-    void vectorWrapKeepsItsValueAndReturnsTheArgumentUntouched() {
-        forEachTransformer((transformer, random) -> {
-            Vec3 vec = sampleVec(random, transformer);
-            Vec3 reference = new Vec3(
-                    blockX(transformer).wrap(vec.x), vec.y, blockZ(transformer).wrap(vec.z));
-            Vec3 wrapped = transformer.fold(vec);
+    void sectionFoldKeepsItsValueAndReturnsAnInBoundsArgumentUntouched() {
+        forEach(FOLDS, (fold, random) -> {
+            SectionPos pos = sampleSectionPos(random, fold);
+            SectionPos folded = fold.fold(pos);
 
-            assertEquals(reference, wrapped, () -> "vectors.wrap(" + vec + ") " + in(transformer));
-            if (reference.equals(vec)) {
-                assertSame(vec, wrapped, () -> "an in-bounds " + vec + " must come back as itself " + in(transformer));
+            if (fold.decomposesPerAxis()) {
+                assertEquals(SectionPos.of(chunkX(fold).wrap(pos.x()), pos.y(), chunkZ(fold).wrap(pos.z())), folded,
+                        () -> "fold(" + pos + ") " + in(fold));
             }
+
+            assertUntouched(pos, folded, !fold.isOver(pos.chunk()), fold);
         });
     }
 
     @Test
-    void nearestCopyKeepsItsValueAndReturnsTheTargetUntouched() {
-        forEachTransformer((transformer, random) -> {
-            Vec3 ref = sampleVec(random, transformer);
-            Vec3 target = sampleVec(random, transformer);
-            Vec3 reference = new Vec3(
-                    nearestCopy(blockX(transformer), ref.x, target.x), target.y,
-                    nearestCopy(blockZ(transformer), ref.z, target.z));
-            Vec3 nearest = transformer.nearestCopy(ref, target);
+    void vectorFoldKeepsItsValueAndReturnsAnInBoundsArgumentUntouched() {
+        forEach(FOLDS, (fold, random) -> {
+            Vec3 vec = sampleVec(random, fold);
+            Vec3 folded = fold.fold(vec);
 
-            assertEquals(reference, nearest,
-                    () -> "nearestCopy(" + ref + ", " + target + ") " + in(transformer));
-            if (reference.equals(target)) {
-                assertSame(target, nearest, () -> "an unshifted " + target + " must come back as itself "
-                        + in(transformer));
+            if (fold.decomposesPerAxis()) {
+                assertEquals(new Vec3(blockX(fold).wrap(vec.x), vec.y, blockZ(fold).wrap(vec.z)), folded,
+                        () -> "fold(" + vec + ") " + in(fold));
             }
+
+            assertUntouched(vec, folded, !fold.isOver(vec), fold);
         });
     }
 
     @Test
-    void blockNearestCopyKeepsItsValueAndReturnsTheTargetUntouched() {
-        forEachTransformer((transformer, random) -> {
-            BlockPos ref = sampleBlockPos(random, transformer);
-            BlockPos target = sampleBlockPos(random, transformer);
-            BlockPos reference = new BlockPos(
-                    nearestCopy(blockX(transformer), ref.getX(), target.getX()), target.getY(),
-                    nearestCopy(blockZ(transformer), ref.getZ(), target.getZ()));
-            BlockPos nearest = transformer.nearestCopy(ref, target);
+    void vectorNearestCopyKeepsItsValueAndReturnsAnUnshiftedTargetUntouched() {
+        forEach(FOLDS, (fold, random) -> {
+            Vec3 ref = sampleVec(random, fold);
+            Vec3 target = sampleVec(random, fold);
+            Vec3 nearest = fold.nearestCopy(ref, target);
 
-            assertEquals(reference, nearest,
-                    () -> "blocks.nearestCopy(" + ref + ", " + target + ") " + in(transformer));
-            if (reference.equals(target)) {
-                assertSame(target, nearest, () -> "an unshifted " + target + " must come back as itself "
-                        + in(transformer));
+            if (fold.decomposesPerAxis()) {
+                assertEquals(new Vec3(
+                        nearestCopy(blockX(fold), ref.x, target.x), target.y, nearestCopy(blockZ(fold), ref.z, target.z)),
+                        nearest, () -> "nearestCopy(" + ref + ", " + target + ") " + in(fold));
             }
+
+            assertUntouched(target, nearest, fold);
+        });
+    }
+
+    @Test
+    void blockNearestCopyKeepsItsValueAndReturnsAnUnshiftedTargetUntouched() {
+        forEach(FOLDS, (fold, random) -> {
+            BlockPos ref = sampleBlockPos(random, fold);
+            BlockPos target = sampleBlockPos(random, fold);
+            BlockPos nearest = fold.nearestCopy(ref, target);
+
+            if (fold.decomposesPerAxis()) {
+                assertEquals(new BlockPos(
+                        nearestCopy(blockX(fold), ref.getX(), target.getX()), target.getY(),
+                        nearestCopy(blockZ(fold), ref.getZ(), target.getZ())),
+                        nearest, () -> "nearestCopy(" + ref + ", " + target + ") " + in(fold));
+            }
+
+            assertUntouched(target, nearest, fold);
+        });
+    }
+
+    @Test
+    void theOrientedFoldsCarryTheSameValueAndTheSameInstanceAsThePlainOnes() {
+        forEach(FOLDS, (fold, random) -> {
+            BlockPos block = sampleBlockPos(random, fold);
+            Vec3 vec = sampleVec(random, fold);
+            ChunkPos chunk = sampleChunkPos(random, fold);
+            BlockPos orientedBlock = fold.foldOriented(block).value();
+            Vec3 orientedVec = fold.foldOriented(vec).value();
+            ChunkPos orientedChunk = fold.foldOriented(chunk).value();
+
+            assertEquals(fold.fold(block), orientedBlock, () -> "foldOriented(" + block + ") " + in(fold));
+            assertEquals(fold.fold(vec), orientedVec, () -> "foldOriented(" + vec + ") " + in(fold));
+            assertEquals(fold.fold(chunk), orientedChunk, () -> "foldOriented(" + chunk + ") " + in(fold));
+            assertUntouched(block, orientedBlock, !fold.isOver(block), fold);
+            assertUntouched(vec, orientedVec, !fold.isOver(vec), fold);
+            assertUntouched(chunk, orientedChunk, !fold.isOver(chunk), fold);
+        });
+    }
+
+    @Test
+    void theOrientedNearestCopiesCarryTheSameValueAndTheSameInstanceAsThePlainOnes() {
+        forEach(FOLDS, (fold, random) -> {
+            BlockPos blockRef = sampleBlockPos(random, fold);
+            BlockPos block = sampleBlockPos(random, fold);
+            Vec3 vecRef = sampleVec(random, fold);
+            Vec3 vec = sampleVec(random, fold);
+            BlockPos orientedBlock = fold.nearestCopyOriented(blockRef, block).value();
+            Vec3 orientedVec = fold.nearestCopyOriented(vecRef, vec).value();
+
+            assertEquals(fold.nearestCopy(blockRef, block), orientedBlock,
+                    () -> "nearestCopyOriented(" + blockRef + ", " + block + ") " + in(fold));
+            assertEquals(fold.nearestCopy(vecRef, vec), orientedVec,
+                    () -> "nearestCopyOriented(" + vecRef + ", " + vec + ") " + in(fold));
+            assertUntouched(block, orientedBlock, fold);
+            assertUntouched(vec, orientedVec, fold);
         });
     }
 
     @Test
     void reseatKeepsTheLowBitsAndReturnsTheArgumentUntouchedInItsOwnChunk() {
-        forEachTransformer((transformer, random) -> {
-            BlockPos pos = sampleBlockPos(random, transformer);
+        forEach(FOLDS, (fold, random) -> {
+            BlockPos pos = sampleBlockPos(random, fold);
             ChunkPos chunk = new ChunkPos(pos);
-            ChunkPos copy = new ChunkPos(
-                    chunk.x + lapsOf(random, chunkX(transformer)), chunk.z + lapsOf(random, chunkZ(transformer)));
-            BlockPos reference = new BlockPos(
-                    copy.getMinBlockX() + Math.floorMod(pos.getX(), CHUNK_BLOCKS), pos.getY(),
-                    copy.getMinBlockZ() + Math.floorMod(pos.getZ(), CHUNK_BLOCKS));
-            BlockPos reseated = transformer.reseat(pos, copy);
+            ChunkPos copy = fold.decomposesPerAxis()
+                    ? new ChunkPos(chunk.x + lapsOf(random, fold.bounds().x()), chunk.z + lapsOf(random, fold.bounds().z()))
+                    : chunk;
+            BlockPos reseated = fold.reseat(pos, copy);
 
-            assertEquals(reference, reseated, () -> "reseat(" + pos + ", " + copy + ") " + in(transformer));
-            if (copy.equals(chunk)) {
-                assertSame(pos, reseated, () -> "a reseat of " + pos + " into its own chunk must come back as itself "
-                        + in(transformer));
-            }
+            assertEquals(new BlockPos(
+                    copy.getMinBlockX() + Math.floorMod(pos.getX(), CHUNK_BLOCKS), pos.getY(),
+                    copy.getMinBlockZ() + Math.floorMod(pos.getZ(), CHUNK_BLOCKS)),
+                    reseated, () -> "reseat(" + pos + ", " + copy + ") " + in(fold));
+            assertUntouched(pos, reseated, copy.equals(chunk), fold);
         });
     }
 
     @Test
     void theDeckTransformationOfAChunkOntoItselfIsTheIdentityInstance() {
-        forEachTransformer((transformer, random) -> {
-            ChunkPos chunk = sampleChunkPos(random, transformer);
+        forEach(FOLDS, (fold, random) -> {
+            ChunkPos chunk = sampleChunkPos(random, fold);
             BoundingBox box = new BoundingBox(chunk.getMinBlockX(), 0, chunk.getMinBlockZ(),
                     chunk.getMaxBlockX(), 10, chunk.getMaxBlockZ());
 
-            assertSame(DeckTransformation.IDENTITY, transformer.deckTransformation(chunk, chunk),
-                    () -> "a chunk carried onto itself " + in(transformer));
+            assertSame(DeckTransformation.IDENTITY, fold.deckTransformation(chunk, chunk),
+                    () -> "a chunk carried onto itself " + in(fold));
             assertSame(box, DeckTransformation.IDENTITY.apply(box), "the identity rebuilt a box");
             assertSame(chunk, DeckTransformation.IDENTITY.apply(chunk), "the identity rebuilt a chunk");
         });
@@ -190,13 +260,68 @@ class IdentityFastPathTest {
 
     @Test
     void crossesBoundsAgreesWithWhetherTheSplitChangesAnything() {
-        forEachTransformer((transformer, random) -> {
-            AABB box = sampleBox(random, transformer);
-            List<WorldFold.Folded<AABB>> pieces = transformer.split(box);
+        forEach(FOLDS, (fold, random) -> {
+            AABB box = sampleBox(random, fold);
+            List<WorldFold.Folded<AABB>> pieces = fold.split(box);
             boolean untouched = pieces.size() == 1 && pieces.getFirst().value() == box;
 
-            assertEquals(untouched, !transformer.crossesBounds(box),
-                    () -> "crossesBounds(" + box + ") " + in(transformer));
+            assertEquals(untouched, !fold.crossesBounds(box), () -> "crossesBounds(" + box + ") " + in(fold));
+        });
+    }
+
+    @Test
+    void aRegionInsideTheBoundsSplitsIntoItself() {
+        forEach(FOLDS, (fold, random) -> {
+            BoundingBox region = sampleRegion(random, fold);
+            List<WorldFold.Folded<BoundingBox>> pieces = fold.split(region);
+            boolean untouched = pieces.size() == 1 && pieces.getFirst().value() == region;
+
+            assertEquals(untouched, !fold.crossesBounds(region), () -> "crossesBounds(" + region + ") " + in(fold));
+        });
+    }
+
+    @Test
+    void foldBoxKeepsItsValueAndReturnsABoxWhoseCentreNeedsNoShiftUntouched() {
+        forEach(FOLDS, (fold, random) -> {
+            AABB box = sampleBox(random, fold);
+            boolean anchoredAtTheCentre = random.nextBoolean();
+            Vec3 ref = anchoredAtTheCentre ? box.getCenter() : sampleVec(random, fold);
+            AABB folded = fold.foldBox(ref, box).value();
+
+            if (fold.decomposesPerAxis()) {
+                double centerX = (box.minX + box.maxX) / 2.0;
+                double centerZ = (box.minZ + box.maxZ) / 2.0;
+                double shiftX = nearestCopy(blockX(fold), ref.x, centerX) - centerX;
+                double shiftZ = nearestCopy(blockZ(fold), ref.z, centerZ) - centerZ;
+                assertBoxEquals(box.move(shiftX, 0.0, shiftZ), folded,
+                        () -> "foldBox(" + ref + ", " + box + ") " + in(fold));
+            }
+
+            assertUntouched(box, folded, anchoredAtTheCentre, fold);
+        });
+    }
+
+    @Test
+    void foldAcrossSeamReturnsARegionSpanningNoSeamUntouched() {
+        forEach(PER_AXIS, (fold, random) -> {
+            BoundingBox region = sampleRegion(random, fold);
+            BoundingBox folded = SeamSpans.foldAcrossSeam(fold, region);
+
+            assertUntouched(region, folded, !SeamSpans.crossesSeam(fold, region), fold);
+        });
+    }
+
+    @Test
+    void dimensionMappingReturnsAPositionThatMapsOntoItselfUntouched() {
+        forEach(PER_AXIS, (fold, random) -> {
+            Vec3 inside = insideVec(random, fold);
+            WorldFold destination = PER_AXIS.get(random.nextInt(PER_AXIS.size()));
+            Vec3 position = sampleVec(random, fold);
+            double declaredScale = random.nextBoolean() ? 1.0 : NETHER_SCALE;
+
+            assertSame(inside, DimensionMapping.map(fold, fold, inside, 1.0),
+                    () -> "a position mapped onto its own world " + in(fold));
+            assertUntouched(position, DimensionMapping.map(fold, destination, position, declaredScale), fold);
         });
     }
 
@@ -224,8 +349,27 @@ class IdentityFastPathTest {
         assertEquals(2, EVEN.split(box).size());
     }
 
-    private static int lapsOf(Random random, WrapDomain domain) {
-        return domain instanceof WrapDomain.Noop ? 0 : (random.nextInt(5) - 2) * domain.domainLength;
+    private static void assertBoxEquals(AABB expected, AABB actual, Supplier<String> message) {
+        assertEquals(expected.minX, actual.minX, SHIFT_TOLERANCE, message);
+        assertEquals(expected.minY, actual.minY, SHIFT_TOLERANCE, message);
+        assertEquals(expected.minZ, actual.minZ, SHIFT_TOLERANCE, message);
+        assertEquals(expected.maxX, actual.maxX, SHIFT_TOLERANCE, message);
+        assertEquals(expected.maxY, actual.maxY, SHIFT_TOLERANCE, message);
+        assertEquals(expected.maxZ, actual.maxZ, SHIFT_TOLERANCE, message);
+    }
+
+    private static <T> void assertUntouched(T argument, T result, WorldFold fold) {
+        assertUntouched(argument, result, false, fold);
+    }
+
+    private static <T> void assertUntouched(T argument, T result, boolean mustBeUnmoved, WorldFold fold) {
+        if (mustBeUnmoved || result.equals(argument)) {
+            assertSame(argument, result, () -> "an unmoved " + argument + " must come back as itself " + in(fold));
+        }
+    }
+
+    private static int lapsOf(Random random, AxisBounds axis) {
+        return axis instanceof AxisBounds.Looped looped ? (random.nextInt(5) - 2) * looped.chunkWidth() : 0;
     }
 
     private static double nearestCopy(WrapDomain domain, double ref, double coord) {
@@ -252,14 +396,14 @@ class IdentityFastPathTest {
     }
 
     private interface Case {
-        void check(WorldFold transformer, Random random);
+        void check(WorldFold fold, Random random);
     }
 
-    private static void forEachTransformer(Case body) {
-        for (WorldFold transformer : TRANSFORMERS) {
+    private static void forEach(List<WorldFold> folds, Case body) {
+        for (WorldFold fold : folds) {
             Random random = new Random(SEED);
             for (int sample = 0; sample < SAMPLES; sample++) {
-                body.check(transformer, random);
+                body.check(fold, random);
             }
         }
     }
@@ -268,54 +412,91 @@ class IdentityFastPathTest {
         return new WorldLoopTransformer(new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax));
     }
 
-    private static int reach(WrapDomain domain, int cap) {
-        return domain instanceof WrapDomain.Noop ? cap : Math.min(3 * domain.domainLength, cap);
-    }
-
-    private static int sampleCoord(Random random, WrapDomain domain, int cap) {
-        int span = reach(domain, cap);
+    private static int sampleCoord(Random random, int width, int cap) {
+        int span = width == 0 ? cap : Math.min(3 * width, cap);
         return random.nextInt(2 * span + 1) - span;
     }
 
-    private static int insideCoord(Random random, WrapDomain domain, int cap) {
-        return domain instanceof WrapDomain.Noop
-                ? sampleCoord(random, domain, cap)
-                : domain.lowerBound + random.nextInt(domain.domainLength);
+    private static int sampleBlockCoord(Random random, AxisBounds axis) {
+        return sampleCoord(random, axis instanceof AxisBounds.Looped looped ? looped.blockWidth() : 0, BLOCK_REACH_CAP);
     }
 
-    private static BlockPos sampleBlockPos(Random random, WorldFold transformer) {
-        return new BlockPos(sampleCoord(random, blockX(transformer), 16_000), random.nextInt(384) - 64,
-                sampleCoord(random, blockZ(transformer), 16_000));
+    private static int sampleChunkCoord(Random random, AxisBounds axis) {
+        return sampleCoord(random, axis instanceof AxisBounds.Looped looped ? looped.chunkWidth() : 0, CHUNK_REACH_CAP);
     }
 
-    private static BlockPos insideBlockPos(Random random, WorldFold transformer) {
-        return new BlockPos(insideCoord(random, blockX(transformer), 16_000), random.nextInt(384) - 64,
-                insideCoord(random, blockZ(transformer), 16_000));
+    private static int insideBlockCoord(Random random, AxisBounds axis) {
+        return axis instanceof AxisBounds.Looped looped
+                ? looped.minBlock() + random.nextInt(looped.blockWidth())
+                : sampleBlockCoord(random, axis);
     }
 
-    private static ChunkPos sampleChunkPos(Random random, WorldFold transformer) {
-        return new ChunkPos(sampleCoord(random, chunkX(transformer), 1_000),
-                sampleCoord(random, chunkZ(transformer), 1_000));
+    private static int insideChunkCoord(Random random, AxisBounds axis) {
+        return axis instanceof AxisBounds.Looped looped
+                ? looped.minChunk() + random.nextInt(looped.chunkWidth())
+                : sampleChunkCoord(random, axis);
     }
 
-    private static ChunkPos insideChunkPos(Random random, WorldFold transformer) {
-        return new ChunkPos(insideCoord(random, chunkX(transformer), 1_000),
-                insideCoord(random, chunkZ(transformer), 1_000));
+    private static int regionSpan(Random random, AxisBounds axis) {
+        return random.nextInt(
+                (axis instanceof AxisBounds.Looped looped ? looped.blockWidth() : UNBOUNDED_REGION_REACH) + 1);
     }
 
-    private static Vec3 sampleVec(Random random, WorldFold transformer) {
-        return new Vec3(sampleCoord(random, blockX(transformer), 16_000) + random.nextDouble(),
-                random.nextInt(384) - 64 + random.nextDouble(),
-                sampleCoord(random, blockZ(transformer), 16_000) + random.nextDouble());
+    private static int sampleY(Random random) {
+        return WORLD_FLOOR + random.nextInt(WORLD_HEIGHT);
     }
 
-    private static AABB sampleBox(Random random, WorldFold transformer) {
-        double minX = sampleCoord(random, blockX(transformer), 16_000) + random.nextDouble();
-        double minZ = sampleCoord(random, blockZ(transformer), 16_000) + random.nextDouble();
-        double minY = random.nextInt(384) - 64;
+    private static BlockPos sampleBlockPos(Random random, WorldFold fold) {
+        return new BlockPos(sampleBlockCoord(random, fold.bounds().x()), sampleY(random),
+                sampleBlockCoord(random, fold.bounds().z()));
+    }
+
+    private static BlockPos insideBlockPos(Random random, WorldFold fold) {
+        return new BlockPos(insideBlockCoord(random, fold.bounds().x()), sampleY(random),
+                insideBlockCoord(random, fold.bounds().z()));
+    }
+
+    private static ChunkPos sampleChunkPos(Random random, WorldFold fold) {
+        return new ChunkPos(sampleChunkCoord(random, fold.bounds().x()), sampleChunkCoord(random, fold.bounds().z()));
+    }
+
+    private static ChunkPos insideChunkPos(Random random, WorldFold fold) {
+        return new ChunkPos(insideChunkCoord(random, fold.bounds().x()), insideChunkCoord(random, fold.bounds().z()));
+    }
+
+    private static SectionPos sampleSectionPos(Random random, WorldFold fold) {
+        return SectionPos.of(sampleChunkCoord(random, fold.bounds().x()),
+                SECTION_FLOOR + random.nextInt(SECTION_COUNT), sampleChunkCoord(random, fold.bounds().z()));
+    }
+
+    private static Vec3 sampleVec(Random random, WorldFold fold) {
+        return new Vec3(sampleBlockCoord(random, fold.bounds().x()) + random.nextDouble(),
+                sampleY(random) + random.nextDouble(),
+                sampleBlockCoord(random, fold.bounds().z()) + random.nextDouble());
+    }
+
+    private static Vec3 insideVec(Random random, WorldFold fold) {
+        return new Vec3(insideBlockCoord(random, fold.bounds().x()) + random.nextDouble(),
+                sampleY(random) + random.nextDouble(),
+                insideBlockCoord(random, fold.bounds().z()) + random.nextDouble());
+    }
+
+    private static AABB sampleBox(Random random, WorldFold fold) {
+        double minX = sampleBlockCoord(random, fold.bounds().x()) + random.nextDouble();
+        double minZ = sampleBlockCoord(random, fold.bounds().z()) + random.nextDouble();
+        double minY = sampleY(random);
         return new AABB(minX, minY, minZ,
                 minX + random.nextDouble() * 24.0, minY + random.nextDouble() * 4.0,
                 minZ + random.nextDouble() * 24.0);
+    }
+
+    private static BoundingBox sampleRegion(Random random, WorldFold fold) {
+        int minX = sampleBlockCoord(random, fold.bounds().x());
+        int minZ = sampleBlockCoord(random, fold.bounds().z());
+        int minY = sampleY(random);
+        return new BoundingBox(minX, minY, minZ,
+                minX + regionSpan(random, fold.bounds().x()), minY + random.nextInt(CHUNK_BLOCKS),
+                minZ + regionSpan(random, fold.bounds().z()));
     }
 
     private static WrapDomain blockX(WorldFold fold) {
@@ -334,7 +515,7 @@ class IdentityFastPathTest {
         return fold.chunkDomain(Direction.Axis.Z);
     }
 
-    private static String in(WorldFold transformer) {
-        return "in " + transformer;
+    private static String in(WorldFold fold) {
+        return "in " + fold;
     }
 }
