@@ -70,6 +70,7 @@
     "DragonTakeoffPhaseMixin",
     "DualNoiseProviderMixin",
     "EnderDragonMixin",
+    "EntityAccessor",
     "EntityMixin",
     "EntitySectionCallbackMixin",
     "EntitySectionManagerMixin",

@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.player.SeamSnap;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.server.level.ServerLevel;
@@ -50,7 +51,7 @@ public class EntitySectionManagerMixin implements LevelBindable {
         }
 
         Vec3 wrapped = transformer.fold(position);
-        actualEntity.absSnapTo(wrapped.x, wrapped.y, wrapped.z);
+        SeamSnap.withPassengers(actualEntity, wrapped.subtract(position));
     }
 
     @ModifyArg(
