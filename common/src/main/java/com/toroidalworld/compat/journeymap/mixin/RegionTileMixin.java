@@ -4,6 +4,7 @@ import java.util.function.ToDoubleFunction;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.Coerce;
 
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
