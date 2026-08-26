@@ -254,12 +254,11 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         }
 
         Vec3 wrapped = transformer.fold(this.player.position());
-        this.player.absSnapTo(wrapped.x, wrapped.y, wrapped.z, this.player.getYRot(), this.player.getXRot());
+        SeamSnap.withPassengers(this.player, wrapped.subtract(this.player.position()));
         this.firstGoodX = wrapped.x;
         this.firstGoodZ = wrapped.z;
         this.lastGoodX = wrapped.x;
         this.lastGoodZ = wrapped.z;
-        this.player.level().getChunkSource().move(this.player);
     }
 
     @WrapOperation(
