@@ -106,8 +106,24 @@ tasks.named('jar', Jar) {
     archiveFileName = "${mod_id}-fabric-${jarVersion}.jar"
 }
 
-// This module has no tests of its own, but it ships common's sources — so its test task runs common's suite.
-tasks.named('test') {
+// The loader-bound tests shared with the neoforge module, run here under Fabric Loader's JUnit launcher so the
+// mixins this jar ships are exercised by the loader that applies them.
+sourceSets.test.java.srcDir '../common/src/loaderTest/java'
+
+dependencies {
+    testImplementation "net.fabricmc:fabric-loader-junit:${fabric_loader_version}"
+    testImplementation platform("org.junit:junit-bom:${junit_version}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
+    // The vanilla log4j config writes logs/latest.log into the working directory — kept under build/, as FML does.
+    workingDir = layout.buildDirectory.dir('test-run').get().asFile
+    doFirst { workingDir.mkdirs() }
+    // The math this jar ships is tested in common; the loader suite alone would let a red common through.
     dependsOn(':common:test')
 }
 
