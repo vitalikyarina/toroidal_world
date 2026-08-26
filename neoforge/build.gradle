@@ -101,8 +101,10 @@ neoForge {
     }
 
     // Creates the test source set with the Minecraft classes on its classpath and runs tests through the FML JUnit
-    // launcher, so registries are bootstrapped and the mod's mixins are applied. The suite lives here rather than in
-    // common because part of it reads packets through accessor mixins, which only exist once a loader applies them.
+    // launcher, so registries are bootstrapped and the mod's mixins are applied. Only tests that need a loader live
+    // here: packets read through accessor mixins, density-function samples whose expected values come from the noise
+    // mixins, and the C2ME fold test — C2ME's own access transformer opens the NoiseChunk internals its AST walks.
+    // Everything else runs as plain JUnit in common.
     unitTest {
         enable()
         testedMod = mods.toroidal_world
