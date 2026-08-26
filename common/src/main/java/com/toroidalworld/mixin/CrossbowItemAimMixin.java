@@ -8,6 +8,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.CrossbowItem;
 
@@ -18,7 +19,7 @@ public class CrossbowItemAimMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getX()D", ordinal = 0))
     private double toroidal$aimTargetX(LivingEntity target, Operation<Double> original,
             @Local(argsOnly = true, ordinal = 0) LivingEntity shooter) {
-        return SeamAim.nearestTo(shooter, target.position()).x;
+        return SeamAim.nearestTo(shooter, target.position().with(Direction.Axis.X, original.call(target))).x;
     }
 
     @WrapOperation(
@@ -26,6 +27,6 @@ public class CrossbowItemAimMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getZ()D", ordinal = 0))
     private double toroidal$aimTargetZ(LivingEntity target, Operation<Double> original,
             @Local(argsOnly = true, ordinal = 0) LivingEntity shooter) {
-        return SeamAim.nearestTo(shooter, target.position()).z;
+        return SeamAim.nearestTo(shooter, target.position().with(Direction.Axis.Z, original.call(target))).z;
     }
 }
