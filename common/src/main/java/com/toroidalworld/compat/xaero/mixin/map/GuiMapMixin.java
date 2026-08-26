@@ -74,6 +74,10 @@ public abstract class GuiMapMixin {
     private int toroidal$slotViewBlockZ;
     @Unique
     private final LongOpenHashSet toroidal$drawnCanonicalSlots = new LongOpenHashSet();
+    @Unique
+    private int toroidal$cursorLapX;
+    @Unique
+    private int toroidal$cursorLapZ;
 
     @Inject(method = "extractRenderState", at = @At("HEAD"))
     private void toroidal$beginFrame(CallbackInfo ci) {
@@ -131,8 +135,12 @@ public abstract class GuiMapMixin {
                     ordinal = 1,
                     shift = At.Shift.AFTER))
     private void toroidal$foldCursorBlockPos(CallbackInfo ci) {
-        this.mouseBlockPosX = XaeroWorldMapFold.foldBlock(Direction.Axis.X, this.mouseBlockPosX);
-        this.mouseBlockPosZ = XaeroWorldMapFold.foldBlock(Direction.Axis.Z, this.mouseBlockPosZ);
+        int rawX = this.mouseBlockPosX;
+        int rawZ = this.mouseBlockPosZ;
+        this.mouseBlockPosX = XaeroWorldMapFold.foldBlock(Direction.Axis.X, rawX);
+        this.mouseBlockPosZ = XaeroWorldMapFold.foldBlock(Direction.Axis.Z, rawZ);
+        this.toroidal$cursorLapX = rawX - this.mouseBlockPosX;
+        this.toroidal$cursorLapZ = rawZ - this.mouseBlockPosZ;
     }
 
     @Redirect(
@@ -365,11 +373,17 @@ public abstract class GuiMapMixin {
             int leftX, int rightX, int topZ, int bottomZ,
             float sideR, float sideG, float sideB, float sideA, float centerR, float centerG, float centerB, float centerA,
             Operation<Void> original) {
-        original.call(matrixStack, overlayBuffer, flooredCameraX, flooredCameraZ, leftX, rightX, topZ, bottomZ,
-                sideR, sideG, sideB, sideA, centerR, centerG, centerB, centerA);
         if (!XaeroWorldMapFold.active()) {
+            original.call(matrixStack, overlayBuffer, flooredCameraX, flooredCameraZ, leftX, rightX, topZ, bottomZ,
+                    sideR, sideG, sideB, sideA, centerR, centerG, centerB, centerA);
             return;
         }
+
+        int lapX = this.toroidal$cursorLapX;
+        int lapZ = this.toroidal$cursorLapZ;
+        original.call(matrixStack, overlayBuffer, flooredCameraX, flooredCameraZ,
+                leftX + lapX, rightX + lapX, topZ + lapZ, bottomZ + lapZ,
+                sideR, sideG, sideB, sideA, centerR, centerG, centerB, centerA);
 
         AxisCopies copiesX = XaeroWorldMapFold.copies(Direction.Axis.X);
         AxisCopies copiesZ = XaeroWorldMapFold.copies(Direction.Axis.Z);
