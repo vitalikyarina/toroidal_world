@@ -12,16 +12,17 @@ import com.toroidalworld.compat.journeymap.JourneyMapSeamPass;
 import journeymap.client.render.draw.DrawPolygonStep;
 import journeymap.client.render.map.Renderer;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.MultiBufferSource;
 import org.joml.Matrix3x2fStack;
 
 @Mixin(targets = "journeymap.client.render.map.PolygonGeometryDrawPass", remap = false)
 public abstract class PolygonGeometryDrawPassMixin {
     @Inject(method = "draw", at = @At("HEAD"))
     private void toroidal$drawSeamLines(GuiGraphicsExtractor graphics, Matrix3x2fStack pose,
-            List<? extends DrawPolygonStep> polygonSteps, double xOffset, double yOffset, Renderer renderer,
-            double fontScale, double rotation, CallbackInfo ci) {
+            MultiBufferSource.BufferSource buffers, List<? extends DrawPolygonStep> polygonSteps, double xOffset,
+            double yOffset, Renderer renderer, double fontScale, double rotation, CallbackInfo ci) {
         if (renderer instanceof JourneyMapSeamPass seamPass) {
-            seamPass.toroidal$drawSeams(graphics, pose, xOffset, yOffset);
+            seamPass.toroidal$drawSeams(graphics, pose, buffers, xOffset, yOffset);
         }
     }
 }
