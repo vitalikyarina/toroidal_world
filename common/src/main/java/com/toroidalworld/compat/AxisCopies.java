@@ -1,15 +1,10 @@
 package com.toroidalworld.compat;
 
-import java.util.List;
-
 import com.toroidalworld.api.ToroidalShape;
 
 import net.minecraft.core.Direction;
 
 public record AxisCopies(boolean loops, int min, int width) {
-    private static final List<Integer> LOOPED_LAPS = List.of(-1, 0, 1);
-    private static final List<Integer> SINGLE_LAP = List.of(0);
-
     public static final AxisCopies UNBOUNDED = new AxisCopies(false, 0, 0);
 
     public static AxisCopies of(ToroidalShape shape, Direction.Axis axis) {
@@ -33,8 +28,42 @@ public record AxisCopies(boolean loops, int min, int width) {
         return looped().min + this.width;
     }
 
-    public List<Integer> laps() {
-        return this.loops ? LOOPED_LAPS : SINGLE_LAP;
+    public int[] laps(int spanMin, int spanMax) {
+        if (!this.loops) {
+            return new int[] {0};
+        }
+
+        int first = Math.floorDiv(spanMin - this.min, this.width);
+        int last = Math.floorDiv(spanMax - 1 - this.min, this.width);
+        if (last < first) {
+            return new int[0];
+        }
+
+        int[] laps = new int[last - first + 1];
+        for (int i = 0; i < laps.length; i++) {
+            laps[i] = first + i;
+        }
+
+        return laps;
+    }
+
+    public int[] seams(int spanMin, int spanMax) {
+        if (!this.loops) {
+            return new int[0];
+        }
+
+        int[] laps = laps(spanMin, spanMax);
+        if (laps.length == 0) {
+            return laps;
+        }
+
+        int[] seams = new int[laps.length + 1];
+        for (int i = 0; i < laps.length; i++) {
+            seams[i] = this.min + offset(laps[i]);
+        }
+
+        seams[laps.length] = max() + offset(laps[laps.length - 1]);
+        return seams;
     }
 
     public int offset(int lap) {
