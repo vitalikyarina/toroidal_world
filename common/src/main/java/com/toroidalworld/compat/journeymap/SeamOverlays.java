@@ -3,8 +3,12 @@ package com.toroidalworld.compat.journeymap;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+
 import com.toroidalworld.api.ToroidalShape;
+import com.toroidalworld.compat.AxisCopies;
 import com.toroidalworld.ToroidalWorld;
+import com.mojang.logging.LogUtils;
 
 import journeymap.api.v2.client.display.PolygonOverlay;
 import journeymap.api.v2.client.model.MapPolygon;
@@ -16,32 +20,45 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
 public final class SeamOverlays {
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     private static final int STROKE_RGB = 0xFFFFFF;
     private static final float STROKE_OPACITY = 0.35f;
     private static final float STROKE_WIDTH = 1.5f;
 
+    private static final int TORUS_OVERLAYS = 9;
+
     public static List<PolygonOverlay> build(ResourceKey<Level> dimension, ToroidalShape shape) {
-        if (!shape.loops(Direction.Axis.X) || !shape.loops(Direction.Axis.Z)) {
-            return List.of();
-        }
-
-        int minX = shape.minBlock(Direction.Axis.X);
-        int maxX = shape.maxBlock(Direction.Axis.X);
-        int minZ = shape.minBlock(Direction.Axis.Z);
-        int maxZ = shape.maxBlock(Direction.Axis.Z);
-        int widthX = shape.widthBlocks(Direction.Axis.X);
-        int widthZ = shape.widthBlocks(Direction.Axis.Z);
-
-        List<PolygonOverlay> overlays = new ArrayList<>(9);
-        for (int lapX = -1; lapX <= 1; lapX++) {
-            for (int lapZ = -1; lapZ <= 1; lapZ++) {
-                overlays.add(outline(dimension,
-                        minX + lapX * widthX, minZ + lapZ * widthZ,
-                        maxX + lapX * widthX, maxZ + lapZ * widthZ));
+        AxisCopies x = AxisCopies.of(shape, Direction.Axis.X);
+        AxisCopies z = AxisCopies.of(shape, Direction.Axis.Z);
+        List<PolygonOverlay> overlays = new ArrayList<>(x.laps().size() * z.laps().size());
+        for (int lapX : x.laps()) {
+            for (int lapZ : z.laps()) {
+                overlays.add(outline(dimension, lower(x, lapX), lower(z, lapZ), upper(x, lapX), upper(z, lapZ)));
             }
         }
 
+        LOGGER.info("[jm-compat] seam_overlays dim={} {} {} overlays={} legacy_overlays={}",
+                dimension.identifier(), describe("x", x), describe("z", z), overlays.size(),
+                x.loops() && z.loops() ? TORUS_OVERLAYS : 0);
         return overlays;
+    }
+
+    private static int lower(AxisCopies axis, int lap) {
+        return axis.loops() ? axis.min() + axis.offset(lap) : -Level.MAX_LEVEL_SIZE;
+    }
+
+    private static int upper(AxisCopies axis, int lap) {
+        return axis.loops() ? axis.max() + axis.offset(lap) : Level.MAX_LEVEL_SIZE;
+    }
+
+    private static String describe(String axis, AxisCopies copies) {
+        if (!copies.loops()) {
+            return axis + "_loops=false " + axis + "_laps=" + copies.laps().size();
+        }
+
+        return axis + "_loops=true " + axis + "_laps=" + copies.laps().size()
+                + " " + axis + "_min=" + copies.min() + " " + axis + "_width_blocks=" + copies.width();
     }
 
     private static PolygonOverlay outline(ResourceKey<Level> dimension, int minX, int minZ, int maxX, int maxZ) {
