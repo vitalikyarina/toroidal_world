@@ -74,7 +74,7 @@ public class CylinderSettingsScreen extends Screen {
 
     @Override
     public void onClose() {
-        Minecraft.getInstance().gui.setScreen(this.parent);
+        Minecraft.getInstance().setScreen(this.parent);
     }
 
     private void refreshDoneButton() {
