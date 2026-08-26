@@ -686,12 +686,96 @@ class DeckGroupFoldMatrixTest {
     }
 
     @Nested
+    class BoundsQueries {
+        @Test
+        void isOverReadsTheFundamentalRectangleWhateverTheGluing() {
+            for (Case testCase : cases()) {
+                DeckGroupFold fold = testCase.fold();
+                Random random = new Random(SEED + 16);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    int x = sample(random);
+                    int z = sample(random);
+                    boolean expected = (testCase.group().xLoops() && (x < LOWER || x >= UPPER))
+                            || (testCase.group().zLoops() && (z < LOWER || z >= UPPER));
+
+                    assertEquals(expected, fold.isOver(new BlockPos(x, 64, z)), testCase.name() + ": block isOver");
+                    assertEquals(expected, fold.isOver(new Vec3(x + 0.5, 64.0, z + 0.5)),
+                            testCase.name() + ": vector isOver");
+                    assertEquals(expected,
+                            fold.isOver(new ChunkPos(Math.floorDiv(x, UNIT), Math.floorDiv(z, UNIT))),
+                            testCase.name() + ": chunk isOver");
+                }
+            }
+        }
+
+        @Test
+        void chunkOvershootIsTheChessboardDistanceToTheNearestChunkInside() {
+            for (Case testCase : cases()) {
+                DeckGroupFold fold = testCase.fold();
+                Random random = new Random(SEED + 17);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    int chunkX = Math.floorDiv(sample(random), UNIT);
+                    int chunkZ = Math.floorDiv(sample(random), UNIT);
+                    int expected = Math.max(
+                            testCase.group().xLoops() ? overshootOf(chunkX) : 0,
+                            testCase.group().zLoops() ? overshootOf(chunkZ) : 0);
+
+                    assertEquals(expected, fold.chunkOvershoot(new ChunkPos(chunkX, chunkZ)),
+                            testCase.name() + ": overshoot of (" + chunkX + ", " + chunkZ + ")");
+                }
+            }
+        }
+
+        @Test
+        void maxViewDistanceIsHalfTheNarrowerLoopedWidthMinusTheMargin() {
+            for (Case testCase : cases()) {
+                int expected = testCase.group().xLoops() || testCase.group().zLoops()
+                        ? (MAX_CHUNK - MIN_CHUNK) / 2 - 3
+                        : Integer.MAX_VALUE;
+
+                assertEquals(expected, testCase.fold().maxViewDistance(), testCase.name());
+                assertEquals(Math.min(expected, 32), testCase.fold().limitViewDistance(32), testCase.name());
+            }
+        }
+
+        private static int overshootOf(int chunk) {
+            if (chunk < MIN_CHUNK) {
+                return MIN_CHUNK - chunk;
+            }
+
+            return chunk >= MAX_CHUNK ? chunk - (MAX_CHUNK - 1) : 0;
+        }
+    }
+
+    @Nested
     class PerAxisAgreement {
+        @Test
+        void theDecomposableShapesAgreeWithThePerAxisTransformerOnBoundsQueries() {
+            for (Case testCase : decomposableCases()) {
+                DeckGroupFold generic = testCase.fold();
+                WorldFold perAxis = new WorldLoopTransformer(testCase.shape().bounds());
+                Random random = new Random(SEED + 18);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    BlockPos block = new BlockPos(sample(random), 64, sample(random));
+                    Vec3 vector = new Vec3(block.getX() + 0.5, 64.0, block.getZ() + 0.5);
+                    ChunkPos chunk = new ChunkPos(Math.floorDiv(block.getX(), UNIT), Math.floorDiv(block.getZ(), UNIT));
+
+                    assertEquals(perAxis.isOver(block), generic.isOver(block), testCase.name() + ": block isOver");
+                    assertEquals(perAxis.isOver(vector), generic.isOver(vector), testCase.name() + ": vector isOver");
+                    assertEquals(perAxis.isOver(chunk), generic.isOver(chunk), testCase.name() + ": chunk isOver");
+                    assertEquals(perAxis.chunkOvershoot(chunk), generic.chunkOvershoot(chunk),
+                            testCase.name() + ": overshoot");
+                }
+
+                assertEquals(perAxis.maxViewDistance(), generic.maxViewDistance(), testCase.name());
+            }
+        }
+
         @Test
         void theDecomposableShapesAgreeWithThePerAxisTransformer() {
             for (Case testCase : decomposableCases()) {
                 DeckGroupFold generic = testCase.fold();
-                WorldLoopTransformer perAxis = new WorldLoopTransformer(testCase.shape().bounds());
+                WorldFold perAxis = new WorldLoopTransformer(testCase.shape().bounds());
                 Random random = new Random(SEED + 14);
                 for (int sample = 0; sample < SAMPLES; sample++) {
                     BlockPos ref = new BlockPos(sample(random), 64, sample(random));

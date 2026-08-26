@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import com.toroidalworld.accessors.FramedStructureStart;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -44,7 +44,7 @@ public class PlaceCommandMixin {
             BlockPos pos,
             Operation<Integer> original) throws CommandSyntaxException {
         ServerLevel level = source.getLevel();
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return original.call(source, structureHolder, pos);
         }
@@ -79,7 +79,7 @@ public class PlaceCommandMixin {
         FramedStructureStart framable = (FramedStructureStart) (Object) start;
         for (int chunkX = chunkMin.x(); chunkX <= chunkMax.x(); chunkX++) {
             for (int chunkZ = chunkMin.z(); chunkZ <= chunkMax.z(); chunkZ++) {
-                ChunkPos wrapped = transformer.chunks.wrap(new ChunkPos(chunkX, chunkZ));
+                ChunkPos wrapped = transformer.fold(new ChunkPos(chunkX, chunkZ));
 
                 StructureStart framed = framable.toroidal$framedBy(level, wrapped.x() - chunkX, wrapped.z() - chunkZ);
                 if (framed == null) {

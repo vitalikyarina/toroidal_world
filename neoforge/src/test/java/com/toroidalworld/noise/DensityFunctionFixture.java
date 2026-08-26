@@ -3,9 +3,11 @@ package com.toroidalworld.noise;
 import java.util.List;
 import java.util.Random;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.shape.FlatShape;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import net.minecraft.core.Holder;
@@ -27,13 +29,13 @@ public final class DensityFunctionFixture {
     private static final DensityFunction.NoiseHolder NOISE = new DensityFunction.NoiseHolder(
             NOISE_DATA, NormalNoise.create(new LegacyRandomSource(SEED), PARAMETERS));
 
-    public static final WorldLoopTransformer SQUARE =
-            new WorldLoopTransformer(new WorldLoopBounds(-16, 16, -16, 16));
+    public static final WorldFold SQUARE =
+            WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(-16, 16, -16, 16), FlatShape.NO_SKEW));
 
-    public static final WorldLoopTransformer RECTANGULAR =
-            new WorldLoopTransformer(new WorldLoopBounds(-16, 16, -8, 8));
+    public static final WorldFold RECTANGULAR =
+            WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(-16, 16, -8, 8), FlatShape.NO_SKEW));
 
-    public static final List<WorldLoopTransformer> WORLDS = List.of(SQUARE, RECTANGULAR);
+    public static final List<WorldFold> WORLDS = List.of(SQUARE, RECTANGULAR);
 
     public static DensityFunction withLiveNoise(DensityFunction function) {
         return function.mapAll(new DensityFunction.Visitor() {

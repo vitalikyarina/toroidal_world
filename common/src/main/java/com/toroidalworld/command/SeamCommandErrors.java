@@ -2,8 +2,9 @@ package com.toroidalworld.command;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.core.WrapDomain;
+import com.toroidalworld.core.SeamSpans;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.Dynamic3CommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
@@ -21,21 +22,21 @@ public final class SeamCommandErrors {
     private static final SimpleCommandExceptionType REGION_ACROSS_SEAM = new SimpleCommandExceptionType(
             Component.translatable("commands.toroidal_world.region.across_seam"));
 
-    public static void requireInsideWorld(WrapDomain domain, WorldCoordinate coordinate)
+    public static void requireInsideWorld(AxisBounds axis, WorldCoordinate coordinate)
             throws CommandSyntaxException {
         if (coordinate.isRelative()) {
             return;
         }
 
-        requireInsideWorld(domain, coordinate.value());
+        requireInsideWorld(axis, coordinate.value());
     }
 
-    public static void requireInsideWorld(WrapDomain domain, double coord) throws CommandSyntaxException {
-        if (!domain.isOver(coord)) {
+    public static void requireInsideWorld(AxisBounds axis, double coord) throws CommandSyntaxException {
+        if (!(axis instanceof AxisBounds.Looped looped) || !looped.isOver(coord)) {
             return;
         }
 
-        throw COORDINATE_OUTSIDE_WORLD.create(blockOf(coord), domain.lowerBound, domain.upperBound - 1);
+        throw COORDINATE_OUTSIDE_WORLD.create(blockOf(coord), looped.minBlock(), looped.maxBlock() - 1);
     }
 
     private static long blockOf(double coord) {
@@ -43,15 +44,15 @@ public final class SeamCommandErrors {
     }
 
     public static @Nullable CommandSyntaxException refusalForAmbiguousRegion(
-            @Nullable WorldLoopTransformer transformer, BoundingBox region) {
-        if (transformer == null || !transformer.spansSeam(region)) {
+            @Nullable WorldFold transformer, BoundingBox region) {
+        if (transformer == null || !SeamSpans.crossesSeam(transformer, region)) {
             return null;
         }
 
         return REGION_ACROSS_SEAM.create();
     }
 
-    public static void requireUnambiguousRegion(@Nullable WorldLoopTransformer transformer, BoundingBox region)
+    public static void requireUnambiguousRegion(@Nullable WorldFold transformer, BoundingBox region)
             throws CommandSyntaxException {
         CommandSyntaxException refusal = refusalForAmbiguousRegion(transformer, region);
         if (refusal != null) {

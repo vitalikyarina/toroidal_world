@@ -68,6 +68,48 @@ class WorldLoopBoundsTest {
     }
 
     @Test
+    void aLoopedAxisAnswersBlockQueriesFromItsChunkBounds() {
+        AxisBounds.Looped axis = new AxisBounds.Looped(-32, 32);
+
+        assertEquals(-32 * 16, axis.minBlock());
+        assertEquals(32 * 16, axis.maxBlock());
+        assertEquals(64 * 16, axis.blockWidth());
+
+        assertFalse(axis.isOver(-32 * 16));
+        assertFalse(axis.isOver(32 * 16 - 0.5));
+        assertTrue(axis.isOver(32 * 16));
+        assertTrue(axis.isOver(-32 * 16 - 1));
+
+        assertTrue(axis.fitsInHalf(32 * 16));
+        assertFalse(axis.fitsInHalf(32 * 16 + 0.5));
+        assertTrue(axis.coversWorld(64 * 16));
+        assertFalse(axis.coversWorld(64 * 16 - 1));
+        assertFalse(axis.foldsOntoItself(64));
+        assertTrue(axis.foldsOntoItself(65));
+    }
+
+    @Test
+    void anUnboundedAxisIsNeverOverNeverCoveredAndAlwaysFitsInHalf() {
+        AxisBounds axis = AxisBounds.Unbounded.INSTANCE;
+
+        assertFalse(axis.isOver(-1.0e9));
+        assertFalse(axis.isOver(1.0e9));
+        assertTrue(axis.fitsInHalf(1.0e9));
+        assertFalse(axis.coversWorld(1.0e9));
+        assertFalse(axis.foldsOntoItself(Integer.MAX_VALUE));
+    }
+
+    @Test
+    void maxViewDistanceIsHalfTheNarrowerLoopedWidthMinusThreeAndNeverBelowOne() {
+        assertEquals(64 / 2 - 3, WorldLoopBounds.ofWidth(64).maxViewDistance());
+        assertEquals(16 / 2 - 3, new WorldLoopBounds(-48, 16, 0, 16).maxViewDistance());
+        assertEquals(1, new WorldLoopBounds(-2, 3, -2, 3).maxViewDistance());
+        assertEquals(64 / 2 - 3, new WorldLoopBounds(
+                new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE).maxViewDistance());
+        assertEquals(Integer.MAX_VALUE, WorldLoopBounds.UNBOUNDED.maxViewDistance());
+    }
+
+    @Test
     void axisRoundTripsThroughItsOwnWriting() {
         List<AxisBounds> axes = List.of(
                 new AxisBounds.Looped(-32, 32),

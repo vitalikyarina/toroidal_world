@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.client.Minecraft;
@@ -19,6 +19,7 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 @Mixin(DebugEntryPosition.class)
 public class DebugEntryPositionMixin {
@@ -35,7 +36,7 @@ public class DebugEntryPositionMixin {
             return lines;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
         Entity entity = minecraft.getCameraEntity();
         if (transformer == null || entity == null) {
             return lines;
@@ -44,13 +45,14 @@ public class DebugEntryPositionMixin {
         double rawX = entity.getX();
         double rawZ = entity.getZ();
         BlockPos feet = entity.blockPosition();
-        BlockPos wrappedFeet = transformer.blocks.wrap(feet);
+        BlockPos wrappedFeet = transformer.fold(feet);
         ChunkPos rawChunk = ChunkPos.containing(feet);
-        ChunkPos wrappedChunk = transformer.chunks.wrap(rawChunk);
+        ChunkPos wrappedChunk = transformer.fold(rawChunk);
 
+        Vec3 wrappedPos = transformer.fold(new Vec3(rawX, entity.getY(), rawZ));
         List<String> wrapped = new ArrayList<>(lines);
         wrapped.set(0, String.format(Locale.ROOT, "XYZ: %.3f / %.5f / %.3f",
-                transformer.coords.x.wrap(rawX), entity.getY(), transformer.coords.z.wrap(rawZ)));
+                wrappedPos.x, entity.getY(), wrappedPos.z));
         wrapped.set(1, String.format(Locale.ROOT, "Block: %d %d %d",
                 wrappedFeet.getX(), wrappedFeet.getY(), wrappedFeet.getZ()));
         wrapped.set(2, String.format(Locale.ROOT, "Chunk: %d %d %d [%d %d in r.%d.%d.mca]",

@@ -1,8 +1,10 @@
 package com.toroidalworld.noise;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
+
+import net.minecraft.core.Direction;
 
 public enum SlotAxis {
     X,
@@ -21,10 +23,10 @@ public enum SlotAxis {
         return carriesWorldAxis() ? coord : coord * uniformScale;
     }
 
-    public WrapDomain domainOf(WorldLoopTransformer transformer) {
+    public WrapDomain domainOf(WorldFold transformer) {
         return switch (this) {
-            case X -> transformer.coords.x;
-            case Z -> transformer.coords.z;
+            case X -> transformer.blockDomain(Direction.Axis.X);
+            case Z -> transformer.blockDomain(Direction.Axis.Z);
             case NONE -> UNWRAPPED;
         };
     }

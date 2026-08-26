@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.LevelHolder;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -146,9 +146,9 @@ public abstract class WorldGenRegionMixin implements LevelHolder {
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/chunk/ChunkAccess;addEntity(Lnet/minecraft/world/entity/Entity;)V"))
     private void toroidal$addEntityInChunkFrame(ChunkAccess chunk, Entity entity, Operation<Void> original) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
-        if (transformer != null && transformer.vectors.isOver(entity.position())) {
-            entity.setPos(transformer.vectors.wrap(entity.position()));
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        if (transformer != null && transformer.isOver(entity.position())) {
+            entity.setPos(transformer.fold(entity.position()));
         }
 
         original.call(chunk, entity);

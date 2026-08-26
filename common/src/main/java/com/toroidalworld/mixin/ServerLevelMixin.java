@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.accessors.TransformerHolder;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.net.PacketReach;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.player.SeamSnap;
@@ -66,7 +66,7 @@ public class ServerLevelMixin {
 
     @Inject(method = "getWorldBorder", at = @At("RETURN"))
     private void toroidal$bindBorderToLevelShape(CallbackInfoReturnable<WorldBorder> cir) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.transformerOf((ServerLevel) (Object) this);
+        WorldFold transformer = WorldLoopAttachments.transformerOf((ServerLevel) (Object) this);
         TransformerHolder border = (TransformerHolder) cir.getReturnValue();
         if (border.toroidal$transformer() != transformer) {
             border.toroidal$setTransformer(transformer);
@@ -79,13 +79,13 @@ public class ServerLevelMixin {
             return;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
         if (transformer == null) {
             return;
         }
 
-        if (transformer.vectors.isOver(entity.position())) {
-            Vec3 wrapped = transformer.vectors.wrap(entity.position());
+        if (transformer.isOver(entity.position())) {
+            Vec3 wrapped = transformer.fold(entity.position());
             SeamSnap.withPassengers(entity, wrapped.subtract(entity.position()));
         }
     }
@@ -99,35 +99,29 @@ public class ServerLevelMixin {
             ChunkPos center, int radius, Operation<Stream<ChunkPos>> original) {
         Stream<ChunkPos> square = original.call(center, radius);
         ServerLevel level = (ServerLevel) (Object) this;
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return square;
         }
 
-        return square.map(transformer.chunks::wrap).distinct();
+        return square.map(chunkPos -> transformer.fold(chunkPos)).distinct();
     }
 
     @ModifyVariable(method = "shouldTickBlocksAt(J)Z", at = @At("HEAD"), argsOnly = true)
     private long toroidal$tickingChunkThroughSeam(long chunkPos) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
         if (transformer == null) {
             return chunkPos;
         }
 
-        int chunkX = ChunkPos.getX(chunkPos);
-        int chunkZ = ChunkPos.getZ(chunkPos);
-        if (!transformer.chunks.x.isOver(chunkX) && !transformer.chunks.z.isOver(chunkZ)) {
-            return chunkPos;
-        }
-
-        return ChunkPos.pack(transformer.chunks.x.wrap(chunkX), transformer.chunks.z.wrap(chunkZ));
+        return transformer.foldChunkKey(chunkPos);
     }
 
     @WrapMethod(method = "sendParticles(Lnet/minecraft/server/level/ServerPlayer;ZDDDLnet/minecraft/network/protocol/Packet;)Z")
     private boolean toroidal$particlesThroughSeam(ServerPlayer player, boolean overrideLimiter, double x, double y, double z,
             Packet<?> packet, Operation<Boolean> original) {
         ServerLevel level = (ServerLevel) (Object) this;
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return original.call(player, overrideLimiter, x, y, z, packet);
         }
@@ -138,7 +132,7 @@ public class ServerLevelMixin {
 
         double range = overrideLimiter ? OVERRIDDEN_PARTICLE_RANGE : PARTICLE_RANGE;
         Vec3 center = Vec3.atCenterOf(player.blockPosition());
-        if (transformer.coords.sqrDistToBounds(center.x, center.y, center.z, x, y, z) >= range * range) {
+        if (transformer.sqrDistance(center.x, center.y, center.z, x, y, z) >= range * range) {
             return false;
         }
 
@@ -149,7 +143,7 @@ public class ServerLevelMixin {
     @WrapMethod(method = "globalLevelEvent")
     private void toroidal$globalEventThroughSeam(int type, BlockPos pos, int data, Operation<Void> original) {
         ServerLevel level = (ServerLevel) (Object) this;
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null || !level.getGameRules().get(GameRules.GLOBAL_SOUND_EVENTS)) {
             original.call(type, pos, data);
             return;
@@ -160,7 +154,7 @@ public class ServerLevelMixin {
             Vec3 listenerPos = player.position();
             Vec3 soundPos;
             if (player.level() == level) {
-                Vec3 eventPos = transformer.vectors.nearestCopy(listenerPos, rawEventPos);
+                Vec3 eventPos = transformer.nearestCopy(listenerPos, rawEventPos);
                 if (player.distanceToSqr(eventPos) < GLOBAL_EVENT_RANGE * GLOBAL_EVENT_RANGE) {
                     soundPos = eventPos;
                 } else {
@@ -178,7 +172,7 @@ public class ServerLevelMixin {
     @WrapMethod(method = "destroyBlockProgress")
     private void toroidal$blockCracksThroughSeam(int id, BlockPos blockPos, int progress, Operation<Void> original) {
         ServerLevel level = (ServerLevel) (Object) this;
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             original.call(id, blockPos, progress);
             return;
@@ -189,7 +183,7 @@ public class ServerLevelMixin {
                 continue;
             }
 
-            double distanceSqr = transformer.coords.sqrDistToBounds(player.getX(), player.getY(), player.getZ(),
+            double distanceSqr = transformer.sqrDistance(player.getX(), player.getY(), player.getZ(),
                     blockPos.getX(), blockPos.getY(), blockPos.getZ());
             if (distanceSqr >= BLOCK_DESTRUCTION_RANGE * BLOCK_DESTRUCTION_RANGE) {
                 continue;

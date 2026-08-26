@@ -2,20 +2,22 @@ package com.toroidalworld.noise;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 
-public record TilingCellGrid(WorldLoopTransformer transformer, int xCellWidth, int zCellWidth) {
+import net.minecraft.core.Direction;
+
+public record TilingCellGrid(WorldFold transformer, int xCellWidth, int zCellWidth) {
     private static final int SMALLEST_CELL_COUNT = 1;
 
-    public static TilingCellGrid of(WorldLoopTransformer transformer, int vanillaCellWidth) {
+    public static TilingCellGrid of(WorldFold transformer, int vanillaCellWidth) {
         return new TilingCellGrid(transformer,
-                tilingWidth(transformer.coords.x, vanillaCellWidth),
-                tilingWidth(transformer.coords.z, vanillaCellWidth));
+                tilingWidth(transformer.blockDomain(Direction.Axis.X), vanillaCellWidth),
+                tilingWidth(transformer.blockDomain(Direction.Axis.Z), vanillaCellWidth));
     }
 
     public static TilingCellGrid resolve(@Nullable TilingCellGrid cached,
-            WorldLoopTransformer transformer, int vanillaCellWidth) {
+            WorldFold transformer, int vanillaCellWidth) {
         return cached != null && cached.transformer == transformer
                 ? cached
                 : of(transformer, vanillaCellWidth);

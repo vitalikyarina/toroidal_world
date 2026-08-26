@@ -3,7 +3,7 @@ package com.toroidalworld.mixin;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -29,7 +29,7 @@ public class BiomePrecipitationMixin {
         }
 
         @Nullable ClientLevel level = minecraft.level;
-        WorldLoopTransformer bounds =
+        WorldFold bounds =
                 level == null ? null : WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
         if (bounds == null) {
             return original.call(pos, seaLevel);

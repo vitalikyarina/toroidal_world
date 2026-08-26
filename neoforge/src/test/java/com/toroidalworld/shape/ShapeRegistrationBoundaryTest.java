@@ -23,8 +23,10 @@ import com.toroidalworld.gen.ShapedDimensions;
 import com.toroidalworld.net.WrappingSettingsPayload;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
+import com.toroidalworld.shape.FlatShape;
 
 import io.netty.buffer.Unpooled;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -145,7 +147,7 @@ class ShapeRegistrationBoundaryTest {
         assertEquals(0, buffer.readableBytes());
 
         assertTrue(WorldFolds.of(CYLINDER).isWrapped());
-        assertTrue(WorldFolds.of(CYLINDER).chunks.x.isOver(64));
-        assertTrue(!WorldFolds.of(CYLINDER).chunks.z.isOver(1_000_000));
+        assertTrue(WorldFolds.of(CYLINDER).chunkDomain(Direction.Axis.X).isOver(64));
+        assertTrue(!WorldFolds.of(CYLINDER).chunkDomain(Direction.Axis.Z).isOver(1_000_000));
     }
 }

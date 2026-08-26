@@ -10,22 +10,23 @@ import org.junit.jupiter.api.Test;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 
+import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 
 class BlockChunkAgreementTest {
     private static final long SEED = 0xB10CL;
     private static final int SAMPLES = 2000;
 
-    private static final List<WorldLoopTransformer> TRANSFORMERS = List.of(
+    private static final List<WorldFold> TRANSFORMERS = List.of(
             transformer(-32, 32, -32, 32),
             transformer(-2, 3, -2, 3),
             transformer(-48, 16, 0, 16),
             transformer(0, 1, 0, 1),
             new WorldLoopTransformer(
                     new WorldLoopBounds(new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE)),
-            WorldLoopTransformer.NOOP);
+            WorldFolds.NOOP);
 
-    private static WorldLoopTransformer transformer(int xChunkMin, int xChunkMax, int zChunkMin, int zChunkMax) {
+    private static WorldFold transformer(int xChunkMin, int xChunkMax, int zChunkMin, int zChunkMax) {
         return new WorldLoopTransformer(new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax));
     }
 
@@ -34,31 +35,47 @@ class BlockChunkAgreementTest {
         return random.nextInt(2 * reach + 1) - reach;
     }
 
-    private static String on(String axis, WorldLoopTransformer transformer) {
+    private static String on(String axis, WorldFold transformer) {
         return "on " + axis + " in " + transformer;
+    }
+
+    private static WrapDomain blockX(WorldFold fold) {
+        return fold.blockDomain(Direction.Axis.X);
+    }
+
+    private static WrapDomain blockZ(WorldFold fold) {
+        return fold.blockDomain(Direction.Axis.Z);
+    }
+
+    private static WrapDomain chunkX(WorldFold fold) {
+        return fold.chunkDomain(Direction.Axis.X);
+    }
+
+    private static WrapDomain chunkZ(WorldFold fold) {
+        return fold.chunkDomain(Direction.Axis.Z);
     }
 
     @Test
     void wrapThenConvertEqualsConvertThenWrap() {
         Random random = new Random(SEED);
-        for (WorldLoopTransformer transformer : TRANSFORMERS) {
+        for (WorldFold transformer : TRANSFORMERS) {
             for (int i = 0; i < SAMPLES; i++) {
-                checkAgreement(transformer.coords.x, transformer.chunks.x,
-                        sampleBlock(random, transformer.coords.x), "X", transformer);
-                checkAgreement(transformer.coords.z, transformer.chunks.z,
-                        sampleBlock(random, transformer.coords.z), "Z", transformer);
+                checkAgreement(blockX(transformer), chunkX(transformer),
+                        sampleBlock(random, blockX(transformer)), "X", transformer);
+                checkAgreement(blockZ(transformer), chunkZ(transformer),
+                        sampleBlock(random, blockZ(transformer)), "Z", transformer);
             }
         }
     }
 
     @Test
     void theBoundsAndWholeWidthsOutAgreeLikeAnyOtherCoordinate() {
-        for (WorldLoopTransformer transformer : TRANSFORMERS) {
-            for (int edge : edges(transformer.coords.x)) {
-                checkAgreement(transformer.coords.x, transformer.chunks.x, edge, "X", transformer);
+        for (WorldFold transformer : TRANSFORMERS) {
+            for (int edge : edges(blockX(transformer))) {
+                checkAgreement(blockX(transformer), chunkX(transformer), edge, "X", transformer);
             }
-            for (int edge : edges(transformer.coords.z)) {
-                checkAgreement(transformer.coords.z, transformer.chunks.z, edge, "Z", transformer);
+            for (int edge : edges(blockZ(transformer))) {
+                checkAgreement(blockZ(transformer), chunkZ(transformer), edge, "Z", transformer);
             }
         }
     }
@@ -72,7 +89,7 @@ class BlockChunkAgreementTest {
     }
 
     private static void checkAgreement(WrapDomain blockDomain, WrapDomain chunkDomain, int blockCoord,
-            String axis, WorldLoopTransformer transformer) {
+            String axis, WorldFold transformer) {
         int wrappedBlock = blockDomain.wrap(blockCoord);
         assertEquals(chunkDomain.wrap(SectionPos.blockToSectionCoord(blockCoord)),
                 SectionPos.blockToSectionCoord(wrappedBlock),

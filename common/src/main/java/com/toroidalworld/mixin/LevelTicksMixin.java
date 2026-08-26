@@ -9,7 +9,8 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.LevelBindable;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFold.Folded;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -24,7 +25,7 @@ public class LevelTicksMixin<T> implements LevelBindable {
     private @Nullable ServerLevel toroidal$level;
 
     @Unique
-    private WorldLoopTransformer toroidal$transformer;
+    private WorldFold toroidal$transformer;
 
     @Override
     public void toroidal$bindLevel(ServerLevel level) {
@@ -37,17 +38,17 @@ public class LevelTicksMixin<T> implements LevelBindable {
             return tick;
         }
 
-        WorldLoopTransformer transformer = toroidal$transformer();
+        WorldFold transformer = toroidal$transformer();
         if (!transformer.isWrapped()) {
             return tick;
         }
 
         BlockPos pos = tick.pos();
-        if (!transformer.coords.x.isOver(pos.getX()) && !transformer.coords.z.isOver(pos.getZ())) {
+        if (!transformer.isOver(pos)) {
             return tick;
         }
 
-        return new ScheduledTick<>(tick.type(), transformer.blocks.wrap(pos), tick.triggerTick(), tick.priority(),
+        return new ScheduledTick<>(tick.type(), transformer.fold(pos), tick.triggerTick(), tick.priority(),
                 tick.subTickOrder());
     }
 
@@ -57,7 +58,7 @@ public class LevelTicksMixin<T> implements LevelBindable {
             return;
         }
 
-        WorldLoopTransformer transformer = toroidal$transformer();
+        WorldFold transformer = toroidal$transformer();
         if (!transformer.isWrapped() || !transformer.crossesBounds(area)) {
             return;
         }
@@ -66,13 +67,13 @@ public class LevelTicksMixin<T> implements LevelBindable {
 
         @SuppressWarnings("unchecked")
         LevelTicks<T> ticks = (LevelTicks<T>) (Object) this;
-        for (BoundingBox piece : transformer.splitAcrossBounds(area)) {
-            ticks.clearArea(piece);
+        for (Folded<BoundingBox> piece : transformer.split(area)) {
+            ticks.clearArea(piece.value());
         }
     }
 
     @Unique
-    private WorldLoopTransformer toroidal$transformer() {
+    private WorldFold toroidal$transformer() {
         if (this.toroidal$transformer == null) {
             this.toroidal$transformer = WorldLoopAttachments.transformerOf(this.toroidal$level);
         }

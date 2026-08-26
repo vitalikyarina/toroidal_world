@@ -10,9 +10,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.TransformerHolder;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WrapDomain;
 
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.phys.Vec3;
@@ -23,7 +25,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 @Mixin(WorldBorder.class)
 public class WorldBorderMixin implements TransformerHolder {
     @Unique
-    private WorldLoopTransformer toroidal$transformer = WorldLoopTransformer.NOOP;
+    private WorldFold toroidal$transformer = WorldFolds.NOOP;
 
     @Unique
     private double @Nullable [] toroidal$wallBounds;
@@ -52,55 +54,57 @@ public class WorldBorderMixin implements TransformerHolder {
     }
 
     @Override
-    public WorldLoopTransformer toroidal$transformer() {
+    public WorldFold toroidal$transformer() {
         return this.toroidal$transformer;
     }
 
     @Override
-    public void toroidal$setTransformer(WorldLoopTransformer transformer) {
+    public void toroidal$setTransformer(WorldFold transformer) {
         this.toroidal$transformer = transformer;
     }
 
     @Inject(method = "isWithinBounds(DDD)Z", at = @At("HEAD"), cancellable = true)
     private void toroidal$boundsThroughSeam(double x, double z, double margin, CallbackInfoReturnable<Boolean> cir) {
-        WorldLoopTransformer transformer = this.toroidal$transformer;
+        WorldFold transformer = this.toroidal$transformer;
         if (!transformer.isWrapped()) {
             return;
         }
 
         cir.setReturnValue(
-                toroidal$insideAxis(transformer.coords.x, getMinX(), getMaxX(), x, margin)
-                        && toroidal$insideAxis(transformer.coords.z, getMinZ(), getMaxZ(), z, margin));
+                toroidal$insideAxis(transformer.blockDomain(Direction.Axis.X), getMinX(), getMaxX(), x, margin)
+                        && toroidal$insideAxis(transformer.blockDomain(Direction.Axis.Z), getMinZ(), getMaxZ(), z, margin));
     }
 
     @Inject(method = "getDistanceToBorder(DD)D", at = @At("HEAD"), cancellable = true)
     private void toroidal$distanceThroughSeam(double x, double z, CallbackInfoReturnable<Double> cir) {
-        WorldLoopTransformer transformer = this.toroidal$transformer;
+        WorldFold transformer = this.toroidal$transformer;
         if (!transformer.isWrapped()) {
             return;
         }
 
-        double xGap = toroidal$gapToAxisEdge(transformer.coords.x, getMinX(), getMaxX(), x);
-        double zGap = toroidal$gapToAxisEdge(transformer.coords.z, getMinZ(), getMaxZ(), z);
+        double xGap = toroidal$gapToAxisEdge(transformer.blockDomain(Direction.Axis.X), getMinX(), getMaxX(), x);
+        double zGap = toroidal$gapToAxisEdge(transformer.blockDomain(Direction.Axis.Z), getMinZ(), getMaxZ(), z);
         cir.setReturnValue(Math.min(xGap, zGap));
     }
 
     @Inject(method = "clampVec3ToBound(DDD)Lnet/minecraft/world/phys/Vec3;", at = @At("HEAD"), cancellable = true)
     private void toroidal$clampThroughSeam(double x, double y, double z, CallbackInfoReturnable<Vec3> cir) {
-        WorldLoopTransformer transformer = this.toroidal$transformer;
+        WorldFold transformer = this.toroidal$transformer;
         if (!transformer.isWrapped()) {
             return;
         }
 
+        WrapDomain xDomain = transformer.blockDomain(Direction.Axis.X);
+        WrapDomain zDomain = transformer.blockDomain(Direction.Axis.Z);
         cir.setReturnValue(new Vec3(
-                transformer.coords.x.wrap(toroidal$clampToAxis(transformer.coords.x, getMinX(), getMaxX(), x)),
+                xDomain.wrap(toroidal$clampToAxis(xDomain, getMinX(), getMaxX(), x)),
                 y,
-                transformer.coords.z.wrap(toroidal$clampToAxis(transformer.coords.z, getMinZ(), getMaxZ(), z))));
+                zDomain.wrap(toroidal$clampToAxis(zDomain, getMinZ(), getMaxZ(), z))));
     }
 
     @Inject(method = "getCollisionShape", at = @At("HEAD"), cancellable = true)
     private void toroidal$wallThroughSeam(CallbackInfoReturnable<VoxelShape> cir) {
-        WorldLoopTransformer transformer = this.toroidal$transformer;
+        WorldFold transformer = this.toroidal$transformer;
         if (!transformer.isWrapped()) {
             return;
         }
@@ -123,11 +127,11 @@ public class WorldBorderMixin implements TransformerHolder {
     }
 
     @Unique
-    private static VoxelShape toroidal$buildWall(WorldLoopTransformer transformer,
+    private static VoxelShape toroidal$buildWall(WorldFold transformer,
             double minX, double maxX, double minZ, double maxZ) {
         VoxelShape wall = Shapes.INFINITY;
-        for (double xShift : toroidal$copyShifts(transformer.coords.x)) {
-            for (double zShift : toroidal$copyShifts(transformer.coords.z)) {
+        for (double xShift : toroidal$copyShifts(transformer.blockDomain(Direction.Axis.X))) {
+            for (double zShift : toroidal$copyShifts(transformer.blockDomain(Direction.Axis.Z))) {
                 wall = Shapes.join(wall, Shapes.box(
                         Math.floor(minX + xShift), Double.NEGATIVE_INFINITY, Math.floor(minZ + zShift),
                         Math.ceil(maxX + xShift), Double.POSITIVE_INFINITY, Math.ceil(maxZ + zShift)),

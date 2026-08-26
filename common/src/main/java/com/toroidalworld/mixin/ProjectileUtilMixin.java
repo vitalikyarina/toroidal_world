@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -27,7 +27,7 @@ public class ProjectileUtilMixin {
     private static AABB toroidal$candidateBoxThroughSeam(Entity candidate, Operation<AABB> original,
             @Local(argsOnly = true, ordinal = 0) Vec3 from) {
         AABB box = original.call(candidate);
-        WorldLoopTransformer transformer = ((TransformerSource) candidate).toroidal$wrappedTransformer();
-        return transformer == null ? box : transformer.foldBoxToward(from, box);
+        WorldFold transformer = ((TransformerSource) candidate).toroidal$wrappedTransformer();
+        return transformer == null ? box : transformer.foldBox(from, box).value();
     }
 }

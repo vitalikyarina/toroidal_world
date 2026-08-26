@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -39,12 +39,12 @@ public interface VibrationSystemTickerMixin {
     private static Optional<Vec3> toroidal$reloadDestThroughSeam(PositionSource positionSource, Level level,
             Operation<Optional<Vec3>> original, @Local(ordinal = 0) Vec3 origin) {
         Optional<Vec3> destination = original.call(positionSource, level);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null || destination.isEmpty()) {
             return destination;
         }
 
-        Vec3 folded = transformer.vectors.nearestCopy(origin, destination.get());
+        Vec3 folded = transformer.nearestCopy(origin, destination.get());
         return folded == destination.get() ? destination : Optional.of(folded);
     }
 }

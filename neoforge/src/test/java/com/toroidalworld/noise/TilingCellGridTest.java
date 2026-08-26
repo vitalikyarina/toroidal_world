@@ -6,11 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.options.WorldLoopPresets;
+import com.toroidalworld.shape.FlatShape;
+
+import net.minecraft.core.Direction;
 
 class TilingCellGridTest {
     private static final int TYPE_CELL_WIDTH = NoiseConstants.AQUIFER_FLUID_TYPE_CELL_WIDTH;
@@ -25,7 +29,11 @@ class TilingCellGridTest {
     private static final int PERIODICITY_STEP = 7;
 
     private static TilingCellGrid grid(int chunkWidth, int vanillaCellWidth) {
-        return TilingCellGrid.of(new WorldLoopTransformer(WorldLoopBounds.ofWidth(chunkWidth)), vanillaCellWidth);
+        return TilingCellGrid.of(torus(chunkWidth), vanillaCellWidth);
+    }
+
+    private static WorldFold torus(int chunkWidth) {
+        return WorldFolds.of(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(chunkWidth), FlatShape.NO_SKEW));
     }
 
     @Nested
@@ -62,8 +70,8 @@ class TilingCellGridTest {
 
         @Test
         void anUnboundedAxisKeepsTheVanillaCellWidth() {
-            WorldLoopTransformer transformer = new WorldLoopTransformer(
-                    new WorldLoopBounds(new AxisBounds.Looped(-9, 9), AxisBounds.Unbounded.INSTANCE));
+            WorldFold transformer = WorldFolds.of(FlatShape.cylinder(
+                    new WorldLoopBounds(new AxisBounds.Looped(-9, 9), AxisBounds.Unbounded.INSTANCE)));
             TilingCellGrid grid = TilingCellGrid.of(transformer, TYPE_CELL_WIDTH);
 
             assertEquals(72, grid.xCellWidth());
@@ -99,8 +107,8 @@ class TilingCellGridTest {
 
         @Test
         void eachAxisTakesItsOwnWidth() {
-            WorldLoopTransformer transformer = new WorldLoopTransformer(
-                    new WorldLoopBounds(new AxisBounds.Looped(-9, 9), new AxisBounds.Looped(-16, 16)));
+            WorldFold transformer = WorldFolds.of(FlatShape.latticeTorus(
+                    new WorldLoopBounds(new AxisBounds.Looped(-9, 9), new AxisBounds.Looped(-16, 16)), FlatShape.NO_SKEW));
             TilingCellGrid grid = TilingCellGrid.of(transformer, TYPE_CELL_WIDTH);
 
             assertEquals(72, grid.xCellWidth());
@@ -120,8 +128,8 @@ class TilingCellGridTest {
 
         @Test
         void theVanillaCellWidthIsNotPeriodicOnEighteenChunks() {
-            WorldLoopTransformer transformer = new WorldLoopTransformer(WorldLoopBounds.ofWidth(18));
-            WrapDomain domain = transformer.coords.x;
+            WorldFold transformer = torus(18);
+            WrapDomain domain = transformer.blockDomain(Direction.Axis.X);
             int width = domain.domainLength;
             boolean differs = false;
 
@@ -133,9 +141,9 @@ class TilingCellGridTest {
         }
 
         private void assertPeriodic(int chunkWidth, int vanillaCellWidth) {
-            WorldLoopTransformer transformer = new WorldLoopTransformer(WorldLoopBounds.ofWidth(chunkWidth));
+            WorldFold transformer = torus(chunkWidth);
             TilingCellGrid grid = TilingCellGrid.of(transformer, vanillaCellWidth);
-            WrapDomain domain = transformer.coords.x;
+            WrapDomain domain = transformer.blockDomain(Direction.Axis.X);
             int width = domain.domainLength;
 
             for (int x = domain.lowerBound - width; x < domain.upperBound + width; x += PERIODICITY_STEP) {

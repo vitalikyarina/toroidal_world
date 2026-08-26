@@ -2,7 +2,7 @@ package com.toroidalworld.noise;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
@@ -22,7 +22,7 @@ public final class CanonicalCellSampler {
 
     public double sample(DensityFunction.FunctionContext cell, int blockX, int blockZ, Sample sample) {
         Context generation = GenerationTransformerContext.context();
-        WorldLoopTransformer transformer = generation.wrappedTransformer();
+        WorldFold transformer = generation.wrappedTransformer();
         if (transformer == null) {
             return sample.at(cell);
         }

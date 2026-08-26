@@ -2,9 +2,9 @@ package com.toroidalworld.accessors;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 
 public interface TransformerSource {
     @Nullable
-    WorldLoopTransformer toroidal$wrappedTransformer();
+    WorldFold toroidal$wrappedTransformer();
 }

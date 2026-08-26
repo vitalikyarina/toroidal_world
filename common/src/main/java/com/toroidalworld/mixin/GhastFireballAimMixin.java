@@ -6,8 +6,10 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamAim;
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Ghast;
 
 @Mixin(targets = "net.minecraft.world.entity.monster.Ghast$GhastShootFireballGoal")
@@ -16,17 +18,17 @@ public class GhastFireballAimMixin {
     @Final
     private Ghast ghast;
 
-    @ModifyExpressionValue(
+    @WrapOperation(
             method = "tick",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getX()D"))
-    private double toroidal$aimTargetX(double targetX) {
-        return SeamAim.nearX(this.ghast, targetX);
+    private double toroidal$aimTargetX(LivingEntity target, Operation<Double> original) {
+        return SeamAim.nearestTo(this.ghast, target.position()).x;
     }
 
-    @ModifyExpressionValue(
+    @WrapOperation(
             method = "tick",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getZ()D"))
-    private double toroidal$aimTargetZ(double targetZ) {
-        return SeamAim.nearZ(this.ghast, targetZ);
+    private double toroidal$aimTargetZ(LivingEntity target, Operation<Double> original) {
+        return SeamAim.nearestTo(this.ghast, target.position()).z;
     }
 }

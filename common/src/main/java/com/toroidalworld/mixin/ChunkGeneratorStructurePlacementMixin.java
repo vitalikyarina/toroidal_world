@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.FramedStructureStart;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.gen.ShapedChunkGenerator;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -38,7 +38,7 @@ public class ChunkGeneratorStructurePlacementMixin {
             @Local(argsOnly = true) WorldGenLevel level) {
         List<StructureStart> starts = original.call(structureManager, sectionPos, structure);
 
-        WorldLoopTransformer transformer = ShapedChunkGenerator.wrappedTransformerOf((ChunkGenerator) (Object) this);
+        WorldFold transformer = ShapedChunkGenerator.wrappedTransformerOf((ChunkGenerator) (Object) this);
         if (transformer == null || starts.isEmpty()) {
             return starts;
         }
@@ -57,15 +57,14 @@ public class ChunkGeneratorStructurePlacementMixin {
 
     @Unique
     private static @Nullable StructureStart toroidal$inFrameOf(
-            WorldGenLevel level, WorldLoopTransformer transformer, ChunkPos centerPos, StructureStart start) {
+            WorldGenLevel level, WorldFold transformer, ChunkPos centerPos, StructureStart start) {
         if (!start.isValid()) {
             return start;
         }
 
         ChunkPos startPos = start.getChunkPos();
+        ChunkPos nearest = transformer.nearestCopy(centerPos, startPos);
         return ((FramedStructureStart) (Object) start).toroidal$framedBy(
-                level,
-                transformer.chunks.x.unwrap(centerPos.x(), startPos.x()) - startPos.x(),
-                transformer.chunks.z.unwrap(centerPos.z(), startPos.z()) - startPos.z());
+                level, nearest.x() - startPos.x(), nearest.z() - startPos.z());
     }
 }

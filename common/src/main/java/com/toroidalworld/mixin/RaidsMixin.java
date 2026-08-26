@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.LevelBindable;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -47,12 +47,12 @@ public class RaidsMixin implements LevelBindable {
     private BlockPos toroidal$poiInPlayerFrame(PoiRecord record, Operation<BlockPos> original,
             @Local(argsOnly = true) ServerPlayer player, @Local(argsOnly = true) BlockPos raidPosition) {
         BlockPos pos = original.call(record);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
         if (transformer == null) {
             return pos;
         }
 
-        return transformer.blocks.unwrap(raidPosition, pos);
+        return transformer.nearestCopy(raidPosition, pos);
     }
 
     @WrapOperation(
@@ -63,11 +63,11 @@ public class RaidsMixin implements LevelBindable {
     private BlockPos toroidal$centerIntoBounds(Position mean, Operation<BlockPos> original,
             @Local(argsOnly = true) ServerPlayer player) {
         BlockPos center = original.call(mean);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
         if (transformer == null) {
             return center;
         }
 
-        return transformer.blocks.wrap(center);
+        return transformer.fold(center);
     }
 }

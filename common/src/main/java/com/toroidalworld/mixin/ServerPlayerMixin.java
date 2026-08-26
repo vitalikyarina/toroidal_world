@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.TrackedEntityRefresher;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamAim;
 import com.toroidalworld.net.ClientAnchorSync;
 import com.toroidalworld.net.WorldShapeSync;
@@ -88,7 +88,7 @@ public class ServerPlayerMixin {
             return;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
         if (transformer == null) {
             return;
         }
@@ -101,14 +101,15 @@ public class ServerPlayerMixin {
     @WrapMethod(method = "isReachableBedBlock")
     private boolean toroidal$bedReachThroughSeam(BlockPos bedBlockPos, Operation<Boolean> original) {
         ServerPlayer player = (ServerPlayer) (Object) this;
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
         if (transformer == null) {
             return original.call(bedBlockPos);
         }
 
         Vec3 bedCenter = Vec3.atBottomCenterOf(bedBlockPos);
-        return Math.abs(transformer.coords.x.deltaFromBounds(player.getX(), bedCenter.x())) <= BED_REACH_HORIZONTAL
-                && Math.abs(player.getY() - bedCenter.y()) <= BED_REACH_VERTICAL
-                && Math.abs(transformer.coords.z.deltaFromBounds(player.getZ(), bedCenter.z())) <= BED_REACH_HORIZONTAL;
+        Vec3 delta = transformer.foldDelta(player.position(), bedCenter);
+        return Math.abs(delta.x) <= BED_REACH_HORIZONTAL
+                && Math.abs(delta.y) <= BED_REACH_VERTICAL
+                && Math.abs(delta.z) <= BED_REACH_HORIZONTAL;
     }
 }

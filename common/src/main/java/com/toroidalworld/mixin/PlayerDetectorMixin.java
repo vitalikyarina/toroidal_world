@@ -3,7 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -30,9 +30,9 @@ public interface PlayerDetectorMixin {
 
     @WrapMethod(method = "inLineOfSight")
     private static boolean toroidal$sightLineThroughSeam(Level level, Vec3 origin, Vec3 dest, Operation<Boolean> original) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         return transformer == null
                 ? original.call(level, origin, dest)
-                : original.call(level, origin, transformer.vectors.nearestCopy(origin, dest));
+                : original.call(level, origin, transformer.nearestCopy(origin, dest));
     }
 }

@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.gen.SectorGridAxis;
 import com.toroidalworld.gen.ShapedChunkGenerator;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -15,6 +15,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
@@ -42,14 +43,16 @@ public class ChunkGeneratorRandomSpreadSearchMixin {
             long seed,
             RandomSpreadStructurePlacement placement,
             Operation<@Nullable Pair<BlockPos, Holder<Structure>>> original) {
-        WorldLoopTransformer transformer = ShapedChunkGenerator.wrappedTransformerOf((ChunkGenerator) (Object) this);
+        WorldFold transformer = ShapedChunkGenerator.wrappedTransformerOf((ChunkGenerator) (Object) this);
         if (transformer == null) {
             return original.call(structures, level, structureManager, chunkOriginX, chunkOriginZ, radius,
                     createReference, seed, placement);
         }
 
-        SectorGridAxis xCells = SectorGridAxis.of(transformer.chunks.x, placement.spacing(), chunkOriginX);
-        SectorGridAxis zCells = SectorGridAxis.of(transformer.chunks.z, placement.spacing(), chunkOriginZ);
+        SectorGridAxis xCells =
+                SectorGridAxis.of(transformer.chunkDomain(Direction.Axis.X), placement.spacing(), chunkOriginX);
+        SectorGridAxis zCells =
+                SectorGridAxis.of(transformer.chunkDomain(Direction.Axis.Z), placement.spacing(), chunkOriginZ);
         if (radius > Math.max(xCells.offsetCap(), zCells.offsetCap())) {
             return null;
         }
@@ -70,7 +73,7 @@ public class ChunkGeneratorRandomSpreadSearchMixin {
                 }
 
                 ChunkPos candidate = placement.getPotentialStructureChunk(seed, xCells.probeChunk(x), zCells.probeChunk(z));
-                if (transformer.chunks.isOver(candidate)) {
+                if (transformer.isOver(candidate)) {
                     continue;
                 }
 
@@ -89,12 +92,12 @@ public class ChunkGeneratorRandomSpreadSearchMixin {
             method = "findNearestMapStructure",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;distSqr(Lnet/minecraft/core/Vec3i;)D"))
     private double toroidal$rankThroughTheSeam(BlockPos origin, Vec3i candidate, Operation<Double> original) {
-        WorldLoopTransformer transformer = ShapedChunkGenerator.wrappedTransformerOf((ChunkGenerator) (Object) this);
+        WorldFold transformer = ShapedChunkGenerator.wrappedTransformerOf((ChunkGenerator) (Object) this);
         if (transformer == null) {
             return original.call(origin, candidate);
         }
 
-        return transformer.coords.sqrDistToBounds(
+        return transformer.sqrDistance(
                 origin.getX(), origin.getY(), origin.getZ(), candidate.getX(), candidate.getY(), candidate.getZ());
     }
 }

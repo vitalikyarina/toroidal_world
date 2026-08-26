@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import com.toroidalworld.api.ToroidalShape.Orientation;
 import com.toroidalworld.api.ToroidalShape.Oriented;
 import com.toroidalworld.core.DeckGroupFold;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.shape.FlatShape;
@@ -35,7 +35,7 @@ class ToroidalShapeContractTest {
     private static final WorldLoopBounds X_ONLY = new WorldLoopBounds(LOOPED, AxisBounds.Unbounded.INSTANCE);
 
     private static ToroidalShape torus() {
-        return new WorldFoldToroidalShape(new WorldLoopTransformer(BOTH));
+        return new WorldFoldToroidalShape(WorldFolds.of(FlatShape.latticeTorus(BOTH, FlatShape.NO_SKEW)));
     }
 
     private static ToroidalShape mobius() {
