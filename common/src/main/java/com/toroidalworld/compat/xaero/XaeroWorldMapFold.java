@@ -134,6 +134,15 @@ public final class XaeroWorldMapFold {
         return shape.foldCoord(axis, coord);
     }
 
+    public static double foldFootprintCoord(Direction.Axis axis, double coord) {
+        ToroidalShape shape = shape();
+        if (shape == null) {
+            return coord;
+        }
+
+        return shape.foldCoord(axis, coord);
+    }
+
     public static int foldWaypointBlock(Direction.Axis axis, int coord) {
         ToroidalShape shape = shape();
         if (shape == null) {
