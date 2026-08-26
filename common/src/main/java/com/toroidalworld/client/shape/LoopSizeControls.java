@@ -1,12 +1,15 @@
 package com.toroidalworld.client.shape;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.client.screen.DigitsEditBox;
 import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.options.NetherScales;
+import com.toroidalworld.options.WorldLoopPresets;
 import com.toroidalworld.options.WorldLoopSizes;
 
 import net.minecraft.client.gui.Font;
@@ -31,10 +34,24 @@ public final class LoopSizeControls {
     private static final String END_EFFECTIVE_KEY = "gui.toroidal_world.toroidal_settings.end_effective";
     private static final Component END_HINT = Component.translatable("gui.toroidal_world.toroidal_settings.end_hint");
 
+    private static final String PRESET_KEY_PREFIX = "gui.toroidal_world.toroidal_settings.preset.";
+    private static final String STRUCTURES_SCARCE_KEY = "gui.toroidal_world.toroidal_settings.consequence.structures_scarce";
+    private static final String STRUCTURES_VILLAGES_KEY = "gui.toroidal_world.toroidal_settings.consequence.structures_villages";
+    private static final String STRUCTURES_COMMON_KEY = "gui.toroidal_world.toroidal_settings.consequence.structures_common";
+    private static final String STRUCTURES_ALL_KEY = "gui.toroidal_world.toroidal_settings.consequence.structures_all";
+
+    private static final int VILLAGE_GRID_CHUNKS = 34;
+    private static final int MANSION_GRID_CHUNKS = 80;
+    private static final int STRONGHOLD_RING_CHUNKS = 336;
+
     public static final int FIELD_WIDTH = 310;
     public static final int FIELD_HEIGHT = 20;
 
     private static final int FIELD_MAX_LENGTH = 7;
+    private static final int PRESET_SPACING = 5;
+
+    private static final int PRESET_WIDTH =
+            (FIELD_WIDTH - PRESET_SPACING * (WorldLoopPresets.values().length - 1)) / WorldLoopPresets.values().length;
 
     private final Runnable onChange;
 
@@ -48,6 +65,7 @@ public final class LoopSizeControls {
     private int wantedNetherScale;
     private int scalePickedForSize;
 
+    private final Map<WorldLoopPresets, Button> presetButtons = new EnumMap<>(WorldLoopPresets.class);
     private EditBox sizeEdit;
     private Button netherScaleButton;
     private EditBox endSizeEdit;
@@ -61,7 +79,25 @@ public final class LoopSizeControls {
         this.endSizeText = String.valueOf(endChunkWidth);
     }
 
-    public void addTo(Font font, LinearLayout contents) {
+    public void addPresets(LinearLayout contents) {
+        LinearLayout presetRow = contents.addChild(LinearLayout.horizontal().spacing(PRESET_SPACING));
+        for (WorldLoopPresets preset : WorldLoopPresets.values()) {
+            Button presetButton = presetRow.addChild(Button.builder(presetLabel(preset), button -> this.apply(preset))
+                    .width(PRESET_WIDTH)
+                    .build());
+            presetButton.setTooltip(Tooltip.create(
+                    effectiveLine(preset.chunkWidth()).copy()
+                            .append(CommonComponents.NEW_LINE)
+                            .append(netherScaleLine(preset.netherScale()))
+                            .append(CommonComponents.NEW_LINE)
+                            .append(endEffectiveLine(preset.endChunkWidth()))
+                            .append(CommonComponents.NEW_LINE)
+                            .append(Component.translatable(structureRoomKey(preset.chunkWidth())))));
+            this.presetButtons.put(preset, presetButton);
+        }
+    }
+
+    public void addFields(Font font, LinearLayout contents) {
         this.sizeEdit = new DigitsEditBox(font, FIELD_WIDTH, FIELD_HEIGHT, sizeLabel());
         this.sizeEdit.setMaxLength(FIELD_MAX_LENGTH);
         this.sizeEdit.setValue(this.sizeText);
@@ -90,13 +126,6 @@ public final class LoopSizeControls {
         this.onEndSizeChanged();
     }
 
-    public void set(int chunkWidth, int scale, int endChunkWidth) {
-        this.netherScale = scale;
-        this.wantedNetherScale = scale;
-        this.sizeEdit.setValue(String.valueOf(chunkWidth));
-        this.endSizeEdit.setValue(String.valueOf(endChunkWidth));
-    }
-
     public @Nullable Integer effectiveSize() {
         return this.effectiveSize;
     }
@@ -113,16 +142,25 @@ public final class LoopSizeControls {
         return this.effectiveSize != null && this.effectiveEndSize != null;
     }
 
-    public static Component effectiveLine(int chunkWidth) {
-        return Component.translatable(EFFECTIVE_KEY, chunkWidth, chunkWidth * CoordinateConstants.CHUNK_WIDTH);
+    private void apply(WorldLoopPresets preset) {
+        this.netherScale = preset.netherScale();
+        this.wantedNetherScale = preset.netherScale();
+        this.sizeEdit.setValue(String.valueOf(preset.chunkWidth()));
+        this.endSizeEdit.setValue(String.valueOf(preset.endChunkWidth()));
     }
 
-    public static Component netherScaleLine(int scale) {
-        return Component.translatable(NETHER_SCALE_KEY, scale);
+    private boolean matchesPreset(WorldLoopPresets preset) {
+        return this.effectiveSize != null && this.effectiveSize == preset.chunkWidth()
+                && this.netherScale == preset.netherScale()
+                && this.effectiveEndSize != null && this.effectiveEndSize == preset.endChunkWidth();
     }
 
-    public static Component endEffectiveLine(int endChunkWidth) {
-        return Component.translatable(END_EFFECTIVE_KEY, endChunkWidth, endChunkWidth * CoordinateConstants.CHUNK_WIDTH);
+    private void changed() {
+        for (Map.Entry<WorldLoopPresets, Button> entry : this.presetButtons.entrySet()) {
+            entry.getValue().active = !this.matchesPreset(entry.getKey());
+        }
+
+        this.onChange.run();
     }
 
     private void onSizeChanged() {
@@ -132,7 +170,7 @@ public final class LoopSizeControls {
         if (this.effectiveSize == null) {
             this.sizeEdit.setTooltip(Tooltip.create(sizeHint(sizeChunks, WorldLoopSizes.MIN_CHUNK_WIDTH, HINT)));
             this.netherScaleButton.active = false;
-            this.onChange.run();
+            this.changed();
             return;
         }
 
@@ -140,7 +178,7 @@ public final class LoopSizeControls {
                 effectiveLine(this.effectiveSize).copy().append(CommonComponents.NEW_LINE).append(HINT)));
 
         this.refreshNetherScale();
-        this.onChange.run();
+        this.changed();
     }
 
     private void refreshNetherScale() {
@@ -167,7 +205,7 @@ public final class LoopSizeControls {
         this.netherScale = NetherScales.next(this.netherScale, this.effectiveSize);
         this.wantedNetherScale = this.netherScale;
         this.refreshNetherScale();
-        this.onChange.run();
+        this.changed();
     }
 
     private void onEndSizeChanged() {
@@ -177,13 +215,45 @@ public final class LoopSizeControls {
         if (this.effectiveEndSize == null) {
             this.endSizeEdit.setTooltip(Tooltip.create(
                     sizeHint(sizeChunks, WorldLoopSizes.END_MIN_CHUNK_WIDTH, END_HINT)));
-            this.onChange.run();
+            this.changed();
             return;
         }
 
         this.endSizeEdit.setTooltip(Tooltip.create(
                 endEffectiveLine(this.effectiveEndSize).copy().append(CommonComponents.NEW_LINE).append(END_HINT)));
-        this.onChange.run();
+        this.changed();
+    }
+
+    private static Component presetLabel(WorldLoopPresets preset) {
+        return Component.translatable(PRESET_KEY_PREFIX + preset.id());
+    }
+
+    private static String structureRoomKey(int sizeChunks) {
+        if (sizeChunks < VILLAGE_GRID_CHUNKS) {
+            return STRUCTURES_SCARCE_KEY;
+        }
+
+        if (sizeChunks < MANSION_GRID_CHUNKS) {
+            return STRUCTURES_VILLAGES_KEY;
+        }
+
+        if (sizeChunks < STRONGHOLD_RING_CHUNKS) {
+            return STRUCTURES_COMMON_KEY;
+        }
+
+        return STRUCTURES_ALL_KEY;
+    }
+
+    private static Component effectiveLine(int chunkWidth) {
+        return Component.translatable(EFFECTIVE_KEY, chunkWidth, chunkWidth * CoordinateConstants.CHUNK_WIDTH);
+    }
+
+    private static Component netherScaleLine(int scale) {
+        return Component.translatable(NETHER_SCALE_KEY, scale);
+    }
+
+    private static Component endEffectiveLine(int endChunkWidth) {
+        return Component.translatable(END_EFFECTIVE_KEY, endChunkWidth, endChunkWidth * CoordinateConstants.CHUNK_WIDTH);
     }
 
     private static Component sizeLabel() {
