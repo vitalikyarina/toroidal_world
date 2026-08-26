@@ -8,6 +8,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.layouts.GridLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -44,6 +45,7 @@ public class WorldTabMixin {
     private void toroidal$addWorldShapeRow(CallbackInfo ci, @Local GridLayout.RowHelper helper) {
         helper.addChild(CycleButton.builder(WorldShape::label, WorldShapes.selected())
                 .withValues(WorldShapes.shapes())
+                .withTooltip(shape -> Tooltip.create(shape.hint()))
                 .create(0, 0, toroidal$SHAPE_BUTTON_WIDTH, toroidal$SHAPE_BUTTON_HEIGHT, toroidal$SHAPE_LABEL,
                         (button, shape) -> {
                             WorldShapes.select(shape);

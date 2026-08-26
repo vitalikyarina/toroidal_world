@@ -4,7 +4,11 @@
 
   "gui.toroidal_world.world_shape": "Formato do mundo",
   "gui.toroidal_world.world_shape.normal": "Normal",
+  "gui.toroidal_world.world_shape.normal.hint": "O mundo normal: um plano infinito em todas as direções.",
   "gui.toroidal_world.world_shape.toroidal": "Toroidal",
+  "gui.toroidal_world.world_shape.toroidal.hint": "Os dois eixos horizontais se fecham — ande o bastante em qualquer direção e você volta ao ponto de partida.",
+  "gui.toroidal_world.world_shape.cylinder": "Cilíndrico",
+  "gui.toroidal_world.world_shape.cylinder.hint": "Um eixo horizontal se fecha; o outro segue sem fim, como no mundo normal.",
 
   "gui.toroidal_world.toroidal_settings.title": "Configurações do mundo toroidal",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Minúsculo",
@@ -26,5 +30,9 @@
   "gui.toroidal_world.toroidal_settings.end_hint": "O End dá a volta na própria largura, independente do tamanho do mundo. Menor que o mínimo não deixa ilhas externas — sem cidades do End, sem élitros.",
   "gui.toroidal_world.toroidal_settings.end_effective": "End: %s chunks = %s blocos",
   "gui.toroidal_world.toroidal_settings.too_small": "Pequeno demais — no mínimo %s chunks.",
-  "gui.toroidal_world.toroidal_settings.too_large": "Grande demais — no máximo %s chunks."
+  "gui.toroidal_world.toroidal_settings.too_large": "Grande demais — no máximo %s chunks.",
+
+  "gui.toroidal_world.cylinder_settings.title": "Configurações do mundo cilíndrico",
+  "gui.toroidal_world.cylinder_settings.axis": "Eixo de repetição",
+  "gui.toroidal_world.cylinder_settings.axis_hint": "O mundo se fecha ao longo deste eixo e segue sem fim ao longo do outro."
 }

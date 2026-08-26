@@ -10,6 +10,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import io.netty.buffer.ByteBuf;
+import net.minecraft.core.Direction;
 import net.minecraft.network.VarInt;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.level.border.WorldBorder;
@@ -21,6 +22,11 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
         String MAX_CHUNK_KEY = "max_chunk";
 
         record Looped(int minChunk, int maxChunk) implements AxisBounds {
+            public static Looped ofWidth(int chunkWidth) {
+                int minChunk = -(chunkWidth / 2);
+                return new Looped(minChunk, chunkWidth + minChunk);
+            }
+
             public int chunkWidth() {
                 return maxChunk - minChunk;
             }
@@ -162,6 +168,8 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
     private static final String X_KEY = "x";
     private static final String Z_KEY = "z";
 
+    private static final String NOT_A_HORIZONTAL_AXIS = "Not a horizontal axis: ";
+
     public static final MapCodec<WorldLoopBounds> MAP_CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                     AxisBounds.CODEC.fieldOf(X_KEY).forGetter(WorldLoopBounds::x),
@@ -183,9 +191,47 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
     }
 
     public static WorldLoopBounds ofWidth(int chunkWidth) {
-        int min = -(chunkWidth / 2);
-        int max = chunkWidth + min;
-        return new WorldLoopBounds(min, max, min, max);
+        AxisBounds.Looped looped = AxisBounds.Looped.ofWidth(chunkWidth);
+        return new WorldLoopBounds(looped, looped);
+    }
+
+    public static WorldLoopBounds ofWidth(Direction.Axis axis, int chunkWidth) {
+        AxisBounds.Looped looped = AxisBounds.Looped.ofWidth(chunkWidth);
+        return switch (axis) {
+            case X -> new WorldLoopBounds(looped, AxisBounds.Unbounded.INSTANCE);
+            case Z -> new WorldLoopBounds(AxisBounds.Unbounded.INSTANCE, looped);
+            case Y -> throw new IllegalArgumentException(NOT_A_HORIZONTAL_AXIS + axis);
+        };
+    }
+
+    public AxisBounds axis(Direction.Axis axis) {
+        return switch (axis) {
+            case X -> x;
+            case Z -> z;
+            case Y -> throw new IllegalArgumentException(NOT_A_HORIZONTAL_AXIS + axis);
+        };
+    }
+
+    public boolean loops(Direction.Axis axis) {
+        return axis(axis) instanceof AxisBounds.Looped;
+    }
+
+    public int chunkWidth(Direction.Axis axis) {
+        return switch (axis(axis)) {
+            case AxisBounds.Looped looped -> looped.chunkWidth();
+            case AxisBounds.Unbounded() -> throw new IllegalStateException("chunkWidth() of the unbounded axis " + axis);
+        };
+    }
+
+    public WorldLoopBounds scaledDown(int scale) {
+        return new WorldLoopBounds(scaledDown(x, scale), scaledDown(z, scale));
+    }
+
+    private static AxisBounds scaledDown(AxisBounds axis, int scale) {
+        return switch (axis) {
+            case AxisBounds.Looped looped -> AxisBounds.Looped.ofWidth(looped.chunkWidth() / scale);
+            case AxisBounds.Unbounded() -> axis;
+        };
     }
 
     public boolean isSquare() {

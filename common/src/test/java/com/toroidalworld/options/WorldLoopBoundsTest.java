@@ -2,6 +2,7 @@ package com.toroidalworld.options;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -13,6 +14,8 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
+
+import net.minecraft.core.Direction;
 
 class WorldLoopBoundsTest {
     private static final int LEGACY_DISABLED_AXIS_RADIUS = 1883191;
@@ -185,5 +188,42 @@ class WorldLoopBoundsTest {
     void aDegenerateSpanIsNotSquare() {
         assertFalse(new WorldLoopBounds(5, 5, 5, 5).isSquare());
         assertFalse(new WorldLoopBounds(10, -10, 10, -10).isSquare());
+    }
+
+    @Test
+    void ofWidthOnOneAxisLoopsThatAxisCentredAndLeavesTheOtherUnbounded() {
+        assertEquals(new WorldLoopBounds(new AxisBounds.Looped(-16, 16), AxisBounds.Unbounded.INSTANCE),
+                WorldLoopBounds.ofWidth(Direction.Axis.X, 32));
+        assertEquals(new WorldLoopBounds(AxisBounds.Unbounded.INSTANCE, new AxisBounds.Looped(-2, 3)),
+                WorldLoopBounds.ofWidth(Direction.Axis.Z, 5));
+        assertThrows(IllegalArgumentException.class, () -> WorldLoopBounds.ofWidth(Direction.Axis.Y, 32));
+    }
+
+    @Test
+    void perAxisReadsAnswerForTheAxisNamed() {
+        WorldLoopBounds xOnly = WorldLoopBounds.ofWidth(Direction.Axis.X, 32);
+
+        assertEquals(new AxisBounds.Looped(-16, 16), xOnly.axis(Direction.Axis.X));
+        assertEquals(AxisBounds.Unbounded.INSTANCE, xOnly.axis(Direction.Axis.Z));
+        assertTrue(xOnly.loops(Direction.Axis.X));
+        assertFalse(xOnly.loops(Direction.Axis.Z));
+        assertEquals(32, xOnly.chunkWidth(Direction.Axis.X));
+        assertThrows(IllegalStateException.class, () -> xOnly.chunkWidth(Direction.Axis.Z));
+        assertThrows(IllegalArgumentException.class, () -> xOnly.axis(Direction.Axis.Y));
+
+        WorldLoopBounds rectangle = new WorldLoopBounds(-16, 16, -32, 32);
+        assertEquals(32, rectangle.chunkWidth(Direction.Axis.X));
+        assertEquals(64, rectangle.chunkWidth(Direction.Axis.Z));
+    }
+
+    @Test
+    void scaledDownDividesEveryLoopedWidthRecentredAndLeavesAnUnboundedAxisAlone() {
+        assertEquals(WorldLoopBounds.ofWidth(16), WorldLoopBounds.ofWidth(32).scaledDown(2));
+        assertEquals(WorldLoopBounds.ofWidth(32), new WorldLoopBounds(-48, 16, 0, 64).scaledDown(2));
+        assertEquals(WorldLoopBounds.ofWidth(Direction.Axis.Z, 16),
+                WorldLoopBounds.ofWidth(Direction.Axis.Z, 128).scaledDown(8));
+        assertEquals(new WorldLoopBounds(-8, 8, -32, 32), new WorldLoopBounds(-16, 16, -64, 64).scaledDown(2));
+        assertEquals(WorldLoopBounds.UNBOUNDED, WorldLoopBounds.UNBOUNDED.scaledDown(8));
+        assertEquals(WorldLoopBounds.ofWidth(32), WorldLoopBounds.ofWidth(32).scaledDown(1));
     }
 }
