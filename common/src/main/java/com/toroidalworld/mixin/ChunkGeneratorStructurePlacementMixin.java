@@ -65,6 +65,6 @@ public class ChunkGeneratorStructurePlacementMixin {
         ChunkPos startPos = start.getChunkPos();
         ChunkPos nearest = transformer.nearestCopy(centerPos, startPos);
         return ((FramedStructureStart) (Object) start).toroidal$framedBy(
-                level, nearest.x() - startPos.x(), nearest.z() - startPos.z());
+                level, transformer.deckTransformation(startPos, nearest));
     }
 }

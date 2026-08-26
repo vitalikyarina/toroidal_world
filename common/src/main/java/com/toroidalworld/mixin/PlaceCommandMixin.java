@@ -79,9 +79,10 @@ public class PlaceCommandMixin {
         FramedStructureStart framable = (FramedStructureStart) (Object) start;
         for (int chunkX = chunkMin.x(); chunkX <= chunkMax.x(); chunkX++) {
             for (int chunkZ = chunkMin.z(); chunkZ <= chunkMax.z(); chunkZ++) {
-                ChunkPos wrapped = transformer.fold(new ChunkPos(chunkX, chunkZ));
+                ChunkPos chunk = new ChunkPos(chunkX, chunkZ);
+                ChunkPos wrapped = transformer.fold(chunk);
 
-                StructureStart framed = framable.toroidal$framedBy(level, wrapped.x() - chunkX, wrapped.z() - chunkZ);
+                StructureStart framed = framable.toroidal$framedBy(level, transformer.deckTransformation(chunk, wrapped));
                 if (framed == null) {
                     continue;
                 }
