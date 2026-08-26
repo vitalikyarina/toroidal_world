@@ -131,6 +131,8 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    // The math this jar ships is tested in common; the loader suite alone would let a red common through.
+    dependsOn(':common:test')
 }
 
 // C2ME's module jars are jar-in-jar payloads FML cannot load: fold-test compile only, the outer artifact runs as a mod.
