@@ -42,7 +42,7 @@ public class BiomeMixin {
 
     @Unique
     private <T> T toroidal$boundToLevel(LevelReader level, Supplier<T> action) {
-        WorldFold transformer = WorldLoopAttachments.noiseTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.noiseTransformerOfReader(level);
         if (transformer == null) {
             return action.get();
         }
