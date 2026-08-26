@@ -49,6 +49,7 @@ public class CylinderSettingsScreen extends Screen {
         this.layout.addTitleHeader(TITLE, this.font);
 
         LinearLayout contents = this.layout.addToContents(LinearLayout.vertical().spacing(CONTENTS_SPACING));
+        this.controls.addPresets(contents);
 
         contents.addChild(CycleButton.builder(CylinderSettingsScreen::axisName, this.axis)
                 .withValues(Direction.Axis.X, Direction.Axis.Z)
@@ -56,7 +57,7 @@ public class CylinderSettingsScreen extends Screen {
                 .create(0, 0, LoopSizeControls.FIELD_WIDTH, LoopSizeControls.FIELD_HEIGHT, AXIS_LABEL,
                         (button, chosen) -> this.axis = chosen));
 
-        this.controls.addTo(this.font, contents);
+        this.controls.addFields(this.font, contents);
 
         LinearLayout footer = this.layout.addToFooter(LinearLayout.horizontal().spacing(FOOTER_SPACING));
         this.doneButton = footer.addChild(Button.builder(CommonComponents.GUI_DONE, button -> this.commit()).build());
