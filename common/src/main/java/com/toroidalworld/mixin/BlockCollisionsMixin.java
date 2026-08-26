@@ -15,10 +15,10 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.CollisionGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -34,7 +34,7 @@ public abstract class BlockCollisionsMixin {
     private void toroidal$resolveTransformer(CollisionGetter collisionGetter, CollisionContext context, AABB box,
             boolean onlySuffocatingBlocks, BiFunction<BlockPos.MutableBlockPos, VoxelShape, ?> resultProvider,
             CallbackInfo ci) {
-        this.toroidal$transformer = collisionGetter instanceof ServerLevel level
+        this.toroidal$transformer = collisionGetter instanceof Level level
                 ? WorldLoopAttachments.wrappedTransformerOf(level)
                 : null;
     }
