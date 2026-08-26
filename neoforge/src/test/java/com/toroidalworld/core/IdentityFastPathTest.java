@@ -15,12 +15,14 @@ import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 class IdentityFastPathTest {
     private static final long SEED = 0x1DEA5L;
     private static final int SAMPLES = 600;
+    private static final int CHUNK_BLOCKS = 16;
 
     private static final WorldFold EVEN = transformer(-32, 32, -32, 32);
     private static final WorldFold ODD = transformer(-2, 3, -2, 3);
@@ -153,6 +155,40 @@ class IdentityFastPathTest {
     }
 
     @Test
+    void reseatKeepsTheLowBitsAndReturnsTheArgumentUntouchedInItsOwnChunk() {
+        forEachTransformer((transformer, random) -> {
+            BlockPos pos = sampleBlockPos(random, transformer);
+            ChunkPos chunk = ChunkPos.containing(pos);
+            ChunkPos copy = new ChunkPos(
+                    chunk.x() + lapsOf(random, chunkX(transformer)), chunk.z() + lapsOf(random, chunkZ(transformer)));
+            BlockPos reference = new BlockPos(
+                    copy.getMinBlockX() + Math.floorMod(pos.getX(), CHUNK_BLOCKS), pos.getY(),
+                    copy.getMinBlockZ() + Math.floorMod(pos.getZ(), CHUNK_BLOCKS));
+            BlockPos reseated = transformer.reseat(pos, copy);
+
+            assertEquals(reference, reseated, () -> "reseat(" + pos + ", " + copy + ") " + in(transformer));
+            if (copy.equals(chunk)) {
+                assertSame(pos, reseated, () -> "a reseat of " + pos + " into its own chunk must come back as itself "
+                        + in(transformer));
+            }
+        });
+    }
+
+    @Test
+    void theDeckTransformationOfAChunkOntoItselfIsTheIdentityInstance() {
+        forEachTransformer((transformer, random) -> {
+            ChunkPos chunk = sampleChunkPos(random, transformer);
+            BoundingBox box = new BoundingBox(chunk.getMinBlockX(), 0, chunk.getMinBlockZ(),
+                    chunk.getMaxBlockX(), 10, chunk.getMaxBlockZ());
+
+            assertSame(DeckTransformation.IDENTITY, transformer.deckTransformation(chunk, chunk),
+                    () -> "a chunk carried onto itself " + in(transformer));
+            assertSame(box, DeckTransformation.IDENTITY.apply(box), "the identity rebuilt a box");
+            assertSame(chunk, DeckTransformation.IDENTITY.apply(chunk), "the identity rebuilt a chunk");
+        });
+    }
+
+    @Test
     void crossesBoundsAgreesWithWhetherTheSplitChangesAnything() {
         forEachTransformer((transformer, random) -> {
             AABB box = sampleBox(random, transformer);
@@ -186,6 +222,10 @@ class IdentityFastPathTest {
         AABB box = new AABB(500.0, 60.0, -100.0, 520.0, 62.0, -90.0);
 
         assertEquals(2, EVEN.split(box).size());
+    }
+
+    private static int lapsOf(Random random, WrapDomain domain) {
+        return domain instanceof WrapDomain.Noop ? 0 : (random.nextInt(5) - 2) * domain.domainLength;
     }
 
     private static double nearestCopy(WrapDomain domain, double ref, double coord) {

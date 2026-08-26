@@ -384,6 +384,37 @@ final class WorldLoopTransformer implements WorldFold {
     }
 
     @Override
+    public DeckTransformation deckTransformation(ChunkPos chunk, ChunkPos copy) {
+        int deltaX = copy.x() - chunk.x();
+        int deltaZ = copy.z() - chunk.z();
+        if (deltaX == 0 && deltaZ == 0) {
+            return DeckTransformation.IDENTITY;
+        }
+
+        requireCopy(chunk, copy, deltaX, deltaZ);
+        return new DeckTransformation(SeamTransform.translation(
+                SectionPos.sectionToBlockCoord(deltaX), SectionPos.sectionToBlockCoord(deltaZ)));
+    }
+
+    @Override
+    public BlockPos reseat(BlockPos pos, ChunkPos copy) {
+        int deltaX = copy.x() - SectionPos.blockToSectionCoord(pos.getX());
+        int deltaZ = copy.z() - SectionPos.blockToSectionCoord(pos.getZ());
+        if (deltaX == 0 && deltaZ == 0) {
+            return pos;
+        }
+
+        requireCopy(ChunkPos.containing(pos), copy, deltaX, deltaZ);
+        return pos.offset(SectionPos.sectionToBlockCoord(deltaX), 0, SectionPos.sectionToBlockCoord(deltaZ));
+    }
+
+    private void requireCopy(ChunkPos chunk, ChunkPos copy, int deltaX, int deltaZ) {
+        if (!chunks.x.isWholeLaps(deltaX) || !chunks.z.isWholeLaps(deltaZ)) {
+            throw new IllegalArgumentException(copy + " is not a copy of " + chunk + " in " + this);
+        }
+    }
+
+    @Override
     public Vec3 foldDelta(Vec3 from, Vec3 to) {
         return vectors.nearestCopy(from, to).subtract(from);
     }

@@ -69,7 +69,7 @@ public class StructureManagerMixin {
         ChunkPos startPos = start.getChunkPos();
         ChunkPos nearest = transformer.nearestCopy(centerPos, startPos);
         return ((FramedStructureStart) (Object) start).toroidal$framedBy(
-                region, nearest.x - startPos.x, nearest.z - startPos.z);
+                region, transformer.deckTransformation(startPos, nearest));
     }
 
     @WrapOperation(

@@ -172,6 +172,19 @@ class DeckGroupFoldMatrixTest {
         return value * value;
     }
 
+    private static int orbitStep(Random random) {
+        return random.nextInt(2 * ORBIT_REACH + 1) - ORBIT_REACH;
+    }
+
+    private static ChunkPos chunkOf(int x, int z) {
+        return new ChunkPos(Math.floorDiv(x, UNIT), Math.floorDiv(z, UNIT));
+    }
+
+    private static ChunkPos copyOf(Group group, ChunkPos chunk, int first, int second) {
+        int[] image = group.cell(chunk.x() * UNIT, chunk.z() * UNIT, first, second);
+        return chunkOf(image[0], image[1]);
+    }
+
     private static void assertInsideWorld(Case testCase, int x, int z, String what) {
         if (testCase.group().xLoops()) {
             assertTrue(x >= LOWER && x < UPPER,
@@ -389,6 +402,105 @@ class DeckGroupFoldMatrixTest {
             assertTrue(squared(nearest.value().getX() - ref.getX()) + squared(nearest.value().getZ() - ref.getZ())
                             < squared(target.getX() - ref.getX()) + squared(target.getZ() - ref.getZ()),
                     "the flipped copy is not nearer than the unflipped one");
+        }
+    }
+
+    @Nested
+    class Reseat {
+        @Test
+        void landsInTheCopyAtTheOrbitImage() {
+            for (Case testCase : cases()) {
+                DeckGroupFold fold = testCase.fold();
+                Random random = new Random(SEED + 19);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    int x = sample(random);
+                    int z = sample(random);
+                    int first = orbitStep(random);
+                    int second = orbitStep(random);
+                    ChunkPos copy = copyOf(testCase.group(), chunkOf(x, z), first, second);
+                    int[] image = testCase.group().cell(x, z, first, second);
+
+                    BlockPos reseated = fold.reseat(new BlockPos(x, 64, z), copy);
+                    assertEquals(new BlockPos(image[0], 64, image[1]), reseated,
+                            testCase.name() + ": reseat of (" + x + ", " + z + ") into " + copy
+                                    + " is not the orbit image");
+                    assertEquals(copy, chunkOf(reseated.getX(), reseated.getZ()),
+                            testCase.name() + ": reseat left the copy");
+                }
+            }
+        }
+
+        @Test
+        void aPositionReseatedIntoItsOwnChunkComesBackAsTheSameObject() {
+            for (Case testCase : cases()) {
+                DeckGroupFold fold = testCase.fold();
+                BlockPos pos = new BlockPos(LOWER + 5, 64, LOWER + 7);
+                assertSame(pos, fold.reseat(pos, chunkOf(pos.getX(), pos.getZ())),
+                        testCase.name() + ": a reseat into the own chunk rebuilt the position");
+            }
+        }
+
+        @Test
+        void aChunkOutsideTheOrbitIsRefused() {
+            for (Case testCase : cases()) {
+                DeckGroupFold fold = testCase.fold();
+                BlockPos pos = new BlockPos(LOWER + 5, 64, LOWER + 7);
+                ChunkPos chunk = chunkOf(pos.getX(), pos.getZ());
+                ChunkPos neighbour = new ChunkPos(chunk.x() + 1, chunk.z());
+                assertThrows(IllegalArgumentException.class, () -> fold.reseat(pos, neighbour),
+                        testCase.name() + ": a neighbouring chunk passed as a copy");
+                assertThrows(IllegalArgumentException.class, () -> fold.deckTransformation(chunk, neighbour),
+                        testCase.name() + ": a deck transformation onto a neighbouring chunk");
+            }
+        }
+
+        @Test
+        void theDeckTransformationCarriesTheChunkItsBlocksAndItsBoxes() {
+            for (Case testCase : cases()) {
+                DeckGroupFold fold = testCase.fold();
+                Random random = new Random(SEED + 20);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    int x = sample(random);
+                    int z = sample(random);
+                    int first = orbitStep(random);
+                    int second = orbitStep(random);
+                    ChunkPos chunk = chunkOf(x, z);
+                    ChunkPos copy = copyOf(testCase.group(), chunk, first, second);
+                    DeckTransformation move = fold.deckTransformation(chunk, copy);
+
+                    assertEquals(copy, move.apply(chunk), testCase.name() + ": the chunk is not carried onto the copy");
+                    BlockPos pos = new BlockPos(x, 64, z);
+                    assertEquals(fold.reseat(pos, copy), move.apply(pos),
+                            testCase.name() + ": the transformation and the reseat disagree");
+
+                    BoundingBox box = new BoundingBox(x, 60, z, x + random.nextInt(40), 68, z + random.nextInt(40));
+                    int[] low = testCase.group().cell(box.minX(), box.minZ(), first, second);
+                    int[] high = testCase.group().cell(box.maxX(), box.maxZ(), first, second);
+                    assertEquals(new BoundingBox(
+                            Math.min(low[0], high[0]), 60, Math.min(low[1], high[1]),
+                            Math.max(low[0], high[0]), 68, Math.max(low[1], high[1])),
+                            move.apply(box), testCase.name() + ": the box is not carried onto its orbit image");
+                }
+            }
+        }
+
+        @Test
+        void anOddMirroredLapReversesTheLocalIndexAndReportsTheFlip() {
+            for (Case testCase : mirroredCases()) {
+                DeckGroupFold fold = testCase.fold();
+                BlockPos pos = new BlockPos(LOWER + 3, 64, LOWER + 5);
+                ChunkPos chunk = chunkOf(pos.getX(), pos.getZ());
+                ChunkPos copy = copyOf(testCase.group(), chunk, 1, 0);
+                DeckTransformation move = fold.deckTransformation(chunk, copy);
+
+                assertEquals(FoldOrientation.MIRROR_Z, move.orientation(),
+                        testCase.name() + ": one lap across the mirrored seam did not report the flip");
+                BlockPos reseated = fold.reseat(pos, copy);
+                assertEquals(Math.floorMod(pos.getX(), UNIT), Math.floorMod(reseated.getX(), UNIT),
+                        testCase.name() + ": the unmirrored local index moved");
+                assertEquals(UNIT - 1 - Math.floorMod(pos.getZ(), UNIT), Math.floorMod(reseated.getZ(), UNIT),
+                        testCase.name() + ": the mirrored local index is not reversed");
+            }
         }
     }
 
@@ -805,6 +917,34 @@ class DeckGroupFoldMatrixTest {
                     assertEquals(perAxis.sqrChunkDistance(refChunk, targetChunk),
                             generic.sqrChunkDistance(refChunk, targetChunk), testCase.name() + ": chunk distance");
                 }
+            }
+        }
+
+        @Test
+        void theDecomposableShapesAgreeWithThePerAxisTransformerOnTheReseat() {
+            for (Case testCase : decomposableCases()) {
+                DeckGroupFold generic = testCase.fold();
+                WorldFold perAxis = new WorldLoopTransformer(testCase.shape().bounds());
+                Random random = new Random(SEED + 21);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    int x = sample(random);
+                    int z = sample(random);
+                    ChunkPos chunk = chunkOf(x, z);
+                    ChunkPos copy = copyOf(testCase.group(), chunk, orbitStep(random), orbitStep(random));
+                    BlockPos pos = new BlockPos(x, 64, z);
+                    BoundingBox box = new BoundingBox(x, 60, z, x + random.nextInt(40), 68, z + random.nextInt(40));
+
+                    assertEquals(perAxis.reseat(pos, copy), generic.reseat(pos, copy), testCase.name() + ": reseat");
+                    assertEquals(perAxis.deckTransformation(chunk, copy), generic.deckTransformation(chunk, copy),
+                            testCase.name() + ": deck transformation");
+                    assertEquals(perAxis.deckTransformation(chunk, copy).apply(box),
+                            generic.deckTransformation(chunk, copy).apply(box), testCase.name() + ": box");
+                }
+
+                ChunkPos chunk = new ChunkPos(MIN_CHUNK, MIN_CHUNK);
+                ChunkPos neighbour = new ChunkPos(MIN_CHUNK + 1, MIN_CHUNK);
+                assertThrows(IllegalArgumentException.class, () -> perAxis.deckTransformation(chunk, neighbour),
+                        testCase.name() + ": the per-axis transformer accepted a neighbouring chunk as a copy");
             }
         }
 

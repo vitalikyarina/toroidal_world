@@ -225,6 +225,26 @@ public final class DeckGroupFold implements WorldFold {
     }
 
     @Override
+    public DeckTransformation deckTransformation(ChunkPos chunk, ChunkPos copy) {
+        if (chunk.equals(copy)) {
+            return DeckTransformation.IDENTITY;
+        }
+
+        DeckTransformation carried = new DeckTransformation(this.blocks.between(
+                chunk.getMinBlockX(), chunk.getMinBlockZ(), copy.getMinBlockX(), copy.getMinBlockZ()));
+        if (!carried.apply(chunk).equals(copy)) {
+            throw new IllegalArgumentException(copy + " is not a copy of " + chunk + " in " + this.shape);
+        }
+
+        return carried;
+    }
+
+    @Override
+    public BlockPos reseat(BlockPos pos, ChunkPos copy) {
+        return deckTransformation(ChunkPos.containing(pos), copy).apply(pos);
+    }
+
+    @Override
     public Vec3 foldDelta(Vec3 from, Vec3 to) {
         return nearestCopy(from, to).subtract(from);
     }
@@ -491,6 +511,10 @@ public final class DeckGroupFold implements WorldFold {
             }
 
             return applied;
+        }
+
+        private SeamTransform between(int fromX, int fromZ, int toX, int toZ) {
+            return foldCells(fromX, fromZ).then(foldCells(toX, toZ).inverse());
         }
 
         private SeamTransform nearestCells(int refX, int refZ, int targetX, int targetZ) {

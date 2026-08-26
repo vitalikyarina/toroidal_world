@@ -772,7 +772,7 @@ public final class PacketTranslator {
     }
 
     static BlockPos toClientBlock(TranslationContext context, BlockPos pos, ChunkTraffic traffic) {
-        return blockInChunkCopy(context.toClient(new ChunkPos(pos), traffic), pos);
+        return context.transformer().reseat(pos, context.toClient(new ChunkPos(pos), traffic));
     }
 
     private static BlockPos nearestCopyBlock(TranslationContext context, BlockPos pos) {
@@ -784,14 +784,7 @@ public final class PacketTranslator {
     }
 
     static BlockPos nearestCopyBlock(WorldFold transformer, ChunkPos anchor, BlockPos pos) {
-        return blockInChunkCopy(transformer.nearestCopy(anchor, new ChunkPos(pos)), pos);
-    }
-
-    private static BlockPos blockInChunkCopy(ChunkPos clientChunk, BlockPos pos) {
-        return new BlockPos(
-                clientChunk.getMinBlockX() + (pos.getX() & SectionPos.SECTION_MASK),
-                pos.getY(),
-                clientChunk.getMinBlockZ() + (pos.getZ() & SectionPos.SECTION_MASK));
+        return transformer.reseat(pos, transformer.nearestCopy(anchor, new ChunkPos(pos)));
     }
 
     private static <T, P> T rewritePosition(BiConsumer<T, RegistryFriendlyByteBuf> writer,

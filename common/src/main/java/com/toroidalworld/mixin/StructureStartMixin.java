@@ -8,11 +8,12 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 import com.toroidalworld.accessors.FramedStructureStart;
-import com.toroidalworld.core.CoordinateConstants;
+import com.toroidalworld.core.DeckTransformation;
 
-import net.minecraft.world.level.ChunkPos;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pools.JigsawJunction;
@@ -20,34 +21,33 @@ import net.minecraft.world.level.levelgen.structure.pools.JigsawJunction;
 @Mixin(StructureStart.class)
 public class StructureStartMixin implements FramedStructureStart {
     @Unique
-    private volatile @Nullable Map<Long, StructureStart> toroidal$framed;
+    private volatile @Nullable Map<DeckTransformation, StructureStart> toroidal$framed;
 
     @Override
-    public @Nullable StructureStart toroidal$framedBy(WorldGenLevel level, int deltaChunkX, int deltaChunkZ) {
+    public @Nullable StructureStart toroidal$framedBy(WorldGenLevel level, DeckTransformation move) {
         StructureStart self = (StructureStart) (Object) this;
-        if (deltaChunkX == 0 && deltaChunkZ == 0) {
+        if (move.isIdentity()) {
             return self;
         }
 
-        Map<Long, StructureStart> framed = this.toroidal$cache();
-        long frame = ChunkPos.asLong(deltaChunkX, deltaChunkZ);
-        StructureStart known = framed.get(frame);
+        Map<DeckTransformation, StructureStart> framed = this.toroidal$cache();
+        StructureStart known = framed.get(move);
         if (known != null) {
             return known;
         }
 
-        StructureStart made = toroidal$movedCopy(self, level, deltaChunkX, deltaChunkZ);
+        StructureStart made = toroidal$movedCopy(self, level, move);
         if (made == null) {
             return null;
         }
 
-        StructureStart raced = framed.putIfAbsent(frame, made);
+        StructureStart raced = framed.putIfAbsent(move, made);
         return raced != null ? raced : made;
     }
 
     @Unique
-    private Map<Long, StructureStart> toroidal$cache() {
-        Map<Long, StructureStart> framed = this.toroidal$framed;
+    private Map<DeckTransformation, StructureStart> toroidal$cache() {
+        Map<DeckTransformation, StructureStart> framed = this.toroidal$framed;
         if (framed != null) {
             return framed;
         }
@@ -65,7 +65,7 @@ public class StructureStartMixin implements FramedStructureStart {
 
     @Unique
     private static @Nullable StructureStart toroidal$movedCopy(
-            StructureStart start, WorldGenLevel level, int deltaChunkX, int deltaChunkZ) {
+            StructureStart start, WorldGenLevel level, DeckTransformation move) {
         StructurePieceSerializationContext context = StructurePieceSerializationContext.fromLevel(level.getLevel());
         StructureStart copy = StructureStart.loadStaticStart(
                 context, start.createTag(context, start.getChunkPos()), level.getSeed());
@@ -73,18 +73,22 @@ public class StructureStartMixin implements FramedStructureStart {
             return null;
         }
 
-        int blockX = deltaChunkX * CoordinateConstants.CHUNK_WIDTH;
-        int blockZ = deltaChunkZ * CoordinateConstants.CHUNK_WIDTH;
         copy.getPieces().forEach(piece -> {
-            piece.move(blockX, 0, blockZ);
+            BoundingBox box = piece.getBoundingBox();
+            BoundingBox moved = move.apply(box);
+            piece.move(moved.minX() - box.minX(), 0, moved.minZ() - box.minZ());
 
             if (piece instanceof PoolElementStructurePiece poolPiece) {
-                poolPiece.getJunctions().replaceAll(junction -> new JigsawJunction(
-                        junction.getSourceX() + blockX,
-                        junction.getSourceGroundY(),
-                        junction.getSourceZ() + blockZ,
-                        junction.getDeltaY(),
-                        junction.getDestProjection()));
+                poolPiece.getJunctions().replaceAll(junction -> {
+                    BlockPos source = move.apply(new BlockPos(
+                            junction.getSourceX(), junction.getSourceGroundY(), junction.getSourceZ()));
+                    return new JigsawJunction(
+                            source.getX(),
+                            junction.getSourceGroundY(),
+                            source.getZ(),
+                            junction.getDeltaY(),
+                            junction.getDestProjection());
+                });
             }
         });
         return copy;

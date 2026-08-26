@@ -86,6 +86,10 @@ public class WrapDomain {
         return delta > 0 ? coord - domainLength : coord + domainLength;
     }
 
+    public boolean isWholeLaps(int delta) {
+        return Math.floorMod(delta, domainLength) == 0;
+    }
+
     public boolean isOver(double coord) {
         return coord < lowerBound || coord >= upperBound;
     }
@@ -258,6 +262,11 @@ public class WrapDomain {
         @Override
         public int otherCopy(int coord, int delta) {
             return coord;
+        }
+
+        @Override
+        public boolean isWholeLaps(int delta) {
+            return delta == 0;
         }
 
         @Override
