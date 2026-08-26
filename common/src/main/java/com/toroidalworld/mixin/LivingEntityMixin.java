@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamAim;
 
 import net.minecraft.core.BlockPos;
@@ -17,8 +17,8 @@ import net.minecraft.world.phys.Vec3;
 public class LivingEntityMixin {
     @ModifyVariable(method = "startSleeping", at = @At("HEAD"), argsOnly = true)
     private BlockPos toroidal$wrapBedPosition(BlockPos bedPosition) {
-        WorldLoopTransformer transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? bedPosition : transformer.blocks.wrap(bedPosition);
+        WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
+        return transformer == null ? bedPosition : transformer.fold(bedPosition);
     }
 
     @ModifyVariable(method = "knockback(DDD)V", at = @At("HEAD"), argsOnly = true, ordinal = 1)
@@ -46,7 +46,7 @@ public class LivingEntityMixin {
             at = @At("STORE"), ordinal = 1)
     private Vec3 toroidal$sightTargetThroughSeam(Vec3 to) {
         LivingEntity self = (LivingEntity) (Object) this;
-        WorldLoopTransformer transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? to : transformer.vectors.nearestCopy(self.position(), to);
+        WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
+        return transformer == null ? to : transformer.nearestCopy(self.position(), to);
     }
 }

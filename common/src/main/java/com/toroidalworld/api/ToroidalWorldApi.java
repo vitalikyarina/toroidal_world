@@ -2,7 +2,7 @@ package com.toroidalworld.api;
 
 import java.util.Optional;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.world.level.Level;
@@ -19,7 +19,7 @@ public final class ToroidalWorldApi {
      * cheap; callers may hold it for as long as the level lives.
      */
     public static Optional<ToroidalShape> shapeOf(Level level) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         return transformer == null ? Optional.empty() : Optional.of(new WorldFoldToroidalShape(transformer));
     }
 

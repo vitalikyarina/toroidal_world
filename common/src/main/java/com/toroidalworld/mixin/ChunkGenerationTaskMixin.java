@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.slf4j.Logger;
 
 import com.toroidalworld.accessors.LevelHolder;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -41,7 +41,7 @@ public class ChunkGenerationTaskMixin {
         }
 
         ServerLevel level = ((LevelHolder) (Object) map).toroidal$level();
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return original.call(centerX, centerZ, range, initializer);
         }
@@ -58,7 +58,7 @@ public class ChunkGenerationTaskMixin {
     @Unique
     private static GenerationChunkHolder toroidal$slotFor(
             ChunkMap map,
-            WorldLoopTransformer transformer,
+            WorldFold transformer,
             String levelName,
             StaticCache2D.Initializer<GenerationChunkHolder> initializer,
             int centerX,
@@ -69,12 +69,14 @@ public class ChunkGenerationTaskMixin {
             return initializer.get(slotX, slotZ);
         }
 
-        if (!transformer.chunks.x.isOver(slotX) && !transformer.chunks.z.isOver(slotZ)) {
+        ChunkPos slot = new ChunkPos(slotX, slotZ);
+        if (!transformer.isOver(slot)) {
             return initializer.get(slotX, slotZ);
         }
 
-        int wrappedX = transformer.chunks.x.wrap(slotX);
-        int wrappedZ = transformer.chunks.z.wrap(slotZ);
+        ChunkPos wrapped = transformer.fold(slot);
+        int wrappedX = wrapped.x();
+        int wrappedZ = wrapped.z();
 
         if (map.getUpdatingChunkIfPresent(ChunkPos.asLong(wrappedX, wrappedZ)) == null) {
             toroidal$LOGGER.warn(

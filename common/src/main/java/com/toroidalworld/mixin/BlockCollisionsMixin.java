@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -26,7 +26,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 @Mixin(BlockCollisions.class)
 public abstract class BlockCollisionsMixin {
     @Unique
-    private @Nullable WorldLoopTransformer toroidal$transformer;
+    private @Nullable WorldFold toroidal$transformer;
 
     @Inject(
             method = "<init>(Lnet/minecraft/world/level/CollisionGetter;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;ZLjava/util/function/BiFunction;)V",
@@ -44,9 +44,12 @@ public abstract class BlockCollisionsMixin {
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/level/BlockCollisions;getChunk(II)Lnet/minecraft/world/level/BlockGetter;"))
     private BlockGetter toroidal$chunkThroughSeam(BlockCollisions<?> self, int x, int z, Operation<BlockGetter> original) {
-        WorldLoopTransformer transformer = this.toroidal$transformer;
-        return transformer == null
-                ? original.call(self, x, z)
-                : original.call(self, transformer.coords.x.wrap(x), transformer.coords.z.wrap(z));
+        WorldFold transformer = this.toroidal$transformer;
+        if (transformer == null) {
+            return original.call(self, x, z);
+        }
+
+        long folded = transformer.foldBlockNode(BlockPos.asLong(x, 0, z));
+        return original.call(self, BlockPos.getX(folded), BlockPos.getZ(folded));
     }
 }

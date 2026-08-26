@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -43,12 +43,12 @@ public class RaidMixin {
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/phys/Vec3;atCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$raidHornThroughSeam(Vec3 raidLoc, @Local ServerPlayer listener) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
-        Vec3 folded = transformer == null
-                ? raidLoc
-                : transformer.vectors.nearestCopy(listener.position(), raidLoc);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        if (transformer == null) {
+            return raidLoc;
+        }
 
-        return folded;
+        return transformer.nearestCopy(listener.position(), raidLoc);
     }
 
     @WrapOperation(
@@ -66,13 +66,13 @@ public class RaidMixin {
                     target = "Lnet/minecraft/core/SectionPos;cube(Lnet/minecraft/core/SectionPos;I)Ljava/util/stream/Stream;"))
     private Stream<SectionPos> toroidal$villageSectionsThroughSeam(SectionPos cubeCenter, int radius,
             Operation<Stream<SectionPos>> original) {
-        List<SectionPos> raw = original.call(cubeCenter, radius).toList();
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
-        List<SectionPos> folded = transformer == null
-                ? raw
-                : raw.stream().map(transformer.chunks::wrapSection).distinct().toList();
+        Stream<SectionPos> sections = original.call(cubeCenter, radius);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        if (transformer == null) {
+            return sections;
+        }
 
-        return folded.stream();
+        return sections.map(section -> transformer.fold(section)).distinct();
     }
 
     @ModifyArg(
@@ -80,7 +80,7 @@ public class RaidMixin {
             at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;min(Ljava/util/Comparator;)Ljava/util/Optional;"),
             index = 0)
     private Comparator<BlockPos> toroidal$nearestVillageSectionThroughSeam(Comparator<BlockPos> original) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
             return original;
         }

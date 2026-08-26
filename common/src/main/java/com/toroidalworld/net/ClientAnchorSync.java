@@ -1,12 +1,11 @@
 package com.toroidalworld.net;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.SectionPos;
 import net.minecraft.network.protocol.game.ClientboundSetBorderCenterPacket;
 import net.minecraft.network.protocol.game.ClientboundSetDefaultSpawnPositionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -17,7 +16,7 @@ import net.minecraft.world.level.border.WorldBorder;
 public final class ClientAnchorSync {
     public static void refresh(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return;
         }
@@ -31,7 +30,7 @@ public final class ClientAnchorSync {
         refreshBorderCenter(player, level, transformer, clientPosition);
     }
 
-    private static void refreshSpawn(ServerPlayer player, ServerLevel level, WorldLoopTransformer transformer,
+    private static void refreshSpawn(ServerPlayer player, ServerLevel level, WorldFold transformer,
             ClientPosition clientPosition) {
         if (!Level.OVERWORLD.equals(level.dimension())) {
             return;
@@ -39,11 +38,8 @@ public final class ClientAnchorSync {
 
         BlockPos held = clientPosition.heldSpawn();
         BlockPos spawnPos = level.getSharedSpawnPos();
-        int anchorChunkX = SectionPos.blockToSectionCoord(clientPosition.x());
-        int anchorChunkZ = SectionPos.blockToSectionCoord(clientPosition.z());
-        int wantX = PacketTranslator.nearestCopyBlockX(transformer, anchorChunkX, spawnPos.getX());
-        int wantZ = PacketTranslator.nearestCopyBlockZ(transformer, anchorChunkZ, spawnPos.getZ());
-        if (held != null && held.getX() == wantX && held.getY() == spawnPos.getY() && held.getZ() == wantZ) {
+        BlockPos want = PacketTranslator.nearestCopyBlock(transformer, clientPosition.chunk(), spawnPos);
+        if (want.equals(held)) {
             return;
         }
 
@@ -51,13 +47,13 @@ public final class ClientAnchorSync {
                 new ClientboundSetDefaultSpawnPositionPacket(spawnPos, level.getSharedSpawnAngle()));
     }
 
-    private static void refreshBorderCenter(ServerPlayer player, ServerLevel level, WorldLoopTransformer transformer,
+    private static void refreshBorderCenter(ServerPlayer player, ServerLevel level, WorldFold transformer,
             ClientPosition clientPosition) {
         WorldBorder border = level.getWorldBorder();
         BorderCenter held = clientPosition.heldBorderCenter();
-        double wantX = PacketTranslator.nearestCopyCenterX(transformer, clientPosition, border.getCenterX());
-        double wantZ = PacketTranslator.nearestCopyCenterZ(transformer, clientPosition, border.getCenterZ());
-        if (held != null && held.x() == wantX && held.z() == wantZ) {
+        BorderCenter want = PacketTranslator.nearestCopyCenter(transformer, clientPosition,
+                new BorderCenter(border.getCenterX(), border.getCenterZ()));
+        if (want.equals(held)) {
             return;
         }
 

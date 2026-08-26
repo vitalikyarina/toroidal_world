@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.DensityFunctionSlotAxes;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
@@ -23,7 +23,7 @@ public class DensityFunctionsShiftBMixin {
     @WrapMethod(method = "compute(Lnet/minecraft/world/level/levelgen/DensityFunction$FunctionContext;)D")
     private double toroidal$periodicCompute(DensityFunction.FunctionContext context, Operation<Double> original) {
         Context generation = GenerationTransformerContext.context();
-        WorldLoopTransformer transformer = generation.wrappedTransformer();
+        WorldFold transformer = generation.wrappedTransformer();
         if (transformer == null) {
             return original.call(context);
         }

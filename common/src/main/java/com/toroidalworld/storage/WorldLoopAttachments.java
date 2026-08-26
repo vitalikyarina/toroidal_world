@@ -5,30 +5,32 @@ import org.jspecify.annotations.Nullable;
 import com.toroidalworld.accessors.ClientBoundsHolder;
 import com.toroidalworld.accessors.ClientPositionHolder;
 import com.toroidalworld.accessors.TransformerCache;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.player.ClientPosition;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.Vec3;
 
 public final class WorldLoopAttachments {
-    public static WorldLoopTransformer transformerOf(Level level) {
+    public static WorldFold transformerOf(Level level) {
         return ((TransformerCache) level).toroidal$transformer();
     }
 
-    public static @Nullable WorldLoopTransformer wrappedTransformerOf(Level level) {
-        WorldLoopTransformer transformer = transformerOf(level);
+    public static @Nullable WorldFold wrappedTransformerOf(Level level) {
+        WorldFold transformer = transformerOf(level);
         return transformer.isWrapped() ? transformer : null;
     }
 
-    private static WorldLoopTransformer clientBoundsTransformerOf(Level level) {
-        return level instanceof ClientBoundsHolder holder ? holder.toroidal$clientBounds() : WorldLoopTransformer.NOOP;
+    private static WorldFold clientBoundsTransformerOf(Level level) {
+        return level instanceof ClientBoundsHolder holder ? holder.toroidal$clientBounds() : WorldFolds.NOOP;
     }
 
-    public static @Nullable WorldLoopTransformer wrappedClientBoundsTransformerOf(Level level) {
-        WorldLoopTransformer transformer = clientBoundsTransformerOf(level);
+    public static @Nullable WorldFold wrappedClientBoundsTransformerOf(Level level) {
+        WorldFold transformer = clientBoundsTransformerOf(level);
         return transformer.isWrapped() ? transformer : null;
     }
 
@@ -73,10 +75,11 @@ public final class WorldLoopAttachments {
             return;
         }
 
-        WorldLoopTransformer transformer = transformerOf(player.level());
+        WorldFold transformer = transformerOf(player.level());
+        Vec3 folded = transformer.fold(player.position());
         clientPositionOf(player).rebase(
-                transformer.coords.x.wrap(player.getX()),
-                transformer.coords.z.wrap(player.getZ()),
+                folded.x,
+                folded.z,
                 player.level().dimension(),
                 transformer);
     }

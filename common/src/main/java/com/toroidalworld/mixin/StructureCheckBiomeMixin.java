@@ -5,7 +5,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.gen.ShapedChunkGenerator;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -30,9 +31,9 @@ public class StructureCheckBiomeMixin {
     }
 
     @Unique
-    private WorldLoopTransformer toroidal$transformer() {
+    private WorldFold toroidal$transformer() {
         return this.chunkGenerator instanceof ShapedChunkGenerator shaped
                 ? shaped.transformer()
-                : WorldLoopTransformer.NOOP;
+                : WorldFolds.NOOP;
     }
 }

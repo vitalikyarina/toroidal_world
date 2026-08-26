@@ -1,9 +1,10 @@
 package com.toroidalworld.noise;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 
@@ -30,7 +31,7 @@ public final class PeriodicNoiseSampler {
     private static final long UNBOUNDED_PERIOD = 0L;
 
     public static double sample(byte[] permutations, double xOffset, double yOffset, double zOffset,
-            WorldLoopTransformer transformer, Context context,
+            WorldFold transformer, Context context,
             double x, double y, double z, double yScale, double yFudge) {
         SlotAxes axes = context.slotAxes();
         double scale = context.horizontalScale();
@@ -42,8 +43,8 @@ public final class PeriodicNoiseSampler {
         double ys;
         double zs;
         if (axes == SlotAxes.DEFAULT && context.xDivisor() == 1.0 && context.zDivisor() == 1.0) {
-            WrapDomain xDomain = transformer.coords.x;
-            WrapDomain zDomain = transformer.coords.z;
+            WrapDomain xDomain = transformer.blockDomain(Direction.Axis.X);
+            WrapDomain zDomain = transformer.blockDomain(Direction.Axis.Z);
             xPeriod = period(xDomain, scale);
             yPeriod = UNBOUNDED_PERIOD;
             zPeriod = period(zDomain, scale);

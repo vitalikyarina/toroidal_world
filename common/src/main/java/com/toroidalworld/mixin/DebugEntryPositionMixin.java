@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 
@@ -18,6 +18,7 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 @Mixin(DebugScreenOverlay.class)
 public class DebugEntryPositionMixin {
@@ -39,7 +40,7 @@ public class DebugEntryPositionMixin {
             return lines;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
         if (transformer == null) {
             return lines;
         }
@@ -54,12 +55,13 @@ public class DebugEntryPositionMixin {
         double rawX = entity.getX();
         double rawZ = entity.getZ();
         BlockPos feet = entity.blockPosition();
-        BlockPos wrappedFeet = transformer.blocks.wrap(feet);
+        BlockPos wrappedFeet = transformer.fold(feet);
         ChunkPos rawChunk = new ChunkPos(feet);
-        ChunkPos wrappedChunk = transformer.chunks.wrap(rawChunk);
+        ChunkPos wrappedChunk = transformer.fold(rawChunk);
 
+        Vec3 wrappedPos = transformer.fold(new Vec3(rawX, entity.getY(), rawZ));
         lines.set(xyzLine, String.format(Locale.ROOT, "XYZ: %.3f / %.5f / %.3f",
-                transformer.coords.x.wrap(rawX), entity.getY(), transformer.coords.z.wrap(rawZ)));
+                wrappedPos.x, entity.getY(), wrappedPos.z));
         lines.set(blockLine, String.format(Locale.ROOT, "Block: %d %d %d [%d %d %d]",
                 wrappedFeet.getX(), wrappedFeet.getY(), wrappedFeet.getZ(),
                 wrappedFeet.getX() & 15, wrappedFeet.getY() & 15, wrappedFeet.getZ() & 15));

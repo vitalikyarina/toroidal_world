@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.compat.c2me.C2meSeamFold;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.ishland.c2me.base.common.scheduler.LockTokenImpl;
 import com.ishland.c2me.base.common.scheduler.ScheduledTask;
 import com.ishland.c2me.base.common.scheduler.SchedulingManager;
@@ -38,7 +38,7 @@ public class VanillaWorldGenerationDelegateMixin {
             StaticCache2D.Initializer<GenerationChunkHolder> initializer,
             Operation<StaticCache2D<GenerationChunkHolder>> original,
             @Local(argsOnly = true) ChunkLoadingContext context) {
-        WorldLoopTransformer transformer =
+        WorldFold transformer =
                 ((TransformerSource) context.theChunkSystem()).toroidal$wrappedTransformer();
         if (transformer == null) {
             return original.call(centerX, centerZ, range, initializer);
@@ -60,7 +60,7 @@ public class VanillaWorldGenerationDelegateMixin {
             SchedulingManager schedulingManager,
             Supplier<CompletableFuture<T>> action,
             Operation<CompletableFuture<T>> original) {
-        WorldLoopTransformer transformer = ((TransformerSource) schedulingManager).toroidal$wrappedTransformer();
+        WorldFold transformer = ((TransformerSource) schedulingManager).toroidal$wrappedTransformer();
         if (transformer == null) {
             return original.call(baseChunkX, baseChunkZ, sizeX, sizeZ, schedulingManager, action);
         }

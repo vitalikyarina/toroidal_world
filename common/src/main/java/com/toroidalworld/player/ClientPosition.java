@@ -4,8 +4,9 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import com.toroidalworld.core.LogRateGate;
-import com.toroidalworld.core.WorldLoopTransformer;
-import com.toroidalworld.core.WrapDomain;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.BlockPos;
@@ -18,13 +19,13 @@ public final class ClientPosition {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     // Written on the server thread and read on the network thread, so the four values change together or not at all.
-    private record Mirror(double x, double z, @Nullable ResourceKey<Level> space, WorldLoopTransformer transformer) {
+    private record Mirror(double x, double z, @Nullable ResourceKey<Level> space, WorldFold transformer) {
     }
 
     public record BorderCenter(double x, double z) {
     }
 
-    private volatile Mirror mirror = new Mirror(0.0, 0.0, null, WorldLoopTransformer.NOOP);
+    private volatile Mirror mirror = new Mirror(0.0, 0.0, null, WorldFolds.NOOP);
 
     private volatile @Nullable BlockPos heldSpawn;
 
@@ -53,20 +54,20 @@ public final class ClientPosition {
 
     public void setX(double x, MirrorWriter writer) {
         Mirror currMirror = this.mirror;
-        checkStep(writer, "x", currMirror.transformer().coords.x, currMirror.x(), x, currMirror.space());
+        checkStep(writer, "x", currMirror.transformer().bounds().x(), currMirror.x(), x, currMirror.space());
         this.mirror = new Mirror(x, currMirror.z(), currMirror.space(), currMirror.transformer());
     }
 
     public void setZ(double z, MirrorWriter writer) {
         Mirror currMirror = this.mirror;
-        checkStep(writer, "z", currMirror.transformer().coords.z, currMirror.z(), z, currMirror.space());
+        checkStep(writer, "z", currMirror.transformer().bounds().z(), currMirror.z(), z, currMirror.space());
         this.mirror = new Mirror(currMirror.x(), z, currMirror.space(), currMirror.transformer());
     }
 
     public void set(double x, double z, MirrorWriter writer) {
         Mirror currMirror = this.mirror;
-        checkStep(writer, "x", currMirror.transformer().coords.x, currMirror.x(), x, currMirror.space());
-        checkStep(writer, "z", currMirror.transformer().coords.z, currMirror.z(), z, currMirror.space());
+        checkStep(writer, "x", currMirror.transformer().bounds().x(), currMirror.x(), x, currMirror.space());
+        checkStep(writer, "z", currMirror.transformer().bounds().z(), currMirror.z(), z, currMirror.space());
         this.mirror = new Mirror(x, z, currMirror.space(), currMirror.transformer());
     }
 
@@ -74,7 +75,7 @@ public final class ClientPosition {
         return dimension.equals(this.mirror.space());
     }
 
-    public void rebase(double x, double z, ResourceKey<Level> dimension, WorldLoopTransformer transformer) {
+    public void rebase(double x, double z, ResourceKey<Level> dimension, WorldFold transformer) {
         this.mirror = new Mirror(x, z, dimension, transformer);
         this.heldSpawn = null;
         this.heldBorderCenter = null;
@@ -112,9 +113,9 @@ public final class ClientPosition {
                 SectionPos.blockToSectionCoord(currMirror.z()));
     }
 
-    private void checkStep(MirrorWriter writer, String axis, WrapDomain domain, double from, double to,
+    private void checkStep(MirrorWriter writer, String axis, AxisBounds bounds, double from, double to,
             @Nullable ResourceKey<Level> space) {
-        if (domain.fitsInHalf(Math.abs(to - from)) || !warnGate.tryPass()) {
+        if (bounds.fitsInHalf(Math.abs(to - from)) || !warnGate.tryPass()) {
             return;
         }
 

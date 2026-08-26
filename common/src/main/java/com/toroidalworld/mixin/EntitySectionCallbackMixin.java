@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
 import net.minecraft.world.entity.Entity;
@@ -26,7 +26,7 @@ public class EntitySectionCallbackMixin {
             return sectionKey;
         }
 
-        WorldLoopTransformer transformer = ((TransformerSource) actualEntity).toroidal$wrappedTransformer();
-        return transformer == null ? sectionKey : transformer.chunks.wrapSectionNode(sectionKey);
+        WorldFold transformer = ((TransformerSource) actualEntity).toroidal$wrappedTransformer();
+        return transformer == null ? sectionKey : transformer.foldSectionNode(sectionKey);
     }
 }

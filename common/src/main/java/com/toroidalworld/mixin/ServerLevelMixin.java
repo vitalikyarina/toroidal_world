@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.LevelBindable;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.net.PacketReach;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.player.SeamSnap;
@@ -60,31 +60,25 @@ public class ServerLevelMixin {
             return;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
         if (transformer == null) {
             return;
         }
 
-        if (transformer.vectors.isOver(entity.position())) {
-            Vec3 wrapped = transformer.vectors.wrap(entity.position());
+        if (transformer.isOver(entity.position())) {
+            Vec3 wrapped = transformer.fold(entity.position());
             SeamSnap.withPassengers(entity, wrapped.subtract(entity.position()));
         }
     }
 
     @ModifyVariable(method = "shouldTickBlocksAt(J)Z", at = @At("HEAD"), argsOnly = true)
     private long toroidal$tickingChunkThroughSeam(long chunkPos) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
         if (transformer == null) {
             return chunkPos;
         }
 
-        int chunkX = ChunkPos.getX(chunkPos);
-        int chunkZ = ChunkPos.getZ(chunkPos);
-        if (!transformer.chunks.x.isOver(chunkX) && !transformer.chunks.z.isOver(chunkZ)) {
-            return chunkPos;
-        }
-
-        return ChunkPos.asLong(transformer.chunks.x.wrap(chunkX), transformer.chunks.z.wrap(chunkZ));
+        return transformer.foldChunkKey(chunkPos);
     }
 
     @ModifyVariable(method = "setDefaultSpawnPos(Lnet/minecraft/core/BlockPos;F)V", at = @At("HEAD"), argsOnly = true)
@@ -96,7 +90,7 @@ public class ServerLevelMixin {
     private boolean toroidal$particlesThroughSeam(ServerPlayer player, boolean overrideLimiter, double x, double y, double z,
             Packet<?> packet, Operation<Boolean> original) {
         ServerLevel level = (ServerLevel) (Object) this;
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return original.call(player, overrideLimiter, x, y, z, packet);
         }
@@ -107,7 +101,7 @@ public class ServerLevelMixin {
 
         double range = overrideLimiter ? OVERRIDDEN_PARTICLE_RANGE : PARTICLE_RANGE;
         Vec3 center = Vec3.atCenterOf(player.blockPosition());
-        if (transformer.coords.sqrDistToBounds(center.x, center.y, center.z, x, y, z) >= range * range) {
+        if (transformer.sqrDistance(center.x, center.y, center.z, x, y, z) >= range * range) {
             return false;
         }
 
@@ -118,7 +112,7 @@ public class ServerLevelMixin {
     @WrapMethod(method = "destroyBlockProgress")
     private void toroidal$blockCracksThroughSeam(int id, BlockPos blockPos, int progress, Operation<Void> original) {
         ServerLevel level = (ServerLevel) (Object) this;
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             original.call(id, blockPos, progress);
             return;
@@ -129,7 +123,7 @@ public class ServerLevelMixin {
                 continue;
             }
 
-            double distanceSqr = transformer.coords.sqrDistToBounds(player.getX(), player.getY(), player.getZ(),
+            double distanceSqr = transformer.sqrDistance(player.getX(), player.getY(), player.getZ(),
                     blockPos.getX(), blockPos.getY(), blockPos.getZ());
             if (distanceSqr >= BLOCK_DESTRUCTION_RANGE * BLOCK_DESTRUCTION_RANGE) {
                 continue;

@@ -36,6 +36,20 @@ public interface WorldFold {
 
     WrapDomain chunkDomain(Direction.Axis axis);
 
+    boolean isOver(Vec3 pos);
+
+    boolean isOver(BlockPos pos);
+
+    boolean isOver(ChunkPos pos);
+
+    int chunkOvershoot(ChunkPos pos);
+
+    int maxViewDistance();
+
+    default int limitViewDistance(int viewDistance) {
+        return Math.min(viewDistance, maxViewDistance());
+    }
+
     Vec3 fold(Vec3 pos);
 
     BlockPos fold(BlockPos pos);

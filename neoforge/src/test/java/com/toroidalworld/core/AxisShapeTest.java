@@ -2,7 +2,6 @@ package com.toroidalworld.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
@@ -11,11 +10,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
-
-import net.minecraft.world.phys.Vec3;
 
 class AxisShapeTest {
     private static final List<WrapDomain> LOOPED = List.of(
@@ -30,11 +24,6 @@ class AxisShapeTest {
 
     private static String in(WrapDomain domain) {
         return "in [" + domain.lowerBound + ", " + domain.upperBound + ")";
-    }
-
-    private static WorldLoopTransformer xOnly(int minChunk, int maxChunk) {
-        return new WorldLoopTransformer(
-                new WorldLoopBounds(new AxisBounds.Looped(minChunk, maxChunk), AxisBounds.Unbounded.INSTANCE));
     }
 
     @Nested
@@ -238,33 +227,6 @@ class AxisShapeTest {
                             () -> "mapFrom gave " + mapped + " crossing " + in(source) + " to " + in(destination));
                 }
             }
-        }
-
-        @Test
-        void aWorldLoopedInOneAxisScalesThatAxisAndDeclaresTheOther() {
-            Vec3 mapped = xOnly(-4, 4).mapFrom(xOnly(-32, 32), new Vec3(256.0, 70.0, 800.0), DECLARED);
-
-            assertEquals(32.0, mapped.x);
-            assertEquals(70.0, mapped.y);
-            assertEquals(100.0, mapped.z);
-        }
-
-        @Test
-        void anUnwrappedWorldMapsByTheDeclaredScaleAlone() {
-            Vec3 mapped = WorldLoopTransformer.NOOP.mapFrom(
-                    WorldLoopTransformer.NOOP, new Vec3(80.0, 70.0, -160.0), DECLARED);
-
-            assertEquals(10.0, mapped.x);
-            assertEquals(70.0, mapped.y);
-            assertEquals(-20.0, mapped.z);
-        }
-
-        @Test
-        void aPositionThatMapsToItselfComesBackUntouched() {
-            WorldLoopTransformer world = xOnly(-32, 32);
-            Vec3 position = new Vec3(100.0, 70.0, -3000.0);
-
-            assertSame(position, world.mapFrom(world, position, 1.0));
         }
     }
 }

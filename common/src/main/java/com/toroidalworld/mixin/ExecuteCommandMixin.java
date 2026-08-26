@@ -3,7 +3,8 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.SeamSpans;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -22,7 +23,7 @@ public class ExecuteCommandMixin {
                     ordinal = 0))
     private static BoundingBox toroidal$foldComparedRegion(BoundingBox region,
             @Local(argsOnly = true) ServerLevel level) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        return transformer == null ? region : transformer.foldAcrossSeam(region);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        return transformer == null ? region : SeamSpans.foldAcrossSeam(transformer, region);
     }
 }

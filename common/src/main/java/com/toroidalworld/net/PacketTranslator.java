@@ -14,7 +14,8 @@ import java.util.function.UnaryOperator;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.SeamDelta;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.mixin.BlockEntityDataPacketAccessor;
 import com.toroidalworld.mixin.BlockPositionSourceAccessor;
 import com.toroidalworld.mixin.InitializeBorderPacketAccessor;
@@ -199,7 +200,7 @@ public final class PacketTranslator {
             Map.entry(ServerboundSetStructureBlockPacket.class, rewriter(PacketTranslator::setStructureBlock)));
 
     public static <T extends net.minecraft.network.PacketListener> Packet<T> toClient(Packet<T> packet, ServerPlayer player) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
         if (transformer == null) {
             return packet;
         }
@@ -216,7 +217,7 @@ public final class PacketTranslator {
     }
 
     @SuppressWarnings("unchecked")
-    private static Packet<?> toClientBundle(ClientboundBundlePacket bundle, ServerPlayer player, WorldLoopTransformer transformer) {
+    private static Packet<?> toClientBundle(ClientboundBundlePacket bundle, ServerPlayer player, WorldFold transformer) {
         TranslationContext context = null;
         List<Packet<? super ClientGamePacketListener>> translated = new ArrayList<>();
         boolean changed = false;
@@ -243,7 +244,7 @@ public final class PacketTranslator {
     }
 
     public static <T extends net.minecraft.network.PacketListener> Packet<T> toServer(Packet<T> packet, ServerPlayer player) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
         if (transformer == null) {
             return packet;
         }
@@ -257,7 +258,7 @@ public final class PacketTranslator {
 
     private static <T extends net.minecraft.network.PacketListener> Packet<T> dispatch(
             Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> rewriters,
-            Packet<T> packet, ServerPlayer player, WorldLoopTransformer transformer) {
+            Packet<T> packet, ServerPlayer player, WorldFold transformer) {
         BiFunction<Packet<?>, TranslationContext, Packet<?>> rewriter = rewriters.get(packet.getClass());
         return rewriter == null ? packet
                 : castPacket(rewriter.apply(packet, TranslationContext.of(player, transformer)));
@@ -537,11 +538,10 @@ public final class PacketTranslator {
 
     private static ClientboundSoundPacket sound(ClientboundSoundPacket packet, TranslationContext context) {
         PacketReach reach = PacketReach.sound(packet.getSound().value().getRange(packet.getVolume()));
+        Vec3 clientPos = context.toClient(new Vec3(packet.getX(), packet.getY(), packet.getZ()), reach);
         return new ClientboundSoundPacket(
                 packet.getSound(), packet.getSource(),
-                context.toClientX(packet.getX(), reach),
-                packet.getY(),
-                context.toClientZ(packet.getZ(), reach),
+                clientPos.x, clientPos.y, clientPos.z,
                 packet.getVolume(), packet.getPitch(), packet.getSeed());
     }
 
@@ -645,25 +645,18 @@ public final class PacketTranslator {
         return clientCenter;
     }
 
-    static BorderCenter nearestCopyCenter(WorldLoopTransformer transformer, ClientPosition clientPosition,
+    static BorderCenter nearestCopyCenter(WorldFold transformer, ClientPosition clientPosition,
             BorderCenter center) {
-        return new BorderCenter(
-                nearestCopyCenterX(transformer, clientPosition, center.x()),
-                nearestCopyCenterZ(transformer, clientPosition, center.z()));
-    }
-
-    static double nearestCopyCenterX(WorldLoopTransformer transformer, ClientPosition clientPosition, double centerX) {
-        return transformer.coords.x.unwrapAround(clientPosition.x(), centerX);
-    }
-
-    static double nearestCopyCenterZ(WorldLoopTransformer transformer, ClientPosition clientPosition, double centerZ) {
-        return transformer.coords.z.unwrapAround(clientPosition.z(), centerZ);
+        Vec3 nearest = transformer.nearestCopy(
+                new Vec3(clientPosition.x(), 0.0, clientPosition.z()), new Vec3(center.x(), 0.0, center.z()));
+        return new BorderCenter(nearest.x, nearest.z);
     }
 
     private static ClientboundPlayerLookAtPacket playerLookAt(ClientboundPlayerLookAtPacket packet, TranslationContext context) {
         PlayerLookAtPacketAccessor accessor = (PlayerLookAtPacketAccessor) packet;
-        accessor.toroidal$setX(context.nearestCopyX(accessor.toroidal$getX()));
-        accessor.toroidal$setZ(context.nearestCopyZ(accessor.toroidal$getZ()));
+        Vec3 near = context.nearestCopy(new Vec3(accessor.toroidal$getX(), 0.0, accessor.toroidal$getZ()));
+        accessor.toroidal$setX(near.x);
+        accessor.toroidal$setZ(near.z);
         return packet;
     }
 
@@ -729,7 +722,7 @@ public final class PacketTranslator {
         Vec3 targetPosition = context.entityPosition().apply(entityId);
         return targetPosition == null
                 ? context.toServer(location)
-                : context.transformer().vectors.nearestCopy(targetPosition, location);
+                : context.transformer().nearestCopy(targetPosition, location);
     }
 
     private static boolean carriesLocation(ServerboundInteractPacket packet) {
@@ -787,24 +780,11 @@ public final class PacketTranslator {
     }
 
     private static BlockPos nearestCopyBlock(TranslationContext context, Vec3 anchor, BlockPos pos) {
-        return context.transformer().blocks.nearestCopy(BlockPos.containing(anchor), pos);
+        return context.transformer().nearestCopy(BlockPos.containing(anchor), pos);
     }
 
-    static BlockPos nearestCopyBlock(WorldLoopTransformer transformer, ChunkPos anchor, BlockPos pos) {
-        return new BlockPos(
-                nearestCopyBlockX(transformer, anchor.x, pos.getX()),
-                pos.getY(),
-                nearestCopyBlockZ(transformer, anchor.z, pos.getZ()));
-    }
-
-    static int nearestCopyBlockX(WorldLoopTransformer transformer, int anchorChunkX, int blockX) {
-        int nearestChunkX = transformer.chunks.x.unwrap(anchorChunkX, SectionPos.blockToSectionCoord(blockX));
-        return SectionPos.sectionToBlockCoord(nearestChunkX) + (blockX & SectionPos.SECTION_MASK);
-    }
-
-    static int nearestCopyBlockZ(WorldLoopTransformer transformer, int anchorChunkZ, int blockZ) {
-        int nearestChunkZ = transformer.chunks.z.unwrap(anchorChunkZ, SectionPos.blockToSectionCoord(blockZ));
-        return SectionPos.sectionToBlockCoord(nearestChunkZ) + (blockZ & SectionPos.SECTION_MASK);
+    static BlockPos nearestCopyBlock(WorldFold transformer, ChunkPos anchor, BlockPos pos) {
+        return blockInChunkCopy(transformer.nearestCopy(anchor, new ChunkPos(pos)), pos);
     }
 
     private static BlockPos blockInChunkCopy(ChunkPos clientChunk, BlockPos pos) {

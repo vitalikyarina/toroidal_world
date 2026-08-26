@@ -11,12 +11,13 @@ import org.apache.commons.lang3.mutable.MutableObject;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.world.level.LevelHeightAccessor;
@@ -44,7 +45,7 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
     private static final int BASE_HEIGHT_CACHE_CAP = 1 << 18;
 
     private final FlatShape shape;
-    private final WorldLoopTransformer transformer;
+    private final WorldFold transformer;
 
     private final List<Map<Long, Integer>> baseHeightCache;
 
@@ -66,7 +67,7 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
     }
 
     @Override
-    public WorldLoopTransformer transformer() {
+    public WorldFold transformer() {
         return this.transformer;
     }
 
@@ -79,8 +80,8 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
     @Override
     public int getBaseHeight(int x, int z, Heightmap.Types type, LevelHeightAccessor heightAccessor,
             RandomState randomState) {
-        long wrappedColumn = (((long) this.transformer.coords.x.wrap(x)) << 32)
-                | (this.transformer.coords.z.wrap(z) & 0xFFFFFFFFL);
+        long folded = this.transformer.foldBlockNode(BlockPos.asLong(x, 0, z));
+        long wrappedColumn = (((long) BlockPos.getX(folded)) << 32) | (BlockPos.getZ(folded) & 0xFFFFFFFFL);
         Map<Long, Integer> cache = this.baseHeightCache.get(type.ordinal());
 
         Integer cached = cache.get(wrappedColumn);

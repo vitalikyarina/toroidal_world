@@ -153,10 +153,6 @@ public class WrapDomain {
         return Math.floorDiv(highestShift, domainLength) * (long) domainLength >= lowestShift;
     }
 
-    public double deltaFromBounds(double from, double to) {
-        return foldDelta(to - wrap(from));
-    }
-
     public double foldDelta(double delta) {
         if (delta > halfLength) {
             return delta - domainLength;
@@ -179,10 +175,6 @@ public class WrapDomain {
         }
 
         return delta;
-    }
-
-    public boolean nearsAntipode(double delta, double margin) {
-        return Math.abs(delta) > halfLength - margin;
     }
 
     public double mapFrom(WrapDomain source, double coord, double declaredScale) {
@@ -221,16 +213,6 @@ public class WrapDomain {
         return List.of(
                 new int[] {start, upperBound - 1},
                 new int[] {lowerBound, lowerBound + (end - upperBound)});
-    }
-
-    public double sqrDistToBounds(double dist) {
-        double folded = foldDelta(dist);
-        return folded * folded;
-    }
-
-    public int sqrDistToBounds(int dist) {
-        int folded = foldDelta(dist);
-        return folded * folded;
     }
 
     public static final class Noop extends WrapDomain {
@@ -344,11 +326,6 @@ public class WrapDomain {
         }
 
         @Override
-        public double deltaFromBounds(double from, double to) {
-            return to - from;
-        }
-
-        @Override
         public double foldDelta(double delta) {
             return delta;
         }
@@ -359,11 +336,6 @@ public class WrapDomain {
         }
 
         @Override
-        public boolean nearsAntipode(double delta, double margin) {
-            return false;
-        }
-
-        @Override
         public List<double[]> spans(double min, double max) {
             return List.of(new double[] {min, max});
         }
@@ -371,16 +343,6 @@ public class WrapDomain {
         @Override
         public List<int[]> cellSpans(int min, int max) {
             return List.of(new int[] {min, max});
-        }
-
-        @Override
-        public double sqrDistToBounds(double dist) {
-            return dist * dist;
-        }
-
-        @Override
-        public int sqrDistToBounds(int dist) {
-            return dist * dist;
         }
     }
 }

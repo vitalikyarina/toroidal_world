@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 import com.toroidalworld.core.CoordinateConstants;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.gen.ShapedChunkGenerator;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -26,7 +26,7 @@ public class ChunkGeneratorReferencesMixin {
     @WrapMethod(method = "createReferences")
     private void toroidal$referencesThroughSeam(WorldGenLevel level, StructureManager structureManager,
             ChunkAccess centerChunk, Operation<Void> original) {
-        WorldLoopTransformer transformer = ShapedChunkGenerator.wrappedTransformerOf((ChunkGenerator) (Object) this);
+        WorldFold transformer = ShapedChunkGenerator.wrappedTransformerOf((ChunkGenerator) (Object) this);
         if (transformer == null) {
             original.call(level, structureManager, centerChunk);
             return;
@@ -41,8 +41,8 @@ public class ChunkGeneratorReferencesMixin {
 
         for (int sourceX = centerChunkX - toroidal$REFERENCE_RANGE; sourceX <= centerChunkX + toroidal$REFERENCE_RANGE; sourceX++) {
             for (int sourceZ = centerChunkZ - toroidal$REFERENCE_RANGE; sourceZ <= centerChunkZ + toroidal$REFERENCE_RANGE; sourceZ++) {
-                if (transformer.chunks.x.unwrap(centerChunkX, transformer.chunks.x.wrap(sourceX)) != sourceX
-                        || transformer.chunks.z.unwrap(centerChunkZ, transformer.chunks.z.wrap(sourceZ)) != sourceZ) {
+                ChunkPos source = new ChunkPos(sourceX, sourceZ);
+                if (!transformer.nearestCopy(centerPos, transformer.fold(source)).equals(source)) {
                     continue;
                 }
 

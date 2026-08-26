@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.TransformerHolder;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -24,7 +24,7 @@ public interface ChunkTrackingViewMixin {
             return;
         }
 
-        WorldLoopTransformer transformer = ((TransformerHolder) (Object) next).toroidal$transformer();
+        WorldFold transformer = ((TransformerHolder) (Object) next).toroidal$transformer();
         if (!transformer.isWrapped()) {
             return;
         }
@@ -36,7 +36,7 @@ public interface ChunkTrackingViewMixin {
         }
 
         ChunkPos previousCenter = previous.center();
-        ChunkPos nextCenter = transformer.chunks.unwrap(previousCenter, next.center());
+        ChunkPos nextCenter = transformer.nearestCopy(previousCenter, next.center());
 
         int radius = Math.max(previous.viewDistance(), next.viewDistance()) + 1;
         int minX = Math.min(previousCenter.x, nextCenter.x) - radius;
@@ -48,7 +48,7 @@ public interface ChunkTrackingViewMixin {
 
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
-                ChunkPos pos = new ChunkPos(transformer.chunks.x.wrap(x), transformer.chunks.z.wrap(z));
+                ChunkPos pos = transformer.fold(new ChunkPos(x, z));
                 if (!visited.add(pos.toLong())) {
                     continue;
                 }

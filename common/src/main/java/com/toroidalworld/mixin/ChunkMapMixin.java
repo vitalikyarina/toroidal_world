@@ -14,7 +14,7 @@ import com.toroidalworld.accessors.LevelHolder;
 import com.toroidalworld.accessors.SeamDriveScheduler;
 import com.toroidalworld.accessors.TrackedEntityRefresher;
 import com.toroidalworld.accessors.TransformerHolder;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.gen.SeamDriveRequest;
 import com.toroidalworld.gen.ShapedChunkGenerator;
 import com.toroidalworld.noise.GenerationTransformerContext;
@@ -143,12 +143,13 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
             method = "getChunkRangeFuture",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ChunkPos;asLong(II)J"))
     private long toroidal$rangeOverPhysicalChunks(int chunkX, int chunkZ, Operation<Long> original) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
             return original.call(chunkX, chunkZ);
         }
 
-        return original.call(transformer.chunks.x.wrap(chunkX), transformer.chunks.z.wrap(chunkZ));
+        long folded = transformer.foldChunkKey(ChunkPos.pack(chunkX, chunkZ));
+        return original.call(ChunkPos.getX(folded), ChunkPos.getZ(folded));
     }
 
     @Unique
@@ -229,13 +230,12 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
 
     @Unique
     private SectionPos toroidal$canonical(SectionPos section) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
             return section;
         }
 
-        return SectionPos.of(
-                transformer.chunks.x.wrap(section.x()), section.y(), transformer.chunks.z.wrap(section.z()));
+        return transformer.fold(section);
     }
 
     @WrapOperation(
@@ -245,8 +245,8 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
                     target = "Lnet/minecraft/server/level/ServerPlayer;chunkPosition()Lnet/minecraft/world/level/ChunkPos;"))
     private ChunkPos toroidal$canonicalViewCenter(ServerPlayer player, Operation<ChunkPos> original) {
         ChunkPos pos = original.call(player);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
-        return transformer == null ? pos : transformer.chunks.wrap(pos);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        return transformer == null ? pos : transformer.fold(pos);
     }
 
     @WrapOperation(
@@ -261,7 +261,7 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
     @WrapMethod(method = "getPlayerViewDistance")
     private int toroidal$clampLoopedViewDistance(ServerPlayer player, Operation<Integer> original) {
         int vanilla = original.call(player);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         return transformer == null ? vanilla : transformer.limitViewDistance(vanilla);
     }
 
@@ -269,16 +269,13 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
             method = "playerIsCloseEnoughForSpawning",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ChunkMap;euclideanDistanceSquared(Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/entity/Entity;)D"))
     private double toroidal$wrappedSpawnDistance(ChunkPos chunkPos, Entity player, Operation<Double> original) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
             return original.call(chunkPos, player);
         }
 
         double chunkCenterX = SectionPos.sectionToBlockCoord(chunkPos.x, 8);
         double chunkCenterZ = SectionPos.sectionToBlockCoord(chunkPos.z, 8);
-        double vanilla = original.call(chunkPos, player);
-        double folded = transformer.coords.sqrDistToBounds(
-                player.getX(), 0.0, player.getZ(), chunkCenterX, 0.0, chunkCenterZ);
-        return folded;
+        return transformer.sqrDistance(player.getX(), 0.0, player.getZ(), chunkCenterX, 0.0, chunkCenterZ);
     }
 }

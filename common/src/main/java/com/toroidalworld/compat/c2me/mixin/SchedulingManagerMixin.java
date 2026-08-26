@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Unique;
 
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.accessors.TransformerSourceBindable;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.ishland.c2me.base.common.scheduler.SchedulingManager;
 
 @Mixin(SchedulingManager.class)
@@ -21,7 +21,7 @@ public class SchedulingManagerMixin implements TransformerSource, TransformerSou
     }
 
     @Override
-    public @Nullable WorldLoopTransformer toroidal$wrappedTransformer() {
+    public @Nullable WorldFold toroidal$wrappedTransformer() {
         TransformerSource source = this.toroidal$source;
         return source != null ? source.toroidal$wrappedTransformer() : null;
     }

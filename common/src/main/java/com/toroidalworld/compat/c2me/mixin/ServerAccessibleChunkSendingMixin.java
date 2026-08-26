@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.compat.c2me.C2meSeamFold;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.ishland.c2me.rewrites.chunksystem.common.ChunkLoadingContext;
 import com.ishland.c2me.rewrites.chunksystem.common.statuses.ServerAccessibleChunkSending;
 import com.bawnorton.mixinsquared.TargetHandler;
@@ -34,7 +34,7 @@ public class ServerAccessibleChunkSendingMixin {
             StaticCache2D.Initializer<GenerationChunkHolder> initializer,
             Operation<StaticCache2D<GenerationChunkHolder>> original,
             @Local(argsOnly = true) ChunkLoadingContext context) {
-        WorldLoopTransformer transformer =
+        WorldFold transformer =
                 ((TransformerSource) context.theChunkSystem()).toroidal$wrappedTransformer();
         if (transformer == null) {
             return original.call(centerX, centerZ, range, initializer);

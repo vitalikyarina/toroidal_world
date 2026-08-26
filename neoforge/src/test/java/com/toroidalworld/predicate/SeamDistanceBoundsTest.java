@@ -7,15 +7,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.advancements.critereon.DistancePredicate;
 import net.minecraft.advancements.critereon.MinMaxBounds;
 import net.minecraft.world.phys.Vec3;
 
 class SeamDistanceBoundsTest {
-    private static final WorldLoopTransformer WORLD = new WorldLoopTransformer(new WorldLoopBounds(-16, 16, -16, 16));
+    private static final WorldFold WORLD =
+            WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(-16, 16, -16, 16), FlatShape.NO_SKEW));
 
     private static final Vec3 PLAYER = new Vec3(253.5, 64.0, 0.0);
     private static final Vec3 ACROSS_THE_SEAM = new Vec3(-253.5, 64.0, 0.0);
@@ -71,7 +74,7 @@ class SeamDistanceBoundsTest {
     }
 
     private static Vec3 nearestCopy(Vec3 reference, Vec3 measured) {
-        return WORLD.vectors.nearestCopy(reference, measured);
+        return WORLD.nearestCopy(reference, measured);
     }
 
     private static boolean matches(DistancePredicate bounds, Vec3 reference, Vec3 measured) {

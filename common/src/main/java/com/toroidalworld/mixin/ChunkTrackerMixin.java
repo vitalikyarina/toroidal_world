@@ -7,13 +7,15 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.accessors.TransformerCache;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.server.level.ChunkTracker;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 
 @Mixin(ChunkTracker.class)
 public class ChunkTrackerMixin implements LevelBindable, TransformerCache {
@@ -21,7 +23,7 @@ public class ChunkTrackerMixin implements LevelBindable, TransformerCache {
     private @Nullable ServerLevel toroidal$level;
 
     @Unique
-    private @Nullable WorldLoopTransformer toroidal$boundTransformer;
+    private @Nullable WorldFold toroidal$boundTransformer;
 
     @Override
     public void toroidal$bindLevel(ServerLevel level) {
@@ -38,23 +40,24 @@ public class ChunkTrackerMixin implements LevelBindable, TransformerCache {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ChunkPos;asLong(II)J"),
             expect = 2)
     private long toroidal$physicalNeighborKey(int chunkX, int chunkZ, Operation<Long> original) {
-        WorldLoopTransformer transformer = this.toroidal$transformer();
+        WorldFold transformer = this.toroidal$transformer();
         if (!transformer.isWrapped()) {
             return original.call(chunkX, chunkZ);
         }
 
-        return original.call(transformer.chunks.x.wrap(chunkX), transformer.chunks.z.wrap(chunkZ));
+        long folded = transformer.foldChunkKey(ChunkPos.pack(chunkX, chunkZ));
+        return original.call(ChunkPos.getX(folded), ChunkPos.getZ(folded));
     }
 
     @Override
-    public WorldLoopTransformer toroidal$transformer() {
-        WorldLoopTransformer transformer = this.toroidal$boundTransformer;
+    public WorldFold toroidal$transformer() {
+        WorldFold transformer = this.toroidal$boundTransformer;
         if (transformer != null) {
             return transformer;
         }
 
         if (this.toroidal$level == null) {
-            return WorldLoopTransformer.NOOP;
+            return WorldFolds.NOOP;
         }
 
         transformer = WorldLoopAttachments.transformerOf(this.toroidal$level);

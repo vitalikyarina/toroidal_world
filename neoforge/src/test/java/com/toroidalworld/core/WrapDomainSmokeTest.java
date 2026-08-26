@@ -19,8 +19,8 @@ class WrapDomainSmokeTest {
 
     @Test
     void transformerWrapsChunkPosAcrossTheSeam() {
-        WorldLoopTransformer transformer = new WorldLoopTransformer(WorldLoopBounds.ofWidth(4));
+        WorldFold transformer = new WorldLoopTransformer(WorldLoopBounds.ofWidth(4));
 
-        assertEquals(new ChunkPos(-2, 0), transformer.chunks.wrap(new ChunkPos(2, 0)));
+        assertEquals(new ChunkPos(-2, 0), transformer.fold(new ChunkPos(2, 0)));
     }
 }

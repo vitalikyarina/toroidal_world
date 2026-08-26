@@ -6,9 +6,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.mojang.logging.LogUtils;
 
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.server.level.ServerLevel;
@@ -29,7 +30,7 @@ public final class PeriodicityCheck {
 
     private static final Set<String> DONE = ConcurrentHashMap.newKeySet();
 
-    public static void runOnce(ServerLevel level, WorldLoopTransformer transformer) {
+    public static void runOnce(ServerLevel level, WorldFold transformer) {
         String levelName = level.dimension().location().toString();
         if (!DONE.add(levelName)) {
             return;
@@ -37,7 +38,7 @@ public final class PeriodicityCheck {
 
         ChunkGenerator generator = level.getChunkSource().getGenerator();
         RandomState randomState = level.getChunkSource().randomState();
-        int widthBlocks = transformer.coords.x.domainLength;
+        int widthBlocks = transformer.blockDomain(Direction.Axis.X).domainLength;
 
         Set<String> brokenFields = new LinkedHashSet<>();
         int brokenSamples = 0;

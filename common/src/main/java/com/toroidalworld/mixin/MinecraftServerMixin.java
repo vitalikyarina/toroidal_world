@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.ToroidalWorld;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.gen.WorldShapeReport;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.storage.CurrentServer;
@@ -50,13 +50,13 @@ public class MinecraftServerMixin {
                     target = "Lnet/minecraft/world/level/biome/Climate$Sampler;findSpawnPosition()Lnet/minecraft/core/BlockPos;"))
     private static BlockPos toroidal$spawnSearchInBounds(Climate.Sampler sampler, Operation<BlockPos> original,
             @Local(argsOnly = true) ServerLevel level) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return original.call(sampler);
         }
 
         BlockPos found = GenerationTransformerContext.withTransformer(transformer, () -> original.call(sampler));
-        return transformer.blocks.wrap(found);
+        return transformer.fold(found);
     }
 
     @WrapOperation(
@@ -66,12 +66,12 @@ public class MinecraftServerMixin {
                     target = "Lnet/minecraft/server/level/PlayerRespawnLogic;getSpawnPosInChunk(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/ChunkPos;)Lnet/minecraft/core/BlockPos;"))
     private static @Nullable BlockPos toroidal$searchWrappedChunk(ServerLevel level, ChunkPos chunkPos,
             Operation<@Nullable BlockPos> original) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return original.call(level, chunkPos);
         }
 
-        return original.call(level, transformer.chunks.wrap(chunkPos));
+        return original.call(level, transformer.fold(chunkPos));
     }
 
     @WrapOperation(

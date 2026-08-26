@@ -19,12 +19,15 @@ import java.util.function.IntPredicate;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.mixin.BlockPositionSourceAccessor;
 import com.toroidalworld.mixin.PlayerLookAtPacketAccessor;
 import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
+import com.toroidalworld.shape.FlatShape;
 
 import io.netty.buffer.Unpooled;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
@@ -93,8 +96,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 class PacketTranslatorTest {
-    private static final WorldLoopTransformer TRANSFORMER =
-            new WorldLoopTransformer(new WorldLoopBounds(-32, 32, -32, 32));
+    private static final WorldFold TRANSFORMER =
+            WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(-32, 32, -32, 32), FlatShape.NO_SKEW));
     private static final RegistryAccess.Frozen REGISTRIES =
             RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
 
@@ -313,9 +316,8 @@ class PacketTranslatorTest {
 
         @Test
         void unboundedAxisNeverSplitsHoweverFarTheForget() {
-            WorldLoopTransformer singleAxis = new WorldLoopTransformer(new WorldLoopBounds(
-                    new WorldLoopBounds.AxisBounds.Looped(-32, 32),
-                    WorldLoopBounds.AxisBounds.Unbounded.INSTANCE));
+            WorldFold singleAxis = WorldFolds.of(FlatShape.cylinder(new WorldLoopBounds(
+                    new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE)));
             ClientPosition mirror = new ClientPosition();
             mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, singleAxis);
             TranslationContext context = new TranslationContext(singleAxis, mirror, REGISTRIES, BUFFERS,
@@ -733,6 +735,24 @@ class PacketTranslatorTest {
             assertEquals(CLIENT_Z, translated.getZ());
             assertEquals(CLIENT_X, mirror.x());
             assertEquals(CLIENT_Z, mirror.z());
+        }
+
+        @Test
+        void relativeOffsetOfSeveralLapsFoldsAllTheWayDown() {
+            ClientPosition mirror = new ClientPosition();
+            mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, TRANSFORMER);
+            TranslationContext context = new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS,
+                    Level.OVERWORLD, VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
+
+            ClientboundPlayerPositionPacket translated = (ClientboundPlayerPositionPacket) PacketTranslator.toClient(
+                    new ClientboundPlayerPositionPacket(2000.0, 0.0, -3000.0, 0.0F, 0.0F,
+                            Set.of(RelativeMovement.X, RelativeMovement.Z), 1),
+                    context);
+
+            assertEquals(2000.0 - 2 * 1024.0, translated.getX());
+            assertEquals(-3000.0 + 3 * 1024.0, translated.getZ());
+            assertEquals(MIRROR_X + (2000.0 - 2 * 1024.0), mirror.x());
+            assertEquals(MIRROR_Z + (-3000.0 + 3 * 1024.0), mirror.z());
         }
     }
 

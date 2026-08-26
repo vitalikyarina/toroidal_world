@@ -48,7 +48,7 @@ class WorldFoldsTest {
     @Test
     void aDecomposableShapeGetsAFoldOverItsOwnBounds() {
         for (FlatShape shape : decomposable()) {
-            assertEquals(shape.bounds(), WorldFolds.of(shape).bounds, shape.toString());
+            assertEquals(shape.bounds(), WorldFolds.of(shape).bounds(), shape.toString());
         }
     }
 
@@ -56,6 +56,13 @@ class WorldFoldsTest {
     void anUnboundedShapeStillGetsAFoldThatKnowsItDoesNotWrap() {
         assertFalse(WorldFolds.of(FlatShape.rectangle()).isWrapped());
         assertTrue(WorldFolds.of(FlatShape.cylinder(X_ONLY)).isWrapped());
+    }
+
+    @Test
+    void noopIsTheRectanglesFold() {
+        assertFalse(WorldFolds.NOOP.isWrapped());
+        assertEquals(WorldLoopBounds.UNBOUNDED, WorldFolds.NOOP.bounds());
+        assertTrue(WorldFolds.NOOP.decomposesPerAxis());
     }
 
     @Test

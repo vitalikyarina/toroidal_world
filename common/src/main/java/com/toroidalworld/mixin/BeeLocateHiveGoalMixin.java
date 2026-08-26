@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -36,7 +36,7 @@ public class BeeLocateHiveGoalMixin {
     private Comparator<BlockPos> toroidal$rankHivesThroughSeam(Comparator<BlockPos> byRawDistance,
             @Local BlockPos beePos) {
         Bee rankingBee = this.toroidal$bee;
-        WorldLoopTransformer transformer = ((TransformerSource) rankingBee).toroidal$wrappedTransformer();
+        WorldFold transformer = ((TransformerSource) rankingBee).toroidal$wrappedTransformer();
         if (transformer == null) {
             return byRawDistance;
         }

@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.command.SeamCommandErrors;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
@@ -30,12 +30,12 @@ public class CommandCoordinatesMixin {
     @Inject(method = "getPosition", at = @At("HEAD"))
     private void toroidal$refuseCoordinateOutsideWorld(CommandSourceStack source, CallbackInfoReturnable<Vec3> cir)
             throws CommandSyntaxException {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(source.getLevel());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(source.getLevel());
         if (transformer == null) {
             return;
         }
 
-        SeamCommandErrors.requireInsideWorld(transformer.coords.x, this.x);
-        SeamCommandErrors.requireInsideWorld(transformer.coords.z, this.z);
+        SeamCommandErrors.requireInsideWorld(transformer.bounds().x(), this.x);
+        SeamCommandErrors.requireInsideWorld(transformer.bounds().z(), this.z);
     }
 }

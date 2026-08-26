@@ -169,7 +169,6 @@ class WrapDomainTest {
                 assertEquals(coord, (int) noop.unwrapAround(7.0, coord));
                 assertEquals(coord, noop.foldDelta(coord));
                 assertEquals(coord + 0.5, noop.foldDelta(coord + 0.5));
-                assertEquals((double) coord * coord, noop.sqrDistToBounds((double) coord));
             }
         }
 
@@ -330,43 +329,6 @@ class WrapDomainTest {
         }
 
         @Test
-        void sqrDistToBoundsIsTheMinimumOverWorldCopies() {
-            Random random = new Random(SEED);
-            for (WrapDomain domain : DOMAINS) {
-                for (int i = 0; i < SAMPLES; i++) {
-                    int delta = random.nextInt(2 * domain.domainLength - 1) - (domain.domainLength - 1);
-                    long best = Long.MAX_VALUE;
-                    for (int laps = -2; laps <= 2; laps++) {
-                        long shifted = delta + (long) laps * domain.domainLength;
-                        best = Math.min(best, shifted * shifted);
-                    }
-                    assertEquals(best, domain.sqrDistToBounds(delta),
-                            () -> "sqrDistToBounds(" + delta + ") " + in(domain));
-                    assertEquals(best, domain.sqrDistToBounds((double) delta), 1e-9,
-                            () -> "sqrDistToBounds(" + (double) delta + ") " + in(domain));
-                }
-            }
-        }
-
-        @Test
-        void deltaFromBoundsAgreesWithItsUnwrap() {
-            Random random = new Random(SEED);
-            for (WrapDomain domain : DOMAINS) {
-                for (int i = 0; i < SAMPLES; i++) {
-                    double from = sampleCoord(random, domain) + random.nextDouble();
-                    double to = domain.wrap(sampleCoord(random, domain) + random.nextDouble());
-                    double delta = domain.deltaFromBounds(from, to);
-
-                    double laps = (to - (from + delta)) / domain.domainLength;
-                    assertEquals(Math.round(laps), laps, 1e-9,
-                            () -> "deltaFromBounds(" + from + ", " + to + ") left its lattice " + in(domain));
-                    assertTrue(Math.abs(delta) <= domain.domainLength / 2.0 + 1e-9,
-                            () -> "deltaFromBounds(" + from + ", " + to + ") is over half a world " + in(domain));
-                }
-            }
-        }
-
-        @Test
         void spansSeamAgreesWithDoubledDistanceAgainstTheWholeWidth() {
             Random random = new Random(SEED);
             for (WrapDomain domain : DOMAINS) {
@@ -474,26 +436,6 @@ class WrapDomainTest {
     }
 
     @Nested
-    class NearsAntipode {
-        private final WrapDomain domain = new WrapDomain(-32, 32);
-
-        @Test
-        void firesOnlyInsideTheBandBeforeHalf() {
-            assertFalse(domain.nearsAntipode(29.9, 2.0));
-            assertFalse(domain.nearsAntipode(-30.0, 2.0));
-            assertTrue(domain.nearsAntipode(30.5, 2.0));
-            assertTrue(domain.nearsAntipode(-32.0, 2.0));
-        }
-
-        @Test
-        void disabledAxisHasNoAntipodeToNear() {
-            WrapDomain noop = new WrapDomain.Noop();
-            assertFalse(noop.nearsAntipode(1.0e9, 2.0));
-            assertFalse(noop.nearsAntipode(-1.0e9, 2.0));
-        }
-    }
-
-    @Nested
     class IntDoubleAgreement {
         @Test
         void bothOverloadsAgreeOnIntegerInput() {
@@ -512,8 +454,6 @@ class WrapDomainTest {
                     int delta = random.nextInt(2 * domain.domainLength - 1) - (domain.domainLength - 1);
                     assertEquals(domain.foldDelta(delta), domain.foldDelta((double) delta), 0.0,
                             () -> "foldDelta(" + delta + ") " + in(domain));
-                    assertEquals(domain.sqrDistToBounds(delta), domain.sqrDistToBounds((double) delta), 0.0,
-                            () -> "sqrDistToBounds(" + delta + ") " + in(domain));
                 }
             }
         }

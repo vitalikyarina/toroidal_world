@@ -7,7 +7,9 @@ public final class WorldFolds {
     private static final String COUPLED_AXES = "its axes do not decompose";
     private static final String REVERSED_LOCAL_INDICES = "its seam reverses the local indices inside a chunk";
 
-    public static WorldLoopTransformer of(FlatShape shape) {
+    public static final WorldFold NOOP = of(FlatShape.rectangle());
+
+    public static WorldFold of(FlatShape shape) {
         verifyFoldable(shape).getOrThrow(IllegalArgumentException::new);
 
         return new WorldLoopTransformer(shape.bounds());

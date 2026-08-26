@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.ishland.c2me.rewrites.chunksystem.common.NewChunkHolderVanillaInterface;
 import com.ishland.c2me.rewrites.chunksystem.common.TheChunkSystem;
 
@@ -17,7 +17,7 @@ public class NewChunkHolderVanillaInterfaceMixin implements TransformerSource {
     private TheChunkSystem chunkSystem;
 
     @Override
-    public @Nullable WorldLoopTransformer toroidal$wrappedTransformer() {
+    public @Nullable WorldFold toroidal$wrappedTransformer() {
         return ((TransformerSource) this.chunkSystem).toroidal$wrappedTransformer();
     }
 }

@@ -4,8 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.entity.SeamRange;
 import com.toroidalworld.entity.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -24,14 +23,7 @@ public class BeeMixin {
             method = "pathfindRandomlyTowards",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;distManhattan(Lnet/minecraft/core/Vec3i;)I"))
     private int toroidal$stepDistanceThroughSeam(int distance, @Local(argsOnly = true) BlockPos targetPos) {
-        WorldLoopTransformer transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        if (transformer == null) {
-            return distance;
-        }
-
-        BlockPos beePos = ((Bee) (Object) this).blockPosition();
-        return Math.abs(transformer.coords.x.foldDelta(targetPos.getX() - beePos.getX()))
-                + Math.abs(targetPos.getY() - beePos.getY())
-                + Math.abs(transformer.coords.z.foldDelta(targetPos.getZ() - beePos.getZ()));
+        Bee bee = (Bee) (Object) this;
+        return SeamRange.manhattan(bee, bee.blockPosition(), targetPos);
     }
 }

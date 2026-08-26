@@ -1,12 +1,13 @@
 package com.toroidalworld.accessors;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 
 public interface ClientBoundsHolder {
-    default WorldLoopTransformer toroidal$clientBounds() {
-        return WorldLoopTransformer.NOOP;
+    default WorldFold toroidal$clientBounds() {
+        return WorldFolds.NOOP;
     }
 
-    default void toroidal$setClientBounds(WorldLoopTransformer transformer) {
+    default void toroidal$setClientBounds(WorldFold transformer) {
     }
 }

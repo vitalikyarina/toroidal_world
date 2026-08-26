@@ -10,7 +10,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.TransformerHolder;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 
 import net.minecraft.server.level.ChunkTrackingView;
 import net.minecraft.world.level.ChunkPos;
@@ -18,15 +19,15 @@ import net.minecraft.world.level.ChunkPos;
 @Mixin(ChunkTrackingView.Positioned.class)
 public abstract class ChunkTrackingViewPositionedMixin implements TransformerHolder {
     @Unique
-    private WorldLoopTransformer toroidal$transformer = WorldLoopTransformer.NOOP;
+    private WorldFold toroidal$transformer = WorldFolds.NOOP;
 
     @Override
-    public WorldLoopTransformer toroidal$transformer() {
+    public WorldFold toroidal$transformer() {
         return this.toroidal$transformer;
     }
 
     @Override
-    public void toroidal$setTransformer(WorldLoopTransformer transformer) {
+    public void toroidal$setTransformer(WorldFold transformer) {
         this.toroidal$transformer = transformer;
     }
 
@@ -36,7 +37,7 @@ public abstract class ChunkTrackingViewPositionedMixin implements TransformerHol
             return;
         }
 
-        if (this.toroidal$transformer.chunks.x.isOver(chunkX) || this.toroidal$transformer.chunks.z.isOver(chunkZ)) {
+        if (this.toroidal$transformer.isOver(new ChunkPos(chunkX, chunkZ))) {
             cir.setReturnValue(false);
             return;
         }
@@ -44,11 +45,10 @@ public abstract class ChunkTrackingViewPositionedMixin implements TransformerHol
         ChunkPos center = ((ChunkTrackingView.Positioned) (Object) this).center();
         int viewDistance = ((ChunkTrackingView.Positioned) (Object) this).viewDistance();
 
-        int unwrappedX = this.toroidal$transformer.chunks.x.unwrap(center.x, chunkX);
-        int unwrappedZ = this.toroidal$transformer.chunks.z.unwrap(center.z, chunkZ);
+        ChunkPos unwrapped = this.toroidal$transformer.nearestCopy(center, new ChunkPos(chunkX, chunkZ));
 
         cir.setReturnValue(ChunkTrackingView.isWithinDistance(
-                center.x, center.z, viewDistance, unwrappedX, unwrappedZ, includeNeighbors));
+                center.x, center.z, viewDistance, unwrapped.x, unwrapped.z, includeNeighbors));
     }
 
     @Inject(method = "forEach", at = @At("HEAD"), cancellable = true)
@@ -67,9 +67,7 @@ public abstract class ChunkTrackingViewPositionedMixin implements TransformerHol
         for (int x = center.x - radius; x <= center.x + radius; x++) {
             for (int z = center.z - radius; z <= center.z + radius; z++) {
                 if (ChunkTrackingView.isWithinDistance(center.x, center.z, viewDistance, x, z, true)) {
-                    consumer.accept(new ChunkPos(
-                            this.toroidal$transformer.chunks.x.wrap(x),
-                            this.toroidal$transformer.chunks.z.wrap(z)));
+                    consumer.accept(this.toroidal$transformer.fold(new ChunkPos(x, z)));
                 }
             }
         }
