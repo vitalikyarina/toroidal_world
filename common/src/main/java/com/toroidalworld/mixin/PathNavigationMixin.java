@@ -1,7 +1,6 @@
 package com.toroidalworld.mixin;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -15,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.accessors.NavigationShifter;
 import com.toroidalworld.accessors.TransformerSource;
+import com.toroidalworld.core.FoldedCopies;
 import com.toroidalworld.core.SeamDelta;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
@@ -58,31 +58,7 @@ public class PathNavigationMixin implements NavigationShifter {
         }
 
         BlockPos from = this.mob.blockPosition();
-        Set<BlockPos> unwrapped = null;
-        int identityPrefix = 0;
-        for (BlockPos target : targets) {
-            BlockPos nearest = transformer.nearestCopy(from, target);
-            if (unwrapped == null) {
-                if (nearest == target) {
-                    identityPrefix++;
-                    continue;
-                }
-
-                unwrapped = new LinkedHashSet<>(targets.size());
-                int copiedCount = 0;
-                for (BlockPos passedTarget : targets) {
-                    if (copiedCount++ == identityPrefix) {
-                        break;
-                    }
-
-                    unwrapped.add(passedTarget);
-                }
-            }
-
-            unwrapped.add(nearest);
-        }
-
-        return unwrapped == null ? targets : unwrapped;
+        return FoldedCopies.of(targets, target -> transformer.nearestCopy(from, target));
     }
 
     @WrapOperation(
