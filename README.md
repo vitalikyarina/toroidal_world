@@ -1,6 +1,6 @@
 # Toroidal World
 
-A NeoForge mod that makes the Minecraft world a seamless torus: the world has a finite size and no edge — cross the +X border and you arrive from the −X side, with terrain, structures, mobs and gameplay continuous across the seam.
+A NeoForge and Fabric mod that gives the Minecraft world a finite shape with no edge — a seamless torus, where both horizontal axes loop, or a cylinder, where one loops and the other stays endless: cross the +X border and you arrive from the −X side, with terrain, structures, mobs and gameplay continuous across the seam.
 
 ## Versions
 
