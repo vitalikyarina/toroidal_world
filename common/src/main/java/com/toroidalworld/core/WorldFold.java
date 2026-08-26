@@ -80,6 +80,10 @@ public interface WorldFold {
 
     Folded<BlockPos> nearestCopyOriented(BlockPos ref, BlockPos target);
 
+    DeckTransformation deckTransformation(ChunkPos chunk, ChunkPos copy);
+
+    BlockPos reseat(BlockPos pos, ChunkPos copy);
+
     Vec3 foldDelta(Vec3 from, Vec3 to);
 
     double sqrDistance(Vec3 from, Vec3 to);
