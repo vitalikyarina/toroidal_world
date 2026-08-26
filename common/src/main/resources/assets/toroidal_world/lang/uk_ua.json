@@ -5,7 +5,11 @@
 
   "gui.toroidal_world.world_shape": "Форма світу",
   "gui.toroidal_world.world_shape.normal": "Звичайна",
+  "gui.toroidal_world.world_shape.normal.hint": "Звичайний світ: нескінченна площина в усі боки.",
   "gui.toroidal_world.world_shape.toroidal": "Тороїдальна",
+  "gui.toroidal_world.world_shape.toroidal.hint": "Обидві горизонтальні осі зациклені — пройди достатньо в будь-який бік і повернешся туди, звідки вийшов.",
+  "gui.toroidal_world.world_shape.cylinder": "Циліндрична",
+  "gui.toroidal_world.world_shape.cylinder.hint": "Одна горизонтальна вісь зациклена, інша триває нескінченно, як у звичайному світі.",
 
   "gui.toroidal_world.toroidal_settings.title": "Налаштування тороїдального світу",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Крихітний",
@@ -27,5 +31,9 @@
   "gui.toroidal_world.toroidal_settings.end_hint": "Енд зациклюється на власній ширині, незалежній від розміру світу. Менше за мінімум — і зовнішніх островів не буде: ані міст Енду, ані елітр.",
   "gui.toroidal_world.toroidal_settings.end_effective": "Енд: %s чанків = %s блоків",
   "gui.toroidal_world.toroidal_settings.too_small": "Замало — щонайменше %s чанків.",
-  "gui.toroidal_world.toroidal_settings.too_large": "Забагато — щонайбільше %s чанків."
+  "gui.toroidal_world.toroidal_settings.too_large": "Забагато — щонайбільше %s чанків.",
+
+  "gui.toroidal_world.cylinder_settings.title": "Налаштування циліндричного світу",
+  "gui.toroidal_world.cylinder_settings.axis": "Вісь зациклення",
+  "gui.toroidal_world.cylinder_settings.axis_hint": "Світ зациклюється вздовж цієї осі, а вздовж іншої триває нескінченно."
 }

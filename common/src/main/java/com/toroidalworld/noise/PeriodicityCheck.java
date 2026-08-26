@@ -1,6 +1,7 @@
 package com.toroidalworld.noise;
 
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,33 +39,38 @@ public final class PeriodicityCheck {
 
         ChunkGenerator generator = level.getChunkSource().getGenerator();
         RandomState randomState = level.getChunkSource().randomState();
-        int widthBlocks = transformer.blockDomain(Direction.Axis.X).domainLength;
+        Direction.Axis lapAxis = transformer.bounds().loops(Direction.Axis.X) ? Direction.Axis.X : Direction.Axis.Z;
+        int widthBlocks = transformer.blockDomain(lapAxis).domainLength;
+        String axisName = lapAxis.getName().toUpperCase(Locale.ROOT);
 
         Set<String> brokenFields = new LinkedHashSet<>();
         int brokenSamples = 0;
 
         for (int z : SAMPLE_Z) {
             for (int x : SAMPLE_X) {
+                int xLapAway = lapAxis == Direction.Axis.X ? x + widthBlocks : x;
+                int zLapAway = lapAxis == Direction.Axis.Z ? z + widthBlocks : z;
                 NoiseColumn columnHere = generator.getBaseColumn(x, z, level, randomState);
-                NoiseColumn columnLapAway = generator.getBaseColumn(x + widthBlocks, z, level, randomState);
+                NoiseColumn columnLapAway = generator.getBaseColumn(xLapAway, zLapAway, level, randomState);
                 boolean broken = collectColumn(brokenFields, level, columnHere, columnLapAway);
 
                 int quartX = QuartPos.fromBlock(x);
                 int quartZ = QuartPos.fromBlock(z);
                 int quartY = QuartPos.fromBlock(SAMPLE_Y);
-                int lapAwayQuartX = QuartPos.fromBlock(x + widthBlocks);
+                int lapAwayQuartX = QuartPos.fromBlock(xLapAway);
+                int lapAwayQuartZ = QuartPos.fromBlock(zLapAway);
 
                 Climate.Sampler sampler = randomState.sampler();
                 Climate.TargetPoint climateHere = GenerationTransformerContext.withTransformer(transformer,
                         () -> sampler.sample(quartX, quartY, quartZ));
                 Climate.TargetPoint climateLapAway = GenerationTransformerContext.withTransformer(transformer,
-                        () -> sampler.sample(lapAwayQuartX, quartY, quartZ));
+                        () -> sampler.sample(lapAwayQuartX, quartY, lapAwayQuartZ));
                 broken |= collectClimate(brokenFields, climateHere, climateLapAway);
 
                 Holder<Biome> biomeHere = GenerationTransformerContext.withTransformer(transformer,
                         () -> generator.getBiomeSource().getNoiseBiome(quartX, quartY, quartZ, sampler));
                 Holder<Biome> biomeLapAway = GenerationTransformerContext.withTransformer(transformer,
-                        () -> generator.getBiomeSource().getNoiseBiome(lapAwayQuartX, quartY, quartZ, sampler));
+                        () -> generator.getBiomeSource().getNoiseBiome(lapAwayQuartX, quartY, lapAwayQuartZ, sampler));
                 if (!biomeHere.equals(biomeLapAway)) {
                     brokenFields.add("biome");
                     broken = true;
@@ -78,14 +84,14 @@ public final class PeriodicityCheck {
 
         int samples = SAMPLE_X.length * SAMPLE_Z.length;
         if (brokenFields.isEmpty()) {
-            LOGGER.info("[world-loop] periodicity_ok level={} width_blocks={} samples={}",
-                    levelName, widthBlocks, samples);
+            LOGGER.info("[world-loop] periodicity_ok level={} axis={} width_blocks={} samples={}",
+                    levelName, axisName, widthBlocks, samples);
             return;
         }
 
         LOGGER.warn(
-                "[world-loop] periodicity_broken level={} width_blocks={} fields={} broken_samples={} samples={}",
-                levelName, widthBlocks, String.join(",", brokenFields), brokenSamples, samples);
+                "[world-loop] periodicity_broken level={} axis={} width_blocks={} fields={} broken_samples={} samples={}",
+                levelName, axisName, widthBlocks, String.join(",", brokenFields), brokenSamples, samples);
     }
 
     private static boolean collectColumn(Set<String> brokenFields, LevelHeightAccessor heightAccessor,

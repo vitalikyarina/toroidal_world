@@ -64,6 +64,7 @@ class ShapeRegistrationBoundaryTest {
         cylinder = WorldShape.of(
                 CYLINDER_ID,
                 Component.literal("Boundary test cylinder"),
+                Component.literal("A cylinder registered by the boundary test"),
                 (registries, dimensions) -> ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD, CYLINDER),
                 () -> settingsWereReset = true,
                 (registries, dimensions) ->

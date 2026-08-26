@@ -5,7 +5,11 @@
 
   "gui.toroidal_world.world_shape": "Weltform",
   "gui.toroidal_world.world_shape.normal": "Normal",
+  "gui.toroidal_world.world_shape.normal.hint": "Die Vanilla-Welt: eine endlose Ebene in alle Richtungen.",
   "gui.toroidal_world.world_shape.toroidal": "Toroidal",
+  "gui.toroidal_world.world_shape.toroidal.hint": "Beide horizontalen Achsen schließen sich — wer weit genug in eine Richtung geht, kommt am Ausgangspunkt wieder an.",
+  "gui.toroidal_world.world_shape.cylinder": "Zylindrisch",
+  "gui.toroidal_world.world_shape.cylinder.hint": "Eine horizontale Achse schließt sich, die andere geht wie in Vanilla endlos weiter.",
 
   "gui.toroidal_world.toroidal_settings.title": "Einstellungen der toroidalen Welt",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Winzig",
@@ -27,5 +31,9 @@
   "gui.toroidal_world.toroidal_settings.end_hint": "Das Ende schließt sich bei seiner eigenen Breite, unabhängig von der Weltgröße. Unter dem Minimum bleiben keine äußeren Inseln — keine Endstädte, keine Elytren.",
   "gui.toroidal_world.toroidal_settings.end_effective": "Ende: %s Chunks = %s Blöcke",
   "gui.toroidal_world.toroidal_settings.too_small": "Zu klein — mindestens %s Chunks.",
-  "gui.toroidal_world.toroidal_settings.too_large": "Zu groß — höchstens %s Chunks."
+  "gui.toroidal_world.toroidal_settings.too_large": "Zu groß — höchstens %s Chunks.",
+
+  "gui.toroidal_world.cylinder_settings.title": "Einstellungen der zylindrischen Welt",
+  "gui.toroidal_world.cylinder_settings.axis": "Schleifenachse",
+  "gui.toroidal_world.cylinder_settings.axis_hint": "Die Welt schließt sich entlang dieser Achse und geht entlang der anderen endlos weiter."
 }

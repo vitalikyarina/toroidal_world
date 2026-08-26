@@ -52,9 +52,8 @@ public final class TorusDimensions {
     }
 
     private static WorldLoopBounds netherWrapping(TorusSettings settings) {
-        int overworldChunkWidth = settings.overworld().chunkWidth();
-        int scale = NetherScales.normalize(settings.netherScale(), overworldChunkWidth);
-        return WorldLoopBounds.ofWidth(NetherScales.netherChunkWidth(overworldChunkWidth, scale));
+        int scale = NetherScales.normalize(settings.netherScale(), settings.overworld().chunkWidth());
+        return settings.overworld().scaledDown(scale);
     }
 
     private static WorldLoopBounds readEndWrapping(WorldDimensions dimensions) {

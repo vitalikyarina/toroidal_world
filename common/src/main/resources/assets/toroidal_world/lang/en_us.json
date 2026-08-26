@@ -5,7 +5,11 @@
 
   "gui.toroidal_world.world_shape": "World Shape",
   "gui.toroidal_world.world_shape.normal": "Normal",
+  "gui.toroidal_world.world_shape.normal.hint": "The vanilla world: an endless plane in every direction.",
   "gui.toroidal_world.world_shape.toroidal": "Toroidal",
+  "gui.toroidal_world.world_shape.toroidal.hint": "Both horizontal axes loop — walk far enough in any direction and you return to where you started.",
+  "gui.toroidal_world.world_shape.cylinder": "Cylinder",
+  "gui.toroidal_world.world_shape.cylinder.hint": "One horizontal axis loops, the other goes on forever like vanilla.",
 
   "gui.toroidal_world.toroidal_settings.title": "Toroidal World Settings",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Tiny",
@@ -27,5 +31,9 @@
   "gui.toroidal_world.toroidal_settings.end_hint": "The End wraps at its own width, untied to the world size. Smaller than the minimum would leave no outer islands — no end cities, no elytra.",
   "gui.toroidal_world.toroidal_settings.end_effective": "End: %s chunks = %s blocks",
   "gui.toroidal_world.toroidal_settings.too_small": "Too small — at least %s chunks.",
-  "gui.toroidal_world.toroidal_settings.too_large": "Too large — at most %s chunks."
+  "gui.toroidal_world.toroidal_settings.too_large": "Too large — at most %s chunks.",
+
+  "gui.toroidal_world.cylinder_settings.title": "Cylinder World Settings",
+  "gui.toroidal_world.cylinder_settings.axis": "Looping axis",
+  "gui.toroidal_world.cylinder_settings.axis_hint": "The world loops along this axis and goes on forever along the other."
 }

@@ -5,7 +5,11 @@
 
   "gui.toroidal_world.world_shape": "Kształt świata",
   "gui.toroidal_world.world_shape.normal": "Zwykły",
+  "gui.toroidal_world.world_shape.normal.hint": "Zwykły świat: nieskończona płaszczyzna we wszystkie strony.",
   "gui.toroidal_world.world_shape.toroidal": "Toroidalny",
+  "gui.toroidal_world.world_shape.toroidal.hint": "Obie osie poziome się zapętlają — idź dostatecznie daleko w dowolną stronę, a wrócisz do punktu wyjścia.",
+  "gui.toroidal_world.world_shape.cylinder": "Cylindryczny",
+  "gui.toroidal_world.world_shape.cylinder.hint": "Jedna oś pozioma się zapętla, druga ciągnie się bez końca jak w zwykłym świecie.",
 
   "gui.toroidal_world.toroidal_settings.title": "Ustawienia świata toroidalnego",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Malutki",
@@ -27,5 +31,9 @@
   "gui.toroidal_world.toroidal_settings.end_hint": "Kres zapętla się na własnej szerokości, niezależnie od rozmiaru świata. Poniżej minimum nie będzie zewnętrznych wysp — ani miast Kresu, ani elytr.",
   "gui.toroidal_world.toroidal_settings.end_effective": "Kres: %s chunków = %s bloków",
   "gui.toroidal_world.toroidal_settings.too_small": "Za mało — co najmniej %s chunków.",
-  "gui.toroidal_world.toroidal_settings.too_large": "Za dużo — co najwyżej %s chunków."
+  "gui.toroidal_world.toroidal_settings.too_large": "Za dużo — co najwyżej %s chunków.",
+
+  "gui.toroidal_world.cylinder_settings.title": "Ustawienia świata cylindrycznego",
+  "gui.toroidal_world.cylinder_settings.axis": "Oś zapętlenia",
+  "gui.toroidal_world.cylinder_settings.axis_hint": "Świat zapętla się wzdłuż tej osi, a wzdłuż drugiej ciągnie się bez końca."
 }

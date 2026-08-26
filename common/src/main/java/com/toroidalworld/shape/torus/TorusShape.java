@@ -14,6 +14,7 @@ import net.minecraft.world.level.levelgen.WorldDimensions;
 public final class TorusShape {
     private static final String TORUS_ID = "toroidal";
     private static final String TORUS_LABEL_KEY = "gui.toroidal_world.world_shape.toroidal";
+    private static final String TORUS_HINT_KEY = "gui.toroidal_world.world_shape.toroidal.hint";
 
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, TORUS_ID);
 
@@ -23,6 +24,7 @@ public final class TorusShape {
         WorldShapes.register(WorldShape.of(
                 ID,
                 Component.translatable(TORUS_LABEL_KEY),
+                Component.translatable(TORUS_HINT_KEY),
                 TorusShape::applyAtCreation,
                 TorusShape::resetSettings,
                 TorusShape::restoreFromExisting));

@@ -5,7 +5,11 @@
 
   "gui.toroidal_world.world_shape": "세계 형태",
   "gui.toroidal_world.world_shape.normal": "일반",
+  "gui.toroidal_world.world_shape.normal.hint": "일반 세계: 모든 방향으로 끝없이 이어지는 평면입니다.",
   "gui.toroidal_world.world_shape.toroidal": "토로이드형",
+  "gui.toroidal_world.world_shape.toroidal.hint": "두 수평 축이 모두 순환합니다. 어느 방향으로든 충분히 가면 출발한 곳으로 돌아옵니다.",
+  "gui.toroidal_world.world_shape.cylinder": "원통형",
+  "gui.toroidal_world.world_shape.cylinder.hint": "수평 축 하나는 순환하고, 다른 하나는 일반 세계처럼 끝없이 이어집니다.",
 
   "gui.toroidal_world.toroidal_settings.title": "토로이드형 세계 설정",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "아주 작음",
@@ -27,5 +31,9 @@
   "gui.toroidal_world.toroidal_settings.end_hint": "엔드는 세계 크기와 무관하게 자체 너비로 순환합니다. 최솟값보다 작으면 바깥 섬이 없어 엔드 시티도 겉날개도 없습니다.",
   "gui.toroidal_world.toroidal_settings.end_effective": "엔드: %s 청크 = %s 블록",
   "gui.toroidal_world.toroidal_settings.too_small": "너무 작습니다 — 최소 %s 청크.",
-  "gui.toroidal_world.toroidal_settings.too_large": "너무 큽니다 — 최대 %s 청크."
+  "gui.toroidal_world.toroidal_settings.too_large": "너무 큽니다 — 최대 %s 청크.",
+
+  "gui.toroidal_world.cylinder_settings.title": "원통형 세계 설정",
+  "gui.toroidal_world.cylinder_settings.axis": "순환 축",
+  "gui.toroidal_world.cylinder_settings.axis_hint": "세계는 이 축을 따라 순환하고, 다른 축을 따라서는 끝없이 이어집니다."
 }

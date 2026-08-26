@@ -5,7 +5,11 @@
 
   "gui.toroidal_world.world_shape": "世界形状",
   "gui.toroidal_world.world_shape.normal": "普通",
+  "gui.toroidal_world.world_shape.normal.hint": "普通世界：向各个方向无限延伸的平面。",
   "gui.toroidal_world.world_shape.toroidal": "环面",
+  "gui.toroidal_world.world_shape.toroidal.hint": "两条水平轴都循环——朝任意方向走得足够远，就会回到出发的地方。",
+  "gui.toroidal_world.world_shape.cylinder": "圆柱面",
+  "gui.toroidal_world.world_shape.cylinder.hint": "一条水平轴循环，另一条像普通世界一样无限延伸。",
 
   "gui.toroidal_world.toroidal_settings.title": "环面世界设置",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "微型",
@@ -27,5 +31,9 @@
   "gui.toroidal_world.toroidal_settings.end_hint": "末地按自身宽度环绕，与世界大小无关。小于最小值将不会有外围岛屿——没有末地城，也没有鞘翅。",
   "gui.toroidal_world.toroidal_settings.end_effective": "末地：%s 区块 = %s 方块",
   "gui.toroidal_world.toroidal_settings.too_small": "太小——至少 %s 区块。",
-  "gui.toroidal_world.toroidal_settings.too_large": "太大——至多 %s 区块。"
+  "gui.toroidal_world.toroidal_settings.too_large": "太大——至多 %s 区块。",
+
+  "gui.toroidal_world.cylinder_settings.title": "圆柱面世界设置",
+  "gui.toroidal_world.cylinder_settings.axis": "循环轴",
+  "gui.toroidal_world.cylinder_settings.axis_hint": "世界沿此轴循环，沿另一轴则无限延伸。"
 }
