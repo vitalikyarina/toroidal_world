@@ -105,6 +105,26 @@ dependencies {
     compileOnly "com.github.bawnorton.mixinsquared:mixinsquared-common:${mixinsquared_version}"
 }
 
+// Plain JUnit on the NeoForm vanilla classpath: NeoForm mode has no FML, hence no junit run-type and no applied
+// mixins — a test that needs a mixin at runtime belongs to a loader module. The registries are filled by the
+// launcher-session listener under src/test, ahead of any test class initialisation.
+neoForge.addModdingDependenciesTo(sourceSets.test)
+
+dependencies {
+    testCompileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
+    testRuntimeOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
+    testImplementation platform("org.junit:junit-bom:${junit_version}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    // The vanilla log4j config writes logs/latest.log into the working directory — kept under build/, as FML does.
+    workingDir = layout.buildDirectory.dir('test-run').get().asFile
+    doFirst { workingDir.mkdirs() }
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
