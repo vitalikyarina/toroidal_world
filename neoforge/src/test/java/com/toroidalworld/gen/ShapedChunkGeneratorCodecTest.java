@@ -15,6 +15,7 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.shape.FlatShape;
@@ -74,6 +75,16 @@ class ShapedChunkGeneratorCodecTest {
         assertTrue(readError("{\"x\":{},\"z\":{\"min_chunk\":-16,\"max_chunk\":16},"
                 + "\"mirror\":{\"axis\":\"x\",\"line_chunk\":3}}")
                 .contains(FlatShape.Identification.MOBIUS.toString()));
+    }
+
+    @Test
+    void aMirroredWorldFileIsRefusedOnTheLocalIndexFloorRatherThanOnDecomposition() {
+        FlatShape klein = FlatShape.mirrored(SQUARE, Direction.Axis.Z, -7);
+
+        assertEquals(
+                WorldFolds.verifyPreservesLocalIndices(klein).error().orElseThrow().message(),
+                readError("{\"x\":{\"min_chunk\":-16,\"max_chunk\":16},\"z\":{\"min_chunk\":-16,\"max_chunk\":16},"
+                        + "\"mirror\":{\"axis\":\"z\",\"line_chunk\":-7}}"));
     }
 
     @Test
