@@ -1,5 +1,7 @@
 package com.toroidalworld.mixin;
 
+import java.util.Optional;
+
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -14,15 +16,19 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamAim;
 import com.toroidalworld.player.VehicleDismountResync;
 import com.toroidalworld.storage.WorldLoopAttachments;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.BlockUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 @Mixin(Entity.class)
@@ -128,6 +134,30 @@ public class EntityMixin implements TransformerSource {
         }
 
         return transformer.nearestCopy(Vec3.atLowerCornerOf(portalArea.minCorner), position);
+    }
+
+    @WrapOperation(
+            method = "checkSupportingBlock",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/level/Level;findSupportingBlock(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;)Ljava/util/Optional;"))
+    private Optional<BlockPos> toroidal$storeCanonicalSupportingBlock(Level level, Entity source, AABB box,
+            Operation<Optional<BlockPos>> original) {
+        Optional<BlockPos> found = original.call(level, source, box);
+        WorldFold transformer = toroidal$wrappedTransformer();
+        if (transformer == null || found.isEmpty()) {
+            return found;
+        }
+
+        BlockPos raw = found.get();
+        BlockPos folded = transformer.fold(raw);
+        return folded == raw ? found : Optional.of(folded);
+    }
+
+    @ModifyReturnValue(method = "getOnPos(F)Lnet/minecraft/core/BlockPos;", at = @At("RETURN"))
+    private BlockPos toroidal$canonicalOnPos(BlockPos raw) {
+        WorldFold transformer = toroidal$wrappedTransformer();
+        return transformer == null ? raw : transformer.fold(raw);
     }
 
     @Inject(method = "snapTo(DDDFF)V", at = @At("TAIL"))

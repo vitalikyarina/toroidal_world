@@ -26,6 +26,7 @@
     "BlockEntityDataPacketAccessor",
     "BlockEntityMixin",
     "BlockLightEngineMixin",
+    "BlockStateCollisionMixin",
     "BlockStateInsideMixin",
     "BreakDoorGoalMixin",
     "BreezeMixin",
