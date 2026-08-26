@@ -27,6 +27,7 @@
     "BlockEntityMixin",
     "BlockLightEngineMixin",
     "BlockPositionSourceAccessor",
+    "BlockStateCollisionMixin",
     "BlockStateInsideMixin",
     "BoatLeashMixin",
     "BreakDoorGoalMixin",
