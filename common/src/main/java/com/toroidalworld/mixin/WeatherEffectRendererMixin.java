@@ -3,7 +3,7 @@ package com.toroidalworld.mixin;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -19,7 +19,7 @@ public class WeatherEffectRendererMixin {
     @WrapMethod(method = "getPrecipitationAt")
     private Biome.Precipitation toroidal$bindPrecipitationTransformer(
             Level level, BlockPos pos, Operation<Biome.Precipitation> original) {
-        @Nullable WorldLoopTransformer bounds = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
+        @Nullable WorldFold bounds = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
         if (bounds == null) {
             return original.call(level, pos);
         }
