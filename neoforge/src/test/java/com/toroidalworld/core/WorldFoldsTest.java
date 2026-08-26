@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
@@ -32,11 +33,16 @@ class WorldFoldsTest {
                 FlatShape.latticeTorus(SQUARE, 0));
     }
 
-    private static List<FlatShape> coupled() {
+    private static final FlatShape SKEWED = FlatShape.latticeTorus(SQUARE, 5);
+
+    private static List<FlatShape> mirrored() {
         return List.of(
-                FlatShape.latticeTorus(SQUARE, 5),
                 FlatShape.mirrored(Z_ONLY, Direction.Axis.X, 3),
                 FlatShape.mirrored(SQUARE, Direction.Axis.Z, -7));
+    }
+
+    private static List<FlatShape> coupled() {
+        return Stream.concat(Stream.of(SKEWED), mirrored().stream()).toList();
     }
 
     @Test
@@ -82,5 +88,50 @@ class WorldFoldsTest {
     void theFixturesSplitExactlyOnTheCapabilityFlag() {
         decomposable().forEach(shape -> assertTrue(shape.decomposesPerAxis(), shape.toString()));
         coupled().forEach(shape -> assertFalse(shape.decomposesPerAxis(), shape.toString()));
+    }
+
+    @Test
+    void theLocalIndexFloorSeparatesASkewFromAMirror() {
+        assertSame(SKEWED, WorldFolds.verifyPreservesLocalIndices(SKEWED).getOrThrow());
+
+        for (FlatShape shape : mirrored()) {
+            DataResult<FlatShape> result = WorldFolds.verifyPreservesLocalIndices(shape);
+            assertTrue(result.isError(), shape.toString());
+            assertTrue(result.error().orElseThrow().message().contains(shape.identification().toString()),
+                    result.toString());
+        }
+    }
+
+    @Test
+    void everyShapeThatLosesItsLocalIndicesAlsoFailsToDecompose() {
+        for (FlatShape shape : Stream.concat(decomposable().stream(), coupled().stream()).toList()) {
+            if (!shape.preservesLocalIndices()) {
+                assertFalse(shape.decomposesPerAxis(), shape.toString());
+            }
+        }
+    }
+
+    @Test
+    void theFoldableGatePassesEveryShapeTheEngineCanCarry() {
+        for (FlatShape shape : decomposable()) {
+            assertSame(shape, WorldFolds.verifyFoldable(shape).getOrThrow(), shape.toString());
+        }
+    }
+
+    @Test
+    void theFoldableGateRefusesAMirrorOnTheFloorsOwnGrounds() {
+        for (FlatShape shape : mirrored()) {
+            assertEquals(
+                    WorldFolds.verifyPreservesLocalIndices(shape).error().orElseThrow().message(),
+                    WorldFolds.verifyFoldable(shape).error().orElseThrow().message(),
+                    shape.toString());
+        }
+    }
+
+    @Test
+    void theFoldableGateStillRefusesASkewOnTheDecompositionGrounds() {
+        assertEquals(
+                WorldFolds.verifyDecomposable(SKEWED).error().orElseThrow().message(),
+                WorldFolds.verifyFoldable(SKEWED).error().orElseThrow().message());
     }
 }
