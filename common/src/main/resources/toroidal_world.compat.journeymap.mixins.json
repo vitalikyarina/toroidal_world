@@ -9,6 +9,8 @@
     "LayerDelegateMixin",
     "LocationFormatMixin",
     "MapRendererMixin",
+    "MapStateMixin",
+    "PolygonGeometryDrawPassMixin",
     "RegionCoordMixin",
     "RegionTileMixin"
   ],

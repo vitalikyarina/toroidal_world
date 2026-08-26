@@ -65,6 +65,25 @@ var c2meModuleJars = tasks.register('unpackC2meModules', Sync) {
     into layout.buildDirectory.dir('c2me-modules')
 }
 
+// Xaero's World Map bundles XaeroLib as a jar-in-jar; the fullscreen-map glue names its texture holder when it fetches
+// a canonical slot's texture for the copies. Unpacked the same way, compile classpath alone.
+configurations {
+    xaeroLib
+}
+
+dependencies {
+    xaeroLib "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
+}
+
+var xaeroLibJars = tasks.register('unpackXaeroLib', Sync) {
+    from(zipTree(configurations.xaeroLib.singleFile)) {
+        include 'META-INF/jarjar/xaerolib-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('xaerolib')
+}
+
 // NeoForm brings only vanilla; the mixin annotations the sources carry come from the same artifacts the NeoForge
 // runtime ships (pinned in gradle.properties from the neo_version userdev config). compileOnly — applying them is
 // the loaders' business.
@@ -76,6 +95,7 @@ dependencies {
     compileOnly "maven.modrinth:journeymap:${journeymap_version}"
     compileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
     compileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
+    compileOnly files(xaeroLibJars).asFileTree.matching { include '*.jar' }
     compileOnly "com.github.bawnorton.mixinsquared:mixinsquared-common:${mixinsquared_version}"
 }
 
