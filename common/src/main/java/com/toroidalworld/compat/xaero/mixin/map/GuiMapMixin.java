@@ -12,12 +12,15 @@ import org.joml.Matrix4f;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.toroidalworld.compat.AxisCopies;
 import com.toroidalworld.compat.xaero.XaeroWorldMapFold;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 
@@ -36,6 +39,10 @@ public abstract class GuiMapMixin {
     private int mouseBlockPosZ;
     @Shadow
     private double scale;
+    @Shadow
+    private double cameraX;
+    @Shadow
+    private double cameraZ;
 
     @Unique
     private MapProcessor toroidal$processor;
@@ -207,22 +214,21 @@ public abstract class GuiMapMixin {
             Matrix4f matrix, float x, float y, float width, float height,
             GpuTextureView texture, boolean hasLight, MultiTextureRenderTypeRenderer renderer, Operation<Void> original) {
         int slotSize = 64 << this.toroidal$viewLevel;
-        int[] xBounds;
-        int[] zBounds;
-        if (!XaeroWorldMapFold.active()
-                || XaeroWorldMapFold.glueableAt(slotSize)
-                || (xBounds = XaeroWorldMapFold.seamBounds(Direction.Axis.X)) == null
-                || (zBounds = XaeroWorldMapFold.seamBounds(Direction.Axis.Z)) == null) {
+        if (!XaeroWorldMapFold.active() || XaeroWorldMapFold.glueableAt(slotSize)) {
             original.call(matrix, x, y, width, height, texture, hasLight, renderer);
             return;
         }
 
+        AxisCopies copiesX = XaeroWorldMapFold.copies(Direction.Axis.X);
+        AxisCopies copiesZ = XaeroWorldMapFold.copies(Direction.Axis.Z);
         int slotMinX = this.toroidal$slotViewBlockX;
         int slotMinZ = this.toroidal$slotViewBlockZ;
-        int clippedMinX = Math.max(slotMinX, xBounds[0]);
-        int clippedMaxX = Math.min(slotMinX + slotSize, xBounds[0] + xBounds[1]);
-        int clippedMinZ = Math.max(slotMinZ, zBounds[0]);
-        int clippedMaxZ = Math.min(slotMinZ + slotSize, zBounds[0] + zBounds[1]);
+        int clippedMinX = copiesX.clipMin(slotMinX);
+        int clippedMaxX = copiesX.clipMax(slotMinX + slotSize);
+        int clippedMinZ = copiesZ.clipMin(slotMinZ);
+        int clippedMaxZ = copiesZ.clipMax(slotMinZ + slotSize);
+        XaeroWorldMapFold.logClipCopies(copiesX, copiesZ, slotSize, slotMinX, slotMinZ,
+                clippedMinX, clippedMaxX, clippedMinZ, clippedMaxZ);
         if (clippedMinX >= clippedMaxX || clippedMinZ >= clippedMaxZ) {
             return;
         }
@@ -236,10 +242,10 @@ public abstract class GuiMapMixin {
         float v1 = (float) (clippedMinZ - slotMinZ) / slotSize;
         float v2 = (float) (clippedMaxZ - slotMinZ) / slotSize;
         // The quad is emitted directly: calling GuiMap's own helper would drag its xaerolib superclass onto the compile classpath.
-        for (int periodX = -1; periodX <= 1; periodX++) {
-            for (int periodZ = -1; periodZ <= 1; periodZ++) {
-                float copyX = clippedX + periodX * xBounds[1];
-                float copyY = clippedY + periodZ * zBounds[1];
+        for (int lapX : copiesX.laps()) {
+            for (int lapZ : copiesZ.laps()) {
+                float copyX = clippedX + copiesX.offset(lapX);
+                float copyY = clippedY + copiesZ.offset(lapZ);
                 BufferBuilder quad = renderer.begin(texture);
                 quad.addVertex(matrix, copyX, copyY + clippedHeight, 0.0F).setUv(u1, v2);
                 quad.addVertex(matrix, copyX + clippedWidth, copyY + clippedHeight, 0.0F).setUv(u2, v2);
@@ -266,28 +272,25 @@ public abstract class GuiMapMixin {
             return;
         }
 
-        int[] xBounds = XaeroWorldMapFold.seamBounds(Direction.Axis.X);
-        int[] zBounds = XaeroWorldMapFold.seamBounds(Direction.Axis.Z);
-        if (xBounds == null || zBounds == null) {
-            return;
+        AxisCopies copiesX = XaeroWorldMapFold.copies(Direction.Axis.X);
+        AxisCopies copiesZ = XaeroWorldMapFold.copies(Direction.Axis.Z);
+        int thickness = Math.max(1, (int) Math.ceil(1.0 / this.scale));
+        Window window = Minecraft.getInstance().getWindow();
+        int[] extentX = XaeroWorldMapFold.gridExtent(copiesX, this.cameraX, window.getWidth(), this.scale, thickness);
+        int[] extentZ = XaeroWorldMapFold.gridExtent(copiesZ, this.cameraZ, window.getHeight(), this.scale, thickness);
+        XaeroWorldMapFold.logSeamGrid(copiesX, copiesZ, extentX, extentZ);
+        Matrix4f matrix = matrixStack.last().pose();
+        for (int lineX : XaeroWorldMapFold.gridLines(copiesX)) {
+            MapRenderHelper.fillIntoExistingBuffer(matrix, overlayBuffer,
+                    lineX - flooredCameraX, extentZ[0] - flooredCameraZ,
+                    lineX - flooredCameraX + thickness, extentZ[1] - flooredCameraZ,
+                    1.0F, 1.0F, 1.0F, 0.8F);
         }
 
-        int thickness = Math.max(1, (int) Math.ceil(1.0 / this.scale));
-        int gridMinX = xBounds[0] - xBounds[1];
-        int gridMaxX = xBounds[0] + 2 * xBounds[1];
-        int gridMinZ = zBounds[0] - zBounds[1];
-        int gridMaxZ = zBounds[0] + 2 * zBounds[1];
-        Matrix4f matrix = matrixStack.last().pose();
-        for (int lineIndex = 0; lineIndex <= 3; lineIndex++) {
-            int lineX = gridMinX + lineIndex * xBounds[1];
+        for (int lineZ : XaeroWorldMapFold.gridLines(copiesZ)) {
             MapRenderHelper.fillIntoExistingBuffer(matrix, overlayBuffer,
-                    lineX - flooredCameraX, gridMinZ - flooredCameraZ,
-                    lineX - flooredCameraX + thickness, gridMaxZ - flooredCameraZ,
-                    1.0F, 1.0F, 1.0F, 0.8F);
-            int lineZ = gridMinZ + lineIndex * zBounds[1];
-            MapRenderHelper.fillIntoExistingBuffer(matrix, overlayBuffer,
-                    gridMinX - flooredCameraX, lineZ - flooredCameraZ,
-                    gridMaxX - flooredCameraX, lineZ - flooredCameraZ + thickness,
+                    extentX[0] - flooredCameraX, lineZ - flooredCameraZ,
+                    extentX[1] - flooredCameraX, lineZ - flooredCameraZ + thickness,
                     1.0F, 1.0F, 1.0F, 0.8F);
         }
     }
