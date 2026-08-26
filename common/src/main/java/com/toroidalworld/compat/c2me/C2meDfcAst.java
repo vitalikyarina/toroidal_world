@@ -4,7 +4,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.DensityFunctionSlotAxes;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.NoiseConstants;
@@ -38,7 +38,7 @@ public final class C2meDfcAst {
             return produced;
         }
 
-        WorldLoopTransformer transformer = GenerationTransformerContext.context().routerBuildTransformer();
+        WorldFold transformer = GenerationTransformerContext.context().routerBuildTransformer();
         if (transformer == null) {
             return produced;
         }
@@ -75,7 +75,7 @@ public final class C2meDfcAst {
         return noise.xzScale();
     }
 
-    private static AstNode foldNoise(GenericShiftedNoiseNode noise, Fold fold, WorldLoopTransformer transformer) {
+    private static AstNode foldNoise(GenericShiftedNoiseNode noise, Fold fold, WorldFold transformer) {
         SlotAxes axes = fold.axes();
 
         return new C2meFoldedNoiseNode(noise.inputX, noise.inputY, noise.inputZ, noise.noise,

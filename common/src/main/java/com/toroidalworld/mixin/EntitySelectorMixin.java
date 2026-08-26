@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.command.SeamCommandErrors;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -43,25 +43,25 @@ public class EntitySelectorMixin {
             Operation<Object> original, @Local(argsOnly = true) CommandSourceStack sender)
             throws CommandSyntaxException {
         Object resolved = original.call(position, senderPosition);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(sender.getLevel());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(sender.getLevel());
         if (transformer == null || !(resolved instanceof Vec3 pos) || !(senderPosition instanceof Vec3 senderPos)) {
             return resolved;
         }
 
         if (pos.x != senderPos.x) {
-            SeamCommandErrors.requireInsideWorld(transformer.coords.x, pos.x);
+            SeamCommandErrors.requireInsideWorld(transformer.bounds().x(), pos.x);
         }
 
         if (pos.z != senderPos.z) {
-            SeamCommandErrors.requireInsideWorld(transformer.coords.z, pos.z);
+            SeamCommandErrors.requireInsideWorld(transformer.bounds().z(), pos.z);
         }
 
         return resolved;
     }
 
     private static boolean toroidal$insideThroughSeam(Entity entity, AABB absoluteAabb) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(entity.level());
-        AABB box = transformer == null ? absoluteAabb : transformer.foldBoxToward(entity.position(), absoluteAabb);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(entity.level());
+        AABB box = transformer == null ? absoluteAabb : transformer.foldBox(entity.position(), absoluteAabb).value();
         return box.intersects(entity.getBoundingBox());
     }
 }

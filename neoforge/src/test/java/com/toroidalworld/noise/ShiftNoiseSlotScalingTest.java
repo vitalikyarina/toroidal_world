@@ -6,9 +6,11 @@ import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.shape.FlatShape;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import net.minecraft.core.Holder;
@@ -30,8 +32,8 @@ class ShiftNoiseSlotScalingTest {
     private static final DensityFunction.NoiseHolder NOISE = new DensityFunction.NoiseHolder(
             NOISE_DATA, NormalNoise.create(new LegacyRandomSource(SEED), PARAMETERS));
 
-    private static final WorldLoopTransformer SQUARE =
-            new WorldLoopTransformer(new WorldLoopBounds(-16, 16, -16, 16));
+    private static final WorldFold SQUARE =
+            WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(-16, 16, -16, 16), FlatShape.NO_SKEW));
 
     private static final SlotAxes NONE_X = new SlotAxes(SlotAxis.NONE, SlotAxis.X, SlotAxis.Z);
 

@@ -2,7 +2,7 @@ package com.toroidalworld.storage;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
@@ -22,18 +22,18 @@ public final class SeamRespawnData {
             return respawnData;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return respawnData;
         }
 
         BlockPos pos = respawnData.pos();
-        if (!transformer.coords.x.isOver(pos.getX()) && !transformer.coords.z.isOver(pos.getZ())) {
+        if (!transformer.isOver(pos)) {
             return respawnData;
         }
 
         return new LevelData.RespawnData(
-                GlobalPos.of(respawnData.dimension(), transformer.blocks.wrap(pos)),
+                GlobalPos.of(respawnData.dimension(), transformer.fold(pos)),
                 respawnData.yaw(),
                 respawnData.pitch());
     }

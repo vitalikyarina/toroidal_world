@@ -9,11 +9,14 @@ import java.util.Random;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
+import com.toroidalworld.shape.FlatShape;
 
+import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.synth.SimplexNoise;
@@ -30,14 +33,14 @@ class PeriodicSimplexSamplerTest {
 
     private static final double[] SPREAD_SCALES = {0.05, 0.2, 1.0};
 
-    private static final WorldLoopTransformer DEFAULT = transformer(-16, 16, -16, 16);
-    private static final WorldLoopTransformer SMALL = transformer(-8, 8, -8, 8);
-    private static final WorldLoopTransformer UNEVEN = transformer(-32, 32, 0, 16);
-    private static final WorldLoopTransformer X_ONLY = new WorldLoopTransformer(
-            new WorldLoopBounds(new AxisBounds.Looped(-16, 16), AxisBounds.Unbounded.INSTANCE));
+    private static final WorldFold DEFAULT = transformer(-16, 16, -16, 16);
+    private static final WorldFold SMALL = transformer(-8, 8, -8, 8);
+    private static final WorldFold UNEVEN = transformer(-32, 32, 0, 16);
+    private static final WorldFold X_ONLY = WorldFolds.of(FlatShape.cylinder(
+            new WorldLoopBounds(new AxisBounds.Looped(-16, 16), AxisBounds.Unbounded.INSTANCE)));
 
-    private static final List<WorldLoopTransformer> BOTH_AXES = List.of(DEFAULT, SMALL, UNEVEN);
-    private static final List<WorldLoopTransformer> WRAPPED_X = List.of(DEFAULT, SMALL, UNEVEN, X_ONLY);
+    private static final List<WorldFold> BOTH_AXES = List.of(DEFAULT, SMALL, UNEVEN);
+    private static final List<WorldFold> WRAPPED_X = List.of(DEFAULT, SMALL, UNEVEN, X_ONLY);
 
     private static final double SEAM_EPSILON = 1.0E-9;
 
@@ -47,8 +50,9 @@ class PeriodicSimplexSamplerTest {
 
     private static final double VANILLA_KERNEL_RADIUS_SQR = 0.5;
 
-    private static WorldLoopTransformer transformer(int xChunkMin, int xChunkMax, int zChunkMin, int zChunkMax) {
-        return new WorldLoopTransformer(new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax));
+    private static WorldFold transformer(int xChunkMin, int xChunkMax, int zChunkMin, int zChunkMax) {
+        return WorldFolds.of(FlatShape.latticeTorus(
+                new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax), FlatShape.NO_SKEW));
     }
 
     private record NoiseInstance(SimplexNoise vanilla, int[] permutations, double xo, double zo) {
@@ -76,7 +80,7 @@ class PeriodicSimplexSamplerTest {
             return new NoiseInstance(vanilla, permutations, xo, yo);
         }
 
-        double sample(WorldLoopTransformer transformer, double scale, double x, double z) {
+        double sample(WorldFold transformer, double scale, double x, double z) {
             return PeriodicSimplexSampler.sample(permutations, 0.0, 0.0, transformer, scale, x, z);
         }
     }
@@ -97,7 +101,7 @@ class PeriodicSimplexSamplerTest {
         return random.nextInt(SIXTEENTHS) / (double) SIXTEENTHS;
     }
 
-    private static String at(WorldLoopTransformer transformer, long worldSeed, double scale) {
+    private static String at(WorldFold transformer, long worldSeed, double scale) {
         return "in " + transformer + " with seed " + worldSeed + " and scale " + scale;
     }
 
@@ -105,11 +109,11 @@ class PeriodicSimplexSamplerTest {
     class SkewDerivation {
         @Test
         void sharesOneDenominatorBetweenTheTwoAxes() {
-            assertEquals(26, PeriodicNoiseSampler.period(DEFAULT.coords.x, 0.05));
+            assertEquals(26, PeriodicNoiseSampler.period(DEFAULT.blockDomain(Direction.Axis.X), 0.05));
             assertEquals(26, PeriodicSimplexSampler.skewDenominator(26, 26));
             assertEquals(9, PeriodicSimplexSampler.skewNumerator(26));
 
-            assertEquals(102, PeriodicNoiseSampler.period(DEFAULT.coords.x, 0.2));
+            assertEquals(102, PeriodicNoiseSampler.period(DEFAULT.blockDomain(Direction.Axis.X), 0.2));
             assertEquals(37, PeriodicSimplexSampler.skewNumerator(102));
         }
 
@@ -132,16 +136,16 @@ class PeriodicSimplexSamplerTest {
 
         @Test
         void takesTheLoopedAxisWhenTheOtherIsUnbounded() {
-            long xPeriod = PeriodicNoiseSampler.period(X_ONLY.coords.x, 0.05);
-            long zPeriod = PeriodicNoiseSampler.period(X_ONLY.coords.z, 0.05);
+            long xPeriod = PeriodicNoiseSampler.period(X_ONLY.blockDomain(Direction.Axis.X), 0.05);
+            long zPeriod = PeriodicNoiseSampler.period(X_ONLY.blockDomain(Direction.Axis.Z), 0.05);
             assertEquals(0, zPeriod);
             assertEquals(xPeriod, PeriodicSimplexSampler.skewDenominator(xPeriod, zPeriod));
         }
 
         @Test
         void collapsesToZeroWhenThePeriodsAreCoprime() {
-            long xPeriod = PeriodicNoiseSampler.period(UNEVEN.coords.x, 0.05);
-            long zPeriod = PeriodicNoiseSampler.period(UNEVEN.coords.z, 0.05);
+            long xPeriod = PeriodicNoiseSampler.period(UNEVEN.blockDomain(Direction.Axis.X), 0.05);
+            long zPeriod = PeriodicNoiseSampler.period(UNEVEN.blockDomain(Direction.Axis.Z), 0.05);
             assertEquals(51, xPeriod);
             assertEquals(13, zPeriod);
             assertEquals(1, PeriodicSimplexSampler.skewDenominator(xPeriod, zPeriod));
@@ -160,14 +164,14 @@ class PeriodicSimplexSamplerTest {
         @Test
         void agreesOneWorldWidthApartAlongTheWholeSeamLine() {
             Random random = new Random(SEED);
-            for (WorldLoopTransformer transformer : WRAPPED_X) {
-                double period = transformer.coords.x.domainLength;
+            for (WorldFold transformer : WRAPPED_X) {
+                double period = transformer.blockDomain(Direction.Axis.X).domainLength;
                 for (long worldSeed : WORLD_SEEDS) {
                     NoiseInstance noise = NoiseInstance.of(worldSeed);
                     for (double scale : SCALES) {
                         for (int i = 0; i < LINE_SAMPLES; i++) {
-                            double x = blockInDomain(random, transformer.coords.x);
-                            double z = lineCoord(random, transformer.coords.z, i);
+                            double x = blockInDomain(random, transformer.blockDomain(Direction.Axis.X));
+                            double z = lineCoord(random, transformer.blockDomain(Direction.Axis.Z), i);
 
                             double base = noise.sample(transformer, scale, x, z);
                             double lap = noise.sample(transformer, scale, x + period, z);
@@ -186,14 +190,14 @@ class PeriodicSimplexSamplerTest {
         @Test
         void agreesOneWorldWidthApartAlongTheWholeSeamLine() {
             Random random = new Random(SEED);
-            for (WorldLoopTransformer transformer : BOTH_AXES) {
-                double period = transformer.coords.z.domainLength;
+            for (WorldFold transformer : BOTH_AXES) {
+                double period = transformer.blockDomain(Direction.Axis.Z).domainLength;
                 for (long worldSeed : WORLD_SEEDS) {
                     NoiseInstance noise = NoiseInstance.of(worldSeed);
                     for (double scale : SCALES) {
                         for (int i = 0; i < LINE_SAMPLES; i++) {
-                            double x = lineCoord(random, transformer.coords.x, i);
-                            double z = blockInDomain(random, transformer.coords.z);
+                            double x = lineCoord(random, transformer.blockDomain(Direction.Axis.X), i);
+                            double z = blockInDomain(random, transformer.blockDomain(Direction.Axis.Z));
 
                             double base = noise.sample(transformer, scale, x, z);
                             double lap = noise.sample(transformer, scale, x, z + period);
@@ -212,15 +216,15 @@ class PeriodicSimplexSamplerTest {
         @Test
         void agreesWhenBothAxesWrapAtOnce() {
             Random random = new Random(SEED);
-            for (WorldLoopTransformer transformer : BOTH_AXES) {
-                double xPeriod = transformer.coords.x.domainLength;
-                double zPeriod = transformer.coords.z.domainLength;
+            for (WorldFold transformer : BOTH_AXES) {
+                double xPeriod = transformer.blockDomain(Direction.Axis.X).domainLength;
+                double zPeriod = transformer.blockDomain(Direction.Axis.Z).domainLength;
                 for (long worldSeed : WORLD_SEEDS) {
                     NoiseInstance noise = NoiseInstance.of(worldSeed);
                     for (double scale : SCALES) {
                         for (int i = 0; i < LINE_SAMPLES; i++) {
-                            double x = blockInDomain(random, transformer.coords.x);
-                            double z = blockInDomain(random, transformer.coords.z);
+                            double x = blockInDomain(random, transformer.blockDomain(Direction.Axis.X));
+                            double z = blockInDomain(random, transformer.blockDomain(Direction.Axis.Z));
 
                             double base = noise.sample(transformer, scale, x, z);
                             double corner = noise.sample(transformer, scale, x + xPeriod, z + zPeriod);
@@ -239,15 +243,15 @@ class PeriodicSimplexSamplerTest {
         @Test
         void closesAcrossTheXSeamAlongTheWholeLine() {
             Random random = new Random(SEED);
-            for (WorldLoopTransformer transformer : WRAPPED_X) {
-                WrapDomain xDomain = transformer.coords.x;
+            for (WorldFold transformer : WRAPPED_X) {
+                WrapDomain xDomain = transformer.blockDomain(Direction.Axis.X);
                 double before = xDomain.upperBound - SEAM_EPSILON;
                 double after = xDomain.lowerBound;
                 for (long worldSeed : WORLD_SEEDS) {
                     NoiseInstance noise = NoiseInstance.of(worldSeed);
                     for (double scale : SCALES) {
                         for (int i = 0; i < LINE_SAMPLES; i++) {
-                            double z = lineCoord(random, transformer.coords.z, i);
+                            double z = lineCoord(random, transformer.blockDomain(Direction.Axis.Z), i);
                             double gap = Math.abs(noise.sample(transformer, scale, before, z)
                                     - noise.sample(transformer, scale, after, z));
                             assertTrue(gap <= CONTINUITY_TOLERANCE,
@@ -262,15 +266,15 @@ class PeriodicSimplexSamplerTest {
         @Test
         void closesAcrossTheZSeamAlongTheWholeLine() {
             Random random = new Random(SEED);
-            for (WorldLoopTransformer transformer : BOTH_AXES) {
-                WrapDomain zDomain = transformer.coords.z;
+            for (WorldFold transformer : BOTH_AXES) {
+                WrapDomain zDomain = transformer.blockDomain(Direction.Axis.Z);
                 double before = zDomain.upperBound - SEAM_EPSILON;
                 double after = zDomain.lowerBound;
                 for (long worldSeed : WORLD_SEEDS) {
                     NoiseInstance noise = NoiseInstance.of(worldSeed);
                     for (double scale : SCALES) {
                         for (int i = 0; i < LINE_SAMPLES; i++) {
-                            double x = lineCoord(random, transformer.coords.x, i);
+                            double x = lineCoord(random, transformer.blockDomain(Direction.Axis.X), i);
                             double gap = Math.abs(noise.sample(transformer, scale, x, before)
                                     - noise.sample(transformer, scale, x, after));
                             assertTrue(gap <= CONTINUITY_TOLERANCE,
@@ -285,7 +289,7 @@ class PeriodicSimplexSamplerTest {
         @Test
         void vanillaTearsTheSameSeamItIsAskedToClose() {
             Random random = new Random(SEED);
-            WrapDomain xDomain = DEFAULT.coords.x;
+            WrapDomain xDomain = DEFAULT.blockDomain(Direction.Axis.X);
             double before = xDomain.upperBound - SEAM_EPSILON;
             double after = xDomain.lowerBound;
             for (long worldSeed : WORLD_SEEDS) {
@@ -293,7 +297,7 @@ class PeriodicSimplexSamplerTest {
                 for (double scale : SCALES) {
                     double widest = 0.0;
                     for (int i = 0; i < LINE_SAMPLES; i++) {
-                        double z = lineCoord(random, DEFAULT.coords.z, i) * scale;
+                        double z = lineCoord(random, DEFAULT.blockDomain(Direction.Axis.Z), i) * scale;
                         widest = Math.max(widest, Math.abs(noise.vanilla().getValue(before * scale, z)
                                 - noise.vanilla().getValue(after * scale, z)));
                     }
@@ -316,14 +320,14 @@ class PeriodicSimplexSamplerTest {
                 NoiseInstance noise = NoiseInstance.of(worldSeed);
                 for (double scale : SCALES) {
                     for (int i = 0; i < LINE_SAMPLES; i++) {
-                        double x = lineCoord(random, WorldLoopTransformer.NOOP.coords.x, i);
-                        double z = lineCoord(random, WorldLoopTransformer.NOOP.coords.z, i);
+                        double x = lineCoord(random, WorldFolds.NOOP.blockDomain(Direction.Axis.X), i);
+                        double z = lineCoord(random, WorldFolds.NOOP.blockDomain(Direction.Axis.Z), i);
 
-                        double periodic = noise.sample(WorldLoopTransformer.NOOP, scale, x, z);
+                        double periodic = noise.sample(WorldFolds.NOOP, scale, x, z);
                         double vanilla = noise.vanilla().getValue(x * scale, z * scale);
                         assertEquals(vanilla, periodic,
                                 () -> "sample(" + x + ", " + z + ") vs vanilla "
-                                        + at(WorldLoopTransformer.NOOP, worldSeed, scale));
+                                        + at(WorldFolds.NOOP, worldSeed, scale));
                     }
                 }
             }
@@ -335,7 +339,7 @@ class PeriodicSimplexSamplerTest {
         @Test
         void outputVariesAlongTheSeamLineAndAroundTheWorld() {
             Random random = new Random(SEED);
-            for (WorldLoopTransformer transformer : WRAPPED_X) {
+            for (WorldFold transformer : WRAPPED_X) {
                 for (long worldSeed : WORLD_SEEDS) {
                     NoiseInstance noise = NoiseInstance.of(worldSeed);
                     for (double scale : SPREAD_SCALES) {
@@ -353,13 +357,14 @@ class PeriodicSimplexSamplerTest {
             }
         }
 
-        private double spread(Random random, NoiseInstance noise, WorldLoopTransformer transformer, double scale,
+        private double spread(Random random, NoiseInstance noise, WorldFold transformer, double scale,
                 boolean alongSeam) {
             double min = Double.MAX_VALUE;
             double max = -Double.MAX_VALUE;
             for (int i = 0; i < LINE_SAMPLES; i++) {
-                double x = alongSeam ? transformer.coords.x.lowerBound : lineCoord(random, transformer.coords.x, i);
-                double z = alongSeam ? lineCoord(random, transformer.coords.z, i) : 5.0;
+                WrapDomain xDomain = transformer.blockDomain(Direction.Axis.X);
+                double x = alongSeam ? xDomain.lowerBound : lineCoord(random, xDomain, i);
+                double z = alongSeam ? lineCoord(random, transformer.blockDomain(Direction.Axis.Z), i) : 5.0;
                 double value = noise.sample(transformer, scale, x, z);
                 min = Math.min(min, value);
                 max = Math.max(max, value);

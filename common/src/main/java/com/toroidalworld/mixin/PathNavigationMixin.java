@@ -15,7 +15,8 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.accessors.NavigationShifter;
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.SeamDelta;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -51,7 +52,7 @@ public class PathNavigationMixin implements NavigationShifter {
             method = "createPath(Ljava/util/Set;IZIF)Lnet/minecraft/world/level/pathfinder/Path;",
             at = @At("HEAD"), argsOnly = true)
     private Set<BlockPos> toroidal$targetsThroughSeam(Set<BlockPos> targets) {
-        WorldLoopTransformer transformer = toroidal$wrappedTransformer();
+        WorldFold transformer = toroidal$wrappedTransformer();
         if (transformer == null || targets.isEmpty()) {
             return targets;
         }
@@ -60,7 +61,7 @@ public class PathNavigationMixin implements NavigationShifter {
         Set<BlockPos> unwrapped = null;
         int identityPrefix = 0;
         for (BlockPos target : targets) {
-            BlockPos nearest = transformer.blocks.unwrap(from, target);
+            BlockPos nearest = transformer.nearestCopy(from, target);
             if (unwrapped == null) {
                 if (nearest == target) {
                     identityPrefix++;
@@ -88,16 +89,16 @@ public class PathNavigationMixin implements NavigationShifter {
             method = "followThePath",
             at = @At(value = "INVOKE", target = "Ljava/lang/Math;abs(D)D", ordinal = 0))
     private double toroidal$nodeDistanceX(double delta, Operation<Double> original) {
-        WorldLoopTransformer transformer = toroidal$wrappedTransformer();
-        return transformer == null ? original.call(delta) : Math.abs(transformer.coords.x.foldDelta(delta));
+        WorldFold transformer = toroidal$wrappedTransformer();
+        return transformer == null ? original.call(delta) : Math.abs(SeamDelta.foldX(transformer, delta));
     }
 
     @WrapOperation(
             method = "followThePath",
             at = @At(value = "INVOKE", target = "Ljava/lang/Math;abs(D)D", ordinal = 2))
     private double toroidal$nodeDistanceZ(double delta, Operation<Double> original) {
-        WorldLoopTransformer transformer = toroidal$wrappedTransformer();
-        return transformer == null ? original.call(delta) : Math.abs(transformer.coords.z.foldDelta(delta));
+        WorldFold transformer = toroidal$wrappedTransformer();
+        return transformer == null ? original.call(delta) : Math.abs(SeamDelta.foldZ(transformer, delta));
     }
 
     @WrapOperation(
@@ -139,7 +140,7 @@ public class PathNavigationMixin implements NavigationShifter {
     }
 
     @Unique
-    private @Nullable WorldLoopTransformer toroidal$wrappedTransformer() {
+    private @Nullable WorldFold toroidal$wrappedTransformer() {
         return ((TransformerSource) this.mob).toroidal$wrappedTransformer();
     }
 }

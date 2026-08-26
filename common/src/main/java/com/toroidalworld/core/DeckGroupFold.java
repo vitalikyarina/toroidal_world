@@ -70,6 +70,31 @@ public final class DeckGroupFold implements WorldFold {
         return perAxisDomain(this.chunks, axis);
     }
 
+    @Override
+    public boolean isOver(Vec3 pos) {
+        return this.blocks.x.isOver(pos.x) || this.blocks.z.isOver(pos.z);
+    }
+
+    @Override
+    public boolean isOver(BlockPos pos) {
+        return this.blocks.x.isOver(pos.getX()) || this.blocks.z.isOver(pos.getZ());
+    }
+
+    @Override
+    public boolean isOver(ChunkPos pos) {
+        return this.chunks.x.isOver(pos.x()) || this.chunks.z.isOver(pos.z());
+    }
+
+    @Override
+    public int chunkOvershoot(ChunkPos pos) {
+        return Math.max(this.chunks.x.overshoot(pos.x()), this.chunks.z.overshoot(pos.z()));
+    }
+
+    @Override
+    public int maxViewDistance() {
+        return this.shape.bounds().maxViewDistance();
+    }
+
     private WrapDomain perAxisDomain(Lattice lattice, Direction.Axis axis) {
         if (!decomposesPerAxis()) {
             throw new IllegalStateException(this.shape.identification() + " does not decompose per axis");

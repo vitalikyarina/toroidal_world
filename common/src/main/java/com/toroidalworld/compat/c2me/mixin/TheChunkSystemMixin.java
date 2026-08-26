@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.toroidalworld.accessors.LevelHolder;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.accessors.TransformerSourceBindable;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.ishland.c2me.base.common.scheduler.SchedulingManager;
 import com.ishland.c2me.rewrites.chunksystem.common.TheChunkSystem;
@@ -43,10 +43,10 @@ public class TheChunkSystemMixin implements TransformerSource {
     private boolean toroidal$resolved;
 
     @Unique
-    private @Nullable WorldLoopTransformer toroidal$transformer;
+    private @Nullable WorldFold toroidal$transformer;
 
     @Override
-    public @Nullable WorldLoopTransformer toroidal$wrappedTransformer() {
+    public @Nullable WorldFold toroidal$wrappedTransformer() {
         if (!this.toroidal$resolved) {
             this.toroidal$transformer =
                     WorldLoopAttachments.wrappedTransformerOf(((LevelHolder) (Object) this.tacs).toroidal$level());

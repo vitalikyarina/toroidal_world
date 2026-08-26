@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.compat.c2me.C2meSeamFold;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.ishland.c2me.rewrites.chunksystem.common.NewChunkStatus;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -24,7 +24,7 @@ public class NewChunkStatusMixin {
             int chunkZ,
             Operation<ChunkPos> original,
             @Local(argsOnly = true) ItemHolder<?, ?, ?, ?> holder) {
-        WorldLoopTransformer transformer = holder.getUserData().get() instanceof TransformerSource source
+        WorldFold transformer = holder.getUserData().get() instanceof TransformerSource source
                 ? source.toroidal$wrappedTransformer()
                 : null;
         if (transformer == null) {

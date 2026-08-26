@@ -8,7 +8,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -21,6 +22,7 @@ import net.minecraft.server.commands.SpreadPlayersCommand;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 
 @Mixin(SpreadPlayersCommand.class)
 public class SpreadPlayersCommandMixin {
@@ -40,7 +42,7 @@ public class SpreadPlayersCommandMixin {
             RandomSource random, double minX, double minZ, double maxX, double maxZ, int maxHeight,
             SpreadPlayersCommand.Position[] positions, boolean respectTeams, Operation<Void> original)
             throws CommandSyntaxException {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null || toroidal$fitsInHalfTheWorld(transformer, maxX - minX, maxZ - minZ)) {
             original.call(center, spreadDist, level, random, minX, minZ, maxX, maxZ, maxHeight, positions,
                     respectTeams);
@@ -48,12 +50,14 @@ public class SpreadPlayersCommandMixin {
         }
 
         // Vanilla's clamp, except where the square is the whole world: there the two edges are the same ground.
-        boolean freeX = transformer.coords.x.coversWorld(maxX - minX);
-        boolean freeZ = transformer.coords.z.coversWorld(maxZ - minZ);
-        double randomMinX = freeX ? transformer.coords.x.lowerBound : minX;
-        double randomMaxX = freeX ? transformer.coords.x.upperBound : maxX;
-        double randomMinZ = freeZ ? transformer.coords.z.lowerBound : minZ;
-        double randomMaxZ = freeZ ? transformer.coords.z.upperBound : maxZ;
+        AxisBounds xAxis = transformer.bounds().x();
+        AxisBounds zAxis = transformer.bounds().z();
+        boolean freeX = xAxis.coversWorld(maxX - minX);
+        boolean freeZ = zAxis.coversWorld(maxZ - minZ);
+        double randomMinX = freeX && xAxis instanceof AxisBounds.Looped looped ? looped.minBlock() : minX;
+        double randomMaxX = freeX && xAxis instanceof AxisBounds.Looped looped ? looped.maxBlock() : maxX;
+        double randomMinZ = freeZ && zAxis instanceof AxisBounds.Looped looped ? looped.minBlock() : minZ;
+        double randomMaxZ = freeZ && zAxis instanceof AxisBounds.Looped looped ? looped.maxBlock() : maxZ;
 
         boolean hasCollisions = true;
         double minDistance = Float.MAX_VALUE;
@@ -76,8 +80,9 @@ public class SpreadPlayersCommandMixin {
                     }
 
                     SpreadPositionAccessor neighbour = (SpreadPositionAccessor) positions[j];
-                    double deltaX = transformer.coords.x.foldDelta(neighbour.toroidal$x() - position.toroidal$x());
-                    double deltaZ = transformer.coords.z.foldDelta(neighbour.toroidal$z() - position.toroidal$z());
+                    Vec3 delta = toroidal$deltaBetween(transformer, position, neighbour);
+                    double deltaX = delta.x;
+                    double deltaZ = delta.z;
                     double distance = Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
                     minDistance = Math.min(distance, minDistance);
                     if (distance < spreadDist) {
@@ -137,29 +142,40 @@ public class SpreadPlayersCommandMixin {
     private static double toroidal$distThroughSeam(SpreadPlayersCommand.Position position,
             SpreadPlayersCommand.Position target, Operation<Double> original,
             @Local(argsOnly = true) ServerLevel level) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return original.call(position, target);
         }
 
         SpreadPositionAccessor from = (SpreadPositionAccessor) position;
         SpreadPositionAccessor to = (SpreadPositionAccessor) target;
-        double deltaX = transformer.coords.x.foldDelta(to.toroidal$x() - from.toroidal$x());
-        double deltaZ = transformer.coords.z.foldDelta(to.toroidal$z() - from.toroidal$z());
-        return Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
+        Vec3 delta = toroidal$deltaBetween(transformer, from, to);
+        return Math.sqrt(delta.x * delta.x + delta.z * delta.z);
     }
 
     @Unique
-    private static boolean toroidal$fitsInHalfTheWorld(WorldLoopTransformer transformer, double xSpan, double zSpan) {
-        return transformer.coords.x.fitsInHalf(xSpan) && transformer.coords.z.fitsInHalf(zSpan);
+    private static Vec3 toroidal$deltaBetween(WorldFold transformer, SpreadPositionAccessor from,
+            SpreadPositionAccessor to) {
+        return transformer.foldDelta(
+                new Vec3(from.toroidal$x(), 0.0, from.toroidal$z()), new Vec3(to.toroidal$x(), 0.0, to.toroidal$z()));
     }
 
     @Unique
-    private static boolean toroidal$confine(SpreadPositionAccessor position, WorldLoopTransformer transformer,
+    private static Vec3 toroidal$folded(WorldFold transformer, SpreadPositionAccessor position) {
+        return transformer.fold(new Vec3(position.toroidal$x(), 0.0, position.toroidal$z()));
+    }
+
+    @Unique
+    private static boolean toroidal$fitsInHalfTheWorld(WorldFold transformer, double xSpan, double zSpan) {
+        return transformer.bounds().x().fitsInHalf(xSpan) && transformer.bounds().z().fitsInHalf(zSpan);
+    }
+
+    @Unique
+    private static boolean toroidal$confine(SpreadPositionAccessor position, WorldFold transformer,
             boolean freeX, boolean freeZ, double minX, double minZ, double maxX, double maxZ) {
         boolean clamped = false;
         if (freeX) {
-            position.toroidal$setX(transformer.coords.x.wrap(position.toroidal$x()));
+            position.toroidal$setX(toroidal$folded(transformer, position).x);
         } else if (position.toroidal$x() < minX) {
             position.toroidal$setX(minX);
             clamped = true;
@@ -169,7 +185,7 @@ public class SpreadPlayersCommandMixin {
         }
 
         if (freeZ) {
-            position.toroidal$setZ(transformer.coords.z.wrap(position.toroidal$z()));
+            position.toroidal$setZ(toroidal$folded(transformer, position).z);
         } else if (position.toroidal$z() < minZ) {
             position.toroidal$setZ(minZ);
             clamped = true;

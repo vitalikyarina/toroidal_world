@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.toroidalworld.accessors.RecipientPositionHolder;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -29,7 +29,7 @@ public class GameEventDispatcherMixin {
             method = "handleGameEventMessagesInQueue",
             at = @At(value = "INVOKE", target = "Ljava/util/Collections;sort(Ljava/util/List;)V"))
     private void toroidal$orderThroughSeam(List<GameEvent.ListenerInfo> listenerInfos, Operation<Void> original) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
             original.call(listenerInfos);
             return;

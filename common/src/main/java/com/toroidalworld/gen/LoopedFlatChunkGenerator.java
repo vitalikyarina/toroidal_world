@@ -1,7 +1,7 @@
 package com.toroidalworld.gen;
 
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -22,7 +22,7 @@ public class LoopedFlatChunkGenerator extends FlatLevelSource implements ShapedC
             ).apply(instance, instance.stable(LoopedFlatChunkGenerator::new)));
 
     private final FlatShape shape;
-    private final WorldLoopTransformer transformer;
+    private final WorldFold transformer;
 
     public LoopedFlatChunkGenerator(FlatLevelGeneratorSettings settings, FlatShape shape) {
         super(settings);
@@ -36,7 +36,7 @@ public class LoopedFlatChunkGenerator extends FlatLevelSource implements ShapedC
     }
 
     @Override
-    public WorldLoopTransformer transformer() {
+    public WorldFold transformer() {
         return this.transformer;
     }
 

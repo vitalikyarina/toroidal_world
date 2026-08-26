@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.accessors.LevelBindable;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.server.level.DistanceManager;
@@ -48,7 +48,7 @@ public class DistanceManagerMixin implements LevelBindable {
             return chunkKey;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
-        return transformer == null ? chunkKey : transformer.chunks.wrapChunkKey(chunkKey);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
+        return transformer == null ? chunkKey : transformer.foldChunkKey(chunkKey);
     }
 }

@@ -12,7 +12,8 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.core.CoordinateConstants;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -40,7 +41,7 @@ public class PoiManagerMixin {
             int radius,
             PoiManager.Occupancy occupancy,
             Operation<Stream<PoiRecord>> original) {
-        WorldLoopTransformer transformer = toroidal$transformer();
+        WorldFold transformer = toroidal$transformer();
         if (transformer == null) {
             return original.call(predicate, center, radius, occupancy);
         }
@@ -52,8 +53,9 @@ public class PoiManagerMixin {
                 .flatMap(chunkPos -> self.getInChunk(predicate, chunkPos, occupancy))
                 .filter(record -> {
                     BlockPos pos = record.getPos();
-                    return Math.abs(transformer.coords.x.deltaFromBounds(center.getX(), pos.getX())) <= radius
-                            && Math.abs(transformer.coords.z.deltaFromBounds(center.getZ(), pos.getZ())) <= radius;
+                    BlockPos nearest = transformer.nearestCopy(center, pos);
+                    return Math.abs(nearest.getX() - center.getX()) <= radius
+                            && Math.abs(nearest.getZ() - center.getZ()) <= radius;
                 });
     }
 
@@ -63,7 +65,7 @@ public class PoiManagerMixin {
             index = 0)
     private Predicate<PoiRecord> toroidal$rangeThroughSeam(
             Predicate<PoiRecord> original, @Local(argsOnly = true) BlockPos center, @Local(argsOnly = true) int radius) {
-        WorldLoopTransformer transformer = toroidal$transformer();
+        WorldFold transformer = toroidal$transformer();
         if (transformer == null) {
             return original;
         }
@@ -81,7 +83,7 @@ public class PoiManagerMixin {
             index = 0)
     private Comparator<BlockPos> toroidal$closestBlockThroughSeam(
             Comparator<BlockPos> original, @Local(argsOnly = true) BlockPos center) {
-        WorldLoopTransformer transformer = toroidal$transformer();
+        WorldFold transformer = toroidal$transformer();
         if (transformer == null) {
             return original;
         }
@@ -95,7 +97,7 @@ public class PoiManagerMixin {
             index = 0)
     private Comparator<PoiRecord> toroidal$closestRecordThroughSeam(
             Comparator<PoiRecord> original, @Local(argsOnly = true) BlockPos center) {
-        WorldLoopTransformer transformer = toroidal$transformer();
+        WorldFold transformer = toroidal$transformer();
         if (transformer == null) {
             return original;
         }
@@ -109,7 +111,7 @@ public class PoiManagerMixin {
             index = 0)
     private Comparator<Pair<Holder<PoiType>, BlockPos>> toroidal$sortThroughSeam(
             Comparator<Pair<Holder<PoiType>, BlockPos>> original, @Local(argsOnly = true) BlockPos center) {
-        WorldLoopTransformer transformer = toroidal$transformer();
+        WorldFold transformer = toroidal$transformer();
         if (transformer == null) {
             return original;
         }
@@ -124,25 +126,25 @@ public class PoiManagerMixin {
                     target = "Lnet/minecraft/core/SectionPos;aroundChunk(Lnet/minecraft/world/level/ChunkPos;III)Ljava/util/stream/Stream;"))
     private Stream<SectionPos> toroidal$sectionsThroughSeam(
             ChunkPos center, int chunkRadius, int minSectionY, int maxSectionY, Operation<Stream<SectionPos>> original) {
-        WorldLoopTransformer transformer = toroidal$transformer();
+        WorldFold transformer = toroidal$transformer();
         if (transformer == null) {
             return original.call(center, chunkRadius, minSectionY, maxSectionY);
         }
 
         Stream<SectionPos> wrapped = original.call(center, chunkRadius, minSectionY, maxSectionY)
-                .map(transformer.chunks::wrapSection);
+                .map(section -> transformer.fold(section));
 
         return toroidal$foldsOntoItself(chunkRadius, transformer) ? wrapped.distinct() : wrapped;
     }
 
     @WrapMethod(method = "sectionsToVillage")
     private int toroidal$villageDistanceThroughSeam(SectionPos sectionPos, Operation<Integer> original) {
-        WorldLoopTransformer transformer = toroidal$transformer();
+        WorldFold transformer = toroidal$transformer();
         if (transformer == null) {
             return original.call(sectionPos);
         }
 
-        return original.call(transformer.chunks.wrapSection(sectionPos));
+        return original.call(transformer.fold(sectionPos));
     }
 
     @ModifyVariable(
@@ -151,14 +153,14 @@ public class PoiManagerMixin {
             ordinal = 0,
             argsOnly = true)
     private BlockPos toroidal$positionThroughSeam(BlockPos pos) {
-        WorldLoopTransformer transformer = toroidal$transformer();
-        return transformer == null ? pos : transformer.blocks.wrap(pos);
+        WorldFold transformer = toroidal$transformer();
+        return transformer == null ? pos : transformer.fold(pos);
     }
 
     @Unique
-    private static Stream<ChunkPos> toroidal$chunksAround(ChunkPos center, int chunkRadius, WorldLoopTransformer transformer) {
+    private static Stream<ChunkPos> toroidal$chunksAround(ChunkPos center, int chunkRadius, WorldFold transformer) {
         Stream<ChunkPos> wrapped = ChunkPos.rangeClosed(center, chunkRadius)
-                .map(pos -> transformer.chunks.isOver(pos) ? transformer.chunks.wrap(pos) : pos);
+                .map(pos -> transformer.isOver(pos) ? transformer.fold(pos) : pos);
 
         if (!toroidal$foldsOntoItself(chunkRadius, transformer)) {
             return wrapped;
@@ -169,27 +171,27 @@ public class PoiManagerMixin {
     }
 
     @Unique
-    private static boolean toroidal$foldsOntoItself(int chunkRadius, WorldLoopTransformer transformer) {
+    private static boolean toroidal$foldsOntoItself(int chunkRadius, WorldFold transformer) {
         int span = chunkRadius * 2 + 1;
-        return transformer.chunks.x.foldsOntoItself(span) || transformer.chunks.z.foldsOntoItself(span);
+        return transformer.bounds().x().foldsOntoItself(span) || transformer.bounds().z().foldsOntoItself(span);
     }
 
     @Unique
-    private static double toroidal$distSqr(WorldLoopTransformer transformer, BlockPos center, BlockPos pos) {
-        return transformer.coords.sqrDistToBounds(
+    private static double toroidal$distSqr(WorldFold transformer, BlockPos center, BlockPos pos) {
+        return transformer.sqrDistance(
                 center.getX(), center.getY(), center.getZ(), pos.getX(), pos.getY(), pos.getZ());
     }
 
     @Unique
-    private @Nullable WorldLoopTransformer toroidal$levelTransformer;
+    private @Nullable WorldFold toroidal$levelTransformer;
 
     @Unique
-    private @Nullable WorldLoopTransformer toroidal$transformer() {
-        WorldLoopTransformer transformer = this.toroidal$levelTransformer;
+    private @Nullable WorldFold toroidal$transformer() {
+        WorldFold transformer = this.toroidal$levelTransformer;
         if (transformer == null) {
             transformer = ((SectionStorageAccessor) this).toroidal$getLevelHeightAccessor() instanceof ServerLevel level
                     ? WorldLoopAttachments.transformerOf(level)
-                    : WorldLoopTransformer.NOOP;
+                    : WorldFolds.NOOP;
             this.toroidal$levelTransformer = transformer;
         }
 

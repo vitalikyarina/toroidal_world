@@ -3,7 +3,7 @@ package com.toroidalworld.compat.c2me;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.InstructionAdapter;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.ContextScaledNoise;
 import com.toroidalworld.noise.SlotAxes;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.BytecodeEmitter;
@@ -17,14 +17,14 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
     public static final C2meFoldedNoiseEmitter INSTANCE = new C2meFoldedNoiseEmitter();
 
     private static final String SAMPLE_CLASS = Type.getInternalName(ContextScaledNoise.class);
-    private static final String TRANSFORMER_DESC = Type.getDescriptor(WorldLoopTransformer.class);
+    private static final String TRANSFORMER_DESC = Type.getDescriptor(WorldFold.class);
     private static final String SLOT_AXES_DESC = Type.getDescriptor(SlotAxes.class);
     private static final String NOISE_HOLDER_DESC = Type.getDescriptor(NoiseHolder.class);
 
     private static final String SAMPLE_METHOD = "sampleWrapped";
     private static final String SAMPLE_DESC = Type.getMethodDescriptor(
             Type.DOUBLE_TYPE,
-            Type.getType(WorldLoopTransformer.class),
+            Type.getType(WorldFold.class),
             Type.getType(SlotAxes.class),
             Type.getType(NoiseHolder.class),
             Type.DOUBLE_TYPE,
@@ -37,7 +37,7 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
     private static final String FILL_METHOD = "fill";
     private static final String FILL_DESC = Type.getMethodDescriptor(
             Type.VOID_TYPE,
-            Type.getType(WorldLoopTransformer.class),
+            Type.getType(WorldFold.class),
             Type.getType(SlotAxes.class),
             Type.getType(NoiseHolder.class),
             Type.getType(double[].class),
@@ -61,7 +61,7 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
     public void doBytecodeGenSingle(C2meFoldedNoiseNode node, BytecodeGen.Context context, InstructionAdapter m,
             BytecodeGen.Context.LocalVarConsumer localVarConsumer) {
         String noiseField = context.newField(NoiseHolder.class, node.noise);
-        String transformerField = context.newField(WorldLoopTransformer.class, node.transformer);
+        String transformerField = context.newField(WorldFold.class, node.transformer);
         String slotAxesField = context.newField(SlotAxes.class, node.slotAxes);
         ValuesMethodDefF64 foldedXMethod = context.newSingleMethodF64(node.foldedX);
         ValuesMethodDefF64 foldedYMethod = context.newSingleMethodF64(node.foldedY);
@@ -85,7 +85,7 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
     public void doBytecodeGenMulti(C2meFoldedNoiseNode node, BytecodeGen.Context context, InstructionAdapter m,
             BytecodeGen.Context.LocalVarConsumer localVarConsumer) {
         String noiseField = context.newField(NoiseHolder.class, node.noise);
-        String transformerField = context.newField(WorldLoopTransformer.class, node.transformer);
+        String transformerField = context.newField(WorldFold.class, node.transformer);
         String slotAxesField = context.newField(SlotAxes.class, node.slotAxes);
 
         ValuesMethodDefF64 foldedXMethod = context.newMultiMethodF64(node.foldedX);

@@ -1,7 +1,7 @@
 package com.toroidalworld.accessors;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 
 public interface TransformerCache {
-    WorldLoopTransformer toroidal$transformer();
+    WorldFold toroidal$transformer();
 }

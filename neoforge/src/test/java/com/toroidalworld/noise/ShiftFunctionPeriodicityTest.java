@@ -15,8 +15,11 @@ import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.shape.FlatShape;
 
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunctions;
 
@@ -35,13 +38,13 @@ class ShiftFunctionPeriodicityTest {
     @Test
     void everyShiftFunctionAgreesOneWorldWidthApartInX() {
         Random random = new Random(SEED);
-        for (WorldLoopTransformer transformer : WORLDS) {
-            int width = transformer.coords.x.domainLength;
+        for (WorldFold transformer : WORLDS) {
+            int width = transformer.blockDomain(Direction.Axis.X).domainLength;
             for (ShiftFunction shift : SHIFTS) {
                 for (int i = 0; i < SAMPLES; i++) {
-                    int x = blockIn(random, transformer.coords.x);
+                    int x = blockIn(random, transformer.blockDomain(Direction.Axis.X));
                     int y = blockY(random);
-                    int z = blockIn(random, transformer.coords.z);
+                    int z = blockIn(random, transformer.blockDomain(Direction.Axis.Z));
                     assertEquals(sample(shift, transformer, x, y, z),
                             sample(shift, transformer, x + width, y, z),
                             at(shift, transformer, "x", x, x + width, y, z));
@@ -53,13 +56,13 @@ class ShiftFunctionPeriodicityTest {
     @Test
     void everyShiftFunctionAgreesOneWorldWidthApartInZ() {
         Random random = new Random(SEED);
-        for (WorldLoopTransformer transformer : WORLDS) {
-            int width = transformer.coords.z.domainLength;
+        for (WorldFold transformer : WORLDS) {
+            int width = transformer.blockDomain(Direction.Axis.Z).domainLength;
             for (ShiftFunction shift : SHIFTS) {
                 for (int i = 0; i < SAMPLES; i++) {
-                    int x = blockIn(random, transformer.coords.x);
+                    int x = blockIn(random, transformer.blockDomain(Direction.Axis.X));
                     int y = blockY(random);
-                    int z = blockIn(random, transformer.coords.z);
+                    int z = blockIn(random, transformer.blockDomain(Direction.Axis.Z));
                     assertEquals(sample(shift, transformer, x, y, z),
                             sample(shift, transformer, x, y, z + width),
                             at(shift, transformer, "z", z, z + width, x, y));
@@ -75,8 +78,9 @@ class ShiftFunctionPeriodicityTest {
             double lowest = Double.MAX_VALUE;
             double highest = -Double.MAX_VALUE;
             for (int i = 0; i < SAMPLES; i++) {
-                double value = sample(shift, SQUARE, blockIn(random, SQUARE.coords.x), blockY(random),
-                        blockIn(random, SQUARE.coords.z));
+                double value = sample(shift, SQUARE,
+                        blockIn(random, SQUARE.blockDomain(Direction.Axis.X)), blockY(random),
+                        blockIn(random, SQUARE.blockDomain(Direction.Axis.Z)));
                 lowest = Math.min(lowest, value);
                 highest = Math.max(highest, value);
             }
@@ -86,13 +90,13 @@ class ShiftFunctionPeriodicityTest {
         }
     }
 
-    private static double sample(ShiftFunction shift, WorldLoopTransformer transformer, int x, int y, int z) {
+    private static double sample(ShiftFunction shift, WorldFold transformer, int x, int y, int z) {
         DensityFunction.FunctionContext at = new DensityFunction.SinglePointContext(x, y, z);
 
         return GenerationTransformerContext.withTransformer(transformer, () -> shift.function().compute(at));
     }
 
-    private static String at(ShiftFunction shift, WorldLoopTransformer transformer,
+    private static String at(ShiftFunction shift, WorldFold transformer,
             String axis, int from, int to, int firstOther, int secondOther) {
         return shift.name() + " in " + transformer + " at " + axis + "=" + from + " vs " + axis + "=" + to
                 + " (" + firstOther + ", " + secondOther + ")";

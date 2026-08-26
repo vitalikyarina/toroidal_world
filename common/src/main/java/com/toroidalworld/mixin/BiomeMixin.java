@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.noise.NoiseConstants;
@@ -42,7 +42,7 @@ public class BiomeMixin {
 
     @Unique
     private <T> T toroidal$boundToLevel(LevelReader level, Supplier<T> action) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.noiseTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.noiseTransformerOf(level);
         if (transformer == null) {
             return action.get();
         }

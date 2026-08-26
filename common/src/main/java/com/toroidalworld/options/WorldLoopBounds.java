@@ -24,11 +24,83 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
             public int chunkWidth() {
                 return maxChunk - minChunk;
             }
+
+            public int minBlock() {
+                return minChunk * CoordinateConstants.CHUNK_WIDTH;
+            }
+
+            public int maxBlock() {
+                return maxChunk * CoordinateConstants.CHUNK_WIDTH;
+            }
+
+            public int blockWidth() {
+                return chunkWidth() * CoordinateConstants.CHUNK_WIDTH;
+            }
+
+            @Override
+            public boolean isOver(double blockCoord) {
+                return blockCoord < minBlock() || blockCoord >= maxBlock();
+            }
+
+            @Override
+            public boolean fitsInHalf(double blockSpan) {
+                return 2 * blockSpan <= blockWidth();
+            }
+
+            @Override
+            public boolean coversWorld(double blockSpan) {
+                return blockSpan >= blockWidth();
+            }
+
+            @Override
+            public boolean foldsOntoItself(int chunkCount) {
+                return chunkCount > chunkWidth();
+            }
+
+            @Override
+            public int maxViewDistance() {
+                return Math.max(1, chunkWidth() / 2 - CoordinateConstants.VIEW_DISTANCE_MARGIN);
+            }
         }
 
         record Unbounded() implements AxisBounds {
             public static final Unbounded INSTANCE = new Unbounded();
+
+            @Override
+            public boolean isOver(double blockCoord) {
+                return false;
+            }
+
+            @Override
+            public boolean fitsInHalf(double blockSpan) {
+                return true;
+            }
+
+            @Override
+            public boolean coversWorld(double blockSpan) {
+                return false;
+            }
+
+            @Override
+            public boolean foldsOntoItself(int chunkCount) {
+                return false;
+            }
+
+            @Override
+            public int maxViewDistance() {
+                return Integer.MAX_VALUE;
+            }
         }
+
+        boolean isOver(double blockCoord);
+
+        boolean fitsInHalf(double blockSpan);
+
+        boolean coversWorld(double blockSpan);
+
+        boolean foldsOntoItself(int chunkCount);
+
+        int maxViewDistance();
 
         StreamCodec<ByteBuf, AxisBounds> STREAM_CODEC = StreamCodec.of(
                 (buffer, axis) -> {
@@ -128,5 +200,9 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
             case AxisBounds.Looped looped -> looped.chunkWidth();
             case AxisBounds.Unbounded() -> throw new IllegalStateException("chunkWidth() of an unbounded axis");
         };
+    }
+
+    public int maxViewDistance() {
+        return Math.min(x.maxViewDistance(), z.maxViewDistance());
     }
 }

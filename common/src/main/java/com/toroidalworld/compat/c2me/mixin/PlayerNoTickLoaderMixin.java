@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.accessors.LevelHolder;
 import com.toroidalworld.compat.c2me.C2meSeamFold;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.ishland.c2me.notickvd.common.PlayerNoTickLoader;
 import com.ishland.c2me.rewrites.chunksystem.common.TheChunkSystem;
@@ -33,10 +33,10 @@ public class PlayerNoTickLoaderMixin {
     private boolean toroidal$resolved;
 
     @Unique
-    private @Nullable WorldLoopTransformer toroidal$transformer;
+    private @Nullable WorldFold toroidal$transformer;
 
     @Unique
-    private @Nullable WorldLoopTransformer toroidal$transformer() {
+    private @Nullable WorldFold toroidal$transformer() {
         if (!this.toroidal$resolved) {
             this.toroidal$transformer =
                     WorldLoopAttachments.wrappedTransformerOf(((LevelHolder) (Object) this.tacs).toroidal$level());
@@ -79,7 +79,7 @@ public class PlayerNoTickLoaderMixin {
 
     @Unique
     private Object toroidal$canonical(Object key) {
-        WorldLoopTransformer transformer = this.toroidal$transformer();
+        WorldFold transformer = this.toroidal$transformer();
         if (transformer == null || !(key instanceof ChunkPos pos)) {
             return key;
         }
@@ -89,7 +89,7 @@ public class PlayerNoTickLoaderMixin {
 
     @ModifyVariable(method = "setViewDistance", at = @At("HEAD"), argsOnly = true)
     private int toroidal$clampNoTickViewDistance(int viewDistance) {
-        WorldLoopTransformer transformer = this.toroidal$transformer();
+        WorldFold transformer = this.toroidal$transformer();
         return transformer == null ? viewDistance : transformer.limitViewDistance(viewDistance);
     }
 }

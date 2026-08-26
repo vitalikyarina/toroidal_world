@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.google.common.collect.Maps;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -52,7 +52,7 @@ public class SerializableChunkDataMixin {
             CompoundTag tag,
             Operation<Map<Structure, LongSet>> original,
             @Local(argsOnly = true) ServerLevel level) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return original.call(registryAccess, pos, tag);
         }
@@ -75,7 +75,7 @@ public class SerializableChunkDataMixin {
             LongSet kept = new LongOpenHashSet();
             for (long referenceKey : stored.get()) {
                 ChunkPos referencePos = ChunkPos.unpack(referenceKey);
-                if (transformer.chunks.chessboardDistance(pos, referencePos) > toroidal$MAX_REFERENCE_DISTANCE) {
+                if (pos.getChessboardDistance(transformer.nearestCopy(pos, referencePos)) > toroidal$MAX_REFERENCE_DISTANCE) {
                     toroidal$LOGGER.warn(
                             "Found invalid structure reference [ {} @ {} ] for chunk {}.", structureId, referencePos, pos);
                     continue;

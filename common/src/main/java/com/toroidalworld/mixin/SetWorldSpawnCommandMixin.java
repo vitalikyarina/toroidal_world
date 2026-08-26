@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.sugar.Local;
 
@@ -17,7 +17,7 @@ public class SetWorldSpawnCommandMixin {
     @ModifyVariable(method = "setSpawn", at = @At("HEAD"), argsOnly = true)
     private static BlockPos toroidal$worldSpawnInsideBounds(BlockPos pos,
             @Local(argsOnly = true) CommandSourceStack source) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(source.getLevel());
-        return transformer == null ? pos : transformer.blocks.wrap(pos);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(source.getLevel());
+        return transformer == null ? pos : transformer.fold(pos);
     }
 }

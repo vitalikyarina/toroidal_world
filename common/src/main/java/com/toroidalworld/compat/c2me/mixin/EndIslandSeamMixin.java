@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.PeriodicEndIslands;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -21,7 +21,7 @@ public class EndIslandSeamMixin {
 
     @WrapMethod(method = "compute(Lnet/minecraft/world/level/levelgen/DensityFunction$FunctionContext;)D")
     private double toroidal$loopedCompute(DensityFunction.FunctionContext context, Operation<Double> original) {
-        WorldLoopTransformer transformer = GenerationTransformerContext.context().wrappedTransformer();
+        WorldFold transformer = GenerationTransformerContext.context().wrappedTransformer();
         if (transformer == null) {
             return original.call(context);
         }

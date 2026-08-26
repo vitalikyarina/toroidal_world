@@ -1,8 +1,9 @@
 package com.toroidalworld.noise;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 
 public final class PeriodicSimplexSampler {
@@ -18,9 +19,9 @@ public final class PeriodicSimplexSampler {
     private static final int PERMUTATION_MASK = 0xFF;
 
     public static double sample(int[] permutations, double xOffset, double zOffset,
-            WorldLoopTransformer transformer, double scale, double x, double z) {
-        WrapDomain xDomain = transformer.coords.x;
-        WrapDomain zDomain = transformer.coords.z;
+            WorldFold transformer, double scale, double x, double z) {
+        WrapDomain xDomain = transformer.blockDomain(Direction.Axis.X);
+        WrapDomain zDomain = transformer.blockDomain(Direction.Axis.Z);
         long xPeriod = PeriodicNoiseSampler.period(xDomain, scale);
         long zPeriod = PeriodicNoiseSampler.period(zDomain, scale);
         long denominator = skewDenominator(xPeriod, zPeriod);

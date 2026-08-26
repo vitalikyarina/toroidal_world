@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -36,12 +36,12 @@ public class PrepareRamNearestTargetMixin {
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/ai/behavior/PrepareRamNearestTarget$RamCandidate;getStartPosition()Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$ramStartThroughSeam(BlockPos startPos, @Local(argsOnly = true) PathfinderMob body) {
-        WorldLoopTransformer transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
+        WorldFold transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
         if (transformer == null) {
             return startPos;
         }
 
-        return transformer.blocks.wrap(startPos);
+        return transformer.fold(startPos);
     }
 
     @WrapOperation(
@@ -50,11 +50,11 @@ public class PrepareRamNearestTargetMixin {
                     target = "Lnet/minecraft/world/entity/ai/behavior/PrepareRamNearestTarget;getEdgeOfBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$ramEdgeThroughSeam(PrepareRamNearestTarget<?> self, BlockPos startRamPos, BlockPos targetPos,
             Operation<Vec3> original, @Local(argsOnly = true) PathfinderMob body) {
-        WorldLoopTransformer transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
+        WorldFold transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
         if (transformer == null) {
             return original.call(self, startRamPos, targetPos);
         }
 
-        return original.call(self, transformer.blocks.nearestCopy(targetPos, startRamPos), targetPos);
+        return original.call(self, transformer.nearestCopy(targetPos, startRamPos), targetPos);
     }
 }

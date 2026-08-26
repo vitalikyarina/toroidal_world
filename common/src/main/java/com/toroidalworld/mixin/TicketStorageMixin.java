@@ -11,7 +11,7 @@ import java.util.List;
 
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.accessors.LevelBindRegistry;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.server.level.ServerLevel;
@@ -55,15 +55,11 @@ public class TicketStorageMixin implements LevelBindable, LevelBindRegistry {
             return key;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
         if (transformer == null) {
             return key;
         }
 
-        int chunkX = ChunkPos.getX(key);
-        int chunkZ = ChunkPos.getZ(key);
-        int wrappedX = transformer.chunks.x.wrap(chunkX);
-        int wrappedZ = transformer.chunks.z.wrap(chunkZ);
-        return wrappedX == chunkX && wrappedZ == chunkZ ? key : ChunkPos.pack(wrappedX, wrappedZ);
+        return transformer.foldChunkKey(key);
     }
 }
