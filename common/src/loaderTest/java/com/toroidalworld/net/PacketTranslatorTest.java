@@ -1,5 +1,6 @@
 package com.toroidalworld.net;
 
+import static com.toroidalworld.net.PacketTranslatorFixture.*;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -14,7 +15,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.IntFunction;
-import java.util.function.IntPredicate;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -36,15 +36,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
-import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ExplosionParticleInfo;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.TrailParticleOption;
 import net.minecraft.core.particles.VibrationParticleOption;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -106,43 +103,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.waypoints.Waypoint;
 
 class PacketTranslatorTest {
-    private static final WorldFold TRANSFORMER =
-            WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(-32, 32, -32, 32), FlatShape.NO_SKEW));
-    private static final RegistryAccess.Frozen REGISTRIES =
-            RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
-
-    private static final double MIRROR_X = 580.0;
-    private static final double MIRROR_Z = -700.0;
-
-    private static final BlockPos SERVER_BLOCK = new BlockPos(-510, 64, -505);
-    private static final BlockPos CLIENT_BLOCK = new BlockPos(514, 64, -505);
-    private static final BlockPos SERVER_CARRIED_BLOCK = new BlockPos(-510, 64, -100);
-    private static final BlockPos CLIENT_CARRIED_BLOCK = new BlockPos(514, 64, -100);
-    private static final BlockPos MIRROR_CARRIED_BLOCK = new BlockPos(514, 64, -1124);
-    private static final ChunkPos SERVER_CHUNK = new ChunkPos(-32, -32);
-    private static final ChunkPos CLIENT_CHUNK = new ChunkPos(32, -32);
-
-    private static final double SERVER_X = -500.5;
-    private static final double CLIENT_X = 523.5;
-    private static final double SERVER_Z = 500.0;
-    private static final double CLIENT_Z = -524.0;
-
-    private static TranslationContext context() {
-        return context(entityId -> false, entityId -> null);
-    }
-
-    private static final int VIEW_DISTANCE = 16;
-
-    private static final IntFunction<RegistryFriendlyByteBuf> BUFFERS =
-            capacity -> new RegistryFriendlyByteBuf(Unpooled.buffer(capacity), REGISTRIES);
-
-    private static TranslationContext context(IntPredicate ownVehicle, IntFunction<Vec3> entityPosition) {
-        ClientPosition mirror = new ClientPosition();
-        mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, TRANSFORMER);
-        return new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS, Level.OVERWORLD,
-                VIEW_DISTANCE, VIEW_DISTANCE, ownVehicle, entityPosition, () -> {});
-    }
-
     private static RegistryFriendlyByteBuf buffer() {
         return new RegistryFriendlyByteBuf(Unpooled.buffer(), REGISTRIES);
     }
@@ -670,20 +630,6 @@ class PacketTranslatorTest {
         }
 
         @Test
-        void blockParticlePositionMovesToTheHeldCopy() {
-            BlockState state = Blocks.STONE.defaultBlockState();
-            ClientboundLevelParticlesPacket translated = (ClientboundLevelParticlesPacket) PacketTranslator.toClient(
-                    new ClientboundLevelParticlesPacket(
-                            new BlockParticleOption(ParticleTypes.BLOCK, state, SERVER_BLOCK), false, false,
-                            SERVER_X, 64.0, SERVER_Z, 0.0F, 0.0F, 0.0F, 0.0F, 1),
-                    context());
-
-            BlockParticleOption block = (BlockParticleOption) translated.getParticle();
-            assertEquals(CLIENT_BLOCK, block.getPos());
-            assertSame(state, block.getState());
-        }
-
-        @Test
         void positionlessPayloadPassesThrough() {
             ClientboundLevelParticlesPacket translated = (ClientboundLevelParticlesPacket) PacketTranslator.toClient(
                     new ClientboundLevelParticlesPacket(ParticleTypes.FLAME, false, false,
@@ -707,24 +653,6 @@ class PacketTranslatorTest {
             TrailParticleOption trail = (TrailParticleOption) translated.explosionParticle();
             assertEquals(new Vec3(CLIENT_X + 3.0, 71.0, CLIENT_Z + 3.0), trail.target());
             assertEquals(new Vec3(CLIENT_X, 70.0, CLIENT_Z), translated.center());
-        }
-
-        @Test
-        void explosionBlockParticlesFollowTheTranslatedCentre() {
-            BlockState state = Blocks.STONE.defaultBlockState();
-            WeightedList<ExplosionParticleInfo> blockParticles = WeightedList.of(new ExplosionParticleInfo(
-                    new BlockParticleOption(ParticleTypes.BLOCK, state, SERVER_BLOCK), 1.5F, 0.5F));
-
-            ClientboundExplodePacket translated = (ClientboundExplodePacket) PacketTranslator.toClient(
-                    new ClientboundExplodePacket(
-                            new Vec3(SERVER_X, 70.0, SERVER_Z), 3.0F, 4, Optional.empty(),
-                            ParticleTypes.EXPLOSION, SoundEvents.GENERIC_EXPLODE, blockParticles),
-                    context());
-
-            ExplosionParticleInfo info = translated.blockParticles().unwrap().getFirst().value();
-            assertEquals(CLIENT_BLOCK, ((BlockParticleOption) info.particle()).getPos());
-            assertEquals(1.5F, info.scaling());
-            assertEquals(0.5F, info.speed());
         }
 
         @Test
