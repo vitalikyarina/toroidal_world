@@ -20,10 +20,14 @@ public final class JourneyMapFold {
     private static final double REGION_BLOCKS = 512.0;
 
     private static final int COPY_RANGE_CAP = 5;
+    private static final int MAX_TILE_COPIES = (2 * COPY_RANGE_CAP + 1) * (2 * COPY_RANGE_CAP + 1);
+    private static final int ONE_AXIS_COPY_RANGE_CAP = (MAX_TILE_COPIES - 1) / 2;
+    private static final double VIEWPORT_COVER = 0.75;
 
     private static final int FULLSCREEN_COPIES_EACH_SIDE = 1;
 
-    private static final LogRateGate capGate = new LogRateGate();
+    private static final LogRateGate tileCopiesGate = new LogRateGate();
+    private static String lastTileCopies = "";
 
     private static ToroidalShape shape() {
         ClientLevel level = Minecraft.getInstance().level;
@@ -78,20 +82,45 @@ public final class JourneyMapFold {
         return shape.widthBlocks(axis) * (zoom / REGION_BLOCKS);
     }
 
-    public static int copyRange(double periodPixels, int viewportPixels) {
-        if (periodPixels <= 0.0) {
+    public static int loopedAxes() {
+        ToroidalShape shape = shape();
+        if (shape == null) {
             return 0;
         }
 
-        int needed = (int) Math.ceil(viewportPixels * 0.75 / periodPixels);
-        if (needed > COPY_RANGE_CAP) {
-            if (capGate.tryPass()) {
-                LOGGER.info("[jm-compat] tile_copies capped needed={} cap={}", needed, COPY_RANGE_CAP);
-            }
-            return COPY_RANGE_CAP;
+        return (shape.loops(Direction.Axis.X) ? 1 : 0) + (shape.loops(Direction.Axis.Z) ? 1 : 0);
+    }
+
+    public static int copyRangeCap(int loopedAxes) {
+        return loopedAxes == 2 ? COPY_RANGE_CAP : ONE_AXIS_COPY_RANGE_CAP;
+    }
+
+    public static int copyRange(int loopedAxes, double periodPixels, int viewportPixels) {
+        return Math.min(copiesToCover(periodPixels, viewportPixels), copyRangeCap(loopedAxes));
+    }
+
+    private static int copiesToCover(double periodPixels, int viewportPixels) {
+        return periodPixels <= 0.0 ? 0 : (int) Math.ceil(viewportPixels * VIEWPORT_COVER / periodPixels);
+    }
+
+    public static void logTileCopies(String context, int zoom, int loopedAxes, double periodX, double periodZ,
+            int viewportX, int viewportZ, int legacyViewportX, int legacyViewportZ) {
+        String line = "context=" + context + " looped_axes=" + loopedAxes + " zoom_px=" + zoom
+                + " period_x_px=" + periodX + " period_z_px=" + periodZ
+                + " viewport_x_px=" + viewportX + " viewport_z_px=" + viewportZ
+                + " legacy_viewport_x_px=" + legacyViewportX + " legacy_viewport_z_px=" + legacyViewportZ
+                + " needed_x=" + copiesToCover(periodX, viewportX) + " needed_z=" + copiesToCover(periodZ, viewportZ)
+                + " range_x=" + copyRange(loopedAxes, periodX, viewportX)
+                + " range_z=" + copyRange(loopedAxes, periodZ, viewportZ)
+                + " legacy_range_x=" + Math.min(copiesToCover(periodX, legacyViewportX), COPY_RANGE_CAP)
+                + " legacy_range_z=" + Math.min(copiesToCover(periodZ, legacyViewportZ), COPY_RANGE_CAP)
+                + " cap=" + copyRangeCap(loopedAxes);
+        if (line.equals(lastTileCopies) || !tileCopiesGate.tryPass()) {
+            return;
         }
 
-        return needed;
+        lastTileCopies = line;
+        LOGGER.info("[jm-compat] tile_copies {}", line);
     }
 
     public static int fullscreenCopyRange(Direction.Axis axis) {
