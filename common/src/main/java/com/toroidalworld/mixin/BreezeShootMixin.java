@@ -9,6 +9,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.breeze.Breeze;
 import net.minecraft.world.entity.monster.breeze.Shoot;
@@ -29,7 +30,7 @@ public class BreezeShootMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getX()D"))
     private double toroidal$aimTargetX(LivingEntity target, Operation<Double> original,
             @Local(argsOnly = true) Breeze breeze) {
-        return SeamAim.nearestTo(breeze, target.position()).x;
+        return SeamAim.nearestTo(breeze, target.position().with(Direction.Axis.X, original.call(target))).x;
     }
 
     @WrapOperation(
@@ -37,6 +38,6 @@ public class BreezeShootMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getZ()D"))
     private double toroidal$aimTargetZ(LivingEntity target, Operation<Double> original,
             @Local(argsOnly = true) Breeze breeze) {
-        return SeamAim.nearestTo(breeze, target.position()).z;
+        return SeamAim.nearestTo(breeze, target.position().with(Direction.Axis.Z, original.call(target))).z;
     }
 }

@@ -11,7 +11,6 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.TicketStorage;
 
 @Mixin(TicketStorage.class)

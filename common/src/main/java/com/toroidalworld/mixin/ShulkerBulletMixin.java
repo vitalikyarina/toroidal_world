@@ -11,6 +11,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.ShulkerBullet;
 
@@ -20,14 +21,16 @@ public class ShulkerBulletMixin {
             method = "selectNextMoveDirection",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getX()D"))
     private double toroidal$homeOnTargetX(Entity target, Operation<Double> original) {
-        return SeamAim.nearestTo((ShulkerBullet) (Object) this, target.position()).x;
+        return SeamAim.nearestTo((ShulkerBullet) (Object) this,
+                target.position().with(Direction.Axis.X, original.call(target))).x;
     }
 
     @WrapOperation(
             method = "selectNextMoveDirection",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getZ()D"))
     private double toroidal$homeOnTargetZ(Entity target, Operation<Double> original) {
-        return SeamAim.nearestTo((ShulkerBullet) (Object) this, target.position()).z;
+        return SeamAim.nearestTo((ShulkerBullet) (Object) this,
+                target.position().with(Direction.Axis.Z, original.call(target))).z;
     }
 
     @ModifyExpressionValue(

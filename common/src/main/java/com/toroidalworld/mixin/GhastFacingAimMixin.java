@@ -8,6 +8,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Ghast;
@@ -19,7 +20,7 @@ public class GhastFacingAimMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getX()D"))
     private static double toroidal$aimTargetX(LivingEntity target, Operation<Double> original,
             @Local(argsOnly = true) Mob ghast) {
-        return SeamAim.nearestTo(ghast, target.position()).x;
+        return SeamAim.nearestTo(ghast, target.position().with(Direction.Axis.X, original.call(target))).x;
     }
 
     @WrapOperation(
@@ -27,6 +28,6 @@ public class GhastFacingAimMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getZ()D"))
     private static double toroidal$aimTargetZ(LivingEntity target, Operation<Double> original,
             @Local(argsOnly = true) Mob ghast) {
-        return SeamAim.nearestTo(ghast, target.position()).z;
+        return SeamAim.nearestTo(ghast, target.position().with(Direction.Axis.Z, original.call(target))).z;
     }
 }
