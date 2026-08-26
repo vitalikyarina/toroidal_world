@@ -2,7 +2,7 @@ package com.toroidalworld.player;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -21,7 +21,7 @@ public final class WaypointLapGate {
     }
 
     public int widen(int distance, ServerPlayer receiver, ChunkPos serverChunk) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(receiver.level());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(receiver.level());
         if (transformer == null) {
             return distance;
         }
@@ -31,7 +31,7 @@ public final class WaypointLapGate {
             return distance;
         }
 
-        ChunkPos projection = transformer.chunks.unwrap(mirror.chunk(), serverChunk);
+        ChunkPos projection = transformer.nearestCopy(mirror.chunk(), serverChunk);
         ChunkPos previous = this.lastClientChunk;
         this.lastClientChunk = projection;
         if (distance > 0 || previous == null || previous.equals(projection)) {

@@ -9,7 +9,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import com.toroidalworld.core.LogRateGate;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.platform.Platforms;
 import com.toroidalworld.player.ClientPosition;
@@ -17,6 +17,7 @@ import com.toroidalworld.storage.WorldLoopAttachments;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
@@ -29,7 +30,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 public record TranslationContext(
-        WorldLoopTransformer transformer,
+        WorldFold transformer,
         ClientPosition clientPosition,
         RegistryAccess registryAccess,
         IntFunction<RegistryFriendlyByteBuf> bufferFactory,
@@ -50,7 +51,7 @@ public record TranslationContext(
 
     private static final LogRateGate WARN_GATE = new LogRateGate();
 
-    public static TranslationContext of(ServerPlayer player, WorldLoopTransformer transformer) {
+    public static TranslationContext of(ServerPlayer player, WorldFold transformer) {
         int trackedViewDistance = trackedViewDistanceOf(player, transformer);
         return new TranslationContext(
                 transformer,
@@ -65,7 +66,7 @@ public record TranslationContext(
                 () -> WorldLoopAttachments.rebaseClientPositionOf(player));
     }
 
-    private static int trackedViewDistanceOf(ServerPlayer player, WorldLoopTransformer transformer) {
+    private static int trackedViewDistanceOf(ServerPlayer player, WorldFold transformer) {
         int serverViewDistance = player.level().getServer().getPlayerList().getViewDistance();
         return transformer.limitViewDistance(
                 Mth.clamp(player.requestedViewDistance(), MIN_VIEW_DISTANCE, serverViewDistance));
@@ -89,7 +90,7 @@ public record TranslationContext(
 
     public ChunkPos toClient(ChunkPos chunkPos) {
         ChunkPos anchor = chunkAnchor();
-        ChunkPos clientPos = transformer.chunks.unwrap(anchor, chunkPos);
+        ChunkPos clientPos = transformer.nearestCopy(anchor, chunkPos);
         int viewReach = viewReach();
         if (Math.abs(clientPos.x() - anchor.x()) > viewReach || Math.abs(clientPos.z() - anchor.z()) > viewReach) {
             warnChunkFarFromAnchor(chunkPos, clientPos, anchor, viewReach);
@@ -103,21 +104,23 @@ public record TranslationContext(
     }
 
     public ChunkPos toClientCacheCenter(ChunkPos chunkPos) {
-        ChunkPos clientPos = transformer.chunks.unwrap(clientPosition.chunk(), chunkPos);
+        ChunkPos clientPos = transformer.nearestCopy(clientPosition.chunk(), chunkPos);
         clientPosition.setHeldCacheCenter(clientPos);
         return clientPos;
     }
 
     public ChunkPos nearestCopy(ChunkPos chunkPos) {
-        return transformer.chunks.unwrap(clientPosition.chunk(), chunkPos);
+        return transformer.nearestCopy(clientPosition.chunk(), chunkPos);
     }
 
     public List<ChunkPos> forgetCandidates(ChunkPos chunkPos) {
         ChunkPos anchor = clientPosition.chunk();
-        ChunkPos nearest = transformer.chunks.unwrap(anchor, chunkPos);
+        ChunkPos nearest = transformer.nearestCopy(anchor, chunkPos);
         int ambiguityReach = copyAmbiguityReach();
-        int[] xCandidates = axisCandidates(transformer.chunks.x, nearest.x(), nearest.x() - anchor.x(), ambiguityReach);
-        int[] zCandidates = axisCandidates(transformer.chunks.z, nearest.z(), nearest.z() - anchor.z(), ambiguityReach);
+        int[] xCandidates = axisCandidates(
+                transformer.chunkDomain(Direction.Axis.X), nearest.x(), nearest.x() - anchor.x(), ambiguityReach);
+        int[] zCandidates = axisCandidates(
+                transformer.chunkDomain(Direction.Axis.Z), nearest.z(), nearest.z() - anchor.z(), ambiguityReach);
 
         List<ChunkPos> candidates = new ArrayList<>(xCandidates.length * zCandidates.length);
         for (int xCandidate : xCandidates) {
@@ -148,14 +151,14 @@ public record TranslationContext(
 
     public double toClientX(double x, PacketReach reach) {
         double anchor = clientPosition.x();
-        double clientX = transformer.coords.x.unwrapAround(anchor, x);
+        double clientX = transformer.blockDomain(Direction.Axis.X).unwrapAround(anchor, x);
         guardReach(reach, "x", x, clientX, anchor);
         return clientX;
     }
 
     public double toClientZ(double z, PacketReach reach) {
         double anchor = clientPosition.z();
-        double clientZ = transformer.coords.z.unwrapAround(anchor, z);
+        double clientZ = transformer.blockDomain(Direction.Axis.Z).unwrapAround(anchor, z);
         guardReach(reach, "z", z, clientZ, anchor);
         return clientZ;
     }
@@ -175,11 +178,11 @@ public record TranslationContext(
     }
 
     public double nearestCopyX(double x) {
-        return transformer.coords.x.unwrapAround(clientPosition.x(), x);
+        return transformer.blockDomain(Direction.Axis.X).unwrapAround(clientPosition.x(), x);
     }
 
     public double nearestCopyZ(double z) {
-        return transformer.coords.z.unwrapAround(clientPosition.z(), z);
+        return transformer.blockDomain(Direction.Axis.Z).unwrapAround(clientPosition.z(), z);
     }
 
     private void warnChunkFarFromAnchor(ChunkPos serverPos, ChunkPos clientPos, ChunkPos anchor, int viewReach) {
@@ -205,14 +208,21 @@ public record TranslationContext(
     }
 
     public Vec3 toClient(Vec3 position, PacketReach reach) {
-        return new Vec3(toClientX(position.x, reach), position.y, toClientZ(position.z, reach));
+        Vec3 clientPos = nearestCopy(position);
+        guardReach(reach, "x", position.x, clientPos.x, clientPosition.x());
+        guardReach(reach, "z", position.z, clientPos.z, clientPosition.z());
+        return clientPos;
+    }
+
+    public Vec3 nearestCopy(Vec3 position) {
+        return transformer.nearestCopy(new Vec3(clientPosition.x(), position.y, clientPosition.z()), position);
     }
 
     public BlockPos toServer(BlockPos pos) {
-        return transformer.blocks.wrap(pos);
+        return transformer.fold(pos);
     }
 
     public Vec3 toServer(Vec3 position) {
-        return transformer.vectors.wrap(position);
+        return transformer.fold(position);
     }
 }

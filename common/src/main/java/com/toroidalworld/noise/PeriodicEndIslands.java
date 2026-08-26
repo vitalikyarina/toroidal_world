@@ -1,23 +1,24 @@
 package com.toroidalworld.noise;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.synth.SimplexNoise;
 
 public final class PeriodicEndIslands {
-    public static float heightValue(SimplexNoise islandNoise, WorldLoopTransformer transformer, int blockX, int blockZ) {
-        int sectionX = transformer.coords.x.wrap(blockX) / 8;
-        int sectionZ = transformer.coords.z.wrap(blockZ) / 8;
+    public static float heightValue(SimplexNoise islandNoise, WorldFold transformer, int blockX, int blockZ) {
+        int sectionX = transformer.blockDomain(Direction.Axis.X).wrap(blockX) / 8;
+        int sectionZ = transformer.blockDomain(Direction.Axis.Z).wrap(blockZ) / 8;
         float doffs = Mth.clamp(100.0F - Mth.sqrt(sectionX * sectionX + sectionZ * sectionZ) * 8.0F, -100.0F, 80.0F);
 
         int chunkX = Math.floorDiv(blockX, 16);
         int chunkZ = Math.floorDiv(blockZ, 16);
         int subSectionX = Math.floorMod(Math.floorDiv(blockX, 8), 2);
         int subSectionZ = Math.floorMod(Math.floorDiv(blockZ, 8), 2);
-        WrapDomain xDomain = transformer.chunks.x;
-        WrapDomain zDomain = transformer.chunks.z;
+        WrapDomain xDomain = transformer.chunkDomain(Direction.Axis.X);
+        WrapDomain zDomain = transformer.chunkDomain(Direction.Axis.Z);
 
         for (int xo = -12; xo <= 12; xo++) {
             for (int zo = -12; zo <= 12; zo++) {

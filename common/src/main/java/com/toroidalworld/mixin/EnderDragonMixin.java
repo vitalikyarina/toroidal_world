@@ -11,7 +11,9 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Position;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.phys.Vec3;
 
@@ -36,17 +38,19 @@ public class EnderDragonMixin {
         return SeamRange.sqr((EnderDragon) (Object) this, Vec3.atCenterOf(eggPos), dragonPosition);
     }
 
-    @ModifyExpressionValue(
+    @WrapOperation(
             method = "knockBack",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getX()D"))
-    private double toroidal$shovedEntityX(double entityX) {
-        return SeamAim.nearX((EnderDragon) (Object) this, entityX);
+    private double toroidal$shovedEntityX(Entity target, Operation<Double> original) {
+        return SeamAim.nearestTo((EnderDragon) (Object) this,
+                target.position().with(Direction.Axis.X, original.call(target))).x;
     }
 
-    @ModifyExpressionValue(
+    @WrapOperation(
             method = "knockBack",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getZ()D"))
-    private double toroidal$shovedEntityZ(double entityZ) {
-        return SeamAim.nearZ((EnderDragon) (Object) this, entityZ);
+    private double toroidal$shovedEntityZ(Entity target, Operation<Double> original) {
+        return SeamAim.nearestTo((EnderDragon) (Object) this,
+                target.position().with(Direction.Axis.Z, original.call(target))).z;
     }
 }

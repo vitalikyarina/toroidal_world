@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.toroidalworld.accessors.LevelHolder;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.sugar.Local;
 
@@ -27,13 +27,12 @@ public class PlayerChunkSenderMixin {
             index = 1)
     private Comparator<Long> toroidal$nearestPendingThroughSeam(Comparator<Long> original,
             @Local(argsOnly = true) ChunkMap chunkMap, @Local(argsOnly = true) ChunkPos playerPos) {
-        WorldLoopTransformer transformer = toroidal$transformer(chunkMap);
+        WorldFold transformer = toroidal$transformer(chunkMap);
         if (!transformer.isWrapped()) {
             return original;
         }
 
-        long packedPlayerPos = playerPos.pack();
-        return Comparator.comparingInt(pending -> transformer.chunks.sqrDistToBounds(packedPlayerPos, pending));
+        return Comparator.comparingInt(pending -> transformer.sqrChunkDistance(playerPos, ChunkPos.unpack(pending)));
     }
 
     @ModifyArg(
@@ -44,16 +43,16 @@ public class PlayerChunkSenderMixin {
             index = 0)
     private Comparator<LevelChunk> toroidal$nearestLoadedThroughSeam(Comparator<LevelChunk> original,
             @Local(argsOnly = true) ChunkMap chunkMap, @Local(argsOnly = true) ChunkPos playerPos) {
-        WorldLoopTransformer transformer = toroidal$transformer(chunkMap);
+        WorldFold transformer = toroidal$transformer(chunkMap);
         if (!transformer.isWrapped()) {
             return original;
         }
 
-        return Comparator.comparingInt(chunk -> transformer.chunks.sqrDistToBounds(chunk.getPos(), playerPos));
+        return Comparator.comparingInt(chunk -> transformer.sqrChunkDistance(chunk.getPos(), playerPos));
     }
 
     @Unique
-    private static WorldLoopTransformer toroidal$transformer(ChunkMap chunkMap) {
+    private static WorldFold toroidal$transformer(ChunkMap chunkMap) {
         return WorldLoopAttachments.transformerOf(((LevelHolder) chunkMap).toroidal$level());
     }
 }

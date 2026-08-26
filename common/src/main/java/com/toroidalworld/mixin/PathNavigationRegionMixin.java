@@ -6,11 +6,12 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.chunk.ChunkSource;
@@ -28,11 +29,12 @@ public class PathNavigationRegionMixin {
                     target = "Lnet/minecraft/world/level/chunk/ChunkSource;getChunkNow(II)Lnet/minecraft/world/level/chunk/LevelChunk;"))
     private @Nullable LevelChunk toroidal$foldSnapshotChunk(ChunkSource chunkSource, int chunkX, int chunkZ,
             Operation<@Nullable LevelChunk> original) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
             return original.call(chunkSource, chunkX, chunkZ);
         }
 
-        return original.call(chunkSource, transformer.chunks.x.wrap(chunkX), transformer.chunks.z.wrap(chunkZ));
+        long folded = transformer.foldChunkKey(ChunkPos.pack(chunkX, chunkZ));
+        return original.call(chunkSource, ChunkPos.getX(folded), ChunkPos.getZ(folded));
     }
 }

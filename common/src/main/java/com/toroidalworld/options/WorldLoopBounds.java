@@ -6,8 +6,12 @@ import com.toroidalworld.core.CoordinateConstants;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.VarInt;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.level.border.WorldBorder;
 
 public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
@@ -20,11 +24,98 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
             public int chunkWidth() {
                 return maxChunk - minChunk;
             }
+
+            public int minBlock() {
+                return minChunk * CoordinateConstants.CHUNK_WIDTH;
+            }
+
+            public int maxBlock() {
+                return maxChunk * CoordinateConstants.CHUNK_WIDTH;
+            }
+
+            public int blockWidth() {
+                return chunkWidth() * CoordinateConstants.CHUNK_WIDTH;
+            }
+
+            @Override
+            public boolean isOver(double blockCoord) {
+                return blockCoord < minBlock() || blockCoord >= maxBlock();
+            }
+
+            @Override
+            public boolean fitsInHalf(double blockSpan) {
+                return 2 * blockSpan <= blockWidth();
+            }
+
+            @Override
+            public boolean coversWorld(double blockSpan) {
+                return blockSpan >= blockWidth();
+            }
+
+            @Override
+            public boolean foldsOntoItself(int chunkCount) {
+                return chunkCount > chunkWidth();
+            }
+
+            @Override
+            public int maxViewDistance() {
+                return Math.max(1, chunkWidth() / 2 - CoordinateConstants.VIEW_DISTANCE_MARGIN);
+            }
         }
 
         record Unbounded() implements AxisBounds {
             public static final Unbounded INSTANCE = new Unbounded();
+
+            @Override
+            public boolean isOver(double blockCoord) {
+                return false;
+            }
+
+            @Override
+            public boolean fitsInHalf(double blockSpan) {
+                return true;
+            }
+
+            @Override
+            public boolean coversWorld(double blockSpan) {
+                return false;
+            }
+
+            @Override
+            public boolean foldsOntoItself(int chunkCount) {
+                return false;
+            }
+
+            @Override
+            public int maxViewDistance() {
+                return Integer.MAX_VALUE;
+            }
         }
+
+        boolean isOver(double blockCoord);
+
+        boolean fitsInHalf(double blockSpan);
+
+        boolean coversWorld(double blockSpan);
+
+        boolean foldsOntoItself(int chunkCount);
+
+        int maxViewDistance();
+
+        StreamCodec<ByteBuf, AxisBounds> STREAM_CODEC = StreamCodec.of(
+                (buffer, axis) -> {
+                    switch (axis) {
+                        case Looped looped -> {
+                            buffer.writeBoolean(true);
+                            VarInt.write(buffer, looped.minChunk());
+                            VarInt.write(buffer, looped.maxChunk());
+                        }
+                        case Unbounded() -> buffer.writeBoolean(false);
+                    }
+                },
+                buffer -> buffer.readBoolean()
+                        ? new Looped(VarInt.read(buffer), VarInt.read(buffer))
+                        : Unbounded.INSTANCE);
 
         Codec<AxisBounds> CODEC = Codec.mapPair(
                         Codec.INT.optionalFieldOf(MIN_CHUNK_KEY),
@@ -71,11 +162,18 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
     private static final String X_KEY = "x";
     private static final String Z_KEY = "z";
 
-    public static final Codec<WorldLoopBounds> CODEC = RecordCodecBuilder.create(
+    public static final MapCodec<WorldLoopBounds> MAP_CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                     AxisBounds.CODEC.fieldOf(X_KEY).forGetter(WorldLoopBounds::x),
                     AxisBounds.CODEC.fieldOf(Z_KEY).forGetter(WorldLoopBounds::z)
             ).apply(instance, instance.stable(WorldLoopBounds::new)));
+
+    public static final Codec<WorldLoopBounds> CODEC = MAP_CODEC.codec();
+
+    public static final StreamCodec<ByteBuf, WorldLoopBounds> STREAM_CODEC = StreamCodec.composite(
+            AxisBounds.STREAM_CODEC, WorldLoopBounds::x,
+            AxisBounds.STREAM_CODEC, WorldLoopBounds::z,
+            WorldLoopBounds::new);
 
     public static final WorldLoopBounds UNBOUNDED =
             new WorldLoopBounds(AxisBounds.Unbounded.INSTANCE, AxisBounds.Unbounded.INSTANCE);
@@ -102,5 +200,9 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
             case AxisBounds.Looped looped -> looped.chunkWidth();
             case AxisBounds.Unbounded() -> throw new IllegalStateException("chunkWidth() of an unbounded axis");
         };
+    }
+
+    public int maxViewDistance() {
+        return Math.min(x.maxViewDistance(), z.maxViewDistance());
     }
 }

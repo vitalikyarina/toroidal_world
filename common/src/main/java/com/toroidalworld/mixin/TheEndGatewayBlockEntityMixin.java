@@ -2,7 +2,7 @@ package com.toroidalworld.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -19,14 +19,14 @@ public class TheEndGatewayBlockEntityMixin {
     @WrapMethod(method = "findExitPortalXZPosTentative(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/Vec3;")
     private static Vec3 toroidal$foldTentativeTarget(ServerLevel level, BlockPos endGatewayPos, Operation<Vec3> original) {
         Vec3 tentative = original.call(level, endGatewayPos);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        return transformer == null ? tentative : transformer.vectors.wrap(tentative);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        return transformer == null ? tentative : transformer.fold(tentative);
     }
 
     @WrapMethod(method = "setExitPosition(Lnet/minecraft/core/BlockPos;Z)V")
     private void toroidal$foldExitPosition(BlockPos exactPosition, boolean exact, Operation<Void> original) {
         Level selfLevel = ((BlockEntity) (Object) this).getLevel();
-        WorldLoopTransformer transformer = selfLevel == null ? null : WorldLoopAttachments.wrappedTransformerOf(selfLevel);
-        original.call(transformer == null ? exactPosition : transformer.blocks.wrap(exactPosition), exact);
+        WorldFold transformer = selfLevel == null ? null : WorldLoopAttachments.wrappedTransformerOf(selfLevel);
+        original.call(transformer == null ? exactPosition : transformer.fold(exactPosition), exact);
     }
 }

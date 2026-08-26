@@ -10,7 +10,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.RelocatableBlockEntity;
 import com.toroidalworld.accessors.TransformerCache;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFold.Folded;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.gen.ShapedChunkGenerator;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -28,6 +30,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.AbortableIterationConsumer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -41,7 +44,7 @@ import net.minecraft.world.phys.AABB;
 @Mixin(Level.class)
 public class LevelMixin implements TransformerCache {
     @Unique
-    private WorldLoopTransformer toroidal$transformer;
+    private WorldFold toroidal$transformer;
 
     @WrapOperation(
             method = "getChunk(IILnet/minecraft/world/level/chunk/status/ChunkStatus;Z)Lnet/minecraft/world/level/chunk/ChunkAccess;",
@@ -50,12 +53,13 @@ public class LevelMixin implements TransformerCache {
                     target = "Lnet/minecraft/world/level/chunk/ChunkSource;getChunk(IILnet/minecraft/world/level/chunk/status/ChunkStatus;Z)Lnet/minecraft/world/level/chunk/ChunkAccess;"))
     private @Nullable ChunkAccess toroidal$wrapChunkAccess(ChunkSource chunkSource, int chunkX, int chunkZ,
             ChunkStatus status, boolean loadOrGenerate, Operation<@Nullable ChunkAccess> original) {
-        WorldLoopTransformer transformer = toroidal$transformer();
+        WorldFold transformer = toroidal$transformer();
         if (!transformer.isWrapped()) {
             return original.call(chunkSource, chunkX, chunkZ, status, loadOrGenerate);
         }
 
-        return original.call(chunkSource, transformer.chunks.x.wrap(chunkX), transformer.chunks.z.wrap(chunkZ),
+        long folded = transformer.foldChunkKey(ChunkPos.pack(chunkX, chunkZ));
+        return original.call(chunkSource, ChunkPos.getX(folded), ChunkPos.getZ(folded),
                 status, loadOrGenerate);
     }
 
@@ -77,17 +81,17 @@ public class LevelMixin implements TransformerCache {
 
     @Inject(method = "setBlockEntity", at = @At("HEAD"))
     private void toroidal$wrapBlockEntityIdentity(BlockEntity blockEntity, CallbackInfo ci) {
-        WorldLoopTransformer transformer = toroidal$transformer();
+        WorldFold transformer = toroidal$transformer();
         if (!transformer.isWrapped()) {
             return;
         }
 
         BlockPos pos = blockEntity.getBlockPos();
-        if (!transformer.coords.x.isOver(pos.getX()) && !transformer.coords.z.isOver(pos.getZ())) {
+        if (!transformer.isOver(pos)) {
             return;
         }
 
-        ((RelocatableBlockEntity) blockEntity).toroidal$relocate(transformer.blocks.wrap(pos));
+        ((RelocatableBlockEntity) blockEntity).toroidal$relocate(transformer.fold(pos));
     }
 
     @WrapOperation(
@@ -102,15 +106,15 @@ public class LevelMixin implements TransformerCache {
             return;
         }
 
-        List<AABB> pieces = toroidal$transformer().splitAcrossBounds(box);
+        List<Folded<AABB>> pieces = toroidal$transformer().split(box);
         if (pieces.size() == 1) {
-            original.call(entities, pieces.getFirst(), output);
+            original.call(entities, pieces.getFirst().value(), output);
             return;
         }
 
         Set<Entity> seen = Collections.newSetFromMap(new IdentityHashMap<>());
-        for (AABB piece : pieces) {
-            original.call(entities, piece, (Consumer<Entity>) entity -> {
+        for (Folded<AABB> piece : pieces) {
+            original.call(entities, piece.value(), (Consumer<Entity>) entity -> {
                 if (seen.add(entity)) {
                     output.accept(entity);
                 }
@@ -130,33 +134,33 @@ public class LevelMixin implements TransformerCache {
             return;
         }
 
-        List<AABB> pieces = toroidal$transformer().splitAcrossBounds(box);
+        List<Folded<AABB>> pieces = toroidal$transformer().split(box);
         if (pieces.size() == 1) {
-            original.call(entities, type, pieces.getFirst(), output);
+            original.call(entities, type, pieces.getFirst().value(), output);
             return;
         }
 
         Set<Entity> seen = Collections.newSetFromMap(new IdentityHashMap<>());
-        for (AABB piece : pieces) {
-            original.call(entities, type, piece, (AbortableIterationConsumer<U>) entity ->
+        for (Folded<AABB> piece : pieces) {
+            original.call(entities, type, piece.value(), (AbortableIterationConsumer<U>) entity ->
                     seen.add(entity) ? output.accept(entity) : AbortableIterationConsumer.Continuation.CONTINUE);
         }
     }
 
     @Unique
     private boolean toroidal$crossesSeam(AABB box) {
-        WorldLoopTransformer transformer = toroidal$transformer();
+        WorldFold transformer = toroidal$transformer();
         return transformer.isWrapped() && transformer.crossesBounds(box);
     }
 
     @Unique
     private BlockPos toroidal$wrap(BlockPos pos) {
-        WorldLoopTransformer transformer = toroidal$transformer();
-        return transformer.isWrapped() ? transformer.blocks.wrap(pos) : pos;
+        WorldFold transformer = toroidal$transformer();
+        return transformer.isWrapped() ? transformer.fold(pos) : pos;
     }
 
     @Override
-    public WorldLoopTransformer toroidal$transformer() {
+    public WorldFold toroidal$transformer() {
         if (this.toroidal$transformer == null) {
             this.toroidal$transformer = toroidal$resolveTransformer();
         }
@@ -165,16 +169,16 @@ public class LevelMixin implements TransformerCache {
     }
 
     @Unique
-    private WorldLoopTransformer toroidal$resolveTransformer() {
+    private WorldFold toroidal$resolveTransformer() {
         if (!((Object) this instanceof ServerLevel serverLevel)) {
-            return WorldLoopTransformer.NOOP;
+            return WorldFolds.NOOP;
         }
 
         if (serverLevel.getChunkSource().getGenerator() instanceof ShapedChunkGenerator shaped) {
             return shaped.transformer();
         }
 
-        return WorldLoopTransformer.NOOP;
+        return WorldFolds.NOOP;
     }
 
     @WrapMethod(method = "precipitationAt")
@@ -185,8 +189,8 @@ public class LevelMixin implements TransformerCache {
     }
 
     @Unique
-    private WorldLoopTransformer toroidal$precipitationTransformer() {
-        WorldLoopTransformer clientBounds =
+    private WorldFold toroidal$precipitationTransformer() {
+        WorldFold clientBounds =
                 WorldLoopAttachments.wrappedClientBoundsTransformerOf((Level) (Object) this);
         return clientBounds != null ? clientBounds : toroidal$transformer();
     }

@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -25,7 +25,7 @@ public class ServerLevelCapabilityMixin {
 
     @Unique
     private BlockPos toroidal$canonicalKey(BlockPos pos) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
-        return transformer == null ? pos : transformer.blocks.wrap(pos);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
+        return transformer == null ? pos : transformer.fold(pos);
     }
 }

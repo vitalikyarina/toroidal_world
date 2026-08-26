@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamAim;
 import com.toroidalworld.entity.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -40,12 +40,12 @@ public class TransportItemsBetweenContainersMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/AABB;move(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/AABB;"))
     private AABB toroidal$reachBoxThroughSeam(AABB targetBox, @Local(argsOnly = true) PathfinderMob body,
             @Local(argsOnly = true) Vec3 fromPos) {
-        WorldLoopTransformer transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
+        WorldFold transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
         if (transformer == null) {
             return targetBox;
         }
 
-        return transformer.foldBoxToward(fromPos, targetBox);
+        return transformer.foldBox(fromPos, targetBox).value();
     }
 
     @ModifyExpressionValue(
@@ -61,13 +61,13 @@ public class TransportItemsBetweenContainersMixin {
                     target = "Lnet/minecraft/world/level/Level;clip(Lnet/minecraft/world/level/ClipContext;)Lnet/minecraft/world/phys/BlockHitResult;"))
     private static BlockHitResult toroidal$sightHitThroughSeam(BlockHitResult hit,
             @Local(argsOnly = true) PathfinderMob body) {
-        WorldLoopTransformer transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
+        WorldFold transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
         if (transformer == null) {
             return hit;
         }
 
         BlockPos hitPos = hit.getBlockPos();
-        BlockPos wrapped = transformer.blocks.wrap(hitPos);
+        BlockPos wrapped = transformer.fold(hitPos);
         return wrapped == hitPos ? hit : hit.withPosition(wrapped);
     }
 }

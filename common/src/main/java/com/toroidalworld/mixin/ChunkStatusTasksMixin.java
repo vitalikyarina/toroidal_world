@@ -4,7 +4,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.spongepowered.asm.mixin.Mixin;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.PeriodicityCheck;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -39,7 +39,7 @@ public class ChunkStatusTasksMixin {
             StaticCache2D<GenerationChunkHolder> chunks,
             ChunkAccess chunk,
             Operation<CompletableFuture<ChunkAccess>> original) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.transformerOf(context.level());
+        WorldFold transformer = WorldLoopAttachments.transformerOf(context.level());
         if (transformer.isWrapped()) {
             PeriodicityCheck.runOnce(context.level(), transformer);
         }

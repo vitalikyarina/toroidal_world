@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.LevelBindable;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -20,7 +20,7 @@ public class SectionTrackerMixin implements LevelBindable {
     private @Nullable ServerLevel toroidal$level;
 
     @Unique
-    private @Nullable WorldLoopTransformer toroidal$boundTransformer;
+    private @Nullable WorldFold toroidal$boundTransformer;
 
     @Override
     public void toroidal$bindLevel(ServerLevel level) {
@@ -33,13 +33,13 @@ public class SectionTrackerMixin implements LevelBindable {
     private long toroidal$physicalNeighborSection(
             long sectionNode, int stepX, int stepY, int stepZ, Operation<Long> original) {
         long neighbor = original.call(sectionNode, stepX, stepY, stepZ);
-        WorldLoopTransformer transformer = this.toroidal$transformer();
-        return transformer == null ? neighbor : transformer.chunks.wrapSectionNode(neighbor);
+        WorldFold transformer = this.toroidal$transformer();
+        return transformer == null ? neighbor : transformer.foldSectionNode(neighbor);
     }
 
     @Unique
-    private @Nullable WorldLoopTransformer toroidal$transformer() {
-        WorldLoopTransformer transformer = this.toroidal$boundTransformer;
+    private @Nullable WorldFold toroidal$transformer() {
+        WorldFold transformer = this.toroidal$boundTransformer;
         if (transformer == null) {
             ServerLevel level = this.toroidal$level;
             if (level == null) {

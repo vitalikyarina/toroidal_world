@@ -2,7 +2,7 @@ package com.toroidalworld.compat.c2me;
 
 import java.util.Objects;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.SlotAxes;
 
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
@@ -20,11 +20,11 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
 
     public final double horizontalScale;
 
-    public final WorldLoopTransformer transformer;
+    public final WorldFold transformer;
 
     public C2meFoldedNoiseNode(AstNode inputX, AstNode inputY, AstNode inputZ, DensityFunction.NoiseHolder noise,
             AstNode foldedX, AstNode foldedY, AstNode foldedZ, SlotAxes slotAxes,
-            double horizontalScale, WorldLoopTransformer transformer) {
+            double horizontalScale, WorldFold transformer) {
         super(inputX, inputY, inputZ, noise);
         this.foldedX = Objects.requireNonNull(foldedX);
         this.foldedY = Objects.requireNonNull(foldedY);

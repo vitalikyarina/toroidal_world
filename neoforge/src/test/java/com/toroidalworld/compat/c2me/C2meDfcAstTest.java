@@ -17,7 +17,7 @@ import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.ContextScaledNoise;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
@@ -27,6 +27,7 @@ import com.ishland.c2me.opts.dfc.common.ast.binary.MulNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.ConstantNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.CoordinateNode;
 
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunctions;
 
@@ -76,15 +77,15 @@ class C2meDfcAstTest {
                 withLiveNoise(DensityFunctions.shift(NOISE_DATA)),
                 withLiveNoise(DensityFunctions.shiftA(NOISE_DATA)),
                 withLiveNoise(DensityFunctions.shiftB(NOISE_DATA)))) {
-            for (WorldLoopTransformer transformer : WORLDS) {
+            for (WorldFold transformer : WORLDS) {
                 AstNode folded = GenerationTransformerContext.withRouterBuild(transformer, () -> McToAst.toAst(source));
-                int xWidth = transformer.coords.x.domainLength;
-                int zWidth = transformer.coords.z.domainLength;
+                int xWidth = transformer.blockDomain(Direction.Axis.X).domainLength;
+                int zWidth = transformer.blockDomain(Direction.Axis.Z).domainLength;
 
                 for (int i = 0; i < PERIODICITY_SAMPLES; i++) {
-                    int x = blockIn(random, transformer.coords.x);
+                    int x = blockIn(random, transformer.blockDomain(Direction.Axis.X));
                     int y = blockY(random);
-                    int z = blockIn(random, transformer.coords.z);
+                    int z = blockIn(random, transformer.blockDomain(Direction.Axis.Z));
 
                     assertEquals(sampleFolded(folded, x, y, z), sampleFolded(folded, x + xWidth, y, z),
                             "x lap of " + source + " in " + transformer + " at (" + x + ", " + y + ", " + z + ")");

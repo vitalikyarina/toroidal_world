@@ -6,8 +6,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.command.SeamCommandErrors;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
+import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -15,6 +16,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.datafixers.util.Either;
 
+import net.minecraft.core.Direction;
 import net.minecraft.core.QuartPos;
 import net.minecraft.server.commands.FillBiomeCommand;
 import net.minecraft.server.level.ServerLevel;
@@ -53,14 +55,14 @@ public class FillBiomeCommandMixin {
     private static void toroidal$fillInTheRegionsFrame(ChunkAccess chunk, BiomeResolver resolver,
             Climate.Sampler sampler, Operation<Void> original,
             @Local(argsOnly = true) ServerLevel level, @Local BoundingBox region) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             original.call(chunk, resolver, sampler);
             return;
         }
 
-        boolean foldX = toroidal$leavesTheWorld(transformer.coords.x, region.minX(), region.maxX());
-        boolean foldZ = toroidal$leavesTheWorld(transformer.coords.z, region.minZ(), region.maxZ());
+        boolean foldX = toroidal$leavesTheWorld(transformer.bounds().x(), region.minX(), region.maxX());
+        boolean foldZ = toroidal$leavesTheWorld(transformer.bounds().z(), region.minZ(), region.maxZ());
         if (!foldX && !foldZ) {
             original.call(chunk, resolver, sampler);
             return;
@@ -69,16 +71,16 @@ public class FillBiomeCommandMixin {
         int regionMinX = region.minX();
         int regionMinZ = region.minZ();
         BiomeResolver inFrame = (quartX, quartY, quartZ, resolverSampler) -> resolver.getNoiseBiome(
-                foldX ? toroidal$quartInRegionsFrame(transformer.coords.x, regionMinX, quartX) : quartX,
+                foldX ? toroidal$quartInRegionsFrame(transformer.blockDomain(Direction.Axis.X), regionMinX, quartX) : quartX,
                 quartY,
-                foldZ ? toroidal$quartInRegionsFrame(transformer.coords.z, regionMinZ, quartZ) : quartZ,
+                foldZ ? toroidal$quartInRegionsFrame(transformer.blockDomain(Direction.Axis.Z), regionMinZ, quartZ) : quartZ,
                 resolverSampler);
 
         original.call(chunk, inFrame, sampler);
     }
 
-    private static boolean toroidal$leavesTheWorld(WrapDomain domain, int minCoord, int maxCoord) {
-        return domain.isOver(minCoord) || domain.isOver(maxCoord);
+    private static boolean toroidal$leavesTheWorld(AxisBounds axis, int minCoord, int maxCoord) {
+        return axis.isOver(minCoord) || axis.isOver(maxCoord);
     }
 
     private static int toroidal$quartInRegionsFrame(WrapDomain domain, int regionMinCoord, int quart) {

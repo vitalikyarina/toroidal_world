@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Shadow;
 
 import com.toroidalworld.accessors.NavigationShifter;
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
@@ -29,13 +29,13 @@ public class MoveControlMixin implements NavigationShifter {
     @WrapMethod(method = "setWantedPosition")
     private void toroidal$wantedPositionThroughSeam(double x, double y, double z, double speedModifier,
             Operation<Void> original) {
-        WorldLoopTransformer transformer = ((TransformerSource) this.mob).toroidal$wrappedTransformer();
+        WorldFold transformer = ((TransformerSource) this.mob).toroidal$wrappedTransformer();
         if (transformer == null) {
             original.call(x, y, z, speedModifier);
             return;
         }
 
-        Vec3 nearest = transformer.vectors.nearestCopy(this.mob.position(), new Vec3(x, y, z));
+        Vec3 nearest = transformer.nearestCopy(this.mob.position(), new Vec3(x, y, z));
         original.call(nearest.x, nearest.y, nearest.z, speedModifier);
     }
 
