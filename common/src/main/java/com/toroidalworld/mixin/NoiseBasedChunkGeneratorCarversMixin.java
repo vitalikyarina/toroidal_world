@@ -28,7 +28,7 @@ public class NoiseBasedChunkGeneratorCarversMixin {
             return;
         }
 
-        long folded = transformer.foldChunkKey(ChunkPos.pack(sourceChunkX, sourceChunkZ));
+        long folded = transformer.foldChunkKey(ChunkPos.asLong(sourceChunkX, sourceChunkZ));
         original.call(random, seed,
                 ChunkPos.getX(folded), ChunkPos.getZ(folded));
     }

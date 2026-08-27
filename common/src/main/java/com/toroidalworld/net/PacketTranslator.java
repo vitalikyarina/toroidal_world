@@ -335,8 +335,8 @@ public final class PacketTranslator {
         Set<RelativeMovement> relatives = packet.getRelativeArguments();
         boolean relativeX = relatives.contains(RelativeMovement.X);
         boolean relativeZ = relatives.contains(RelativeMovement.Z);
-        double foldedX = relativeX ? context.transformer().coords.x.foldDelta(packet.getX()) : 0.0;
-        double foldedZ = relativeZ ? context.transformer().coords.z.foldDelta(packet.getZ()) : 0.0;
+        double foldedX = relativeX ? SeamDelta.foldX(context.transformer(), packet.getX()) : 0.0;
+        double foldedZ = relativeZ ? SeamDelta.foldZ(context.transformer(), packet.getZ()) : 0.0;
         double clientX = relativeX ? clientPosition.x() + foldedX : context.nearestCopyX(packet.getX());
         double clientZ = relativeZ ? clientPosition.z() + foldedZ : context.nearestCopyZ(packet.getZ());
         clientPosition.set(clientX, clientZ, MirrorWriter.POSITION_PACKET);

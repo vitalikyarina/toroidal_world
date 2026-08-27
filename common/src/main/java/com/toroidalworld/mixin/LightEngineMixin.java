@@ -50,7 +50,7 @@ public abstract class LightEngineMixin implements TransformerHolder {
             return original.call(source, chunkX, chunkZ);
         }
 
-        long folded = transformer.foldChunkKey(ChunkPos.pack(chunkX, chunkZ));
+        long folded = transformer.foldChunkKey(ChunkPos.asLong(chunkX, chunkZ));
         return original.call(source, ChunkPos.getX(folded), ChunkPos.getZ(folded));
     }
 

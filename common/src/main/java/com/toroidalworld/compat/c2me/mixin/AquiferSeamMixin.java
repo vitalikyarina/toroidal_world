@@ -36,7 +36,7 @@ public class AquiferSeamMixin {
             return;
         }
 
-        long canonical = transformer.foldChunkKey(ChunkPos.pack(gridX, gridZ));
+        long canonical = transformer.foldChunkKey(ChunkPos.asLong(gridX, gridZ));
         original.call(factory, random, ChunkPos.getX(canonical), gridY, ChunkPos.getZ(canonical));
     }
 }

@@ -148,7 +148,7 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
             return original.call(chunkX, chunkZ);
         }
 
-        long folded = transformer.foldChunkKey(ChunkPos.pack(chunkX, chunkZ));
+        long folded = transformer.foldChunkKey(ChunkPos.asLong(chunkX, chunkZ));
         return original.call(ChunkPos.getX(folded), ChunkPos.getZ(folded));
     }
 

@@ -249,7 +249,7 @@ final class WorldLoopTransformer implements WorldFold {
 
     @Override
     public int chunkOvershoot(ChunkPos pos) {
-        return chunks.overshoot(pos.x(), pos.z());
+        return chunks.overshoot(pos.x, pos.z);
     }
 
     @Override

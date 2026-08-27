@@ -82,12 +82,12 @@ public final class DeckGroupFold implements WorldFold {
 
     @Override
     public boolean isOver(ChunkPos pos) {
-        return this.chunks.x.isOver(pos.x()) || this.chunks.z.isOver(pos.z());
+        return this.chunks.x.isOver(pos.x) || this.chunks.z.isOver(pos.z);
     }
 
     @Override
     public int chunkOvershoot(ChunkPos pos) {
-        return Math.max(this.chunks.x.overshoot(pos.x()), this.chunks.z.overshoot(pos.z()));
+        return Math.max(this.chunks.x.overshoot(pos.x), this.chunks.z.overshoot(pos.z));
     }
 
     @Override

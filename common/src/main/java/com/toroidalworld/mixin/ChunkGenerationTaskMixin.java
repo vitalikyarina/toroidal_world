@@ -75,8 +75,8 @@ public class ChunkGenerationTaskMixin {
         }
 
         ChunkPos wrapped = transformer.fold(slot);
-        int wrappedX = wrapped.x();
-        int wrappedZ = wrapped.z();
+        int wrappedX = wrapped.x;
+        int wrappedZ = wrapped.z;
 
         if (map.getUpdatingChunkIfPresent(ChunkPos.asLong(wrappedX, wrappedZ)) == null) {
             toroidal$LOGGER.warn(

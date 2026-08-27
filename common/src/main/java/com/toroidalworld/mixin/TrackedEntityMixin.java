@@ -51,7 +51,7 @@ public class TrackedEntityMixin {
             return original.call(chunkMap, player, chunkX, chunkZ);
         }
 
-        long folded = transformer.foldChunkKey(ChunkPos.pack(chunkX, chunkZ));
+        long folded = transformer.foldChunkKey(ChunkPos.asLong(chunkX, chunkZ));
         return original.call(chunkMap, player, ChunkPos.getX(folded), ChunkPos.getZ(folded));
     }
 }

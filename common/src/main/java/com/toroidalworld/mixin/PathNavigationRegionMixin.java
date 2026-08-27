@@ -34,7 +34,7 @@ public class PathNavigationRegionMixin {
             return original.call(chunkSource, chunkX, chunkZ);
         }
 
-        long folded = transformer.foldChunkKey(ChunkPos.pack(chunkX, chunkZ));
+        long folded = transformer.foldChunkKey(ChunkPos.asLong(chunkX, chunkZ));
         return original.call(chunkSource, ChunkPos.getX(folded), ChunkPos.getZ(folded));
     }
 }

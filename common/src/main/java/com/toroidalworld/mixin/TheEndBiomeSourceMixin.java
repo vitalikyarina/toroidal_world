@@ -49,7 +49,7 @@ public class TheEndBiomeSourceMixin {
         }
 
         int blockY = QuartPos.toBlock(quartY);
-        long chunk = transformer.foldChunkKey(ChunkPos.pack(
+        long chunk = transformer.foldChunkKey(ChunkPos.asLong(
                 SectionPos.blockToSectionCoord(QuartPos.toBlock(quartX)),
                 SectionPos.blockToSectionCoord(QuartPos.toBlock(quartZ))));
         int chunkX = ChunkPos.getX(chunk);
