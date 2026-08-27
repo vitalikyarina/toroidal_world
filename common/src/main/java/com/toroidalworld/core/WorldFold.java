@@ -104,5 +104,9 @@ public interface WorldFold {
 
     boolean regionsOverlap(BoundingBox first, BoundingBox second);
 
+    List<DeckTransformation> copiesTouching(BoundingBox region, int reach);
+
+    boolean foldsOntoItself(BoundingBox region);
+
     Folded<AABB> foldBox(Vec3 ref, AABB box);
 }
