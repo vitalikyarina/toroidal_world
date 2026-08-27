@@ -1,9 +1,6 @@
 package com.toroidalworld.player;
 
-import org.jspecify.annotations.Nullable;
-
 import com.toroidalworld.accessors.NavigationShifter;
-import com.toroidalworld.mixin.EntityAccessor;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -20,12 +17,6 @@ public final class SeamSnap {
         entity.xOld += shift.x;
         entity.yOld += shift.y;
         entity.zOld += shift.z;
-        EntityAccessor stored = (EntityAccessor) entity;
-        @Nullable Vec3 known = stored.toroidal$lastKnownPosition();
-        if (known != null) {
-            stored.toroidal$setLastKnownPosition(known.add(shift));
-        }
-
         if (entity instanceof Mob mob) {
             int shiftX = (int) Math.round(shift.x);
             int shiftZ = (int) Math.round(shift.z);
