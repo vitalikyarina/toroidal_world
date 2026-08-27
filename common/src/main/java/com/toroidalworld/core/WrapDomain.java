@@ -153,6 +153,16 @@ public class WrapDomain {
         return Math.floorDiv(highestShift, domainLength) * (long) domainLength >= lowestShift;
     }
 
+    public int[] laps(int regionMin, int regionMax) {
+        return lapsBetween(lowerBound, upperBound - 1, regionMin, regionMax);
+    }
+
+    public int[] lapsBetween(int spanMin, int spanMax, int regionMin, int regionMax) {
+        return new int[] {
+                Math.toIntExact(Math.ceilDiv((long) regionMin - spanMax, domainLength)),
+                Math.toIntExact(Math.floorDiv((long) regionMax - spanMin, domainLength))};
+    }
+
     public double foldDelta(double delta) {
         if (delta > halfLength) {
             return delta - domainLength;
@@ -323,6 +333,16 @@ public class WrapDomain {
         @Override
         public boolean overlaps(int aMin, int aMax, int bMin, int bMax) {
             return aMin <= bMax && bMin <= aMax;
+        }
+
+        @Override
+        public int[] laps(int regionMin, int regionMax) {
+            return new int[] {0, 0};
+        }
+
+        @Override
+        public int[] lapsBetween(int spanMin, int spanMax, int regionMin, int regionMax) {
+            return spanMin <= regionMax && regionMin <= spanMax ? new int[] {0, 0} : new int[] {0, -1};
         }
 
         @Override
