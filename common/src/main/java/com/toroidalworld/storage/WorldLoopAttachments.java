@@ -34,7 +34,7 @@ public final class WorldLoopAttachments {
         return transformer.isWrapped() ? transformer : null;
     }
 
-    public static @Nullable Level levelOf(LevelReader reader) {
+    private static @Nullable Level levelOf(LevelReader reader) {
         if (reader instanceof ServerLevelAccessor accessor) {
             return accessor.getLevel();
         }

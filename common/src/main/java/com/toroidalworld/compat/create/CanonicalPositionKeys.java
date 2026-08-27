@@ -15,7 +15,6 @@ import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 
 public final class CanonicalPositionKeys {
@@ -30,12 +29,7 @@ public final class CanonicalPositionKeys {
     }
 
     private static @Nullable WorldFold transformerOf(@Nullable BlockGetter reader) {
-        if (!(reader instanceof LevelReader levelReader)) {
-            return null;
-        }
-
-        Level level = WorldLoopAttachments.levelOf(levelReader);
-        return level == null ? null : WorldLoopAttachments.wrappedTransformerOf(level);
+        return reader instanceof LevelReader levelReader ? WorldLoopAttachments.wrappedTransformerOfReader(levelReader) : null;
     }
 
     private static Object key(WorldFold transformer, Object candidate) {
