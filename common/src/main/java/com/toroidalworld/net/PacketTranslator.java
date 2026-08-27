@@ -27,6 +27,7 @@ import com.toroidalworld.mixin.SetBorderCenterPacketAccessor;
 import com.toroidalworld.mixin.Vec3iWaypointAccessor;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
+import com.toroidalworld.player.MirrorWriter;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -318,7 +319,7 @@ public final class PacketTranslator {
         double foldedZ = relativeZ ? SeamDelta.foldZ(context.transformer(), position.z) : 0.0;
         double clientX = relativeX ? clientPosition.x() + foldedX : context.nearestCopyX(position.x);
         double clientZ = relativeZ ? clientPosition.z() + foldedZ : context.nearestCopyZ(position.z);
-        clientPosition.set(clientX, clientZ);
+        clientPosition.set(clientX, clientZ, MirrorWriter.POSITION_PACKET);
 
         Vec3 sentPosition = new Vec3(relativeX ? foldedX : clientX, position.y, relativeZ ? foldedZ : clientZ);
         return new ClientboundPlayerPositionPacket(

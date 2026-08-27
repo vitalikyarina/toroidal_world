@@ -15,6 +15,7 @@ import com.toroidalworld.accessors.TrackedEntityRefresher;
 import com.toroidalworld.core.SeamDelta;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.player.ClientPosition;
+import com.toroidalworld.player.MirrorWriter;
 import com.toroidalworld.player.SeamSnap;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -215,7 +216,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         }
 
         ClientPosition mirror = this.toroidal$clientPosition;
-        mirror.setX(clamped);
+        mirror.setX(clamped, MirrorWriter.PLAYER_MOVE);
         double unwrapped = transformer.blockDomain(Direction.Axis.X).unwrapAround(this.player.getX(), clamped);
 
         this.firstGoodX = transformer.blockDomain(Direction.Axis.X).unwrapAround(unwrapped, this.firstGoodX);
@@ -238,7 +239,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         }
 
         ClientPosition mirror = this.toroidal$clientPosition;
-        mirror.setZ(clamped);
+        mirror.setZ(clamped, MirrorWriter.PLAYER_MOVE);
         double unwrapped = transformer.blockDomain(Direction.Axis.Z).unwrapAround(this.player.getZ(), clamped);
 
         this.firstGoodZ = transformer.blockDomain(Direction.Axis.Z).unwrapAround(unwrapped, this.firstGoodZ);
@@ -274,7 +275,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             return clamped;
         }
 
-        WorldLoopAttachments.clientPositionOf(this.player).setX(clamped);
+        WorldLoopAttachments.clientPositionOf(this.player).setX(clamped, MirrorWriter.VEHICLE_MOVE);
         return transformer.blockDomain(Direction.Axis.X).unwrapAround(this.player.getRootVehicle().getX(), clamped);
     }
 
@@ -291,7 +292,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             return clamped;
         }
 
-        WorldLoopAttachments.clientPositionOf(this.player).setZ(clamped);
+        WorldLoopAttachments.clientPositionOf(this.player).setZ(clamped, MirrorWriter.VEHICLE_MOVE);
         return transformer.blockDomain(Direction.Axis.Z).unwrapAround(this.player.getRootVehicle().getZ(), clamped);
     }
 
