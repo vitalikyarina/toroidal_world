@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.platform.Window;
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
 
 import journeymap.api.v2.client.display.Context;
@@ -146,9 +147,10 @@ public abstract class MapRendererMixin {
 
         double periodX = JourneyMapFold.worldPixelPeriod(Direction.Axis.X, this.zoom);
         double periodZ = JourneyMapFold.worldPixelPeriod(Direction.Axis.Z, this.zoom);
-        int tiles = JourneyMapFold.tilesWithContent(this.zoom, graphics.guiWidth(), graphics.guiHeight());
-        int rangeX = JourneyMapFold.copyRange(loopedAxes, tiles, periodX, graphics.guiWidth());
-        int rangeZ = JourneyMapFold.copyRange(loopedAxes, tiles, periodZ, graphics.guiHeight());
+        Window window = Minecraft.getInstance().getWindow();
+        int tiles = JourneyMapFold.tilesWithContent(this.zoom, window.getWidth(), window.getHeight());
+        int rangeX = JourneyMapFold.copyRange(loopedAxes, tiles, periodX, window.getWidth());
+        int rangeZ = JourneyMapFold.copyRange(loopedAxes, tiles, periodZ, window.getHeight());
         if (this.contextUi == Context.UI.Fullscreen) {
             JourneyMapFold.recordFullscreenCopyRange(rangeX, rangeZ);
         }

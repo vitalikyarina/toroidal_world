@@ -80,19 +80,6 @@ public final class XaeroWorldMapFold {
         return shape == null ? coord : shape.foldBlock(axis, coord);
     }
 
-    public static boolean withinOnePeriod(int viewBlockX, int foldedBlockX, int viewBlockZ, int foldedBlockZ) {
-        ToroidalShape shape = shape();
-        if (shape == null) {
-            return false;
-        }
-
-        if (shape.loops(Direction.Axis.X) && Math.abs(viewBlockX - foldedBlockX) > shape.widthBlocks(Direction.Axis.X)) {
-            return false;
-        }
-
-        return !shape.loops(Direction.Axis.Z) || Math.abs(viewBlockZ - foldedBlockZ) <= shape.widthBlocks(Direction.Axis.Z);
-    }
-
     public static boolean glueableAt(int slotSizeBlocks) {
         ToroidalShape shape = shape();
         if (shape == null) {

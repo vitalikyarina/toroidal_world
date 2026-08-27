@@ -218,10 +218,6 @@ public abstract class GuiMapMixin {
         }
 
         this.toroidal$slotFolded = true;
-        if (!XaeroWorldMapFold.withinOnePeriod(viewBlockX, foldedBlockX, viewBlockZ, foldedBlockZ)) {
-            return null;
-        }
-
         int canonicalRegX = Math.floorDiv(foldedBlockX, side);
         int canonicalRegZ = Math.floorDiv(foldedBlockZ, side);
         LeveledRegion<?> canonical = this.toroidal$processor
