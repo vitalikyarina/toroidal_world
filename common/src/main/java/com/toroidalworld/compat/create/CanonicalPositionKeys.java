@@ -10,7 +10,7 @@ import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -20,16 +20,16 @@ import net.minecraft.world.level.LevelReader;
 
 public final class CanonicalPositionKeys {
     public static Set<BlockPos> set(@Nullable BlockGetter reader) {
-        WorldLoopTransformer transformer = transformerOf(reader);
+        WorldFold transformer = transformerOf(reader);
         return transformer == null ? new HashSet<>() : new CanonicalSet(transformer);
     }
 
     public static <V> Map<BlockPos, V> map(@Nullable BlockGetter reader) {
-        WorldLoopTransformer transformer = transformerOf(reader);
+        WorldFold transformer = transformerOf(reader);
         return transformer == null ? new HashMap<>() : new CanonicalMap<>(transformer);
     }
 
-    private static @Nullable WorldLoopTransformer transformerOf(@Nullable BlockGetter reader) {
+    private static @Nullable WorldFold transformerOf(@Nullable BlockGetter reader) {
         if (!(reader instanceof LevelReader levelReader)) {
             return null;
         }
@@ -38,21 +38,21 @@ public final class CanonicalPositionKeys {
         return level == null ? null : WorldLoopAttachments.wrappedTransformerOf(level);
     }
 
-    private static Object key(WorldLoopTransformer transformer, Object candidate) {
-        return candidate instanceof BlockPos pos ? transformer.blocks.wrap(pos) : candidate;
+    private static Object key(WorldFold transformer, Object candidate) {
+        return candidate instanceof BlockPos pos ? transformer.fold(pos) : candidate;
     }
 
     private static final class CanonicalSet extends AbstractSet<BlockPos> {
-        private final WorldLoopTransformer transformer;
+        private final WorldFold transformer;
         private final Set<BlockPos> keys = new HashSet<>();
 
-        private CanonicalSet(WorldLoopTransformer transformer) {
+        private CanonicalSet(WorldFold transformer) {
             this.transformer = transformer;
         }
 
         @Override
         public boolean add(BlockPos pos) {
-            return keys.add(transformer.blocks.wrap(pos));
+            return keys.add(transformer.fold(pos));
         }
 
         @Override
@@ -82,16 +82,16 @@ public final class CanonicalPositionKeys {
     }
 
     private static final class CanonicalMap<V> extends AbstractMap<BlockPos, V> {
-        private final WorldLoopTransformer transformer;
+        private final WorldFold transformer;
         private final Map<BlockPos, V> entries = new HashMap<>();
 
-        private CanonicalMap(WorldLoopTransformer transformer) {
+        private CanonicalMap(WorldFold transformer) {
             this.transformer = transformer;
         }
 
         @Override
         public @Nullable V put(BlockPos pos, V value) {
-            return entries.put(transformer.blocks.wrap(pos), value);
+            return entries.put(transformer.fold(pos), value);
         }
 
         @Override

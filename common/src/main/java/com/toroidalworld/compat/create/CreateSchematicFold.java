@@ -3,9 +3,10 @@ package com.toroidalworld.compat.create;
 import org.jspecify.annotations.Nullable;
 
 import com.simibubi.create.AllDataComponents;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
+import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -39,12 +40,12 @@ public final class CreateSchematicFold {
     }
 
     public static AABB glueInScanFrame(@Nullable Level level, AABB scanBox, AABB glueBox) {
-        WorldLoopTransformer transformer = seamTransformer(level);
+        WorldFold transformer = seamTransformer(level);
         if (transformer == null) {
             return glueBox;
         }
 
-        return transformer.foldBoxToward(scanBox.getCenter(), glueBox);
+        return transformer.foldBox(scanBox.getCenter(), glueBox).value();
     }
 
     public static BlockPos scannedControllerNear(@Nullable Level level, BlockPos lastKnown, BlockPos controller) {
@@ -52,15 +53,17 @@ public final class CreateSchematicFold {
     }
 
     public static boolean regionExceedsWorld(@Nullable Level level, BlockPos first, BlockPos second) {
-        WorldLoopTransformer transformer = seamTransformer(level);
+        WorldFold transformer = seamTransformer(level);
         if (transformer == null) {
             return false;
         }
 
-        return transformer.exceedsWorld(BoundingBox.fromCorners(first, second));
+        BoundingBox region = BoundingBox.fromCorners(first, second);
+        return transformer.blockDomain(Direction.Axis.X).exceedsWorld(region.minX(), region.maxX())
+                || transformer.blockDomain(Direction.Axis.Z).exceedsWorld(region.minZ(), region.maxZ());
     }
 
-    private static @Nullable WorldLoopTransformer seamTransformer(@Nullable Level level) {
+    private static @Nullable WorldFold seamTransformer(@Nullable Level level) {
         return level == null ? null : WorldLoopAttachments.wrappedTransformerOfReader(level);
     }
 

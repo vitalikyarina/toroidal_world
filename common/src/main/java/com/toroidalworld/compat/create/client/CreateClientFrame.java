@@ -7,7 +7,7 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.compat.create.CreateTrackFold;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -77,8 +77,8 @@ public final class CreateClientFrame {
             return box;
         }
 
-        WorldLoopTransformer transformer = CreateTrackFold.transformerOf(level, null);
-        return transformer == null ? box : transformer.foldBoxToward(anchor, box);
+        WorldFold transformer = CreateTrackFold.transformerOf(level, null);
+        return transformer == null ? box : transformer.foldBox(anchor, box).value();
     }
 
     public static @Nullable Vec3 camera() {

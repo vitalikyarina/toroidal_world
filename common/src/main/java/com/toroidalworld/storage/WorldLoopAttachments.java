@@ -46,23 +46,23 @@ public final class WorldLoopAttachments {
         return null;
     }
 
-    public static @Nullable WorldLoopTransformer wrappedTransformerOfReader(LevelReader reader) {
+    public static @Nullable WorldFold wrappedTransformerOfReader(LevelReader reader) {
         Level level = levelOf(reader);
         if (level == null) {
             return null;
         }
 
-        WorldLoopTransformer clientBounds = wrappedClientBoundsTransformerOf(level);
+        WorldFold clientBounds = wrappedClientBoundsTransformerOf(level);
         return clientBounds != null ? clientBounds : wrappedTransformerOf(level);
     }
 
-    public static @Nullable WorldLoopTransformer noiseTransformerOf(LevelReader reader) {
+    public static @Nullable WorldFold noiseTransformerOf(LevelReader reader) {
         Level level = levelOf(reader);
         if (level == null) {
             return null;
         }
 
-        WorldLoopTransformer clientBounds = wrappedClientBoundsTransformerOf(level);
+        WorldFold clientBounds = wrappedClientBoundsTransformerOf(level);
         return clientBounds != null ? clientBounds : transformerOf(level);
     }
 

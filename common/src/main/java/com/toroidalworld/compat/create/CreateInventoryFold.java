@@ -5,7 +5,7 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 import com.simibubi.create.api.packager.InventoryIdentifier;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.createmod.catnip.math.BlockFace;
@@ -19,7 +19,7 @@ public final class CreateInventoryFold {
             return null;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return identifier;
         }
@@ -27,25 +27,25 @@ public final class CreateInventoryFold {
         return new SeamIdentifier(canonical(transformer, identifier), transformer);
     }
 
-    private static InventoryIdentifier canonical(WorldLoopTransformer transformer, InventoryIdentifier identifier) {
+    private static InventoryIdentifier canonical(WorldFold transformer, InventoryIdentifier identifier) {
         return switch (identifier) {
             case InventoryIdentifier.Single single ->
-                    new InventoryIdentifier.Single(transformer.blocks.wrap(single.pos()));
+                    new InventoryIdentifier.Single(transformer.fold(single.pos()));
             case InventoryIdentifier.MultiFace multiFace ->
-                    new InventoryIdentifier.MultiFace(transformer.blocks.wrap(multiFace.pos()), multiFace.sides());
+                    new InventoryIdentifier.MultiFace(transformer.fold(multiFace.pos()), multiFace.sides());
             case InventoryIdentifier.Pair pair -> new InventoryIdentifier.Pair(
-                    transformer.blocks.wrap(pair.first()), transformer.blocks.wrap(pair.second()));
+                    transformer.fold(pair.first()), transformer.fold(pair.second()));
             case InventoryIdentifier.Bounds bounds -> seamBounds(transformer, bounds);
             default -> identifier;
         };
     }
 
-    private static InventoryIdentifier seamBounds(WorldLoopTransformer transformer, InventoryIdentifier.Bounds bounds) {
+    private static InventoryIdentifier seamBounds(WorldFold transformer, InventoryIdentifier.Bounds bounds) {
         if (!transformer.crossesBounds(bounds.bounds())) {
             return bounds;
         }
 
-        return new SeamBounds(List.copyOf(transformer.splitAcrossBounds(bounds.bounds())));
+        return new SeamBounds(transformer.split(bounds.bounds()).stream().map(WorldFold.Folded::value).toList());
     }
 
     private CreateInventoryFold() {
@@ -53,16 +53,16 @@ public final class CreateInventoryFold {
 
     private static final class SeamIdentifier implements InventoryIdentifier {
         private final InventoryIdentifier canonical;
-        private final WorldLoopTransformer transformer;
+        private final WorldFold transformer;
 
-        private SeamIdentifier(InventoryIdentifier canonical, WorldLoopTransformer transformer) {
+        private SeamIdentifier(InventoryIdentifier canonical, WorldFold transformer) {
             this.canonical = canonical;
             this.transformer = transformer;
         }
 
         @Override
         public boolean contains(BlockFace face) {
-            BlockPos canonicalPos = transformer.blocks.wrap(face.getPos());
+            BlockPos canonicalPos = transformer.fold(face.getPos());
             return canonical.contains(
                     canonicalPos == face.getPos() ? face : new BlockFace(canonicalPos, face.getFace()));
         }

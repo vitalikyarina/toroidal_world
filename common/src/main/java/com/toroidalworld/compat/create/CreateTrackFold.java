@@ -3,7 +3,7 @@ package com.toroidalworld.compat.create;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.CoordinateConstants;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.storage.CurrentServer;
@@ -27,10 +27,10 @@ public final class CreateTrackFold {
     public record NodeKeyAxes(WrapDomain x, WrapDomain z) {
     }
 
-    private record NodeKeyMemo(WorldLoopTransformer transformer, NodeKeyAxes axes) {
+    private record NodeKeyMemo(WorldFold transformer, NodeKeyAxes axes) {
     }
 
-    public static @Nullable WorldLoopTransformer transformerOf(@Nullable Level level,
+    public static @Nullable WorldFold transformerOf(@Nullable Level level,
             @Nullable ResourceKey<Level> dimension) {
         if (level != null) {
             return WorldLoopAttachments.wrappedTransformerOfReader(level);
@@ -49,14 +49,14 @@ public final class CreateTrackFold {
         return serverLevel == null ? null : WorldLoopAttachments.wrappedTransformerOf(serverLevel);
     }
 
-    public static NodeKeyAxes nodeKeyAxes(WorldLoopTransformer transformer) {
+    public static NodeKeyAxes nodeKeyAxes(WorldFold transformer) {
         NodeKeyMemo memo = nodeKeyMemo;
         if (memo != null && memo.transformer() == transformer) {
             return memo.axes();
         }
 
         NodeKeyAxes axes =
-                new NodeKeyAxes(nodeKeyDomain(transformer.bounds.x()), nodeKeyDomain(transformer.bounds.z()));
+                new NodeKeyAxes(nodeKeyDomain(transformer.bounds().x()), nodeKeyDomain(transformer.bounds().z()));
         nodeKeyMemo = new NodeKeyMemo(transformer, axes);
         return axes;
     }
@@ -70,22 +70,22 @@ public final class CreateTrackFold {
     }
 
     public static BlockPos nearestCopy(@Nullable Level level, BlockPos anchor, BlockPos target) {
-        WorldLoopTransformer transformer = transformerOf(level, null);
-        return transformer == null ? target : transformer.blocks.nearestCopy(anchor, target);
+        WorldFold transformer = transformerOf(level, null);
+        return transformer == null ? target : transformer.nearestCopy(anchor, target);
     }
 
-    private static Vec3 nearestCopy(@Nullable WorldLoopTransformer transformer, Vec3 anchor, Vec3 target) {
-        return transformer == null ? target : transformer.vectors.nearestCopy(anchor, target);
+    private static Vec3 nearestCopy(@Nullable WorldFold transformer, Vec3 anchor, Vec3 target) {
+        return transformer == null ? target : transformer.nearestCopy(anchor, target);
     }
 
     public static AABB foldBoxToward(@Nullable Level level, Vec3 anchor, AABB box) {
-        WorldLoopTransformer transformer = transformerOf(level, null);
-        return transformer == null ? box : transformer.foldBoxToward(anchor, box);
+        WorldFold transformer = transformerOf(level, null);
+        return transformer == null ? box : transformer.foldBox(anchor, box).value();
     }
 
     public static Vec3 wrap(@Nullable ServerLevel level, Vec3 position) {
-        WorldLoopTransformer transformer = level == null ? null : WorldLoopAttachments.wrappedTransformerOf(level);
-        return transformer == null ? position : transformer.vectors.wrap(position);
+        WorldFold transformer = level == null ? null : WorldLoopAttachments.wrappedTransformerOf(level);
+        return transformer == null ? position : transformer.fold(position);
     }
 
     private static WrapDomain nodeKeyDomain(AxisBounds axis) {

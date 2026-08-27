@@ -11,7 +11,7 @@ import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.toroidalworld.compat.create.CreateTrackFold;
 import com.toroidalworld.compat.create.CreateTrackFold.NodeKeyAxes;
 import com.toroidalworld.compat.create.TrackNodeKeyFold;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceKey;
@@ -28,7 +28,7 @@ public abstract class TrackNodeLocationMixin extends Vec3i implements TrackNodeK
 
     @Override
     public void toroidal$foldNodeKey(@Nullable Level level) {
-        WorldLoopTransformer transformer = CreateTrackFold.transformerOf(level, this.dimension);
+        WorldFold transformer = CreateTrackFold.transformerOf(level, this.dimension);
         if (transformer == null) {
             return;
         }

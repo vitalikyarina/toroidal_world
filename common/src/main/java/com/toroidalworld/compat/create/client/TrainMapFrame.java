@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.simibubi.create.compat.trainmap.TrainMapRenderer;
 import com.toroidalworld.compat.create.CreateTrackFold;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -16,7 +16,7 @@ import net.minecraft.world.level.Level;
 public final class TrainMapFrame {
     private static boolean bound;
 
-    private static @Nullable WorldLoopTransformer frame;
+    private static @Nullable WorldFold frame;
 
     public static void during(@Nullable ResourceKey<Level> drawnDimension, Runnable pass) {
         during(drawnDimension, () -> {
@@ -27,7 +27,7 @@ public final class TrainMapFrame {
 
     public static <T> T during(@Nullable ResourceKey<Level> drawnDimension, Supplier<T> pass) {
         boolean previouslyBound = bound;
-        WorldLoopTransformer previousFrame = frame;
+        WorldFold previousFrame = frame;
         frame = resolve(drawnDimension);
         bound = true;
         try {
@@ -38,11 +38,11 @@ public final class TrainMapFrame {
         }
     }
 
-    static @Nullable WorldLoopTransformer current() {
+    static @Nullable WorldFold current() {
         return bound ? frame : resolve(TrainMapRenderer.INSTANCE.trackingDim);
     }
 
-    private static @Nullable WorldLoopTransformer resolve(@Nullable ResourceKey<Level> drawnDimension) {
+    private static @Nullable WorldFold resolve(@Nullable ResourceKey<Level> drawnDimension) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
             return null;

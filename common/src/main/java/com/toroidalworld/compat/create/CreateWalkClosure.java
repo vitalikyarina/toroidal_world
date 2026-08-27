@@ -5,7 +5,7 @@ import org.jspecify.annotations.Nullable;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class CreateWalkClosure {
-    private final WorldLoopTransformer transformer;
+    private final WorldFold transformer;
 
     private @Nullable BlockPos legStart;
     private @Nullable BlockPos lastQuery;
@@ -23,7 +23,7 @@ public final class CreateWalkClosure {
     private @Nullable BlockPos origin;
 
     public static @Nullable CreateWalkClosure of(LevelAccessor world) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOfReader(world);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOfReader(world);
         return transformer == null ? null : new CreateWalkClosure(transformer);
     }
 
@@ -42,7 +42,7 @@ public final class CreateWalkClosure {
         return Blocks.AIR.defaultBlockState();
     }
 
-    CreateWalkClosure(WorldLoopTransformer transformer) {
+    CreateWalkClosure(WorldFold transformer) {
         this.transformer = transformer;
     }
 
@@ -51,7 +51,7 @@ public final class CreateWalkClosure {
             lastQuery = query;
             BlockPos legOrigin = origin;
             return legOrigin != null && !query.equals(legOrigin)
-                    && transformer.blocks.wrap(query).equals(transformer.blocks.wrap(legOrigin));
+                    && transformer.fold(query).equals(transformer.fold(legOrigin));
         }
 
         openLeg(query);

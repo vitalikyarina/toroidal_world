@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.simibubi.create.content.trains.track.BezierConnection;
 import com.toroidalworld.compat.create.BezierCurveFold;
 import com.toroidalworld.compat.create.CreateTrackFold;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 
 import net.createmod.catnip.data.Couple;
 import net.minecraft.core.BlockPos;
@@ -39,7 +39,7 @@ public abstract class BezierConnectionMixin implements BezierCurveFold {
             this.toroidal$dimension = dimension;
         }
 
-        WorldLoopTransformer transformer = CreateTrackFold.transformerOf(level, this.toroidal$dimension);
+        WorldFold transformer = CreateTrackFold.transformerOf(level, this.toroidal$dimension);
         if (transformer == null) {
             return;
         }
@@ -49,22 +49,22 @@ public abstract class BezierConnectionMixin implements BezierCurveFold {
 
         Vec3 ownerCentre = Vec3.atCenterOf(this.bePositions.getFirst());
         Vec3 rawNearEnd = this.starts.getFirst();
-        Vec3 nearEnd = transformer.vectors.nearestCopy(ownerCentre, rawNearEnd);
+        Vec3 nearEnd = transformer.nearestCopy(ownerCentre, rawNearEnd);
         if (nearEnd != rawNearEnd) {
             this.starts.setFirst(nearEnd);
         }
 
         Vec3 rawFarEnd = this.starts.getSecond();
-        Vec3 farEnd = transformer.vectors.nearestCopy(nearEnd, rawFarEnd);
+        Vec3 farEnd = transformer.nearestCopy(nearEnd, rawFarEnd);
         if (farEnd != rawFarEnd) {
             this.starts.setSecond(farEnd);
         }
     }
 
     @Unique
-    private void toroidal$canonicaliseEnd(WorldLoopTransformer transformer, boolean first) {
+    private void toroidal$canonicaliseEnd(WorldFold transformer, boolean first) {
         BlockPos rawEnd = this.bePositions.get(first);
-        BlockPos end = transformer.blocks.wrap(rawEnd);
+        BlockPos end = transformer.fold(rawEnd);
         if (end != rawEnd) {
             this.bePositions.set(first, end);
         }

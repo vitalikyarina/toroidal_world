@@ -4,9 +4,10 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
@@ -18,7 +19,7 @@ public final class TrainMapSyncFold {
     private static final int Z_OFFSET = 2;
 
     public static void coherent(Float @Nullable [] positions, @Nullable List<ResourceKey<Level>> dimensions,
-            Function<ResourceKey<Level>, @Nullable WorldLoopTransformer> transformers) {
+            Function<ResourceKey<Level>, @Nullable WorldFold> transformers) {
         if (positions == null || dimensions == null || positions.length < FLOATS_PER_CARRIAGE) {
             return;
         }
@@ -26,7 +27,7 @@ public final class TrainMapSyncFold {
         Float[] anchor = null;
         for (int carriage = 0; carriage * FLOATS_PER_CARRIAGE + FLOATS_PER_CARRIAGE <= positions.length; carriage++) {
             ResourceKey<Level> dimension = carriage < dimensions.size() ? dimensions.get(carriage) : null;
-            WorldLoopTransformer transformer = dimension == null ? null : transformers.apply(dimension);
+            WorldFold transformer = dimension == null ? null : transformers.apply(dimension);
             if (transformer == null) {
                 continue;
             }
@@ -45,7 +46,7 @@ public final class TrainMapSyncFold {
 
     public static void rebaseOnto(Float @Nullable [] stale, Float @Nullable [] current,
             @Nullable List<ResourceKey<Level>> dimensions,
-            Function<ResourceKey<Level>, @Nullable WorldLoopTransformer> transformers) {
+            Function<ResourceKey<Level>, @Nullable WorldFold> transformers) {
         if (stale == null || current == null || dimensions == null) {
             return;
         }
@@ -53,7 +54,7 @@ public final class TrainMapSyncFold {
         int shared = Math.min(stale.length, current.length);
         for (int carriage = 0; carriage * FLOATS_PER_CARRIAGE + FLOATS_PER_CARRIAGE <= shared; carriage++) {
             ResourceKey<Level> dimension = carriage < dimensions.size() ? dimensions.get(carriage) : null;
-            WorldLoopTransformer transformer = dimension == null ? null : transformers.apply(dimension);
+            WorldFold transformer = dimension == null ? null : transformers.apply(dimension);
             if (transformer == null) {
                 continue;
             }
@@ -66,12 +67,12 @@ public final class TrainMapSyncFold {
         }
     }
 
-    private static void rebase(WorldLoopTransformer transformer, Float[] positions, int at, float anchorX,
+    private static void rebase(WorldFold transformer, Float[] positions, int at, float anchorX,
             float anchorZ) {
         float rawX = positions[at + X_OFFSET];
         float rawZ = positions[at + Z_OFFSET];
-        float nearX = (float) nearest(transformer.coords.x, anchorX, rawX);
-        float nearZ = (float) nearest(transformer.coords.z, anchorZ, rawZ);
+        float nearX = (float) nearest(transformer.blockDomain(Direction.Axis.X), anchorX, rawX);
+        float nearZ = (float) nearest(transformer.blockDomain(Direction.Axis.Z), anchorZ, rawZ);
         if (nearX == rawX && nearZ == rawZ) {
             return;
         }

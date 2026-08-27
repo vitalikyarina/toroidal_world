@@ -2,7 +2,7 @@ package com.toroidalworld.compat.create;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -15,14 +15,14 @@ public final class ControllerFrameFold {
         }
 
         if (level.isClientSide) {
-            WorldLoopTransformer clientTransformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
+            WorldFold clientTransformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
             return clientTransformer == null
                     ? controller
-                    : clientTransformer.blocks.nearestCopy(worldPosition, controller);
+                    : clientTransformer.nearestCopy(worldPosition, controller);
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        return transformer == null ? controller : transformer.blocks.wrap(controller);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        return transformer == null ? controller : transformer.fold(controller);
     }
 
     private ControllerFrameFold() {

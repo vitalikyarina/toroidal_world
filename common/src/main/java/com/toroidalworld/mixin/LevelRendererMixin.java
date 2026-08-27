@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -31,7 +31,7 @@ public class LevelRendererMixin {
     @WrapMethod(method = "renderSnowAndRain")
     private void toroidal$bindWeatherCurtainTransformer(LightTexture lightTexture, float partialTick,
             double cameraX, double cameraY, double cameraZ, Operation<Void> original) {
-        @Nullable WorldLoopTransformer bounds = toroidal$clientBounds();
+        @Nullable WorldFold bounds = toroidal$clientBounds();
         if (bounds == null) {
             original.call(lightTexture, partialTick, cameraX, cameraY, cameraZ);
             return;
@@ -43,7 +43,7 @@ public class LevelRendererMixin {
 
     @WrapMethod(method = "tickRain")
     private void toroidal$bindRainParticleTransformer(Camera camera, Operation<Void> original) {
-        @Nullable WorldLoopTransformer bounds = toroidal$clientBounds();
+        @Nullable WorldFold bounds = toroidal$clientBounds();
         if (bounds == null) {
             original.call(camera);
             return;
@@ -53,7 +53,7 @@ public class LevelRendererMixin {
     }
 
     @Unique
-    private @Nullable WorldLoopTransformer toroidal$clientBounds() {
+    private @Nullable WorldFold toroidal$clientBounds() {
         return this.level == null ? null : WorldLoopAttachments.wrappedClientBoundsTransformerOf(this.level);
     }
 }

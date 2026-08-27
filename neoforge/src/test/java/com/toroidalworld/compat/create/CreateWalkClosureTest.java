@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.shape.FlatShape;
 import com.toroidalworld.options.WorldLoopBounds;
 
 import net.minecraft.core.BlockPos;
@@ -14,12 +16,13 @@ import net.minecraft.core.Direction;
 class CreateWalkClosureTest {
     private static final int WORLD_CHUNKS = 16;
     private static final int WORLD_BLOCKS = WORLD_CHUNKS * 2 * 16;
-    private static CreateWalkClosure closure(WorldLoopTransformer transformer) {
+    private static CreateWalkClosure closure(WorldFold transformer) {
         return new CreateWalkClosure(transformer);
     }
 
-    private static WorldLoopTransformer loopedWorld() {
-        return new WorldLoopTransformer(new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS));
+    private static WorldFold loopedWorld() {
+        return WorldFolds.of(FlatShape.latticeTorus(
+                new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS), FlatShape.NO_SKEW));
     }
 
     private static int walk(CreateWalkClosure closure, BlockPos from, Direction direction, int queries) {
@@ -88,7 +91,7 @@ class CreateWalkClosureTest {
 
     @Test
     void anUnwrappedLevelNeverCloses() {
-        CreateWalkClosure closure = closure(WorldLoopTransformer.NOOP);
+        CreateWalkClosure closure = closure(WorldFolds.NOOP);
 
         int closedAt = walk(closure, new BlockPos(0, 64, 0), Direction.WEST, WORLD_BLOCKS * 4);
 

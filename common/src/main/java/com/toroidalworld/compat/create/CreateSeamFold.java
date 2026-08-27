@@ -2,7 +2,7 @@ package com.toroidalworld.compat.create;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -44,8 +44,8 @@ public final class CreateSeamFold {
             return point;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOfReader(level);
-        return transformer == null ? point : transformer.vectors.nearestCopy(box.getCenter(), point);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOfReader(level);
+        return transformer == null ? point : transformer.nearestCopy(box.getCenter(), point);
     }
 
     public static Vec3 foldPoint(@Nullable Level level, Vec3 anchor, Vec3 target) {
@@ -53,8 +53,8 @@ public final class CreateSeamFold {
             return target;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOfReader(level);
-        return transformer == null ? target : transformer.vectors.nearestCopy(anchor, target);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOfReader(level);
+        return transformer == null ? target : transformer.nearestCopy(anchor, target);
     }
 
     public static BlockHitResult canonical(@Nullable ServerLevel level, BlockHitResult hit) {
@@ -76,11 +76,11 @@ public final class CreateSeamFold {
             return position;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        return transformer == null ? position : transformer.blocks.wrap(position);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        return transformer == null ? position : transformer.fold(position);
     }
 
-    private static BlockPos delta(@Nullable WorldLoopTransformer transformer, BlockPos anchor, BlockPos target,
+    private static BlockPos delta(@Nullable WorldFold transformer, BlockPos anchor, BlockPos target,
             BlockPos rawDelta) {
         BlockPos nearest = nearest(transformer, anchor, target);
         if (nearest.equals(target)) {
@@ -90,12 +90,12 @@ public final class CreateSeamFold {
         return nearest.subtract(anchor);
     }
 
-    private static BlockPos nearest(@Nullable WorldLoopTransformer transformer, BlockPos anchor, BlockPos target) {
+    private static BlockPos nearest(@Nullable WorldFold transformer, BlockPos anchor, BlockPos target) {
         if (transformer == null) {
             return target;
         }
 
-        return transformer.blocks.nearestCopy(anchor, target);
+        return transformer.nearestCopy(anchor, target);
     }
 
     private CreateSeamFold() {

@@ -15,7 +15,7 @@ import com.simibubi.create.content.contraptions.StructureTransform;
 import com.toroidalworld.compat.create.ChassisWalkFrame;
 import com.toroidalworld.compat.create.CreateMultiblockFold;
 import com.toroidalworld.compat.create.CreateSeamFold;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import java.util.List;
@@ -70,13 +70,13 @@ public class ContraptionMixin {
             require = 1,
             allow = 1)
     private void toroidal$foldGlueIntoTheLocalFrame(Level world, BlockPos offset, CallbackInfo ci) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(world);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(world);
         if (transformer == null) {
             return;
         }
 
         Vec3 center = bounds == null ? Vec3.ZERO : bounds.getCenter();
-        superglue.replaceAll(box -> transformer.foldBoxToward(center, box));
+        superglue.replaceAll(box -> transformer.foldBox(center, box).value());
     }
 
     @Inject(method = "addBlocksToWorld",

@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.accessors.TransformerCache;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 
 import net.minecraft.server.level.TickingTracker;
 
@@ -24,7 +24,7 @@ public class TickingTrackerMixin {
 
     @Unique
     private long toroidal$foldTicketKey(long key) {
-        WorldLoopTransformer transformer = ((TransformerCache) (Object) this).toroidal$transformer();
-        return transformer.isWrapped() ? transformer.chunks.wrapChunkKey(key) : key;
+        WorldFold transformer = ((TransformerCache) (Object) this).toroidal$transformer();
+        return transformer.isWrapped() ? transformer.foldChunkKey(key) : key;
     }
 }

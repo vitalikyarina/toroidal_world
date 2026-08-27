@@ -11,9 +11,10 @@ import com.toroidalworld.compat.create.TrainMapLaps.Range;
 import com.toroidalworld.compat.create.CreateTrackFold.NodeKeyAxes;
 import com.toroidalworld.core.LogRateGate;
 import com.toroidalworld.map.MapSurfaceCopies;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 
+import net.minecraft.core.Direction;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.phys.Vec3;
 
@@ -25,12 +26,12 @@ public final class TrainMapViewFold {
     public record Lap(int offsetX, int offsetZ) {
     }
 
-    public static @Nullable WorldLoopTransformer transformer() {
+    public static @Nullable WorldFold transformer() {
         return TrainMapFrame.current();
     }
 
     public static int foldNodeKeyX(TrackNodeLocation anchor, int rawCoord) {
-        WorldLoopTransformer transformer = transformer();
+        WorldFold transformer = transformer();
         if (transformer == null) {
             return rawCoord;
         }
@@ -39,7 +40,7 @@ public final class TrainMapViewFold {
     }
 
     public static int foldNodeKeyZ(TrackNodeLocation anchor, int rawCoord) {
-        WorldLoopTransformer transformer = transformer();
+        WorldFold transformer = transformer();
         if (transformer == null) {
             return rawCoord;
         }
@@ -48,31 +49,31 @@ public final class TrainMapViewFold {
     }
 
     public static int wrapPixelX(int coord) {
-        WorldLoopTransformer transformer = transformer();
-        return transformer == null ? coord : transformer.coords.x.wrap(coord);
+        WorldFold transformer = transformer();
+        return transformer == null ? coord : transformer.blockDomain(Direction.Axis.X).wrap(coord);
     }
 
     public static int wrapPixelZ(int coord) {
-        WorldLoopTransformer transformer = transformer();
-        return transformer == null ? coord : transformer.coords.z.wrap(coord);
+        WorldFold transformer = transformer();
+        return transformer == null ? coord : transformer.blockDomain(Direction.Axis.Z).wrap(coord);
     }
 
     public static Vec3 canonical(Vec3 position) {
-        WorldLoopTransformer transformer = transformer();
+        WorldFold transformer = transformer();
         if (transformer == null) {
             return position;
         }
 
-        return transformer.vectors.wrap(position);
+        return transformer.fold(position);
     }
 
     public static Vec3 nearestTo(Vec3 anchor, Vec3 position) {
-        WorldLoopTransformer transformer = transformer();
-        return transformer == null ? position : transformer.vectors.nearestCopy(anchor, position);
+        WorldFold transformer = transformer();
+        return transformer == null ? position : transformer.nearestCopy(anchor, position);
     }
 
     public static Lap[] laps(Rect2i bounds) {
-        WorldLoopTransformer transformer = transformer();
+        WorldFold transformer = transformer();
         if (transformer == null) {
             return new Lap[] {new Lap(0, 0)};
         }
@@ -80,10 +81,10 @@ public final class TrainMapViewFold {
         MapSurfaceCopies.Copies surface = MapSurfaceCopies.current();
         int surfaceX = surface.rangeX();
         int surfaceZ = surface.rangeZ();
-        Range alongX = TrainMapLaps.range(transformer.coords.x, bounds.getX(), bounds.getWidth(), surfaceX);
-        Range alongZ = TrainMapLaps.range(transformer.coords.z, bounds.getY(), bounds.getHeight(), surfaceZ);
-        int worldWidthX = transformer.coords.x.domainLength;
-        int worldWidthZ = transformer.coords.z.domainLength;
+        Range alongX = TrainMapLaps.range(transformer.blockDomain(Direction.Axis.X), bounds.getX(), bounds.getWidth(), surfaceX);
+        Range alongZ = TrainMapLaps.range(transformer.blockDomain(Direction.Axis.Z), bounds.getY(), bounds.getHeight(), surfaceZ);
+        int worldWidthX = transformer.blockDomain(Direction.Axis.X).domainLength;
+        int worldWidthZ = transformer.blockDomain(Direction.Axis.Z).domainLength;
         Lap[] laps = new Lap[alongX.kept() * alongZ.kept()];
         int index = 0;
         for (int lapX = alongX.lowest(); lapX <= alongX.highest(); lapX++) {
@@ -107,15 +108,15 @@ public final class TrainMapViewFold {
         return anchor + domain.foldDelta(rawCoord - anchor);
     }
 
-    private static WrapDomain nodeKeyDomainX(WorldLoopTransformer transformer) {
+    private static WrapDomain nodeKeyDomainX(WorldFold transformer) {
         return axes(transformer).x();
     }
 
-    private static WrapDomain nodeKeyDomainZ(WorldLoopTransformer transformer) {
+    private static WrapDomain nodeKeyDomainZ(WorldFold transformer) {
         return axes(transformer).z();
     }
 
-    private static NodeKeyAxes axes(WorldLoopTransformer transformer) {
+    private static NodeKeyAxes axes(WorldFold transformer) {
         return CreateTrackFold.nodeKeyAxes(transformer);
     }
 

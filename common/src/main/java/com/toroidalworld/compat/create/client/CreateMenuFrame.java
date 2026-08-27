@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.compat.create.ThreadScope;
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.client.Minecraft;
@@ -19,7 +19,7 @@ import net.minecraft.world.level.Level;
 public final class CreateMenuFrame {
     private static final ThreadScope<Frame> PAYLOAD_FRAME = new ThreadScope<>();
 
-    private record Frame(WorldLoopTransformer transformer, BlockPos anchor) {
+    private record Frame(WorldFold transformer, BlockPos anchor) {
     }
 
     public static <T> T readingPayload(Supplier<T> read) {
@@ -32,7 +32,7 @@ public final class CreateMenuFrame {
             return canonical;
         }
 
-        return frame.transformer().blocks.nearestCopy(frame.anchor(), canonical);
+        return frame.transformer().nearestCopy(frame.anchor(), canonical);
     }
 
     private static @Nullable Frame resolve() {
@@ -43,7 +43,7 @@ public final class CreateMenuFrame {
             return null;
         }
 
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
         return transformer == null ? null : new Frame(transformer, player.blockPosition());
     }
 
