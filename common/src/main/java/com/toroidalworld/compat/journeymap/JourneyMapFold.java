@@ -23,7 +23,8 @@ public final class JourneyMapFold {
     private static final int MAX_TILE_BLITS = 16_384;
     private static final double VIEWPORT_COVER = 0.75;
 
-    private static final int FULLSCREEN_COPIES_EACH_SIDE = 1;
+    private static int fullscreenRangeX;
+    private static int fullscreenRangeZ;
 
     private static ToroidalShape shape() {
         ClientLevel level = Minecraft.getInstance().level;
@@ -147,9 +148,13 @@ public final class JourneyMapFold {
         return periodPixels <= 0.0 ? 0 : (int) Math.ceil(viewportPixels * VIEWPORT_COVER / periodPixels);
     }
 
+    public static void recordFullscreenCopyRange(int rangeX, int rangeZ) {
+        fullscreenRangeX = rangeX;
+        fullscreenRangeZ = rangeZ;
+    }
+
     public static int fullscreenCopyRange(Direction.Axis axis) {
-        ToroidalShape shape = shape();
-        return shape != null && shape.loops(axis) ? FULLSCREEN_COPIES_EACH_SIDE : 0;
+        return axis == Direction.Axis.X ? fullscreenRangeX : fullscreenRangeZ;
     }
 
     public static void gridDropped(String fromDimension, String toDimension) {

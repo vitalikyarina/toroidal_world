@@ -150,8 +150,7 @@ public abstract class MapRendererMixin {
         int rangeX = JourneyMapFold.copyRange(loopedAxes, tiles, periodX, graphics.guiWidth());
         int rangeZ = JourneyMapFold.copyRange(loopedAxes, tiles, periodZ, graphics.guiHeight());
         if (this.contextUi == Context.UI.Fullscreen) {
-            rangeX = Math.min(rangeX, JourneyMapFold.fullscreenCopyRange(Direction.Axis.X));
-            rangeZ = Math.min(rangeZ, JourneyMapFold.fullscreenCopyRange(Direction.Axis.Z));
+            JourneyMapFold.recordFullscreenCopyRange(rangeX, rangeZ);
         }
 
         if (rangeX == 0 && rangeZ == 0) {
