@@ -1,0 +1,22 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.toroidalworld.compat.sable.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "com.toroidalworld.compat.sable.SableMixinPlugin",
+  "mixins": [
+    "PhysicsChunkTicketManagerMixin",
+    "RapierPhysicsPipelineMixin",
+    "SubLevelAccessor",
+    "SubLevelHoldingChunkMapMixin",
+    "SubLevelPhysicsSystemMixin",
+    "SubLevelTrackingSystemMixin"
+  ],
+  "client": [
+    "ClientboundSableSnapshotDualPacketMixin",
+    "ClientboundStartTrackingSubLevelPacketMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

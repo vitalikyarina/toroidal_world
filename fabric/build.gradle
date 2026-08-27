@@ -103,9 +103,29 @@ var createBundledJars = tasks.register('unpackCreateBundled', Sync) {
     into layout.buildDirectory.dir('create-bundled')
 }
 
+// Same unpack as in common, for the same reason: common's sources compile in this module too, and the pose fold names
+// Sable's companion types (Pose3d, BoundingBox3d), which ride jar-in-jar inside the Sable jar.
+configurations {
+    sableJarJar
+}
+
+dependencies {
+    sableJarJar "maven.modrinth:sable:${sable_version}"
+}
+
+var sableCompanionJars = tasks.register('unpackSableCompanion', Sync) {
+    from(zipTree(configurations.sableJarJar.singleFile)) {
+        include 'META-INF/jarjar/sable-companion-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('sable-companion')
+}
+
 dependencies {
     compileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     compileOnly files(createBundledJars).asFileTree.matching { include '*.jar' }
+    compileOnly files(sableCompanionJars).asFileTree.matching { include '*.jar' }
     minecraft "com.mojang:minecraft:${minecraft_version}"
     // Mojmap on both sides: the mixins and the accesswidener are written against the same names NeoForge uses,
     // so common's sources compile unchanged for either loader.

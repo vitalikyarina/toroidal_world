@@ -10,6 +10,7 @@ import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.ChunkPos;
@@ -54,21 +55,25 @@ public final class ClientPosition {
 
     public void setX(double x, MirrorWriter writer) {
         Mirror currMirror = this.mirror;
-        checkStep(writer, "x", currMirror.transformer().bounds().x(), currMirror.x(), x, currMirror.space());
-        this.mirror = new Mirror(x, currMirror.z(), currMirror.space(), currMirror.transformer());
+        double seatedX = clientCopy(writer, Direction.Axis.X, currMirror, x);
+        checkStep(writer, "x", currMirror.transformer().bounds().x(), currMirror.x(), seatedX, currMirror.space());
+        this.mirror = new Mirror(seatedX, currMirror.z(), currMirror.space(), currMirror.transformer());
     }
 
     public void setZ(double z, MirrorWriter writer) {
         Mirror currMirror = this.mirror;
-        checkStep(writer, "z", currMirror.transformer().bounds().z(), currMirror.z(), z, currMirror.space());
-        this.mirror = new Mirror(currMirror.x(), z, currMirror.space(), currMirror.transformer());
+        double seatedZ = clientCopy(writer, Direction.Axis.Z, currMirror, z);
+        checkStep(writer, "z", currMirror.transformer().bounds().z(), currMirror.z(), seatedZ, currMirror.space());
+        this.mirror = new Mirror(currMirror.x(), seatedZ, currMirror.space(), currMirror.transformer());
     }
 
     public void set(double x, double z, MirrorWriter writer) {
         Mirror currMirror = this.mirror;
-        checkStep(writer, "x", currMirror.transformer().bounds().x(), currMirror.x(), x, currMirror.space());
-        checkStep(writer, "z", currMirror.transformer().bounds().z(), currMirror.z(), z, currMirror.space());
-        this.mirror = new Mirror(x, z, currMirror.space(), currMirror.transformer());
+        double seatedX = clientCopy(writer, Direction.Axis.X, currMirror, x);
+        double seatedZ = clientCopy(writer, Direction.Axis.Z, currMirror, z);
+        checkStep(writer, "x", currMirror.transformer().bounds().x(), currMirror.x(), seatedX, currMirror.space());
+        checkStep(writer, "z", currMirror.transformer().bounds().z(), currMirror.z(), seatedZ, currMirror.space());
+        this.mirror = new Mirror(seatedX, seatedZ, currMirror.space(), currMirror.transformer());
     }
 
     public boolean describes(ResourceKey<Level> dimension) {
@@ -111,6 +116,15 @@ public final class ClientPosition {
         return new ChunkPos(
                 SectionPos.blockToSectionCoord(currMirror.x()),
                 SectionPos.blockToSectionCoord(currMirror.z()));
+    }
+
+    private double clientCopy(MirrorWriter writer, Direction.Axis axis, Mirror currMirror, double reported) {
+        if (!writer.clientAuthored() || currMirror.space() == null) {
+            return reported;
+        }
+
+        double current = axis == Direction.Axis.X ? currMirror.x() : currMirror.z();
+        return currMirror.transformer().blockDomain(axis).unwrapAround(current, reported);
     }
 
     private void checkStep(MirrorWriter writer, String axis, AxisBounds bounds, double from, double to,

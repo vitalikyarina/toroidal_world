@@ -92,9 +92,29 @@ var createBundledJars = tasks.register('unpackCreateBundled', Sync) {
 // NeoForm brings only vanilla; the mixin annotations the sources carry come from the same artifacts the NeoForge
 // runtime ships (pinned in gradle.properties from the neo_version userdev config). compileOnly — applying them is
 // the loaders' business.
+// Sable keeps its companion library (Pose3d, BoundingBox3d) jar-in-jar, so the pose fold cannot compile against the
+// Modrinth jar alone: the nested jar is unpacked at build time and rides compileOnly beside it.
+configurations {
+    sableJarJar
+}
+
+dependencies {
+    sableJarJar "maven.modrinth:sable:${sable_version}"
+}
+
+var sableCompanionJars = tasks.register('unpackSableCompanion', Sync) {
+    from(zipTree(configurations.sableJarJar.singleFile)) {
+        include 'META-INF/jarjar/sable-companion-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('sable-companion')
+}
+
 dependencies {
     compileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     compileOnly files(createBundledJars).asFileTree.matching { include '*.jar' }
+    compileOnly files(sableCompanionJars).asFileTree.matching { include '*.jar' }
     compileOnly "net.fabricmc:sponge-mixin:${mixin_version}"
     compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
     compileOnly "org.jspecify:jspecify:${jspecify_version}"

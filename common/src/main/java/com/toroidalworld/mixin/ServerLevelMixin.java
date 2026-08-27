@@ -71,16 +71,6 @@ public class ServerLevelMixin {
         }
     }
 
-    @ModifyVariable(method = "shouldTickBlocksAt(J)Z", at = @At("HEAD"), argsOnly = true)
-    private long toroidal$tickingChunkThroughSeam(long chunkPos) {
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
-        if (transformer == null) {
-            return chunkPos;
-        }
-
-        return transformer.foldChunkKey(chunkPos);
-    }
-
     @ModifyVariable(method = "setDefaultSpawnPos(Lnet/minecraft/core/BlockPos;F)V", at = @At("HEAD"), argsOnly = true)
     private BlockPos toroidal$storeWorldSpawnInsideBounds(BlockPos spawnPos) {
         return SeamRespawnData.insideBounds((ServerLevel) (Object) this, spawnPos);

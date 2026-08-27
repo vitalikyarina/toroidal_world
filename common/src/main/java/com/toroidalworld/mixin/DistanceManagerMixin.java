@@ -61,6 +61,11 @@ public class DistanceManagerMixin implements LevelBindable {
         return this.toroidal$foldKey(chunkKey);
     }
 
+    @ModifyVariable(method = "inBlockTickingRange", at = @At("HEAD"), argsOnly = true)
+    private long toroidal$blockTickingOnPhysicalChunk(long chunkKey) {
+        return this.toroidal$foldKey(chunkKey);
+    }
+
     @Unique
     private long toroidal$foldKey(long key) {
         WorldFold transformer = this.toroidal$wrappedTransformer();
