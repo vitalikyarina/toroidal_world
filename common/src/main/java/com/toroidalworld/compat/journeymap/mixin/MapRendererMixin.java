@@ -130,15 +130,18 @@ public abstract class MapRendererMixin {
             return;
         }
 
+        int loopedAxes = JourneyMapFold.loopedAxes();
         double periodX = JourneyMapFold.worldPixelPeriod(Direction.Axis.X, this.zoom);
         double periodZ = JourneyMapFold.worldPixelPeriod(Direction.Axis.Z, this.zoom);
-        int rangeX = JourneyMapFold.copyRange(periodX, graphics.guiWidth());
-        int rangeZ = JourneyMapFold.copyRange(periodZ, graphics.guiHeight());
+        int rangeX = JourneyMapFold.copyRange(loopedAxes, periodX, graphics.guiWidth());
+        int rangeZ = JourneyMapFold.copyRange(loopedAxes, periodZ, graphics.guiHeight());
         if (this.contextUi == Context.UI.Fullscreen) {
             rangeX = Math.min(rangeX, JourneyMapFold.fullscreenCopyRange(Direction.Axis.X));
             rangeZ = Math.min(rangeZ, JourneyMapFold.fullscreenCopyRange(Direction.Axis.Z));
         }
 
+        JourneyMapFold.logTileCopies(this.contextUi.name(), this.zoom, loopedAxes, periodX, periodZ,
+                graphics.guiWidth(), graphics.guiHeight(), graphics.guiWidth(), graphics.guiHeight());
         if (rangeX == 0 && rangeZ == 0) {
             return;
         }
