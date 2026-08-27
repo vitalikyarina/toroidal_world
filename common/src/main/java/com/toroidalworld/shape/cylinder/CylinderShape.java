@@ -8,7 +8,7 @@ import com.toroidalworld.shape.WorldShapes;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.WorldDimensions;
 
 public final class CylinderShape {
@@ -16,7 +16,7 @@ public final class CylinderShape {
     private static final String CYLINDER_LABEL_KEY = "gui.toroidal_world.world_shape.cylinder";
     private static final String CYLINDER_HINT_KEY = "gui.toroidal_world.world_shape.cylinder.hint";
 
-    public static final Identifier ID = Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, CYLINDER_ID);
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, CYLINDER_ID);
 
     private static CylinderSettings settings = CylinderSettings.DEFAULT;
 

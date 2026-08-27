@@ -50,8 +50,9 @@ public class CylinderSettingsScreen extends Screen {
 
         LinearLayout contents = this.layout.addToContents(LinearLayout.vertical().spacing(CONTENTS_SPACING));
 
-        contents.addChild(CycleButton.builder(CylinderSettingsScreen::axisName, this.axis)
+        contents.addChild(CycleButton.builder(CylinderSettingsScreen::axisName)
                 .withValues(Direction.Axis.X, Direction.Axis.Z)
+                .withInitialValue(this.axis)
                 .withTooltip(chosen -> Tooltip.create(AXIS_HINT))
                 .create(0, 0, LoopSizeControls.FIELD_WIDTH, LoopSizeControls.FIELD_HEIGHT, AXIS_LABEL,
                         (button, chosen) -> this.axis = chosen));
@@ -74,7 +75,7 @@ public class CylinderSettingsScreen extends Screen {
 
     @Override
     public void onClose() {
-        Minecraft.getInstance().gui.setScreen(this.parent);
+        Minecraft.getInstance().setScreen(this.parent);
     }
 
     private void refreshDoneButton() {
