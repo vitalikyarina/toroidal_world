@@ -342,6 +342,20 @@ public final class DeckGroupFold implements WorldFold {
     }
 
     @Override
+    public List<DeckTransformation> copiesTouching(BoundingBox region, int reach) {
+        if (reach < 0) {
+            throw new IllegalArgumentException("A copy reach is never negative, got " + reach);
+        }
+
+        return this.blocks.copiesTouching(region.minX(), region.maxX(), region.minZ(), region.maxZ(), reach);
+    }
+
+    @Override
+    public boolean foldsOntoItself(BoundingBox region) {
+        return this.blocks.foldsOntoItself(region.minX(), region.maxX(), region.minZ(), region.maxZ());
+    }
+
+    @Override
     public Folded<AABB> foldBox(Vec3 ref, AABB box) {
         double centerX = (box.minX + box.maxX) / 2.0;
         double centerZ = (box.minZ + box.maxZ) / 2.0;
@@ -667,6 +681,111 @@ public final class DeckGroupFold implements WorldFold {
             }
 
             return pieces;
+        }
+
+        private List<DeckTransformation> copiesTouching(int minX, int maxX, int minZ, int maxZ, int reach) {
+            if (this.steps.length == 0) {
+                return List.of(DeckTransformation.IDENTITY);
+            }
+
+            List<DeckTransformation> copies = new ArrayList<>();
+            Step first = this.steps[0];
+            Step second = this.steps.length > 1 ? this.steps[1] : null;
+            for (int firstPower = -reach; firstPower <= reach; firstPower++) {
+                SeamTransform moved = first.generator().power(firstPower);
+                int[] worldX = worldImage(this.x,
+                        moved.applyCellX(this.x.lowerBound), moved.applyCellX(this.x.upperBound - 1));
+                int[] worldZ = worldImage(this.z,
+                        moved.applyCellZ(this.z.lowerBound), moved.applyCellZ(this.z.upperBound - 1));
+                if (second == null) {
+                    if (meets(worldX, minX, maxX) && meets(worldZ, minZ, maxZ)) {
+                        addCopy(copies, moved);
+                    }
+
+                    continue;
+                }
+
+                boolean alongX = second.onX();
+                if (!meets(alongX ? worldZ : worldX, alongX ? minZ : minX, alongX ? maxZ : maxX)) {
+                    continue;
+                }
+
+                int[] worldAlong = alongX ? worldX : worldZ;
+                int[] laps = (alongX ? this.x : this.z).lapsBetween(
+                        worldAlong[0], worldAlong[1], alongX ? minX : minZ, alongX ? maxX : maxZ);
+                int lowestLap = Math.max(laps[0], -reach);
+                int highestLap = Math.min(laps[1], reach);
+                for (int secondPower = lowestLap; secondPower <= highestLap; secondPower++) {
+                    addCopy(copies, moved.then(second.generator().power(secondPower)));
+                }
+            }
+
+            return copies;
+        }
+
+        private boolean foldsOntoItself(int minX, int maxX, int minZ, int maxZ) {
+            if (this.steps.length == 0) {
+                return false;
+            }
+
+            Step first = this.steps[0];
+            Step second = this.steps.length > 1 ? this.steps[1] : null;
+            WrapDomain own = first.onX() ? this.x : this.z;
+            long extent = first.onX() ? (long) maxX - minX : (long) maxZ - minZ;
+            int highestPower = Math.toIntExact(extent / own.domainLength);
+            for (int firstPower = -highestPower; firstPower <= highestPower; firstPower++) {
+                SeamTransform moved = first.generator().power(firstPower);
+                CellPiece image = movedCells(moved, minX, maxX, minZ, maxZ);
+                if (second == null) {
+                    if (firstPower != 0 && meets(image.minX(), image.maxX(), minX, maxX)
+                            && meets(image.minZ(), image.maxZ(), minZ, maxZ)) {
+                        return true;
+                    }
+
+                    continue;
+                }
+
+                int[] laps = second.onX()
+                        ? this.x.lapsBetween(image.minX(), image.maxX(), minX, maxX)
+                        : this.z.lapsBetween(image.minZ(), image.maxZ(), minZ, maxZ);
+                if (laps[0] <= laps[1] && (firstPower != 0 || laps[0] < 0 || laps[1] > 0)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static int[] worldImage(WrapDomain domain, int firstCell, int secondCell) {
+            return domain instanceof WrapDomain.Noop
+                    ? null
+                    : new int[] {Math.min(firstCell, secondCell), Math.max(firstCell, secondCell)};
+        }
+
+        private static boolean meets(int[] span, int min, int max) {
+            return span == null || meets(span[0], span[1], min, max);
+        }
+
+        private static boolean meets(int firstMin, int firstMax, int secondMin, int secondMax) {
+            return firstMin <= secondMax && secondMin <= firstMax;
+        }
+
+        private static void addCopy(List<DeckTransformation> copies, SeamTransform element) {
+            if (element.isIdentity()) {
+                copies.addFirst(DeckTransformation.IDENTITY);
+            } else {
+                copies.add(new DeckTransformation(element));
+            }
+        }
+
+        private static CellPiece movedCells(SeamTransform move, int minX, int maxX, int minZ, int maxZ) {
+            int firstX = move.applyCellX(minX);
+            int secondX = move.applyCellX(maxX);
+            int firstZ = move.applyCellZ(minZ);
+            int secondZ = move.applyCellZ(maxZ);
+            return new CellPiece(
+                    Math.min(firstX, secondX), Math.max(firstX, secondX),
+                    Math.min(firstZ, secondZ), Math.max(firstZ, secondZ), move);
         }
 
         private static List<double[]> sliceSpan(WrapDomain domain, double min, double max) {
