@@ -46,6 +46,16 @@ class AxisCopiesTest {
     }
 
     @Test
+    void theReachIsHowFarFromTheCanonicalCopyTheSpanGoes() {
+        AxisCopies axis = AxisCopies.looped(MIN, WIDTH);
+        assertEquals(0, axis.reach(-100, 100), "a span inside the world reaches past the canonical copy");
+        assertEquals(1, axis.reach(500, 600), "a span across the seam does not reach one copy out");
+        assertEquals(3, axis.reach(MIN - 3 * WIDTH, MIN + 4 * WIDTH), "seven worlds do not reach three copies each side");
+        assertEquals(4, axis.reach(3000, 4200), "3000..4200 touches lap 4 and does not reach it");
+        assertEquals(0, AxisCopies.UNBOUNDED.reach(-40000000, 40000000), "an unbounded axis reaches past its one copy");
+    }
+
+    @Test
     void anUnboundedAxisDrawsTheOneLapWithNoSeamAndNoOffset() {
         AxisCopies axis = AxisCopies.UNBOUNDED;
         assertFalse(axis.loops(), "the unbounded axis reads as looped");

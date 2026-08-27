@@ -66,6 +66,11 @@ public record AxisCopies(boolean loops, int min, int width) {
         return seams;
     }
 
+    public int reach(int spanMin, int spanMax) {
+        int[] laps = laps(spanMin, spanMax);
+        return laps.length == 0 ? 0 : Math.max(-laps[0], laps[laps.length - 1]);
+    }
+
     public int offset(int lap) {
         return lap * this.width;
     }

@@ -25,8 +25,9 @@ public abstract class XaeroTrainMapMixin {
                             + "Ljava/util/List;"))
     private static List<FormattedText> toroidal$onTheWorldMapSurface(GuiGraphics graphics, int mouseX, int mouseY,
             boolean linearFiltering, Rect2i bounds, Operation<List<FormattedText>> original) {
-        return TrainMapSurface.showing(XaeroWorldMapFold.worldMapCopyRange(Direction.Axis.X),
-                XaeroWorldMapFold.worldMapCopyRange(Direction.Axis.Z),
+        return TrainMapSurface.showing(
+                XaeroWorldMapFold.worldMapCopyRange(Direction.Axis.X, bounds.getX(), bounds.getX() + bounds.getWidth()),
+                XaeroWorldMapFold.worldMapCopyRange(Direction.Axis.Z, bounds.getY(), bounds.getY() + bounds.getHeight()),
                 () -> original.call(graphics, mouseX, mouseY, linearFiltering, bounds));
     }
 }

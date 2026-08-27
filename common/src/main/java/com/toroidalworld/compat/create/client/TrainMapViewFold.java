@@ -1,14 +1,11 @@
 package com.toroidalworld.compat.create.client;
 
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
 
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
-import com.mojang.logging.LogUtils;
 import com.toroidalworld.compat.create.CreateTrackFold;
 import com.toroidalworld.compat.create.TrainMapLaps;
 import com.toroidalworld.compat.create.TrainMapLaps.Range;
-import com.toroidalworld.core.LogRateGate;
 import com.toroidalworld.map.MapSurfaceCopies;
 import com.toroidalworld.core.WorldFold;
 
@@ -19,10 +16,6 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.phys.Vec3;
 
 public final class TrainMapViewFold {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
-    private static final LogRateGate capGate = new LogRateGate();
-
     public record Lap(int offsetX, int offsetZ) {
     }
 
@@ -89,14 +82,6 @@ public final class TrainMapViewFold {
                 laps[index++] = new Lap(lapX * worldWidthX, lapZ * worldWidthZ);
             }
         }
-
-        if ((alongX.capped() || alongZ.capped()) && capGate.tryPass()) {
-            LOGGER.info("[trainmap] laps_capped needed_x={} kept_x={} needed_z={} kept_z={} world_width_x={}"
-                    + " view_width={} surface_x={} surface_z={} units=copies",
-                    alongX.needed(), alongX.kept(), alongZ.needed(), alongZ.kept(), worldWidthX,
-                    bounds.getWidth(), surfaceX, surfaceZ);
-        }
-
 
         return laps;
     }

@@ -15,8 +15,6 @@ import net.minecraft.core.Direction;
 
 public final class XaeroWorldMapFold {
     // Xaero's own units: a tile chunk is 4 chunks (64 blocks), a region 8 tile chunks (512 blocks).
-    public static final int COPIES_EACH_SIDE = 1;
-
     private static final int TILE_CHUNK_CHUNKS = 4;
     private static final int REGION_TILE_CHUNKS = 8;
 
@@ -25,9 +23,8 @@ public final class XaeroWorldMapFold {
         return level == null ? null : ToroidalWorldClientApi.shapeOf(level).orElse(null);
     }
 
-    public static int worldMapCopyRange(Direction.Axis axis) {
-        ToroidalShape shape = shape();
-        return shape != null && shape.loops(axis) ? COPIES_EACH_SIDE : 0;
+    public static int worldMapCopyRange(Direction.Axis axis, int spanMin, int spanMax) {
+        return copies(axis).reach(spanMin, spanMax);
     }
 
     public static boolean active() {
