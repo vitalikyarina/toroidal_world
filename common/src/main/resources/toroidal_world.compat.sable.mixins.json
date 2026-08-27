@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "plugin": "com.toroidalworld.compat.sable.SableMixinPlugin",
   "mixins": [
+    "ActiveSableCompanionMixin",
     "BiomeFrameMixin",
     "EntityFrameMixin",
     "ExplosionFrameMixin",
