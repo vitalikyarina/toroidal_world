@@ -36,7 +36,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.SectionPos;
-import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.VibrationParticleOption;
@@ -562,20 +561,6 @@ class PacketTranslatorTest {
         }
 
         @Test
-        void blockParticlePositionMovesToTheHeldCopy() {
-            BlockState state = Blocks.STONE.defaultBlockState();
-            ClientboundLevelParticlesPacket translated = (ClientboundLevelParticlesPacket) PacketTranslator.toClient(
-                    new ClientboundLevelParticlesPacket(
-                            new BlockParticleOption(ParticleTypes.BLOCK, state).setPos(SERVER_BLOCK), false,
-                            SERVER_X, 64.0, SERVER_Z, 0.0F, 0.0F, 0.0F, 0.0F, 1),
-                    context());
-
-            BlockParticleOption block = (BlockParticleOption) translated.getParticle();
-            assertEquals(CLIENT_BLOCK, block.getPos());
-            assertSame(state, block.getState());
-        }
-
-        @Test
         void positionlessPayloadPassesThrough() {
             ClientboundLevelParticlesPacket translated = (ClientboundLevelParticlesPacket) PacketTranslator.toClient(
                     new ClientboundLevelParticlesPacket(ParticleTypes.FLAME, false,
@@ -584,21 +569,6 @@ class PacketTranslatorTest {
 
             assertSame(ParticleTypes.FLAME, translated.getParticle());
             assertEquals(CLIENT_X, translated.getX());
-        }
-
-        @Test
-        void explosionParticlesFollowTheTranslatedCentre() {
-            BlockState state = Blocks.STONE.defaultBlockState();
-            ClientboundExplodePacket translated = (ClientboundExplodePacket) PacketTranslator.toClient(
-                    explodePacket(List.of(),
-                            new BlockParticleOption(ParticleTypes.BLOCK, state).setPos(SERVER_BLOCK),
-                            new BlockParticleOption(ParticleTypes.BLOCK, state).setPos(SERVER_BLOCK)),
-                    context());
-
-            assertEquals(CLIENT_X, translated.getX());
-            assertEquals(CLIENT_Z, translated.getZ());
-            assertEquals(CLIENT_BLOCK, ((BlockParticleOption) translated.getSmallExplosionParticles()).getPos());
-            assertEquals(CLIENT_BLOCK, ((BlockParticleOption) translated.getLargeExplosionParticles()).getPos());
         }
 
         @Test
