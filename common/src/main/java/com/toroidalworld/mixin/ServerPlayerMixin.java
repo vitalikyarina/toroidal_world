@@ -2,7 +2,6 @@ package com.toroidalworld.mixin;
 
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -31,16 +30,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.portal.DimensionTransition;
-import net.minecraft.world.phys.Vec3;
 
 @Mixin(ServerPlayer.class)
 public class ServerPlayerMixin {
-    @Unique
-    private static final double BED_REACH_HORIZONTAL = 3.0;
-
-    @Unique
-    private static final double BED_REACH_VERTICAL = 2.0;
-
     @ModifyVariable(method = "setRespawnPosition(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/BlockPos;FZZ)V",
             at = @At("HEAD"), argsOnly = true)
     private @Nullable BlockPos toroidal$storeRespawnInsideBounds(@Nullable BlockPos respawnPos,
@@ -115,10 +107,6 @@ public class ServerPlayerMixin {
             return original.call(bedBlockPos);
         }
 
-        Vec3 bedCenter = Vec3.atBottomCenterOf(bedBlockPos);
-        Vec3 delta = transformer.foldDelta(player.position(), bedCenter);
-        return Math.abs(delta.x) <= BED_REACH_HORIZONTAL
-                && Math.abs(delta.y) <= BED_REACH_VERTICAL
-                && Math.abs(delta.z) <= BED_REACH_HORIZONTAL;
+        return original.call(transformer.nearestCopy(player.blockPosition(), bedBlockPos));
     }
 }

@@ -21,8 +21,7 @@ public class PlayerMixin {
             return original.call(pos, buffer);
         }
 
-        double maxRange = player.blockInteractionRange() + buffer;
-        return transformer.sqrDistanceToBox(new AABB(pos), player.getEyePosition()) < maxRange * maxRange;
+        return original.call(transformer.nearestCopy(player.blockPosition(), pos), buffer);
     }
 
     @WrapMethod(method = "canInteractWithEntity(Lnet/minecraft/world/phys/AABB;D)Z")

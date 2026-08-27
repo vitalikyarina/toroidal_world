@@ -37,7 +37,13 @@ public class EntityMixin implements TransformerSource {
             return original.call(other);
         }
 
-        return (float) Math.sqrt(toroidal$sqrTo(transformer, other.getX(), other.getY(), other.getZ()));
+        Vec3 otherPos = other.position();
+        Vec3 nearest = toroidal$nearestCopy(transformer, otherPos);
+        if (nearest == otherPos) {
+            return original.call(other);
+        }
+
+        return (float) Math.sqrt(((Entity) (Object) this).distanceToSqr(nearest));
     }
 
     @WrapMethod(method = "distanceToSqr(DDD)D")
@@ -47,7 +53,8 @@ public class EntityMixin implements TransformerSource {
             return original.call(x, y, z);
         }
 
-        return toroidal$sqrTo(transformer, x, y, z);
+        Vec3 nearest = toroidal$nearestCopy(transformer, new Vec3(x, y, z));
+        return original.call(nearest.x, nearest.y, nearest.z);
     }
 
     @WrapMethod(method = "distanceToSqr(Lnet/minecraft/world/phys/Vec3;)D")
@@ -57,7 +64,7 @@ public class EntityMixin implements TransformerSource {
             return original.call(pos);
         }
 
-        return toroidal$sqrTo(transformer, pos.x, pos.y, pos.z);
+        return original.call(toroidal$nearestCopy(transformer, pos));
     }
 
     @WrapMethod(method = "closerThan(Lnet/minecraft/world/entity/Entity;D)Z")
@@ -67,7 +74,13 @@ public class EntityMixin implements TransformerSource {
             return original.call(other, distance);
         }
 
-        return toroidal$sqrTo(transformer, other.getX(), other.getY(), other.getZ()) < Mth.square(distance);
+        Vec3 otherPos = other.position();
+        Vec3 nearest = toroidal$nearestCopy(transformer, otherPos);
+        if (nearest == otherPos) {
+            return original.call(other, distance);
+        }
+
+        return ((Entity) (Object) this).position().closerThan(nearest, distance);
     }
 
     @WrapMethod(method = "closerThan(Lnet/minecraft/world/entity/Entity;DD)Z")
@@ -78,8 +91,13 @@ public class EntityMixin implements TransformerSource {
             return original.call(other, distanceXZ, distanceY);
         }
 
-        Entity self = (Entity) (Object) this;
-        Vec3 delta = transformer.foldDelta(self.position(), other.position());
+        Vec3 otherPos = other.position();
+        Vec3 nearest = toroidal$nearestCopy(transformer, otherPos);
+        if (nearest == otherPos) {
+            return original.call(other, distanceXZ, distanceY);
+        }
+
+        Vec3 delta = nearest.subtract(((Entity) (Object) this).position());
         return Mth.lengthSquared(delta.x, delta.z) < Mth.square(distanceXZ)
                 && Mth.square(delta.y) < Mth.square(distanceY);
     }
@@ -155,8 +173,7 @@ public class EntityMixin implements TransformerSource {
     }
 
     @Unique
-    private double toroidal$sqrTo(WorldFold transformer, double x, double y, double z) {
-        Entity self = (Entity) (Object) this;
-        return transformer.sqrDistance(self.getX(), self.getY(), self.getZ(), x, y, z);
+    private Vec3 toroidal$nearestCopy(WorldFold transformer, Vec3 target) {
+        return transformer.nearestCopy(((Entity) (Object) this).position(), target);
     }
 }

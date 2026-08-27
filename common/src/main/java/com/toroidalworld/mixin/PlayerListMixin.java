@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.net.ListenerCopies;
 import com.toroidalworld.net.WorldShapeSync;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -30,6 +31,7 @@ import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 @Mixin(PlayerList.class)
 public class PlayerListMixin {
@@ -40,19 +42,24 @@ public class PlayerListMixin {
     @WrapMethod(method = "broadcast")
     private void toroidal$broadcastThroughSeam(@Nullable Player except, double x, double y, double z, double range,
             ResourceKey<Level> dimension, Packet<?> packet, Operation<Void> original) {
+        WorldFold transformer = null;
         for (ServerPlayer player : this.players) {
-            if (player == except || player.level().dimension() != dimension) {
-                continue;
+            if (player != except && player.level().dimension() == dimension) {
+                transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
+                break;
             }
+        }
 
-            WorldFold transformer = WorldLoopAttachments.transformerOf(player.level());
-            double distanceSqr = transformer.isWrapped()
-                    ? transformer.sqrDistance(player.getX(), player.getY(), player.getZ(), x, y, z)
-                    : player.distanceToSqr(x, y, z);
+        if (transformer == null) {
+            original.call(except, x, y, z, range, dimension, packet);
+            return;
+        }
 
-            if (distanceSqr < range * range) {
-                player.connection.send(packet);
-            }
+        Vec3 source = new Vec3(x, y, z);
+        List<Vec3> copies = ListenerCopies.nearestTo(transformer, this.players,
+                player -> player != except && player.level().dimension() == dimension, source);
+        for (Vec3 copy : copies) {
+            original.call(except, copy.x, copy.y, copy.z, range, dimension, packet);
         }
     }
 
