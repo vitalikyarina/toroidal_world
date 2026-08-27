@@ -6,12 +6,14 @@ import com.toroidalworld.api.ToroidalShape;
 import com.toroidalworld.api.ToroidalWorldClientApi;
 import com.toroidalworld.compat.AxisCopies;
 import com.toroidalworld.compat.FullscreenZoomFloor;
+import com.toroidalworld.map.MapSurfaceCopies.Copies;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.Vec3;
 
 public final class JourneyMapFold {
@@ -153,8 +155,22 @@ public final class JourneyMapFold {
         fullscreenRangeZ = rangeZ;
     }
 
-    public static int fullscreenCopyRange(Direction.Axis axis) {
-        return axis == Direction.Axis.X ? fullscreenRangeX : fullscreenRangeZ;
+    public static Copies fullscreenCopies() {
+        return new Copies(Math.max(fullscreenRangeX, fullscreenRangeZ), new BoundingBox(
+                paintedMin(Direction.Axis.X, fullscreenRangeX), Integer.MIN_VALUE,
+                paintedMin(Direction.Axis.Z, fullscreenRangeZ),
+                paintedMax(Direction.Axis.X, fullscreenRangeX), Integer.MAX_VALUE,
+                paintedMax(Direction.Axis.Z, fullscreenRangeZ)));
+    }
+
+    private static int paintedMin(Direction.Axis axis, int range) {
+        AxisCopies copies = copies(axis);
+        return copies.loops() ? copies.min() + copies.offset(-range) : Integer.MIN_VALUE;
+    }
+
+    private static int paintedMax(Direction.Axis axis, int range) {
+        AxisCopies copies = copies(axis);
+        return copies.loops() ? copies.max() + copies.offset(range) - 1 : Integer.MAX_VALUE;
     }
 
     public static void gridDropped(String fromDimension, String toDimension) {

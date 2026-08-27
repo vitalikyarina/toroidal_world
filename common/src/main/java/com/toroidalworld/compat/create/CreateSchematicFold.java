@@ -6,7 +6,6 @@ import com.simibubi.create.AllDataComponents;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
-import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -58,9 +57,7 @@ public final class CreateSchematicFold {
             return false;
         }
 
-        BoundingBox region = BoundingBox.fromCorners(first, second);
-        return transformer.blockDomain(Direction.Axis.X).exceedsWorld(region.minX(), region.maxX())
-                || transformer.blockDomain(Direction.Axis.Z).exceedsWorld(region.minZ(), region.maxZ());
+        return transformer.foldsOntoItself(BoundingBox.fromCorners(first, second));
     }
 
     private static @Nullable WorldFold seamTransformer(@Nullable Level level) {

@@ -21,12 +21,15 @@ import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.toroidalworld.compat.create.client.CarriageBogeyFrame;
 import com.toroidalworld.compat.create.client.TrainMapFrame;
 import com.toroidalworld.compat.create.client.TrainMapViewFold;
-import com.toroidalworld.compat.create.client.TrainMapViewFold.Lap;
 import com.toroidalworld.compat.create.client.TrainMapViewFold.NearestNodeKey;
+import com.toroidalworld.core.DeckTransformation;
+import com.toroidalworld.core.SeamTransform;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -90,16 +93,26 @@ public abstract class TrainMapManagerMixin {
     @Unique
     private static List<FormattedText> toroidal$pickOnEachCopy(GuiGraphics graphics, int mouseX, int mouseY,
             boolean linearFiltering, Rect2i bounds, Operation<List<FormattedText>> original) {
-        Lap[] laps = TrainMapViewFold.laps(bounds);
         PoseStack pose = graphics.pose();
         List<FormattedText> hovered = null;
-        for (Lap lap : laps) {
-            Rect2i copy = new Rect2i(bounds.getX() - lap.offsetX(), bounds.getY() - lap.offsetZ(),
-                    bounds.getWidth(), bounds.getHeight());
+        for (DeckTransformation copy : TrainMapViewFold.copies(bounds)) {
+            Rect2i view = TrainMapViewFold.canonicalView(copy, bounds);
+            BlockPos mouse = TrainMapViewFold.canonicalPixel(copy, mouseX, mouseY);
+            SeamTransform blocks = copy.blocks();
+            // Mirrored quads wind backwards, and with the GUI's backface culling left on the copy draws nothing.
+            boolean mirrored = !copy.orientation().preservesHandedness();
             pose.pushPose();
-            pose.translate(lap.offsetX(), lap.offsetZ(), 0.0F);
-            List<FormattedText> picked = original.call(graphics, mouseX - lap.offsetX(), mouseY - lap.offsetZ(),
-                    linearFiltering, copy);
+            pose.translate(blocks.xShift(), blocks.zShift(), 0.0F);
+            pose.scale(blocks.xSign(), blocks.zSign(), 1.0F);
+            if (mirrored) {
+                RenderSystem.disableCull();
+            }
+
+            List<FormattedText> picked = original.call(graphics, mouse.getX(), mouse.getZ(), linearFiltering, view);
+            if (mirrored) {
+                RenderSystem.enableCull();
+            }
+
             pose.popPose();
             if (picked != null) {
                 hovered = picked;

@@ -13,7 +13,6 @@ import com.toroidalworld.compat.journeymap.JourneyMapFold;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.FormattedText;
 
 @Mixin(value = JourneyTrainMap.class, remap = false)
@@ -25,8 +24,7 @@ public abstract class JourneyTrainMapMixin {
                             + "Ljava/util/List;"))
     private static List<FormattedText> toroidal$onTheFullscreenSurface(GuiGraphics graphics, int mouseX, int mouseY,
             boolean linearFiltering, Rect2i bounds, Operation<List<FormattedText>> original) {
-        return TrainMapSurface.showing(JourneyMapFold.fullscreenCopyRange(Direction.Axis.X),
-                JourneyMapFold.fullscreenCopyRange(Direction.Axis.Z),
+        return TrainMapSurface.showing(JourneyMapFold.fullscreenCopies(),
                 () -> original.call(graphics, mouseX, mouseY, linearFiltering, bounds));
     }
 }

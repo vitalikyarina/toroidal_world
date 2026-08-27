@@ -6,8 +6,8 @@ import com.toroidalworld.map.MapSurfaceCopies;
 import com.toroidalworld.map.MapSurfaceCopies.Copies;
 
 public final class TrainMapSurface {
-    public static <T> T showing(int rangeX, int rangeZ, Supplier<T> render) {
-        Copies previous = MapSurfaceCopies.bind(rangeX, rangeZ);
+    public static <T> T showing(Copies copies, Supplier<T> render) {
+        Copies previous = MapSurfaceCopies.bind(copies);
         try {
             return render.get();
         } finally {

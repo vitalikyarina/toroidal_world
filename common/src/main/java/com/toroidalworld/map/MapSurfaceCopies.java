@@ -1,15 +1,23 @@
 package com.toroidalworld.map;
 
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+
 public final class MapSurfaceCopies {
     private static Copies bound = Copies.NONE;
 
-    public record Copies(int rangeX, int rangeZ) {
-        public static final Copies NONE = new Copies(0, 0);
+    public record Copies(int reach, BoundingBox painted) {
+        public static final Copies NONE = new Copies(0, BoundingBox.infinite());
+
+        public Copies {
+            if (reach < 0) {
+                throw new IllegalArgumentException("A copy reach is never negative, got " + reach);
+            }
+        }
     }
 
-    public static Copies bind(int rangeX, int rangeZ) {
+    public static Copies bind(Copies copies) {
         Copies previous = bound;
-        bound = new Copies(Math.max(0, rangeX), Math.max(0, rangeZ));
+        bound = copies;
         return previous;
     }
 

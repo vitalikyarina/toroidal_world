@@ -13,7 +13,6 @@ import com.toroidalworld.compat.xaero.XaeroWorldMapFold;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.FormattedText;
 
 @Mixin(value = XaeroTrainMap.class, remap = false)
@@ -26,8 +25,8 @@ public abstract class XaeroTrainMapMixin {
     private static List<FormattedText> toroidal$onTheWorldMapSurface(GuiGraphics graphics, int mouseX, int mouseY,
             boolean linearFiltering, Rect2i bounds, Operation<List<FormattedText>> original) {
         return TrainMapSurface.showing(
-                XaeroWorldMapFold.worldMapCopyRange(Direction.Axis.X, bounds.getX(), bounds.getX() + bounds.getWidth()),
-                XaeroWorldMapFold.worldMapCopyRange(Direction.Axis.Z, bounds.getY(), bounds.getY() + bounds.getHeight()),
+                XaeroWorldMapFold.worldMapCopies(bounds.getX(), bounds.getX() + bounds.getWidth(),
+                        bounds.getY(), bounds.getY() + bounds.getHeight()),
                 () -> original.call(graphics, mouseX, mouseY, linearFiltering, bounds));
     }
 }

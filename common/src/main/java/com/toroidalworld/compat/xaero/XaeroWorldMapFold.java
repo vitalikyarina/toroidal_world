@@ -7,11 +7,13 @@ import com.toroidalworld.api.ToroidalShape;
 import com.toroidalworld.api.ToroidalWorldClientApi;
 import com.toroidalworld.compat.AxisCopies;
 import com.toroidalworld.compat.FullscreenZoomFloor;
+import com.toroidalworld.map.MapSurfaceCopies.Copies;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 public final class XaeroWorldMapFold {
     // Xaero's own units: a tile chunk is 4 chunks (64 blocks), a region 8 tile chunks (512 blocks).
@@ -23,8 +25,9 @@ public final class XaeroWorldMapFold {
         return level == null ? null : ToroidalWorldClientApi.shapeOf(level).orElse(null);
     }
 
-    public static int worldMapCopyRange(Direction.Axis axis, int spanMin, int spanMax) {
-        return copies(axis).reach(spanMin, spanMax);
+    public static Copies worldMapCopies(int minX, int maxX, int minZ, int maxZ) {
+        int reach = Math.max(copies(Direction.Axis.X).reach(minX, maxX), copies(Direction.Axis.Z).reach(minZ, maxZ));
+        return new Copies(reach, BoundingBox.infinite());
     }
 
     public static boolean active() {

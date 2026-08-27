@@ -1,24 +1,23 @@
 package com.toroidalworld.compat.create.client;
 
+import java.util.List;
+
 import org.jspecify.annotations.Nullable;
 
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.toroidalworld.compat.create.CreateTrackFold;
-import com.toroidalworld.compat.create.TrainMapLaps;
-import com.toroidalworld.compat.create.TrainMapLaps.Range;
-import com.toroidalworld.map.MapSurfaceCopies;
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.map.MapSurfaceCopies;
+import com.toroidalworld.map.MapSurfaceCopies.Copies;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.Vec3;
 
 public final class TrainMapViewFold {
-    public record Lap(int offsetX, int offsetZ) {
-    }
-
     public record NearestNodeKey(Vec3i raw, Vec3i nearest) {
     }
 
@@ -62,28 +61,40 @@ public final class TrainMapViewFold {
         return transformer == null ? position : transformer.nearestCopy(anchor, position);
     }
 
-    public static Lap[] laps(Rect2i bounds) {
+    public static List<DeckTransformation> copies(Rect2i view) {
         WorldFold transformer = transformer();
         if (transformer == null) {
-            return new Lap[] {new Lap(0, 0)};
+            return List.of(DeckTransformation.IDENTITY);
         }
 
-        MapSurfaceCopies.Copies surface = MapSurfaceCopies.current();
-        int surfaceX = surface.rangeX();
-        int surfaceZ = surface.rangeZ();
-        Range alongX = TrainMapLaps.range(transformer.blockDomain(Direction.Axis.X), bounds.getX(), bounds.getWidth(), surfaceX);
-        Range alongZ = TrainMapLaps.range(transformer.blockDomain(Direction.Axis.Z), bounds.getY(), bounds.getHeight(), surfaceZ);
-        int worldWidthX = transformer.blockDomain(Direction.Axis.X).domainLength;
-        int worldWidthZ = transformer.blockDomain(Direction.Axis.Z).domainLength;
-        Lap[] laps = new Lap[alongX.kept() * alongZ.kept()];
-        int index = 0;
-        for (int lapX = alongX.lowest(); lapX <= alongX.highest(); lapX++) {
-            for (int lapZ = alongZ.lowest(); lapZ <= alongZ.highest(); lapZ++) {
-                laps[index++] = new Lap(lapX * worldWidthX, lapZ * worldWidthZ);
-            }
+        return copies(transformer, MapSurfaceCopies.current(), view);
+    }
+
+    public static List<DeckTransformation> copies(WorldFold transformer, Copies surface, Rect2i view) {
+        BoundingBox painted = surface.painted();
+        int minX = Math.max(view.getX(), painted.minX());
+        int maxX = Math.min(view.getX() + view.getWidth() - 1, painted.maxX());
+        int minZ = Math.max(view.getY(), painted.minZ());
+        int maxZ = Math.min(view.getY() + view.getHeight() - 1, painted.maxZ());
+        if (minX > maxX || minZ > maxZ) {
+            return List.of();
         }
 
-        return laps;
+        return transformer.copiesTouching(new BoundingBox(minX, 0, minZ, maxX, 0, maxZ), surface.reach());
+    }
+
+    public static Rect2i canonicalView(DeckTransformation copy, Rect2i view) {
+        BoundingBox canonical = toCanonical(copy).apply(new BoundingBox(view.getX(), 0, view.getY(),
+                view.getX() + view.getWidth() - 1, 0, view.getY() + view.getHeight() - 1));
+        return new Rect2i(canonical.minX(), canonical.minZ(), canonical.getXSpan(), canonical.getZSpan());
+    }
+
+    public static BlockPos canonicalPixel(DeckTransformation copy, int x, int z) {
+        return toCanonical(copy).apply(new BlockPos(x, 0, z));
+    }
+
+    private static DeckTransformation toCanonical(DeckTransformation copy) {
+        return new DeckTransformation(copy.blocks().inverse());
     }
 
     private TrainMapViewFold() {
