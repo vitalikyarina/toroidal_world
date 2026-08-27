@@ -241,7 +241,7 @@ public final class DeckGroupFold implements WorldFold {
 
     @Override
     public BlockPos reseat(BlockPos pos, ChunkPos copy) {
-        return deckTransformation(ChunkPos.containing(pos), copy).apply(pos);
+        return deckTransformation(new ChunkPos(pos), copy).apply(pos);
     }
 
     @Override

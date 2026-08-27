@@ -181,7 +181,7 @@ class DeckGroupFoldMatrixTest {
     }
 
     private static ChunkPos copyOf(Group group, ChunkPos chunk, int first, int second) {
-        int[] image = group.cell(chunk.x() * UNIT, chunk.z() * UNIT, first, second);
+        int[] image = group.cell(chunk.x * UNIT, chunk.z * UNIT, first, second);
         return chunkOf(image[0], image[1]);
     }
 
@@ -446,7 +446,7 @@ class DeckGroupFoldMatrixTest {
                 DeckGroupFold fold = testCase.fold();
                 BlockPos pos = new BlockPos(LOWER + 5, 64, LOWER + 7);
                 ChunkPos chunk = chunkOf(pos.getX(), pos.getZ());
-                ChunkPos neighbour = new ChunkPos(chunk.x() + 1, chunk.z());
+                ChunkPos neighbour = new ChunkPos(chunk.x + 1, chunk.z);
                 assertThrows(IllegalArgumentException.class, () -> fold.reseat(pos, neighbour),
                         testCase.name() + ": a neighbouring chunk passed as a copy");
                 assertThrows(IllegalArgumentException.class, () -> fold.deckTransformation(chunk, neighbour),

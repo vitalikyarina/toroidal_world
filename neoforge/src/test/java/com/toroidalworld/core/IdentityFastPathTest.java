@@ -158,9 +158,9 @@ class IdentityFastPathTest {
     void reseatKeepsTheLowBitsAndReturnsTheArgumentUntouchedInItsOwnChunk() {
         forEachTransformer((transformer, random) -> {
             BlockPos pos = sampleBlockPos(random, transformer);
-            ChunkPos chunk = ChunkPos.containing(pos);
+            ChunkPos chunk = new ChunkPos(pos);
             ChunkPos copy = new ChunkPos(
-                    chunk.x() + lapsOf(random, chunkX(transformer)), chunk.z() + lapsOf(random, chunkZ(transformer)));
+                    chunk.x + lapsOf(random, chunkX(transformer)), chunk.z + lapsOf(random, chunkZ(transformer)));
             BlockPos reference = new BlockPos(
                     copy.getMinBlockX() + Math.floorMod(pos.getX(), CHUNK_BLOCKS), pos.getY(),
                     copy.getMinBlockZ() + Math.floorMod(pos.getZ(), CHUNK_BLOCKS));
