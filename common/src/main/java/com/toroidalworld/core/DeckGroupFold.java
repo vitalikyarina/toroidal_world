@@ -98,8 +98,8 @@ public final class DeckGroupFold implements WorldFold {
 
     @Override
     public ChunkPos fold(ChunkPos pos) {
-        SeamTransform applied = this.chunks.foldCells(pos.x(), pos.z());
-        return applied.isIdentity() ? pos : new ChunkPos(applied.applyCellX(pos.x()), applied.applyCellZ(pos.z()));
+        SeamTransform applied = this.chunks.foldCells(pos.x, pos.z);
+        return applied.isIdentity() ? pos : new ChunkPos(applied.applyCellX(pos.x), applied.applyCellZ(pos.z));
     }
 
     @Override
@@ -125,7 +125,7 @@ public final class DeckGroupFold implements WorldFold {
         int x = ChunkPos.getX(chunkKey);
         int z = ChunkPos.getZ(chunkKey);
         SeamTransform applied = this.chunks.foldCells(x, z);
-        return applied.isIdentity() ? chunkKey : ChunkPos.pack(applied.applyCellX(x), applied.applyCellZ(z));
+        return applied.isIdentity() ? chunkKey : ChunkPos.asLong(applied.applyCellX(x), applied.applyCellZ(z));
     }
 
     @Override
@@ -156,10 +156,10 @@ public final class DeckGroupFold implements WorldFold {
 
     @Override
     public Folded<ChunkPos> foldOriented(ChunkPos pos) {
-        SeamTransform applied = this.chunks.foldCells(pos.x(), pos.z());
+        SeamTransform applied = this.chunks.foldCells(pos.x, pos.z);
         ChunkPos value = applied.isIdentity()
                 ? pos
-                : new ChunkPos(applied.applyCellX(pos.x()), applied.applyCellZ(pos.z()));
+                : new ChunkPos(applied.applyCellX(pos.x), applied.applyCellZ(pos.z));
         return new Folded<>(value, applied.orientation());
     }
 
@@ -179,8 +179,8 @@ public final class DeckGroupFold implements WorldFold {
 
     @Override
     public ChunkPos nearestCopy(ChunkPos ref, ChunkPos target) {
-        SeamTransform move = this.chunks.nearestCells(ref.x(), ref.z(), target.x(), target.z());
-        return move.isIdentity() ? target : new ChunkPos(move.applyCellX(target.x()), move.applyCellZ(target.z()));
+        SeamTransform move = this.chunks.nearestCells(ref.x, ref.z, target.x, target.z);
+        return move.isIdentity() ? target : new ChunkPos(move.applyCellX(target.x), move.applyCellZ(target.z));
     }
 
     @Override
@@ -220,9 +220,9 @@ public final class DeckGroupFold implements WorldFold {
 
     @Override
     public int sqrChunkDistance(ChunkPos from, ChunkPos to) {
-        SeamTransform move = this.chunks.nearestCells(from.x(), from.z(), to.x(), to.z());
-        int dx = move.applyCellX(to.x()) - from.x();
-        int dz = move.applyCellZ(to.z()) - from.z();
+        SeamTransform move = this.chunks.nearestCells(from.x, from.z, to.x, to.z);
+        int dx = move.applyCellX(to.x) - from.x;
+        int dz = move.applyCellZ(to.z) - from.z;
         return dx * dx + dz * dz;
     }
 

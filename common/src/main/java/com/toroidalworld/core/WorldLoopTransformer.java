@@ -488,8 +488,8 @@ public class WorldLoopTransformer implements WorldFold {
 
     @Override
     public int sqrChunkDistance(ChunkPos from, ChunkPos to) {
-        int dx = chunks.x.unwrapAround(from.x(), to.x()) - from.x();
-        int dz = chunks.z.unwrapAround(from.z(), to.z()) - from.z();
+        int dx = chunks.x.unwrapAround(from.x, to.x) - from.x;
+        int dz = chunks.z.unwrapAround(from.z, to.z) - from.z;
         return dx * dx + dz * dz;
     }
 

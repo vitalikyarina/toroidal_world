@@ -9,7 +9,7 @@ import com.toroidalworld.shape.torus.TorusSettings;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.WorldDimensions;
 
 public final class TorusShapeSetup {
@@ -19,7 +19,7 @@ public final class TorusShapeSetup {
 
     public static void register() {
         WorldShapes.register(WorldShape.of(
-                Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopGenerators.TOROIDAL_ID),
+                ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopGenerators.TOROIDAL_ID),
                 Component.translatable(TOROIDAL_LABEL_KEY),
                 parent -> new TorusSettingsScreen(parent, settings.overworld(), settings.netherScale(),
                         settings.end(),

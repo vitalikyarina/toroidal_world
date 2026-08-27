@@ -242,9 +242,9 @@ class DeckGroupFoldMatrixTest {
                     int z = sample(random);
                     BlockPos block = fold.fold(new BlockPos(x, 64, z));
                     ChunkPos chunk = fold.fold(new ChunkPos(Math.floorDiv(x, UNIT), Math.floorDiv(z, UNIT)));
-                    assertEquals(chunk.x(), Math.floorDiv(block.getX(), UNIT),
+                    assertEquals(chunk.x, Math.floorDiv(block.getX(), UNIT),
                             testCase.name() + ": the chunk fold and the block fold disagree on x");
-                    assertEquals(chunk.z(), Math.floorDiv(block.getZ(), UNIT),
+                    assertEquals(chunk.z, Math.floorDiv(block.getZ(), UNIT),
                             testCase.name() + ": the chunk fold and the block fold disagree on z");
                 }
             }
@@ -263,11 +263,11 @@ class DeckGroupFoldMatrixTest {
                             testCase.name() + ": the block node fold disagrees");
 
                     ChunkPos chunk = new ChunkPos(Math.floorDiv(x, UNIT), Math.floorDiv(z, UNIT));
-                    assertEquals(ChunkPos.pack(fold.fold(chunk).x(), fold.fold(chunk).z()),
-                            fold.foldChunkKey(ChunkPos.pack(chunk.x(), chunk.z())),
+                    assertEquals(ChunkPos.asLong(fold.fold(chunk).x, fold.fold(chunk).z),
+                            fold.foldChunkKey(ChunkPos.asLong(chunk.x, chunk.z)),
                             testCase.name() + ": the chunk key fold disagrees");
 
-                    SectionPos section = SectionPos.of(chunk.x(), 4, chunk.z());
+                    SectionPos section = SectionPos.of(chunk.x, 4, chunk.z);
                     assertEquals(fold.fold(section).asLong(), fold.foldSectionNode(section.asLong()),
                             testCase.name() + ": the section node fold disagrees");
                 }
@@ -707,7 +707,7 @@ class DeckGroupFoldMatrixTest {
                             testCase.name() + ": chunk fold");
                     assertEquals(perAxis.fold(targetVector), generic.fold(targetVector),
                             testCase.name() + ": vector fold");
-                    long targetKey = ChunkPos.pack(targetChunk.x(), targetChunk.z());
+                    long targetKey = ChunkPos.asLong(targetChunk.x, targetChunk.z);
                     assertEquals(perAxis.foldChunkKey(targetKey), generic.foldChunkKey(targetKey),
                             testCase.name() + ": chunk key fold");
                     assertEquals(perAxis.nearestCopy(ref, target), generic.nearestCopy(ref, target),
