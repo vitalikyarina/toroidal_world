@@ -4,10 +4,10 @@ import org.jspecify.annotations.Nullable;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.WorldDimensions;
 
-public record WorldShape(Identifier id, Component label, AtCreation atCreation, Runnable resetSettings,
+public record WorldShape(ResourceLocation id, Component label, AtCreation atCreation, Runnable resetSettings,
         @Nullable FromExisting fromExisting) {
     @FunctionalInterface
     public interface AtCreation {
@@ -19,12 +19,12 @@ public record WorldShape(Identifier id, Component label, AtCreation atCreation, 
         boolean adopt(RegistryAccess.Frozen registries, WorldDimensions dimensions);
     }
 
-    public static WorldShape of(Identifier id, Component label, AtCreation atCreation) {
+    public static WorldShape of(ResourceLocation id, Component label, AtCreation atCreation) {
         return new WorldShape(id, label, atCreation, () -> {
         }, null);
     }
 
-    public static WorldShape of(Identifier id, Component label, AtCreation atCreation, Runnable resetSettings,
+    public static WorldShape of(ResourceLocation id, Component label, AtCreation atCreation, Runnable resetSettings,
             FromExisting fromExisting) {
         return new WorldShape(id, label, atCreation, resetSettings, fromExisting);
     }

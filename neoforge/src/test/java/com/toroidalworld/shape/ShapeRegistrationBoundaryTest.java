@@ -32,7 +32,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.FixedBiomeSource;
 import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
@@ -47,8 +47,8 @@ class ShapeRegistrationBoundaryTest {
 
     private static final HolderLookup.Provider WORLDGEN = VanillaRegistries.createLookup();
 
-    private static final Identifier CYLINDER_ID =
-            Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, "boundary_test_cylinder");
+    private static final ResourceLocation CYLINDER_ID =
+            ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, "boundary_test_cylinder");
 
     private static final FlatShape CYLINDER = FlatShape.cylinder(
             new WorldLoopBounds(new AxisBounds.Looped(-16, 16), AxisBounds.Unbounded.INSTANCE));

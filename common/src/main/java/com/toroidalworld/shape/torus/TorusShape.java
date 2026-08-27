@@ -8,14 +8,14 @@ import com.toroidalworld.shape.WorldShapes;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.WorldDimensions;
 
 public final class TorusShape {
     private static final String TORUS_ID = "toroidal";
     private static final String TORUS_LABEL_KEY = "gui.toroidal_world.world_shape.toroidal";
 
-    public static final Identifier ID = Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, TORUS_ID);
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, TORUS_ID);
 
     private static TorusSettings settings = TorusSettings.DEFAULT;
 
