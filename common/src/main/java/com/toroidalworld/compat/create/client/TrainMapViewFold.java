@@ -3,18 +3,18 @@ package com.toroidalworld.compat.create.client;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.mojang.logging.LogUtils;
-import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.toroidalworld.compat.create.CreateTrackFold;
 import com.toroidalworld.compat.create.TrainMapLaps;
 import com.toroidalworld.compat.create.TrainMapLaps.Range;
-import com.toroidalworld.compat.create.CreateTrackFold.NodeKeyAxes;
 import com.toroidalworld.core.LogRateGate;
 import com.toroidalworld.map.MapSurfaceCopies;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WrapDomain;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.phys.Vec3;
 
@@ -26,36 +26,33 @@ public final class TrainMapViewFold {
     public record Lap(int offsetX, int offsetZ) {
     }
 
+    public record NearestNodeKey(Vec3i raw, Vec3i nearest) {
+    }
+
     public static @Nullable WorldFold transformer() {
         return TrainMapFrame.current();
     }
 
-    public static int foldNodeKeyX(TrackNodeLocation anchor, int rawCoord) {
-        WorldFold transformer = transformer();
-        if (transformer == null) {
-            return rawCoord;
+    public static NearestNodeKey nearestNodeKey(Vec3i anchor, Vec3i key, LocalRef<NearestNodeKey> memo) {
+        NearestNodeKey known = memo.get();
+        if (known != null && known.raw() == key) {
+            return known;
         }
 
-        return foldNodeKey(nodeKeyDomainX(transformer), anchor.getX(), rawCoord);
+        WorldFold transformer = transformer();
+        NearestNodeKey folded = new NearestNodeKey(key,
+                transformer == null ? key : CreateTrackFold.nearestNodeKey(transformer, anchor, key));
+        memo.set(folded);
+        return folded;
     }
 
-    public static int foldNodeKeyZ(TrackNodeLocation anchor, int rawCoord) {
+    public static BlockPos wrapPixel(int x, int z) {
         WorldFold transformer = transformer();
-        if (transformer == null) {
-            return rawCoord;
-        }
-
-        return foldNodeKey(nodeKeyDomainZ(transformer), anchor.getZ(), rawCoord);
+        return transformer == null ? new BlockPos(x, 0, z) : wrapPixel(transformer, x, z);
     }
 
-    public static int wrapPixelX(int coord) {
-        WorldFold transformer = transformer();
-        return transformer == null ? coord : transformer.blockDomain(Direction.Axis.X).wrap(coord);
-    }
-
-    public static int wrapPixelZ(int coord) {
-        WorldFold transformer = transformer();
-        return transformer == null ? coord : transformer.blockDomain(Direction.Axis.Z).wrap(coord);
+    public static BlockPos wrapPixel(WorldFold transformer, int x, int z) {
+        return transformer.fold(new BlockPos(x, 0, z));
     }
 
     public static Vec3 canonical(Vec3 position) {
@@ -102,22 +99,6 @@ public final class TrainMapViewFold {
 
 
         return laps;
-    }
-
-    private static int foldNodeKey(WrapDomain domain, int anchor, int rawCoord) {
-        return anchor + domain.foldDelta(rawCoord - anchor);
-    }
-
-    private static WrapDomain nodeKeyDomainX(WorldFold transformer) {
-        return axes(transformer).x();
-    }
-
-    private static WrapDomain nodeKeyDomainZ(WorldFold transformer) {
-        return axes(transformer).z();
-    }
-
-    private static NodeKeyAxes axes(WorldFold transformer) {
-        return CreateTrackFold.nodeKeyAxes(transformer);
     }
 
     private TrainMapViewFold() {

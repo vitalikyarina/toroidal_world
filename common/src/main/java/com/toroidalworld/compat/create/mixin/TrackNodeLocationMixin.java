@@ -9,7 +9,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.toroidalworld.compat.create.CreateTrackFold;
-import com.toroidalworld.compat.create.CreateTrackFold.NodeKeyAxes;
 import com.toroidalworld.compat.create.TrackNodeKeyFold;
 import com.toroidalworld.core.WorldFold;
 
@@ -33,13 +32,13 @@ public abstract class TrackNodeLocationMixin extends Vec3i implements TrackNodeK
             return;
         }
 
-        NodeKeyAxes axes = CreateTrackFold.nodeKeyAxes(transformer);
-        if (!axes.x().isOver(getX()) && !axes.z().isOver(getZ())) {
+        Vec3i canonical = CreateTrackFold.canonicalNodeKey(transformer, this);
+        if (canonical == this) {
             return;
         }
 
-        setX(axes.x().wrap(getX()));
-        setZ(axes.z().wrap(getZ()));
+        setX(canonical.getX());
+        setZ(canonical.getZ());
     }
 
     @Inject(method = "in(Lnet/minecraft/world/level/Level;)Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;",

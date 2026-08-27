@@ -22,6 +22,7 @@ import com.toroidalworld.compat.create.client.CarriageBogeyFrame;
 import com.toroidalworld.compat.create.client.TrainMapFrame;
 import com.toroidalworld.compat.create.client.TrainMapViewFold;
 import com.toroidalworld.compat.create.client.TrainMapViewFold.Lap;
+import com.toroidalworld.compat.create.client.TrainMapViewFold.NearestNodeKey;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.GuiGraphics;
@@ -38,8 +39,10 @@ public abstract class TrainMapManagerMixin {
                     target = "Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;getX()I",
                     ordinal = 1))
     private static int toroidal$foldSecondNodeX(TrackNodeLocation other, Operation<Integer> original,
-            @Local(name = "nodeLocation") TrackNodeLocation anchor) {
-        return TrainMapViewFold.foldNodeKeyX(anchor, original.call(other));
+            @Local(name = "nodeLocation") TrackNodeLocation anchor,
+            @Share("otherNodeKey") LocalRef<NearestNodeKey> memo) {
+        NearestNodeKey folded = TrainMapViewFold.nearestNodeKey(anchor, other, memo);
+        return folded.nearest() == other ? original.call(other) : folded.nearest().getX();
     }
 
     @WrapOperation(method = "renderPhase",
@@ -47,8 +50,10 @@ public abstract class TrainMapManagerMixin {
                     target = "Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;getZ()I",
                     ordinal = 1))
     private static int toroidal$foldSecondNodeZ(TrackNodeLocation other, Operation<Integer> original,
-            @Local(name = "nodeLocation") TrackNodeLocation anchor) {
-        return TrainMapViewFold.foldNodeKeyZ(anchor, original.call(other));
+            @Local(name = "nodeLocation") TrackNodeLocation anchor,
+            @Share("otherNodeKey") LocalRef<NearestNodeKey> memo) {
+        NearestNodeKey folded = TrainMapViewFold.nearestNodeKey(anchor, other, memo);
+        return folded.nearest() == other ? original.call(other) : folded.nearest().getZ();
     }
 
     @WrapOperation(method = "drawPoints",

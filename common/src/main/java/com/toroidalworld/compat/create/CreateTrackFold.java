@@ -2,14 +2,12 @@ package com.toroidalworld.compat.create;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WrapDomain;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.storage.CurrentServer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -21,14 +19,6 @@ public final class CreateTrackFold {
     // TrackNodeLocation stores Math.round(coord * 2) — the rail ends of one block are one unit apart on each side of
     // its centre, so every node coordinate is a whole number of half-blocks.
     private static final int NODE_KEY_UNITS_PER_BLOCK = 2;
-
-    private static volatile @Nullable NodeKeyMemo nodeKeyMemo;
-
-    public record NodeKeyAxes(WrapDomain x, WrapDomain z) {
-    }
-
-    private record NodeKeyMemo(WorldFold transformer, NodeKeyAxes axes) {
-    }
 
     public static @Nullable WorldFold transformerOf(@Nullable Level level,
             @Nullable ResourceKey<Level> dimension) {
@@ -49,16 +39,19 @@ public final class CreateTrackFold {
         return serverLevel == null ? null : WorldLoopAttachments.wrappedTransformerOf(serverLevel);
     }
 
-    public static NodeKeyAxes nodeKeyAxes(WorldFold transformer) {
-        NodeKeyMemo memo = nodeKeyMemo;
-        if (memo != null && memo.transformer() == transformer) {
-            return memo.axes();
+    public static Vec3i canonicalNodeKey(WorldFold transformer, Vec3i key) {
+        Vec3 location = nodeKeyLocation(key);
+        if (!transformer.isOver(location)) {
+            return key;
         }
 
-        NodeKeyAxes axes =
-                new NodeKeyAxes(nodeKeyDomain(transformer.bounds().x()), nodeKeyDomain(transformer.bounds().z()));
-        nodeKeyMemo = new NodeKeyMemo(transformer, axes);
-        return axes;
+        return nodeKeyAt(transformer.fold(location), key.getY());
+    }
+
+    public static Vec3i nearestNodeKey(WorldFold transformer, Vec3i anchor, Vec3i key) {
+        Vec3 location = nodeKeyLocation(key);
+        Vec3 nearest = transformer.nearestCopy(nodeKeyLocation(anchor), location);
+        return nearest == location ? key : nodeKeyAt(nearest, key.getY());
     }
 
     public static Vec3 nearestCopy(@Nullable Level level, Vec3 anchor, Vec3 target) {
@@ -88,13 +81,17 @@ public final class CreateTrackFold {
         return transformer == null ? position : transformer.fold(position);
     }
 
-    private static WrapDomain nodeKeyDomain(AxisBounds axis) {
-        return switch (axis) {
-            case AxisBounds.Looped looped -> new WrapDomain(
-                    looped.minChunk() * CoordinateConstants.CHUNK_WIDTH * NODE_KEY_UNITS_PER_BLOCK,
-                    looped.maxChunk() * CoordinateConstants.CHUNK_WIDTH * NODE_KEY_UNITS_PER_BLOCK);
-            case AxisBounds.Unbounded() -> new WrapDomain.Noop();
-        };
+    private static Vec3 nodeKeyLocation(Vec3i key) {
+        return new Vec3((double) key.getX() / NODE_KEY_UNITS_PER_BLOCK, 0.0,
+                (double) key.getZ() / NODE_KEY_UNITS_PER_BLOCK);
+    }
+
+    private static Vec3i nodeKeyAt(Vec3 location, int keyY) {
+        return new Vec3i(nodeKeyUnits(location.x), keyY, nodeKeyUnits(location.z));
+    }
+
+    private static int nodeKeyUnits(double coord) {
+        return (int) Math.round(coord * NODE_KEY_UNITS_PER_BLOCK);
     }
 
     private CreateTrackFold() {

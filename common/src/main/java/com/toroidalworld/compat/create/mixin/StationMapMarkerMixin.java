@@ -8,6 +8,8 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.ref.LocalDoubleRef;
 import com.simibubi.create.content.trains.station.StationMarker;
 import com.toroidalworld.compat.create.CreateStationMapFold;
 
@@ -15,6 +17,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = MapItemSavedData.class, priority = 1100)
 public class StationMapMarkerMixin {
@@ -48,13 +51,11 @@ public class StationMapMarkerMixin {
                 original.call(marker));
     }
 
-    @ModifyVariable(method = "toggleStation", at = @At("STORE"), ordinal = 0, remap = false)
-    private double toroidal$toggledStationXInMapFrame(double xCenter) {
-        return CreateStationMapFold.xInMapFrame(this.dimension, this.centerX, xCenter);
-    }
-
     @ModifyVariable(method = "toggleStation", at = @At("STORE"), ordinal = 1, remap = false)
-    private double toroidal$toggledStationZInMapFrame(double zCenter) {
-        return CreateStationMapFold.zInMapFrame(this.dimension, this.centerZ, zCenter);
+    private double toroidal$toggledStationInMapFrame(double zCenter, @Local(name = "xCenter") LocalDoubleRef xCenter) {
+        Vec3 centre = CreateStationMapFold.centreInMapFrame(this.dimension, this.centerX, this.centerZ,
+                xCenter.get(), zCenter);
+        xCenter.set(centre.x);
+        return centre.z;
     }
 }

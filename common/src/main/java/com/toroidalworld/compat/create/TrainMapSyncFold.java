@@ -4,12 +4,12 @@ import java.util.List;
 import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WrapDomain;
 
-import net.minecraft.core.Direction;
+import com.toroidalworld.core.WorldFold;
+
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public final class TrainMapSyncFold {
     private static final int FLOATS_PER_BOGEY = 3;
@@ -69,20 +69,14 @@ public final class TrainMapSyncFold {
 
     private static void rebase(WorldFold transformer, Float[] positions, int at, float anchorX,
             float anchorZ) {
-        float rawX = positions[at + X_OFFSET];
-        float rawZ = positions[at + Z_OFFSET];
-        float nearX = (float) nearest(transformer.blockDomain(Direction.Axis.X), anchorX, rawX);
-        float nearZ = (float) nearest(transformer.blockDomain(Direction.Axis.Z), anchorZ, rawZ);
-        if (nearX == rawX && nearZ == rawZ) {
+        Vec3 raw = new Vec3(positions[at + X_OFFSET], 0.0, positions[at + Z_OFFSET]);
+        Vec3 nearest = transformer.nearestCopy(new Vec3(anchorX, 0.0, anchorZ), raw);
+        if (nearest == raw) {
             return;
         }
 
-        positions[at + X_OFFSET] = nearX;
-        positions[at + Z_OFFSET] = nearZ;
-    }
-
-    private static double nearest(WrapDomain domain, double anchor, double coord) {
-        return domain.unwrapAround(anchor, coord);
+        positions[at + X_OFFSET] = (float) nearest.x;
+        positions[at + Z_OFFSET] = (float) nearest.z;
     }
 
     private TrainMapSyncFold() {
