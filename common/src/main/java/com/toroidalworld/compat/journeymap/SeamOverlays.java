@@ -31,9 +31,11 @@ public final class SeamOverlays {
     public static List<PolygonOverlay> build(ResourceKey<Level> dimension, ToroidalShape shape) {
         AxisCopies x = AxisCopies.of(shape, Direction.Axis.X);
         AxisCopies z = AxisCopies.of(shape, Direction.Axis.Z);
-        List<PolygonOverlay> overlays = new ArrayList<>(x.laps().size() * z.laps().size());
-        for (int lapX : x.laps()) {
-            for (int lapZ : z.laps()) {
+        int[] lapsX = laps(x);
+        int[] lapsZ = laps(z);
+        List<PolygonOverlay> overlays = new ArrayList<>(lapsX.length * lapsZ.length);
+        for (int lapX : lapsX) {
+            for (int lapZ : lapsZ) {
                 overlays.add(outline(dimension, lower(x, lapX), lower(z, lapZ), upper(x, lapX), upper(z, lapZ)));
             }
         }
@@ -42,6 +44,12 @@ public final class SeamOverlays {
                 dimension.location(), describe("x", x), describe("z", z), overlays.size(),
                 x.loops() && z.loops() ? TORUS_OVERLAYS : 0);
         return overlays;
+    }
+
+    private static int[] laps(AxisCopies copies) {
+        return copies.loops()
+                ? copies.laps(copies.min() - copies.width(), copies.max() + copies.width())
+                : new int[] {0};
     }
 
     private static int lower(AxisCopies axis, int lap) {
@@ -54,10 +62,10 @@ public final class SeamOverlays {
 
     private static String describe(String axis, AxisCopies copies) {
         if (!copies.loops()) {
-            return axis + "_loops=false " + axis + "_laps=" + copies.laps().size();
+            return axis + "_loops=false " + axis + "_laps=" + laps(copies).length;
         }
 
-        return axis + "_loops=true " + axis + "_laps=" + copies.laps().size()
+        return axis + "_loops=true " + axis + "_laps=" + laps(copies).length
                 + " " + axis + "_min=" + copies.min() + " " + axis + "_width_blocks=" + copies.width();
     }
 
