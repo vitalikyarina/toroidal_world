@@ -10,6 +10,7 @@ import com.google.common.collect.Multimap;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.StructureTransform;
 import com.toroidalworld.compat.create.ChassisWalkFrame;
@@ -77,6 +78,17 @@ public class ContraptionMixin {
 
         Vec3 center = bounds == null ? Vec3.ZERO : bounds.getCenter();
         superglue.replaceAll(box -> transformer.foldBox(center, box).value());
+    }
+
+    @ModifyExpressionValue(method = "addBlocksToWorld",
+            at = @At(value = "INVOKE",
+                    target = "Lcom/simibubi/create/content/contraptions/StructureTransform;apply(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;"))
+    private BlockPos toroidal$canonicalDisassemblyTarget(BlockPos target, @Local(argsOnly = true) Level world) {
+        if (!(world instanceof ServerLevel serverLevel)) {
+            return target;
+        }
+
+        return CreateSeamFold.canonical(serverLevel, target);
     }
 
     @Inject(method = "addBlocksToWorld",
