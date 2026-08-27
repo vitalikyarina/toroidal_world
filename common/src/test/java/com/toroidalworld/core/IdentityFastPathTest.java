@@ -98,7 +98,7 @@ class IdentityFastPathTest {
             ChunkPos folded = fold.fold(pos);
 
             if (fold.decomposesPerAxis()) {
-                assertEquals(new ChunkPos(chunkX(fold).wrap(pos.x()), chunkZ(fold).wrap(pos.z())), folded,
+                assertEquals(new ChunkPos(chunkX(fold).wrap(pos.x), chunkZ(fold).wrap(pos.z)), folded,
                         () -> "fold(" + pos + ") " + in(fold));
             }
 
@@ -115,7 +115,7 @@ class IdentityFastPathTest {
 
             if (fold.decomposesPerAxis()) {
                 assertEquals(new ChunkPos(
-                        chunkX(fold).unwrap(anchor.x(), inside.x()), chunkZ(fold).unwrap(anchor.z(), inside.z())),
+                        chunkX(fold).unwrap(anchor.x, inside.x), chunkZ(fold).unwrap(anchor.z, inside.z)),
                         nearest, () -> "nearestCopy(" + anchor + ", " + inside + ") " + in(fold));
             }
 
