@@ -14,6 +14,11 @@ import net.minecraft.world.phys.Vec3;
  * <p>All spans are half-open: {@code min} is the first coordinate inside the world, {@code max} the first one past
  * it, {@code width == max - min}. {@link Direction.Axis#Y} never loops. A shape is an immutable view — cheap to
  * hold, valid as long as its level.</p>
+ *
+ * <p>A coordinate inside a <em>foreign frame</em> — a region a mod keeps outside the world for its own coordinate
+ * space, such as the plots Sable assembles its sub-levels in — is not a lap of this world: every fold and
+ * nearest-copy member hands such a coordinate back untouched, and a coordinate outside every frame folds as
+ * described on each member. Which frames a level carries is decided by the mods installed, not by the shape.</p>
  */
 public interface ToroidalShape {
 

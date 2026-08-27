@@ -91,6 +91,10 @@ public record TranslationContext(
     public ChunkPos toClient(ChunkPos chunkPos, ChunkTraffic traffic) {
         ChunkPos anchor = chunkAnchor();
         ChunkPos clientPos = transformer.nearestCopy(anchor, chunkPos);
+        if (isForeign(chunkPos)) {
+            return clientPos;
+        }
+
         int viewReach = viewReach();
         int distanceX = Math.abs(clientPos.x - anchor.x);
         int distanceZ = Math.abs(clientPos.z - anchor.z);
@@ -98,6 +102,15 @@ public record TranslationContext(
             warnChunkFarFromAnchor(traffic, chunkPos, clientPos, anchor, viewReach);
         }
         return clientPos;
+    }
+
+    private boolean isForeign(ChunkPos chunkPos) {
+        return transformer.chunkDomain(Direction.Axis.X).isForeign(chunkPos.x)
+                || transformer.chunkDomain(Direction.Axis.Z).isForeign(chunkPos.z);
+    }
+
+    private boolean isForeign(Direction.Axis axis, double blockCoord) {
+        return transformer.blockDomain(axis).isForeign(blockCoord);
     }
 
     private ChunkPos chunkAnchor() {
@@ -154,14 +167,14 @@ public record TranslationContext(
     public double toClientX(double x, PacketReach reach) {
         double anchor = clientPosition.x();
         double clientX = transformer.blockDomain(Direction.Axis.X).unwrapAround(anchor, x);
-        guardReach(reach, "x", x, clientX, anchor);
+        guardReach(reach, Direction.Axis.X, x, clientX, anchor);
         return clientX;
     }
 
     public double toClientZ(double z, PacketReach reach) {
         double anchor = clientPosition.z();
         double clientZ = transformer.blockDomain(Direction.Axis.Z).unwrapAround(anchor, z);
-        guardReach(reach, "z", z, clientZ, anchor);
+        guardReach(reach, Direction.Axis.Z, z, clientZ, anchor);
         return clientZ;
     }
 
@@ -169,9 +182,10 @@ public record TranslationContext(
         return PacketReach.tracked(trackedViewDistance);
     }
 
-    private void guardReach(PacketReach reach, String axis, double serverValue, double clientValue, double anchor) {
-        if (!withinReach(clientValue, anchor, reach)) {
-            warnCoordFarFromAnchor(reach, axis, serverValue, clientValue, anchor);
+    private void guardReach(PacketReach reach, Direction.Axis axis, double serverValue, double clientValue,
+            double anchor) {
+        if (!withinReach(clientValue, anchor, reach) && !isForeign(axis, serverValue)) {
+            warnCoordFarFromAnchor(reach, axis.getName(), serverValue, clientValue, anchor);
         }
     }
 
@@ -212,8 +226,8 @@ public record TranslationContext(
 
     public Vec3 toClient(Vec3 position, PacketReach reach) {
         Vec3 clientPos = nearestCopy(position);
-        guardReach(reach, "x", position.x, clientPos.x, clientPosition.x());
-        guardReach(reach, "z", position.z, clientPos.z, clientPosition.z());
+        guardReach(reach, Direction.Axis.X, position.x, clientPos.x, clientPosition.x());
+        guardReach(reach, Direction.Axis.Z, position.z, clientPos.z, clientPosition.z());
         return clientPos;
     }
 

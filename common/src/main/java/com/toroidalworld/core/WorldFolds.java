@@ -1,5 +1,7 @@
 package com.toroidalworld.core;
 
+import java.util.List;
+
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.serialization.DataResult;
 
@@ -10,9 +12,13 @@ public final class WorldFolds {
     public static final WorldFold NOOP = of(FlatShape.rectangle());
 
     public static WorldFold of(FlatShape shape) {
+        return of(shape, List.of());
+    }
+
+    public static WorldFold of(FlatShape shape, List<ForeignFrame> foreignFrames) {
         verifyFoldable(shape).getOrThrow(IllegalArgumentException::new);
 
-        return new WorldLoopTransformer(shape.bounds());
+        return new WorldLoopTransformer(shape.bounds(), foreignFrames);
     }
 
     public static DataResult<FlatShape> verifyFoldable(FlatShape shape) {

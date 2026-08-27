@@ -1,5 +1,6 @@
 package com.toroidalworld;
 
+import com.toroidalworld.compat.sable.SableMod;
 import com.toroidalworld.gen.LoopedChunkGenerator;
 import com.toroidalworld.gen.LoopedFlatChunkGenerator;
 import com.toroidalworld.gen.WorldLoopGenerators;
@@ -20,6 +21,7 @@ public class ToroidalWorldFabric implements ModInitializer {
         ToroidalWorld.LOGGER.info("Toroidal World initializing");
         Platforms.set(new FabricPlatform());
         WorldShapeSetup.registerAll();
+        SableMod.register();
 
         Registry.register(BuiltInRegistries.CHUNK_GENERATOR,
                 ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopGenerators.TOROIDAL_ID),

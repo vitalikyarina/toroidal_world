@@ -1,5 +1,6 @@
 package com.toroidalworld.core;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -200,6 +201,110 @@ class WrapDomainTest {
             assertEquals(1, spans.size());
             assertEquals(-5_000_000, spans.get(0)[0]);
             assertEquals(5_000_000, spans.get(0)[1]);
+        }
+    }
+
+    @Nested
+    class ForeignSpans {
+        private static final int PLOT_MIN = 1_280_000;
+        private static final int PLOT_MAX = 1_296_384;
+        private static final int PLOT = PLOT_MIN + 64;
+
+        private final WrapDomain domain = new WrapDomain(-32, 32, List.of(new ForeignSpan(PLOT_MIN, PLOT_MAX)));
+        private final WrapDomain bare = new WrapDomain(-32, 32);
+
+        @Test
+        void aCoordinateInTheSpanIsNeitherOverNorFolded() {
+            for (int coord : new int[] {PLOT_MIN, PLOT, PLOT_MAX - 1}) {
+                assertTrue(domain.isForeign(coord));
+                assertTrue(domain.isForeign(coord + 0.5));
+                assertFalse(domain.isOver(coord));
+                assertFalse(domain.isOver(coord + 0.5));
+                assertEquals(coord, domain.wrap(coord));
+                assertEquals(coord + 0.5, domain.wrap(coord + 0.5), 0.0);
+                assertEquals(0, domain.overshoot(coord));
+            }
+        }
+
+        @Test
+        void theSpanIsHalfOpen() {
+            assertFalse(domain.isForeign(PLOT_MIN - 1));
+            assertFalse(domain.isForeign(PLOT_MAX));
+            assertEquals(bare.wrap(PLOT_MIN - 1), domain.wrap(PLOT_MIN - 1));
+            assertEquals(bare.wrap(PLOT_MAX), domain.wrap(PLOT_MAX));
+            assertTrue(domain.isOver(PLOT_MAX));
+        }
+
+        @Test
+        void aBareDomainKnowsNoForeignSpan() {
+            assertFalse(bare.isForeign(PLOT));
+            assertEquals(bare.wrap(PLOT), bare.lowerBound + Math.floorMod(PLOT - bare.lowerBound, bare.domainLength));
+            assertTrue(bare.isOver(PLOT));
+        }
+
+        @Test
+        void unwrapAroundLeavesEitherForeignOperandWhereItIs() {
+            assertEquals(PLOT, domain.unwrapAround(20, PLOT));
+            assertEquals(20, domain.unwrapAround(PLOT, 20));
+            assertEquals(PLOT + 0.5, domain.unwrapAround(20.0, PLOT + 0.5), 0.0);
+            assertEquals(20.5, domain.unwrapAround(PLOT + 0.5, 20.5), 0.0);
+            assertEquals(PLOT, domain.unwrap(20, PLOT));
+            assertEquals(PLOT + 3, domain.unwrapAround(PLOT, PLOT + 3));
+        }
+
+        @Test
+        void otherCopyAndWrapFromOfAForeignCoordinateAreItself() {
+            assertEquals(PLOT, domain.otherCopy(PLOT, 5));
+            assertEquals(PLOT, domain.wrapFrom(-32, PLOT));
+            assertEquals(20, domain.wrapFrom(PLOT, 20));
+            assertEquals(bare.otherCopy(20, 5), domain.otherCopy(20, 5));
+        }
+
+        @Test
+        void spanQuestionsReadAForeignStretchPlainly() {
+            assertTrue(domain.containsSpan(PLOT, PLOT + 3));
+            assertFalse(domain.spansSeam(20, PLOT));
+            assertFalse(domain.spansSeam(PLOT, PLOT + 3));
+            assertEquals(20, domain.foldSpanStart(20, PLOT));
+            assertEquals(PLOT, domain.foldSpanEnd(20, PLOT));
+
+            assertFalse(domain.overlaps(0, 10, PLOT, PLOT + 10));
+            assertTrue(domain.overlaps(PLOT, PLOT + 10, PLOT + 5, PLOT + 20));
+            assertTrue(bare.overlaps(0, 10, PLOT, PLOT + 10));
+
+            assertArrayEquals(new int[] {0, -1}, domain.laps(PLOT, PLOT + 10));
+            assertArrayEquals(new int[] {0, 0}, domain.lapsBetween(PLOT, PLOT + 10, PLOT + 5, PLOT + 20));
+            assertTrue(bare.laps(PLOT, PLOT + 10)[0] <= bare.laps(PLOT, PLOT + 10)[1]);
+
+            List<double[]> spans = domain.spans(PLOT, PLOT + 100.5);
+            assertEquals(1, spans.size());
+            assertEquals(PLOT, spans.get(0)[0], 0.0);
+            assertEquals(PLOT + 100.5, spans.get(0)[1], 0.0);
+
+            List<int[]> cells = domain.cellSpans(PLOT, PLOT + 100);
+            assertEquals(1, cells.size());
+            assertEquals(PLOT, cells.get(0)[0]);
+            assertEquals(PLOT + 100, cells.get(0)[1]);
+        }
+
+        @Test
+        void everythingOutsideTheSpanFoldsAsBefore() {
+            Random random = new Random(SEED);
+            for (int i = 0; i < SAMPLES; i++) {
+                int coord = sampleCoord(random, bare);
+                int ref = sampleCoord(random, bare);
+                assertEquals(bare.wrap(coord), domain.wrap(coord));
+                assertEquals(bare.unwrapAround(ref, coord), domain.unwrapAround(ref, coord));
+                assertEquals(bare.unwrapAround(ref + 0.25, coord + 0.75), domain.unwrapAround(ref + 0.25, coord + 0.75), 0.0);
+                assertEquals(bare.isOver(coord), domain.isOver(coord));
+                assertEquals(bare.overshoot(coord), domain.overshoot(coord));
+                assertEquals(bare.spansSeam(ref, coord), domain.spansSeam(ref, coord));
+            }
+
+            assertEquals(bare.wrap(-PLOT), domain.wrap(-PLOT));
+            assertTrue(domain.isOver(-PLOT));
+            assertEquals(52, domain.unwrapAround(20, 52));
+            assertEquals(-12, domain.unwrapAround(20, -12));
         }
     }
 

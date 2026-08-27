@@ -12,6 +12,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.toroidalworld.accessors.RelocatableBlockEntity;
 import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.accessors.TransformerHolder;
+import com.toroidalworld.core.ForeignFrame;
+import com.toroidalworld.core.ForeignFrames;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFold.Folded;
 import com.toroidalworld.core.WorldFolds;
@@ -198,9 +200,17 @@ public class LevelMixin implements TransformerCache {
 
     @Unique
     private static WorldFold toroidal$generatorTransformer(ServerLevel level) {
-        return level.getChunkSource().getGenerator() instanceof ShapedChunkGenerator shaped
-                ? shaped.transformer()
-                : WorldFolds.NOOP;
+        if (!(level.getChunkSource().getGenerator() instanceof ShapedChunkGenerator shaped)) {
+            return WorldFolds.NOOP;
+        }
+
+        WorldFold generatorTransformer = shaped.transformer();
+        if (!generatorTransformer.isWrapped()) {
+            return generatorTransformer;
+        }
+
+        List<ForeignFrame> foreignFrames = ForeignFrames.of(level);
+        return foreignFrames.isEmpty() ? generatorTransformer : WorldFolds.of(shaped.shape(), foreignFrames);
     }
 
     // Whether rain falls on a block is the same temperature field the ice is placed from, asked outside any

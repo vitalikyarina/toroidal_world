@@ -102,6 +102,7 @@ dependencies {
     compileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
     compileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
     compileOnly "maven.modrinth:create:${create_version}"
+    compileOnly "maven.modrinth:sable:${sable_version}"
     compileOnly "com.github.bawnorton.mixinsquared:mixinsquared-common:${mixinsquared_version}"
 }
 

@@ -11,12 +11,39 @@ public class WrapDomain {
 
     private final double halfLength;
 
+    private final List<ForeignSpan> foreignSpans;
+
     public WrapDomain(int lowerBound, int upperBound) {
+        this(lowerBound, upperBound, List.of());
+    }
+
+    public WrapDomain(int lowerBound, int upperBound, List<ForeignSpan> foreignSpans) {
         this.lowerBound = lowerBound;
         this.upperBound = upperBound;
         this.domainLength = Math.abs(upperBound - lowerBound);
         this.seamRadius = this.domainLength / 2;
         this.halfLength = this.domainLength / 2.0;
+        this.foreignSpans = List.copyOf(foreignSpans);
+    }
+
+    public boolean isForeign(int coord) {
+        for (ForeignSpan span : foreignSpans) {
+            if (span.contains(coord)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isForeign(double coord) {
+        for (ForeignSpan span : foreignSpans) {
+            if (span.contains(coord)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public double wrap(double coord) {
@@ -36,6 +63,10 @@ public class WrapDomain {
     }
 
     public int wrapFrom(int anchor, int coord) {
+        if (isForeign(anchor) || isForeign(coord)) {
+            return coord;
+        }
+
         return anchor + Math.floorMod(coord - anchor, domainLength);
     }
 
@@ -60,6 +91,14 @@ public class WrapDomain {
     private double lapsToward(double refCoord, double coord) {
         double quotient = (coord - refCoord) / domainLength;
         double laps = Math.round(quotient);
+        if (laps == 0.0) {
+            return 0.0;
+        }
+
+        if (isForeign(refCoord) || isForeign(coord)) {
+            return 0.0;
+        }
+
         if (quotient - laps == -0.5 && laps > 0) {
             return laps - 1;
         }
@@ -73,6 +112,10 @@ public class WrapDomain {
             return 0;
         }
 
+        if (isForeign(refCoord) || isForeign(coord)) {
+            return 0;
+        }
+
         long laps = Math.floorDiv(delta, domainLength);
         long doubledRemainder = 2 * (delta - laps * domainLength);
         if (doubledRemainder > domainLength || (doubledRemainder == domainLength && laps < 0)) {
@@ -83,6 +126,10 @@ public class WrapDomain {
     }
 
     public int otherCopy(int coord, int delta) {
+        if (isForeign(coord)) {
+            return coord;
+        }
+
         return delta > 0 ? coord - domainLength : coord + domainLength;
     }
 
@@ -91,26 +138,26 @@ public class WrapDomain {
     }
 
     public boolean isOver(double coord) {
-        return coord < lowerBound || coord >= upperBound;
+        return (coord < lowerBound || coord >= upperBound) && !isForeign(coord);
     }
 
     public boolean isOver(int coord) {
-        return coord < lowerBound || coord >= upperBound;
+        return (coord < lowerBound || coord >= upperBound) && !isForeign(coord);
     }
 
     public int overshoot(int coord) {
-        if (coord >= upperBound) {
-            return coord - (upperBound - 1);
+        if (!isOver(coord)) {
+            return 0;
         }
 
-        if (coord < lowerBound) {
-            return lowerBound - coord;
-        }
-
-        return 0;
+        return coord >= upperBound ? coord - (upperBound - 1) : lowerBound - coord;
     }
 
     public boolean containsSpan(double min, double max) {
+        if (isForeign(min) && isForeign(max)) {
+            return true;
+        }
+
         return min >= lowerBound && min < upperBound && max <= upperBound;
     }
 
@@ -136,6 +183,10 @@ public class WrapDomain {
     }
 
     public boolean spansSeam(int fromCoord, int toCoord) {
+        if (isForeign(fromCoord) || isForeign(toCoord)) {
+            return false;
+        }
+
         return Math.abs((long) toCoord - fromCoord) > seamRadius;
     }
 
@@ -148,6 +199,10 @@ public class WrapDomain {
     }
 
     public boolean overlaps(int aMin, int aMax, int bMin, int bMax) {
+        if (isForeign(aMin) || isForeign(aMax) || isForeign(bMin) || isForeign(bMax)) {
+            return aMin <= bMax && bMin <= aMax;
+        }
+
         long lowestShift = (long) aMin - bMax;
         long highestShift = (long) aMax - bMin;
         return Math.floorDiv(highestShift, domainLength) * (long) domainLength >= lowestShift;
@@ -158,6 +213,10 @@ public class WrapDomain {
     }
 
     public int[] lapsBetween(int spanMin, int spanMax, int regionMin, int regionMax) {
+        if (isForeign(spanMin) || isForeign(spanMax) || isForeign(regionMin) || isForeign(regionMax)) {
+            return spanMin <= regionMax && regionMin <= spanMax ? new int[] {0, 0} : new int[] {0, -1};
+        }
+
         return new int[] {
                 Math.toIntExact(Math.ceilDiv((long) regionMin - spanMax, domainLength)),
                 Math.toIntExact(Math.floorDiv((long) regionMax - spanMin, domainLength))};
@@ -200,6 +259,10 @@ public class WrapDomain {
     }
 
     public List<double[]> spans(double min, double max) {
+        if (isForeign(min) && isForeign(max)) {
+            return List.of(new double[] {min, max});
+        }
+
         double length = Math.min(max - min, domainLength);
         double start = wrap(min);
         double end = start + length;
@@ -213,6 +276,10 @@ public class WrapDomain {
     }
 
     public List<int[]> cellSpans(int min, int max) {
+        if (isForeign(min) && isForeign(max)) {
+            return List.of(new int[] {min, max});
+        }
+
         int length = (int) Math.min((long) max - min + 1, domainLength);
         int start = wrap(min);
         int end = start + length - 1;

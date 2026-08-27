@@ -27,26 +27,38 @@ final class WorldLoopTransformer implements WorldFold {
     private final int maxViewDistance;
 
     WorldLoopTransformer(WorldLoopBounds bounds) {
+        this(bounds, List.of());
+    }
+
+    WorldLoopTransformer(WorldLoopBounds bounds, List<ForeignFrame> foreignFrames) {
         this.bounds = bounds;
         this.wrapped = bounds.x() instanceof AxisBounds.Looped || bounds.z() instanceof AxisBounds.Looped;
         this.maxViewDistance = bounds.maxViewDistance();
 
-        this.coords = new CoordOps(blockDomainFor(bounds.x()), blockDomainFor(bounds.z()));
-        this.chunks = new ChunkOps(chunkDomainFor(bounds.x()), chunkDomainFor(bounds.z()));
+        this.coords = new CoordOps(
+                blockDomainFor(bounds.x(), foreignFrames, Direction.Axis.X),
+                blockDomainFor(bounds.z(), foreignFrames, Direction.Axis.Z));
+        this.chunks = new ChunkOps(
+                chunkDomainFor(bounds.x(), foreignFrames, Direction.Axis.X),
+                chunkDomainFor(bounds.z(), foreignFrames, Direction.Axis.Z));
         this.vectors = new VectorOps();
         this.blocks = new BlockOps();
     }
 
-    private static WrapDomain chunkDomainFor(AxisBounds axis) {
-        return switch (axis) {
-            case AxisBounds.Looped looped -> new WrapDomain(looped.minChunk(), looped.maxChunk());
+    private static WrapDomain chunkDomainFor(AxisBounds axisBounds, List<ForeignFrame> foreignFrames,
+            Direction.Axis axis) {
+        return switch (axisBounds) {
+            case AxisBounds.Looped looped -> new WrapDomain(looped.minChunk(), looped.maxChunk(),
+                    foreignFrames.stream().map(frame -> frame.chunks(axis)).toList());
             case AxisBounds.Unbounded() -> new WrapDomain.Noop();
         };
     }
 
-    private static WrapDomain blockDomainFor(AxisBounds axis) {
-        return switch (axis) {
-            case AxisBounds.Looped looped -> new WrapDomain(looped.minBlock(), looped.maxBlock());
+    private static WrapDomain blockDomainFor(AxisBounds axisBounds, List<ForeignFrame> foreignFrames,
+            Direction.Axis axis) {
+        return switch (axisBounds) {
+            case AxisBounds.Looped looped -> new WrapDomain(looped.minBlock(), looped.maxBlock(),
+                    foreignFrames.stream().map(frame -> frame.blocks(axis)).toList());
             case AxisBounds.Unbounded() -> new WrapDomain.Noop();
         };
     }
