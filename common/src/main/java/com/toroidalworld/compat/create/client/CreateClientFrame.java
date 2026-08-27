@@ -1,12 +1,11 @@
 package com.toroidalworld.compat.create.client;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.core.FoldedCopies;
 import com.toroidalworld.core.WorldFold;
 
 import net.minecraft.client.Minecraft;
@@ -40,26 +39,7 @@ public final class CreateClientFrame {
             return canonical;
         }
 
-        List<BlockPos> moved = null;
-        for (BlockPos position : canonical) {
-            BlockPos nearest = CreateTrackFold.nearestCopy(level, anchor, position);
-            if (nearest != position && moved == null) {
-                moved = new ArrayList<>(canonical.size());
-                for (BlockPos earlier : canonical) {
-                    if (earlier == position) {
-                        break;
-                    }
-
-                    moved.add(earlier);
-                }
-            }
-
-            if (moved != null) {
-                moved.add(nearest);
-            }
-        }
-
-        return moved == null ? canonical : moved;
+        return FoldedCopies.of(canonical, position -> CreateTrackFold.nearestCopy(level, anchor, position));
     }
 
     public static Vec3 nearestCopy(@Nullable Vec3 anchor, Vec3 target) {

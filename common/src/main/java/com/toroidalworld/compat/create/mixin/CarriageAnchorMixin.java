@@ -116,7 +116,7 @@ public abstract class CarriageAnchorMixin {
     private void toroidal$carryAboard(Entity carriage, Vec3 written) {
         Vec3 standing = carriage.position();
         Vec3 renamed = CreateTrackFold.nearestCopy(carriage.level(), written, standing);
-        if (renamed == standing) {
+        if (renamed.equals(standing)) {
             return;
         }
 

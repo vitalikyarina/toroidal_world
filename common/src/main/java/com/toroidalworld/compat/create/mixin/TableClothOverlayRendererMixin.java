@@ -1,6 +1,5 @@
 package com.toroidalworld.compat.create.mixin;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
@@ -11,6 +10,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.logistics.tableCloth.ShoppingListItem.ShoppingList;
 import com.simibubi.create.content.logistics.tableCloth.TableClothOverlayRenderer;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
+import com.toroidalworld.core.FoldedCopies;
 
 import net.createmod.catnip.data.IntAttached;
 import net.minecraft.client.Minecraft;
@@ -28,22 +28,14 @@ public abstract class TableClothOverlayRendererMixin {
             return null;
         }
 
-        List<IntAttached<BlockPos>> folded = null;
         List<IntAttached<BlockPos>> purchases = canonical.purchases();
-        for (int entry = 0; entry < purchases.size(); entry++) {
-            IntAttached<BlockPos> purchase = purchases.get(entry);
+        List<IntAttached<BlockPos>> folded = FoldedCopies.of(purchases, purchase -> {
             BlockPos stored = purchase.getValue();
             BlockPos nearest = CreateClientFrame.nearestCopy(Minecraft.getInstance().level, stored);
-            if (nearest != stored && folded == null) {
-                folded = new ArrayList<>(purchases.subList(0, entry));
-            }
+            return nearest == stored ? purchase : IntAttached.with(purchase.getFirst(), nearest);
+        });
 
-            if (folded != null) {
-                folded.add(IntAttached.with(purchase.getFirst(), nearest));
-            }
-        }
-
-        return folded == null ? canonical
+        return folded == purchases ? canonical
                 : new ShoppingList(folded, canonical.shopOwner(), canonical.shopNetwork());
     }
 }
