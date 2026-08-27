@@ -7,7 +7,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -22,7 +21,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 
-import net.minecraft.BlockUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -102,21 +100,6 @@ public class EntityMixin implements TransformerSource {
     private double toroidal$pushDeltaZ(double deltaZ, @Local(argsOnly = true) Entity other) {
         WorldFold transformer = toroidal$wrappedTransformer();
         return transformer == null ? deltaZ : toroidal$deltaTo(transformer, other).z;
-    }
-
-    @ModifyArg(
-            method = "getRelativePortalPosition",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/portal/PortalShape;getRelativePosition(Lnet/minecraft/BlockUtil$FoundRectangle;Lnet/minecraft/core/Direction$Axis;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/EntityDimensions;)Lnet/minecraft/world/phys/Vec3;"),
-            index = 2)
-    private Vec3 toroidal$portalPositionNearestCorner(Vec3 position, @Local(argsOnly = true) BlockUtil.FoundRectangle portalArea) {
-        WorldFold transformer = toroidal$wrappedTransformer();
-        if (transformer == null) {
-            return position;
-        }
-
-        return transformer.nearestCopy(Vec3.atLowerCornerOf(portalArea.minCorner), position);
     }
 
     @WrapOperation(
