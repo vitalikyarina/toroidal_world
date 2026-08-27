@@ -3,8 +3,7 @@ package com.toroidalworld.player;
 public enum MirrorWriter {
     PLAYER_MOVE("player_move", true),
     VEHICLE_MOVE("vehicle_move", true),
-    POSITION_PACKET("position_packet", false),
-    REBASE("rebase", false);
+    POSITION_PACKET("position_packet", false);
 
     private final String key;
     private final boolean clientAuthored;
