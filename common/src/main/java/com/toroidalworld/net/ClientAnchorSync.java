@@ -77,7 +77,7 @@ public final class ClientAnchorSync {
             return;
         }
 
-        player.connection.send(new ClientboundSetChunkCacheCenterPacket(view.center().x(), view.center().z()));
+        player.connection.send(new ClientboundSetChunkCacheCenterPacket(view.center().x, view.center().z));
     }
 
     private ClientAnchorSync() {
