@@ -11,9 +11,11 @@ import com.toroidalworld.core.WorldFold;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -26,6 +28,21 @@ public final class CreateClientFrame {
 
         BlockPos anchor = viewer();
         return anchor == null ? canonical : CreateTrackFold.nearestCopy(level, anchor, canonical);
+    }
+
+    public static @Nullable BlockPos heldCopy(@Nullable BlockGetter world, BlockPos canonical) {
+        Level level = toroidalClientLevel(world);
+        if (level == null || CreateTrackFold.transformerOf(level, null) == null) {
+            return canonical;
+        }
+
+        BlockPos anchor = viewer();
+        if (anchor == null) {
+            return canonical;
+        }
+
+        BlockPos nearest = CreateTrackFold.nearestCopy(level, anchor, canonical);
+        return holds(level, nearest) ? nearest : null;
     }
 
     public static Collection<BlockPos> nearestCopies(@Nullable BlockGetter world, Collection<BlockPos> canonical) {
@@ -64,6 +81,11 @@ public final class CreateClientFrame {
     public static @Nullable Vec3 camera() {
         Entity cameraEntity = Minecraft.getInstance().cameraEntity;
         return cameraEntity == null ? null : cameraEntity.getEyePosition();
+    }
+
+    private static boolean holds(Level level, BlockPos pos) {
+        return level.getChunkSource().getChunk(SectionPos.blockToSectionCoord(pos.getX()),
+                SectionPos.blockToSectionCoord(pos.getZ()), ChunkStatus.FULL, false) != null;
     }
 
     private static @Nullable Level toroidalClientLevel(@Nullable BlockGetter world) {

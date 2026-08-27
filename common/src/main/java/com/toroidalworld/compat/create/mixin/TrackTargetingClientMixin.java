@@ -27,6 +27,6 @@ public class TrackTargetingClientMixin {
             return value;
         }
 
-        return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, selected);
+        return CreateClientFrame.heldCopy(Minecraft.getInstance().level, selected);
     }
 }
