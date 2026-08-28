@@ -13,7 +13,7 @@ import dev.ryanhcode.sable.ActiveSableCompanion;
 
 import net.minecraft.world.level.Level;
 
-@Mixin(ActiveSableCompanion.class)
+@Mixin(value = ActiveSableCompanion.class, remap = false)
 public abstract class ActiveSableCompanionMixin {
     @WrapOperation(
             method = {
@@ -23,7 +23,7 @@ public abstract class ActiveSableCompanionMixin {
                     "distanceSquaredWithSubLevels(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/Position;DDD)D",
                     "distanceSquaredWithSubLevels(Lnet/minecraft/world/level/Level;DDDDDD)D"},
             at = @At(value = "INVOKE", target = "Lorg/joml/Vector3dc;distanceSquared(Lorg/joml/Vector3dc;)D"))
-    private static double toroidal$sqrDistanceThroughSeam(Vector3dc from, Vector3dc to, Operation<Double> original,
+    private double toroidal$sqrDistanceThroughSeam(Vector3dc from, Vector3dc to, Operation<Double> original,
             @Local(argsOnly = true) Level level) {
         return SableSeamDistance.sqr(level, from, to, original);
     }
@@ -38,7 +38,7 @@ public abstract class ActiveSableCompanionMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Ldev/ryanhcode/sable/ActiveSableCompanion;rectilinearDistance(Lorg/joml/Vector3dc;Lorg/joml/Vector3dc;)D"))
-    private static double toroidal$rectilinearDistanceThroughSeam(Vector3dc from, Vector3dc to, Operation<Double> original,
+    private double toroidal$rectilinearDistanceThroughSeam(Vector3dc from, Vector3dc to, Operation<Double> original,
             @Local(argsOnly = true) Level level) {
         return SableSeamDistance.rectilinear(level, from, to, original);
     }
