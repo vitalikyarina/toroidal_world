@@ -128,6 +128,10 @@ public record TranslationContext(
         return transformer.nearestCopy(clientPosition.chunk(), chunkPos);
     }
 
+    public BlockPos nearestCopy(BlockPos pos) {
+        return transformer.reseat(pos, nearestCopy(new ChunkPos(pos)));
+    }
+
     public List<ChunkPos> forgetCandidates(ChunkPos chunkPos) {
         ChunkPos anchor = clientPosition.chunk();
         ChunkPos nearest = transformer.nearestCopy(anchor, chunkPos);

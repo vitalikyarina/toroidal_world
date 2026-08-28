@@ -122,10 +122,32 @@ var sableCompanionJars = tasks.register('unpackSableCompanion', Sync) {
     into layout.buildDirectory.dir('sable-companion')
 }
 
+// Create Aeronautics publishes a container jar: its three mods ride jar-in-jar and the outer jar holds no classes at
+// all. The payload rewriters name types from two of them, so those two are unpacked and ride compileOnly beside it;
+// the eriksonn module is content no rewriter touches.
+configurations {
+    aeronauticsJarJar
+}
+
+dependencies {
+    aeronauticsJarJar "maven.modrinth:create-aeronautics:${aeronautics_version}"
+}
+
+var aeronauticsModJars = tasks.register('unpackAeronautics', Sync) {
+    from(zipTree(configurations.aeronauticsJarJar.singleFile)) {
+        include 'META-INF/jarjar/dev.simulated_team.simulated.*.jar'
+        include 'META-INF/jarjar/dev.ryanhcode.offroad.*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('aeronautics')
+}
+
 dependencies {
     compileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     compileOnly files(createBundledJars).asFileTree.matching { include '*.jar' }
     compileOnly files(sableCompanionJars).asFileTree.matching { include '*.jar' }
+    compileOnly files(aeronauticsModJars).asFileTree.matching { include '*.jar' }
     minecraft "com.mojang:minecraft:${minecraft_version}"
     // Mojmap on both sides: the mixins and the accesswidener are written against the same names NeoForge uses,
     // so common's sources compile unchanged for either loader.

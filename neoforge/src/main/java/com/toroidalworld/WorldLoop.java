@@ -1,5 +1,6 @@
 package com.toroidalworld;
 
+import com.toroidalworld.compat.aeronautics.AeronauticsTranslation;
 import com.toroidalworld.compat.sable.SableMod;
 import com.toroidalworld.config.WorldLoopConfig;
 import com.toroidalworld.gen.LoopedChunkGenerator;
@@ -29,6 +30,7 @@ public final class WorldLoop {
         Platforms.set(new NeoForgePlatform(modContainer));
         WorldShapeSetup.registerAll();
         SableMod.register();
+        AeronauticsTranslation.register();
 
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_ID, () -> LoopedChunkGenerator.CODEC);
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_FLAT_ID, () -> LoopedFlatChunkGenerator.CODEC);

@@ -889,6 +889,36 @@ class PacketTranslatorTest {
 
             assertSame(ParticleTypes.FLAME, translated.packedItems().getFirst().value());
         }
+
+        @Test
+        void synchedValueOfARegisteredSerializerIsReSeated() {
+            ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
+                    new SynchedEntityData.DataValue<>(0, FOLDED_POSITION_SERIALIZER, SERVER_CARRIED_POSITION)));
+
+            ClientboundSetEntityDataPacket translated =
+                    (ClientboundSetEntityDataPacket) PacketTranslator.toClient(packet, context());
+
+            assertEquals(MIRROR_CARRIED_POSITION, translated.packedItems().getFirst().value());
+        }
+
+        @Test
+        void synchedValueOfARegisteredSerializerFollowsTheEntityWhenItIsKnown() {
+            ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
+                    new SynchedEntityData.DataValue<>(0, FOLDED_POSITION_SERIALIZER, SERVER_CARRIED_POSITION)));
+
+            ClientboundSetEntityDataPacket translated = (ClientboundSetEntityDataPacket) PacketTranslator.toClient(
+                    packet, context(entityId -> false, entityId -> new Vec3(SERVER_X, 70.0, SERVER_Z)));
+
+            assertEquals(CLIENT_CARRIED_POSITION, translated.packedItems().getFirst().value());
+        }
+
+        @Test
+        void synchedValueOfAnUnregisteredSerializerPassesThrough() {
+            ClientboundSetEntityDataPacket packet = new ClientboundSetEntityDataPacket(3, List.of(
+                    new SynchedEntityData.DataValue<>(0, UNFOLDED_POSITION_SERIALIZER, SERVER_CARRIED_POSITION)));
+
+            assertSame(packet, PacketTranslator.toClient(packet, context()));
+        }
     }
 
     @Nested

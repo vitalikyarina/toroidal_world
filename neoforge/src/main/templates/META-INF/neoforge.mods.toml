@@ -81,4 +81,7 @@ config="toroidal_world.compat.create.mixins.json"
 config="toroidal_world.compat.sable.mixins.json"
 
 [[mixins]]
+config="toroidal_world.compat.aeronautics.mixins.json"
+
+[[mixins]]
 config="toroidal_world.neoforge.mixins.json"

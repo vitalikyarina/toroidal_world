@@ -111,10 +111,32 @@ var sableCompanionJars = tasks.register('unpackSableCompanion', Sync) {
     into layout.buildDirectory.dir('sable-companion')
 }
 
+// Create Aeronautics publishes a container jar: its three mods ride jar-in-jar and the outer jar holds no classes at
+// all. The payload rewriters name types from two of them, so those two are unpacked and ride compileOnly beside it;
+// the eriksonn module is content no rewriter touches.
+configurations {
+    aeronauticsJarJar
+}
+
+dependencies {
+    aeronauticsJarJar "maven.modrinth:create-aeronautics:${aeronautics_version}"
+}
+
+var aeronauticsModJars = tasks.register('unpackAeronautics', Sync) {
+    from(zipTree(configurations.aeronauticsJarJar.singleFile)) {
+        include 'META-INF/jarjar/dev.simulated_team.simulated.*.jar'
+        include 'META-INF/jarjar/dev.ryanhcode.offroad.*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('aeronautics')
+}
+
 dependencies {
     compileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     compileOnly files(createBundledJars).asFileTree.matching { include '*.jar' }
     compileOnly files(sableCompanionJars).asFileTree.matching { include '*.jar' }
+    compileOnly files(aeronauticsModJars).asFileTree.matching { include '*.jar' }
     compileOnly "net.fabricmc:sponge-mixin:${mixin_version}"
     compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
     compileOnly "org.jspecify:jspecify:${jspecify_version}"
@@ -133,6 +155,7 @@ neoForge.addModdingDependenciesTo(sourceSets.test)
 
 dependencies {
     testCompileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
+    testCompileOnly files(aeronauticsModJars).asFileTree.matching { include '*.jar' }
     testRuntimeOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'

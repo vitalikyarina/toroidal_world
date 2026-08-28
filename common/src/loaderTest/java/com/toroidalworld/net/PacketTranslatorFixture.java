@@ -14,6 +14,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -39,6 +41,28 @@ final class PacketTranslatorFixture {
     static final double CLIENT_X = 523.5;
     static final double SERVER_Z = 500.0;
     static final double CLIENT_Z = -524.0;
+
+    static final Vec3 SERVER_CARRIED_POSITION = new Vec3(-510.5, 64.0, -100.5);
+    static final Vec3 CLIENT_CARRIED_POSITION = new Vec3(513.5, 64.0, -100.5);
+    static final Vec3 MIRROR_CARRIED_POSITION = new Vec3(513.5, 64.0, -1124.5);
+
+    static final StreamCodec<RegistryFriendlyByteBuf, Vec3> POSITION_CODEC = StreamCodec.of(
+            (buffer, position) -> {
+                buffer.writeDouble(position.x);
+                buffer.writeDouble(position.y);
+                buffer.writeDouble(position.z);
+            },
+            buffer -> new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()));
+
+    static final EntityDataSerializer<Vec3> FOLDED_POSITION_SERIALIZER =
+            EntityDataSerializer.forValueType(POSITION_CODEC);
+    static final EntityDataSerializer<Vec3> UNFOLDED_POSITION_SERIALIZER =
+            EntityDataSerializer.forValueType(POSITION_CODEC);
+
+    static {
+        PacketTranslator.registerEntityDataRewriter(FOLDED_POSITION_SERIALIZER,
+                (position, context, anchor) -> context.transformer().nearestCopy(anchor, position));
+    }
 
     static final int VIEW_DISTANCE = 16;
 

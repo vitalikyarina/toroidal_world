@@ -80,6 +80,7 @@ import net.minecraft.network.protocol.game.ServerboundSetJigsawBlockPacket;
 import net.minecraft.network.protocol.game.ServerboundSetStructureBlockPacket;
 import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
+import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -186,6 +187,22 @@ public final class PacketTranslator {
 
     private static @Nullable ParticleRewriter<ParticleOptions> particleRewriterFor(ParticleOptions particle) {
         return PARTICLE_REWRITERS.get(particle.getClass());
+    }
+
+    public interface EntityDataRewriter<T> {
+        T rewrite(T value, TranslationContext context, Vec3 anchor);
+    }
+
+    private static final Map<EntityDataSerializer<?>, EntityDataRewriter<Object>> DATA_REWRITERS = new HashMap<>();
+
+    @SuppressWarnings("unchecked")
+    public static <T> void registerEntityDataRewriter(EntityDataSerializer<T> serializer,
+            EntityDataRewriter<T> dataRewriter) {
+        DATA_REWRITERS.put(serializer, (value, context, anchor) -> dataRewriter.rewrite((T) value, context, anchor));
+    }
+
+    private static @Nullable EntityDataRewriter<Object> dataRewriterFor(SynchedEntityData.DataValue<?> item) {
+        return DATA_REWRITERS.get(item.serializer());
     }
 
     private static final Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> TO_SERVER = Map.ofEntries(
@@ -473,6 +490,12 @@ public final class PacketTranslator {
 
     private static SynchedEntityData.DataValue<?> toClientData(SynchedEntityData.DataValue<?> item,
             Supplier<Vec3> anchor, TranslationContext context) {
+        EntityDataRewriter<Object> dataRewriter = dataRewriterFor(item);
+        if (dataRewriter != null) {
+            Object rewritten = dataRewriter.rewrite(item.value(), context, anchor.get());
+            return rewritten == item.value() ? item : withValue(item, rewritten);
+        }
+
         Object value = item.value();
         if (value instanceof Optional<?> optional) {
             Object held = optional.orElse(null);
@@ -776,7 +799,7 @@ public final class PacketTranslator {
     }
 
     private static BlockPos nearestCopyBlock(TranslationContext context, BlockPos pos) {
-        return nearestCopyBlock(context.transformer(), context.clientPosition().chunk(), pos);
+        return context.nearestCopy(pos);
     }
 
     private static BlockPos nearestCopyBlock(TranslationContext context, Vec3 anchor, BlockPos pos) {
