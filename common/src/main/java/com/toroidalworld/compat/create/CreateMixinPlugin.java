@@ -4,10 +4,19 @@ import java.util.List;
 import java.util.Set;
 
 import org.objectweb.asm.tree.ClassNode;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
+import com.mojang.logging.LogUtils;
+import com.toroidalworld.compat.sable.SableMod;
+
 public class CreateMixinPlugin implements IMixinConfigPlugin {
+    private static final Logger LOGGER = LogUtils.getLogger();
+
+    private static final String BLUEPRINT_REACH_MIXIN =
+            "com.toroidalworld.compat.create.mixin.BlueprintReachMixin";
+
     @Override
     public void onLoad(String mixinPackage) {
         // Evaluated here rather than left to the first shouldApplyMixin call: the gate logs the answer as it probes,
@@ -18,7 +27,20 @@ public class CreateMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        return CreateMod.present();
+        if (!CreateMod.present()) {
+            return false;
+        }
+
+        if (BLUEPRINT_REACH_MIXIN.equals(mixinClassName)) {
+            // Mixin refuses any injection into a method another mixin merged, so applying this beside Sable's
+            // canPlayerUse overwrite drops the whole class and takes the two unrelated blueprint folds with it.
+            boolean sablePresent = SableMod.present();
+            LOGGER.info("[create-compat] gate blueprint_reach sable_present={} applied={}", sablePresent,
+                    !sablePresent);
+            return !sablePresent;
+        }
+
+        return true;
     }
 
     @Override

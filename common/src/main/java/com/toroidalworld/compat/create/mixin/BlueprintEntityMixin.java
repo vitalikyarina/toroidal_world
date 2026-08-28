@@ -14,8 +14,6 @@ import com.toroidalworld.compat.create.CreateTrackFold;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = BlueprintEntity.class, remap = false)
@@ -26,11 +24,6 @@ public class BlueprintEntityMixin {
     private static final String TILE_Y_KEY = "TileY";
     @Unique
     private static final String TILE_Z_KEY = "TileZ";
-
-    @ModifyVariable(method = "canPlayerUse", at = @At("STORE"), ordinal = 0)
-    private AABB toroidal$foldBlueprintBox(AABB box, Player player) {
-        return CreateTrackFold.foldBoxToward(player.level(), player.position(), box);
-    }
 
     @ModifyExpressionValue(method = "readSpawnData",
             at = @At(value = "INVOKE", ordinal = 0,

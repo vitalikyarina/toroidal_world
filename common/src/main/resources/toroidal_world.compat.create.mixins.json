@@ -13,6 +13,7 @@
     "BezierConnectionMixin",
     "BlockEntityConfigurationPacketMixin",
     "BlueprintEntityMixin",
+    "BlueprintReachMixin",
     "BrassTunnelBlockEntityMixin",
     "CapabilityMinecartControllerMixin",
     "CarriageAnchorMixin",
