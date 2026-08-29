@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import com.toroidalworld.core.DeckGroupFold;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.net.TagPositions;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.FlatShape;
 
@@ -54,9 +55,9 @@ class SyncedTagFoldTest {
     }
 
     static {
-        SyncedTagFold.register(PackedSubject.class, SyncedTagFold.PositionShape.PACKED_LONG, PACKED_KEY);
-        SyncedTagFold.register(Partnered.class, SyncedTagFold.PositionShape.BLOCK_POS, BLOCK_POS_KEY);
-        SyncedTagFold.register(Vec3Subject.class, SyncedTagFold.PositionShape.VEC3_LIST, VEC3_KEY);
+        SyncedTagFold.register(PackedSubject.class, TagPositions.PositionShape.PACKED_LONG, PACKED_KEY);
+        SyncedTagFold.register(Partnered.class, TagPositions.PositionShape.BLOCK_POS, BLOCK_POS_KEY);
+        SyncedTagFold.register(Vec3Subject.class, TagPositions.PositionShape.VEC3_LIST, VEC3_KEY);
     }
 
     private static ListTag doubleList(double x, double y, double z) {

@@ -1,6 +1,7 @@
 package com.toroidalworld.compat.create;
 
 import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
+import com.toroidalworld.net.TagPositions;
 
 public final class CreateTranslation {
     public static final String CONTROLLER_KEY = "Controller";
@@ -11,7 +12,7 @@ public final class CreateTranslation {
             return;
         }
 
-        SyncedTagFold.register(IMultiBlockEntityContainer.class, SyncedTagFold.PositionShape.BLOCK_POS,
+        SyncedTagFold.register(IMultiBlockEntityContainer.class, TagPositions.PositionShape.BLOCK_POS,
                 CONTROLLER_KEY, LAST_KNOWN_POS_KEY);
     }
 

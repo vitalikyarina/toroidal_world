@@ -39,6 +39,7 @@ public record TranslationContext(
         int heldViewDistance,
         IntPredicate ownVehicle,
         IntFunction<@Nullable Vec3> entityPosition,
+        IntFunction<@Nullable Class<?>> entityClass,
         Runnable rebase) {
 
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -63,6 +64,7 @@ public record TranslationContext(
                 heldViewDistanceOf(player, trackedViewDistance),
                 entityId -> isControlledVehicle(player, entityId),
                 entityId -> positionOf(player, entityId),
+                entityId -> classOf(player, entityId),
                 () -> WorldLoopAttachments.rebaseClientPositionOf(player));
     }
 
@@ -86,6 +88,11 @@ public record TranslationContext(
     private static @Nullable Vec3 positionOf(ServerPlayer player, int entityId) {
         Entity entity = player.level().getEntity(entityId);
         return entity == null ? null : entity.position();
+    }
+
+    private static @Nullable Class<?> classOf(ServerPlayer player, int entityId) {
+        Entity entity = player.level().getEntity(entityId);
+        return entity == null ? null : entity.getClass();
     }
 
     public ChunkPos toClient(ChunkPos chunkPos, ChunkTraffic traffic) {

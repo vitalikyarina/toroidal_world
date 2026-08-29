@@ -9,6 +9,7 @@ import com.toroidalworld.gen.LoopedFlatChunkGenerator;
 import com.toroidalworld.gen.WorldLoopGenerators;
 import com.toroidalworld.net.AuxiliaryLightTranslation;
 import com.toroidalworld.net.BlockParticleTranslation;
+import com.toroidalworld.net.SpawnBufferTranslation;
 import com.toroidalworld.platform.NeoForgePlatform;
 import com.toroidalworld.platform.Platforms;
 import com.toroidalworld.shape.WorldShapeSetup;
@@ -40,6 +41,7 @@ public final class WorldLoop {
 
         AuxiliaryLightTranslation.register();
         BlockParticleTranslation.register();
+        SpawnBufferTranslation.register();
         modContainer.registerConfig(ModConfig.Type.CLIENT, WorldLoopConfig.SPEC);
 
         if (Platforms.get().isClient() && !WorldLoopConfig.SPEC.isEmpty()) {

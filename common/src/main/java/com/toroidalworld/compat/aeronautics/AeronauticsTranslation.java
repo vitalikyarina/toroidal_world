@@ -11,6 +11,8 @@ import com.toroidalworld.compat.aeronautics.mixin.PhysicsStaffBeamPacketAccessor
 import com.toroidalworld.compat.create.SyncedTagFold;
 import com.toroidalworld.core.FoldedCopies;
 import com.toroidalworld.net.PacketTranslator;
+import com.toroidalworld.net.SpawnBufferFold;
+import com.toroidalworld.net.TagPositions;
 import com.toroidalworld.net.TranslationContext;
 
 import dev.eriksonn.aeronautics.network.packets.LevititeCatalystCrystallizationPacket;
@@ -22,6 +24,7 @@ import dev.simulated_team.simulated.content.blocks.nav_table.NavTableBlockEntity
 import dev.simulated_team.simulated.content.blocks.spring.SpringBlockEntity;
 import dev.simulated_team.simulated.content.blocks.swivel_bearing.SwivelBearingBlockEntity;
 import dev.simulated_team.simulated.content.blocks.swivel_bearing.link_block.SwivelBearingPlateBlockEntity;
+import dev.simulated_team.simulated.content.entities.honey_glue.HoneyGlueEntity;
 import dev.simulated_team.simulated.index.SimEntityDataSerializers;
 import dev.simulated_team.simulated.network.packets.honey_glue.HoneyGlueSyncBoundsPacket;
 import dev.simulated_team.simulated.network.packets.linked_typewriter.TypewriterKeySavePacket;
@@ -49,6 +52,7 @@ public final class AeronauticsTranslation {
     private static final String SWIVEL_PARENT_KEY = "ParentPos";
     private static final String NAV_TARGET_KEY = "CurrentTarget";
     private static final String LASER_HIT_KEY = "HitPos";
+    private static final String HONEY_GLUE_POS_KEY = "Pos";
 
     public static void register() {
         if (SimulatedMod.present()) {
@@ -84,6 +88,7 @@ public final class AeronauticsTranslation {
 
     private static void registerSimulated() {
         registerSimulatedSyncedTags();
+        SpawnBufferFold.register(HoneyGlueEntity.class, TagPositions.PositionShape.VEC3_LIST, HONEY_GLUE_POS_KEY);
 
         PacketTranslator.registerServerboundPayloadRewriter(TypewriterKeySavePacket.class, (payload, context) ->
                 new TypewriterKeySavePacket(payload.changedKeys(), context.toServer(payload.pos()), payload.clearAll()));
@@ -124,19 +129,19 @@ public final class AeronauticsTranslation {
     }
 
     private static void registerSimulatedSyncedTags() {
-        SyncedTagFold.register(SpringBlockEntity.class, SyncedTagFold.PositionShape.PACKED_LONG, SPRING_GOAL_KEY);
-        SyncedTagFold.register(MergingGlueBlockEntity.class, SyncedTagFold.PositionShape.PACKED_LONG,
+        SyncedTagFold.register(SpringBlockEntity.class, TagPositions.PositionShape.PACKED_LONG, SPRING_GOAL_KEY);
+        SyncedTagFold.register(MergingGlueBlockEntity.class, TagPositions.PositionShape.PACKED_LONG,
                 MERGING_GLUE_PARTNER_KEY);
-        SyncedTagFold.register(DockingConnectorBlockEntity.class, SyncedTagFold.PositionShape.BLOCK_POS,
+        SyncedTagFold.register(DockingConnectorBlockEntity.class, TagPositions.PositionShape.BLOCK_POS,
                 DOCKING_OTHER_CONNECTOR_KEY);
-        SyncedTagFold.register(NameplateBlockEntity.class, SyncedTagFold.PositionShape.BLOCK_POS,
+        SyncedTagFold.register(NameplateBlockEntity.class, TagPositions.PositionShape.BLOCK_POS,
                 NAMEPLATE_CONTROLLER_KEY);
-        SyncedTagFold.register(SwivelBearingBlockEntity.class, SyncedTagFold.PositionShape.BLOCK_POS,
+        SyncedTagFold.register(SwivelBearingBlockEntity.class, TagPositions.PositionShape.BLOCK_POS,
                 SWIVEL_PLATE_KEY);
-        SyncedTagFold.register(SwivelBearingPlateBlockEntity.class, SyncedTagFold.PositionShape.BLOCK_POS,
+        SyncedTagFold.register(SwivelBearingPlateBlockEntity.class, TagPositions.PositionShape.BLOCK_POS,
                 SWIVEL_PARENT_KEY);
-        SyncedTagFold.register(NavTableBlockEntity.class, SyncedTagFold.PositionShape.VEC3_LIST, NAV_TARGET_KEY);
-        SyncedTagFold.register(LaserPointerBlockEntity.class, SyncedTagFold.PositionShape.VEC3_LIST, LASER_HIT_KEY);
+        SyncedTagFold.register(NavTableBlockEntity.class, TagPositions.PositionShape.VEC3_LIST, NAV_TARGET_KEY);
+        SyncedTagFold.register(LaserPointerBlockEntity.class, TagPositions.PositionShape.VEC3_LIST, LASER_HIT_KEY);
     }
 
     private static @Nullable BlockPos seat(TranslationContext context, @Nullable BlockPos pos) {
