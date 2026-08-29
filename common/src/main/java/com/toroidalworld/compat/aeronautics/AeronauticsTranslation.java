@@ -41,7 +41,7 @@ public final class AeronauticsTranslation {
     }
 
     private static void registerOffroad() {
-        PacketTranslator.registerPayloadRewriter(ClientboundMultiMiningSync.class, (payload, context) -> {
+        PacketTranslator.registerClientboundPayloadRewriter(ClientboundMultiMiningSync.class, (payload, context) -> {
             ClientboundMultiMiningSync seated = ClientboundMultiMiningSync.serverOutboundData(
                     ((MultiMiningSyncAccessor) (Object) payload).toroidal$breakingId());
             for (Map.Entry<BlockPos, MultiMiningServerManager.BlockBreakingData> entry : payload.inData.entrySet()) {
@@ -54,32 +54,32 @@ public final class AeronauticsTranslation {
 
     private static void registerSimulated() {
 
-        PacketTranslator.registerPayloadRewriter(ClientboundRopeDataPacket.class, (payload, context) ->
+        PacketTranslator.registerClientboundPayloadRewriter(ClientboundRopeDataPacket.class, (payload, context) ->
                 new ClientboundRopeDataPacket(payload.interpolationTick(), seat(context, payload.ownerPos()),
                         payload.uuid(), FoldedCopies.of(payload.points(), point -> seat(context, point)),
                         seat(context, payload.startAttachmentPos()), seat(context, payload.endAttachmentPos())));
 
-        PacketTranslator.registerPayloadRewriter(ClientboundRopeStoppedPacket.class, (payload, context) ->
+        PacketTranslator.registerClientboundPayloadRewriter(ClientboundRopeStoppedPacket.class, (payload, context) ->
                 new ClientboundRopeStoppedPacket(seat(context, payload.ownerPos())));
 
-        PacketTranslator.registerPayloadRewriter(HoneyGlueSyncBoundsPacket.class, (payload, context) ->
+        PacketTranslator.registerClientboundPayloadRewriter(HoneyGlueSyncBoundsPacket.class, (payload, context) ->
                 new HoneyGlueSyncBoundsPacket(seat(context, payload.bounds()), payload.honeyGlueId(), payload.uuid()));
 
-        PacketTranslator.registerPayloadRewriter(PhysicsStaffDragSessionsPacket.class, (payload, context) ->
+        PacketTranslator.registerClientboundPayloadRewriter(PhysicsStaffDragSessionsPacket.class, (payload, context) ->
                 new PhysicsStaffDragSessionsPacket(payload.dimension(),
                         FoldedCopies.of(payload.sessions(), session ->
                                 Pair.of(session.getFirst(), seat(context, session.getSecond())))));
 
-        PacketTranslator.registerPayloadRewriter(PhysicsAssemblerFailedPacket.class, (payload, context) ->
+        PacketTranslator.registerClientboundPayloadRewriter(PhysicsAssemblerFailedPacket.class, (payload, context) ->
                 new PhysicsAssemblerFailedPacket(seat(context, payload.pos())));
 
-        PacketTranslator.registerPayloadRewriter(PhysicsAssemblerFlickAndHoldLeverPacket.class, (payload, context) ->
+        PacketTranslator.registerClientboundPayloadRewriter(PhysicsAssemblerFlickAndHoldLeverPacket.class, (payload, context) ->
                 new PhysicsAssemblerFlickAndHoldLeverPacket(seat(context, payload.pos()), payload.flicked()));
 
-        PacketTranslator.registerPayloadRewriter(UpdateClientLodestonePositionPacket.class, (payload, context) ->
+        PacketTranslator.registerClientboundPayloadRewriter(UpdateClientLodestonePositionPacket.class, (payload, context) ->
                 new UpdateClientLodestonePositionPacket(payload.id(), seat(context, payload.sentPosition())));
 
-        PacketTranslator.registerPayloadRewriter(PhysicsStaffBeamPacket.class, (payload, context) -> {
+        PacketTranslator.registerClientboundPayloadRewriter(PhysicsStaffBeamPacket.class, (payload, context) -> {
             PhysicsStaffBeamPacketAccessor beam = (PhysicsStaffBeamPacketAccessor) payload;
             return new PhysicsStaffBeamPacket(beam.toroidal$uuid(), seat(context, beam.toroidal$start()),
                     seat(context, beam.toroidal$end()));

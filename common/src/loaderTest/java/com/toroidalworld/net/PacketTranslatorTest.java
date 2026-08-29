@@ -16,9 +16,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.IntFunction;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.mixin.BlockPositionSourceAccessor;
@@ -45,6 +47,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -73,6 +77,7 @@ import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
@@ -1044,6 +1049,61 @@ class PacketTranslatorTest {
         @Test
         void attackCarriesNoPointAndIsNotRewritten() {
             ServerboundInteractPacket packet = attackPacket(21);
+
+            assertSame(packet, PacketTranslator.toServer(packet, context()));
+        }
+    }
+
+    record SeamProbePayload(BlockPos pos) implements CustomPacketPayload {
+        static final Type<SeamProbePayload> TYPE =
+                new Type<>(ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, "seam_probe"));
+
+        @Override
+        public Type<SeamProbePayload> type() {
+            return TYPE;
+        }
+    }
+
+    record UnregisteredProbePayload(BlockPos pos) implements CustomPacketPayload {
+        static final Type<UnregisteredProbePayload> TYPE =
+                new Type<>(ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, "unregistered_probe"));
+
+        @Override
+        public Type<UnregisteredProbePayload> type() {
+            return TYPE;
+        }
+    }
+
+    @Nested
+    class ServerboundPayloads {
+        @BeforeAll
+        static void registerTheProbeThroughThePublicSeamAlone() {
+            PacketTranslator.registerServerboundPayloadRewriter(SeamProbePayload.class, (payload, context) -> {
+                BlockPos canonical = context.toServer(payload.pos());
+                return canonical.equals(payload.pos()) ? payload : new SeamProbePayload(canonical);
+            });
+        }
+
+        @Test
+        void registeredPayloadReturnsToTheServerFrame() {
+            ServerboundCustomPayloadPacket translated = (ServerboundCustomPayloadPacket) PacketTranslator.toServer(
+                    new ServerboundCustomPayloadPacket(new SeamProbePayload(CLIENT_BLOCK)), context());
+
+            assertEquals(SERVER_BLOCK, ((SeamProbePayload) translated.payload()).pos());
+        }
+
+        @Test
+        void unregisteredPayloadPassesThrough() {
+            ServerboundCustomPayloadPacket packet =
+                    new ServerboundCustomPayloadPacket(new UnregisteredProbePayload(CLIENT_BLOCK));
+
+            assertSame(packet, PacketTranslator.toServer(packet, context()));
+        }
+
+        @Test
+        void payloadAlreadyInTheServerFrameKeepsThePacket() {
+            ServerboundCustomPayloadPacket packet =
+                    new ServerboundCustomPayloadPacket(new SeamProbePayload(SERVER_BLOCK));
 
             assertSame(packet, PacketTranslator.toServer(packet, context()));
         }

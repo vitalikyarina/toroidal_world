@@ -43,6 +43,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -162,15 +163,27 @@ public final class PacketTranslator {
             Map.entry(ClientboundSetBorderCenterPacket.class, rewriter(PacketTranslator::setBorderCenter)),
             Map.entry(ClientboundPlayerLookAtPacket.class, rewriter(PacketTranslator::playerLookAt)),
             Map.entry(ClientboundDamageEventPacket.class, rewriter(PacketTranslator::damageEvent)),
-            Map.entry(ClientboundCustomPayloadPacket.class, rewriter(PacketTranslator::customPayload)));
+            Map.entry(ClientboundCustomPayloadPacket.class, rewriter(PacketTranslator::clientboundCustomPayload)));
 
-    private static final Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>> PAYLOAD_REWRITERS =
-            new HashMap<>();
+    private static final Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
+            CLIENTBOUND_PAYLOAD_REWRITERS = new HashMap<>();
 
-    public static <P extends CustomPacketPayload> void registerPayloadRewriter(Class<P> payloadType,
+    private static final Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
+            SERVERBOUND_PAYLOAD_REWRITERS = new HashMap<>();
+
+    public static <P extends CustomPacketPayload> void registerClientboundPayloadRewriter(Class<P> payloadType,
             BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
-        PAYLOAD_REWRITERS.put(payloadType,
-                (payload, context) -> payloadRewriter.apply(payloadType.cast(payload), context));
+        CLIENTBOUND_PAYLOAD_REWRITERS.put(payloadType, castingRewriter(payloadType, payloadRewriter));
+    }
+
+    public static <P extends CustomPacketPayload> void registerServerboundPayloadRewriter(Class<P> payloadType,
+            BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
+        SERVERBOUND_PAYLOAD_REWRITERS.put(payloadType, castingRewriter(payloadType, payloadRewriter));
+    }
+
+    private static <P extends CustomPacketPayload> BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>
+            castingRewriter(Class<P> payloadType, BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
+        return (payload, context) -> payloadRewriter.apply(payloadType.cast(payload), context);
     }
 
     public interface ParticleRewriter<P extends ParticleOptions> {
@@ -214,7 +227,8 @@ public final class PacketTranslator {
             Map.entry(ServerboundJigsawGeneratePacket.class, rewriter(PacketTranslator::jigsawGenerate)),
             Map.entry(ServerboundSetCommandBlockPacket.class, rewriter(PacketTranslator::setCommandBlock)),
             Map.entry(ServerboundSetJigsawBlockPacket.class, rewriter(PacketTranslator::setJigsawBlock)),
-            Map.entry(ServerboundSetStructureBlockPacket.class, rewriter(PacketTranslator::setStructureBlock)));
+            Map.entry(ServerboundSetStructureBlockPacket.class, rewriter(PacketTranslator::setStructureBlock)),
+            Map.entry(ServerboundCustomPayloadPacket.class, rewriter(PacketTranslator::serverboundCustomPayload)));
 
     public static <T extends net.minecraft.network.PacketListener> Packet<T> toClient(Packet<T> packet, ServerPlayer player) {
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
@@ -330,15 +344,22 @@ public final class PacketTranslator {
         return new ClientboundSetChunkCacheCenterPacket(clientPos.x, clientPos.z);
     }
 
-    private static Packet<?> customPayload(ClientboundCustomPayloadPacket packet, TranslationContext context) {
-        BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload> payloadRewriter =
-                PAYLOAD_REWRITERS.get(packet.payload().getClass());
-        if (payloadRewriter == null) {
-            return packet;
-        }
-
-        CustomPacketPayload rewritten = payloadRewriter.apply(packet.payload(), context);
+    private static Packet<?> clientboundCustomPayload(ClientboundCustomPayloadPacket packet, TranslationContext context) {
+        CustomPacketPayload rewritten = rewritePayload(CLIENTBOUND_PAYLOAD_REWRITERS, packet.payload(), context);
         return rewritten == packet.payload() ? packet : new ClientboundCustomPayloadPacket(rewritten);
+    }
+
+    private static Packet<?> serverboundCustomPayload(ServerboundCustomPayloadPacket packet, TranslationContext context) {
+        CustomPacketPayload rewritten = rewritePayload(SERVERBOUND_PAYLOAD_REWRITERS, packet.payload(), context);
+        return rewritten == packet.payload() ? packet : new ServerboundCustomPayloadPacket(rewritten);
+    }
+
+    private static CustomPacketPayload rewritePayload(
+            Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>> rewriters,
+            CustomPacketPayload payload, TranslationContext context) {
+        BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload> payloadRewriter =
+                rewriters.get(payload.getClass());
+        return payloadRewriter == null ? payload : payloadRewriter.apply(payload, context);
     }
 
     private static ClientboundPlayerPositionPacket playerPosition(ClientboundPlayerPositionPacket packet, TranslationContext context) {
