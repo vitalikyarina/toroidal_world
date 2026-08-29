@@ -8,6 +8,9 @@
     "MultiMiningSyncAccessor",
     "PhysicsStaffBeamPacketAccessor"
   ],
+  "client": [
+    "ClientRopeItemHandlerMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
