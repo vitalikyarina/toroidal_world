@@ -1,6 +1,7 @@
 package com.toroidalworld;
 
 import com.toroidalworld.compat.aeronautics.AeronauticsTranslation;
+import com.toroidalworld.compat.create.CreateTranslation;
 import com.toroidalworld.compat.sable.SableMod;
 import com.toroidalworld.gen.LoopedChunkGenerator;
 import com.toroidalworld.gen.LoopedFlatChunkGenerator;
@@ -23,6 +24,7 @@ public class ToroidalWorldFabric implements ModInitializer {
         Platforms.set(new FabricPlatform());
         WorldShapeSetup.registerAll();
         SableMod.register();
+        CreateTranslation.register();
         AeronauticsTranslation.register();
 
         Registry.register(BuiltInRegistries.CHUNK_GENERATOR,

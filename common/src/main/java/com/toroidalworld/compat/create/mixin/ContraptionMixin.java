@@ -14,7 +14,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.StructureTransform;
 import com.toroidalworld.compat.create.ChassisWalkFrame;
-import com.toroidalworld.compat.create.CreateMultiblockFold;
+import com.toroidalworld.compat.create.CreateTranslation;
 import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -104,15 +104,15 @@ public class ContraptionMixin {
             CompoundTag nbt = info.nbt();
             // The rotation branch leaves Controller as the capture-time local and marks the part with LastKnownPos,
             // and addBlocksToWorld drops that Controller outright — canonicalizing a local would corrupt it.
-            if (nbt == null || !nbt.contains(CreateMultiblockFold.CONTROLLER_KEY)
-                    || nbt.contains(CreateMultiblockFold.LAST_KNOWN_POS_KEY)) {
+            if (nbt == null || !nbt.contains(CreateTranslation.CONTROLLER_KEY)
+                    || nbt.contains(CreateTranslation.LAST_KNOWN_POS_KEY)) {
                 continue;
             }
 
-            BlockPos stored = NBTHelper.readBlockPos(nbt, CreateMultiblockFold.CONTROLLER_KEY);
+            BlockPos stored = NBTHelper.readBlockPos(nbt, CreateTranslation.CONTROLLER_KEY);
             BlockPos canonical = CreateSeamFold.canonical(serverLevel, stored);
             if (canonical != stored) {
-                nbt.put(CreateMultiblockFold.CONTROLLER_KEY, NbtUtils.writeBlockPos(canonical));
+                nbt.put(CreateTranslation.CONTROLLER_KEY, NbtUtils.writeBlockPos(canonical));
             }
         }
     }

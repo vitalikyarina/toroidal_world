@@ -8,11 +8,20 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.compat.aeronautics.mixin.MultiMiningSyncAccessor;
 import com.toroidalworld.compat.aeronautics.mixin.PhysicsStaffBeamPacketAccessor;
+import com.toroidalworld.compat.create.SyncedTagFold;
 import com.toroidalworld.core.FoldedCopies;
 import com.toroidalworld.net.PacketTranslator;
 import com.toroidalworld.net.TranslationContext;
 
 import dev.eriksonn.aeronautics.network.packets.LevititeCatalystCrystallizationPacket;
+import dev.simulated_team.simulated.content.blocks.docking_connector.DockingConnectorBlockEntity;
+import dev.simulated_team.simulated.content.blocks.lasers.laser_pointer.LaserPointerBlockEntity;
+import dev.simulated_team.simulated.content.blocks.merging_glue.MergingGlueBlockEntity;
+import dev.simulated_team.simulated.content.blocks.nameplate.NameplateBlockEntity;
+import dev.simulated_team.simulated.content.blocks.nav_table.NavTableBlockEntity;
+import dev.simulated_team.simulated.content.blocks.spring.SpringBlockEntity;
+import dev.simulated_team.simulated.content.blocks.swivel_bearing.SwivelBearingBlockEntity;
+import dev.simulated_team.simulated.content.blocks.swivel_bearing.link_block.SwivelBearingPlateBlockEntity;
 import dev.simulated_team.simulated.index.SimEntityDataSerializers;
 import dev.simulated_team.simulated.network.packets.honey_glue.HoneyGlueSyncBoundsPacket;
 import dev.simulated_team.simulated.network.packets.lodestone_compass.UpdateClientLodestonePositionPacket;
@@ -31,6 +40,15 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class AeronauticsTranslation {
+    private static final String SPRING_GOAL_KEY = "Goal";
+    private static final String MERGING_GLUE_PARTNER_KEY = "PartnerPosition";
+    private static final String DOCKING_OTHER_CONNECTOR_KEY = "OtherConnector";
+    private static final String NAMEPLATE_CONTROLLER_KEY = "ControllerPos";
+    private static final String SWIVEL_PLATE_KEY = "SwivelPlate";
+    private static final String SWIVEL_PARENT_KEY = "ParentPos";
+    private static final String NAV_TARGET_KEY = "CurrentTarget";
+    private static final String LASER_HIT_KEY = "HitPos";
+
     public static void register() {
         if (SimulatedMod.present()) {
             registerSimulated();
@@ -64,6 +82,7 @@ public final class AeronauticsTranslation {
     }
 
     private static void registerSimulated() {
+        registerSimulatedSyncedTags();
 
         PacketTranslator.registerClientboundPayloadRewriter(ClientboundRopeDataPacket.class, (payload, context) ->
                 new ClientboundRopeDataPacket(payload.interpolationTick(), seat(context, payload.ownerPos()),
@@ -98,6 +117,22 @@ public final class AeronauticsTranslation {
 
         PacketTranslator.registerEntityDataRewriter(SimEntityDataSerializers.VEC3,
                 (position, context, anchor) -> context.transformer().nearestCopy(anchor, position));
+    }
+
+    private static void registerSimulatedSyncedTags() {
+        SyncedTagFold.register(SpringBlockEntity.class, SyncedTagFold.PositionShape.PACKED_LONG, SPRING_GOAL_KEY);
+        SyncedTagFold.register(MergingGlueBlockEntity.class, SyncedTagFold.PositionShape.PACKED_LONG,
+                MERGING_GLUE_PARTNER_KEY);
+        SyncedTagFold.register(DockingConnectorBlockEntity.class, SyncedTagFold.PositionShape.BLOCK_POS,
+                DOCKING_OTHER_CONNECTOR_KEY);
+        SyncedTagFold.register(NameplateBlockEntity.class, SyncedTagFold.PositionShape.BLOCK_POS,
+                NAMEPLATE_CONTROLLER_KEY);
+        SyncedTagFold.register(SwivelBearingBlockEntity.class, SyncedTagFold.PositionShape.BLOCK_POS,
+                SWIVEL_PLATE_KEY);
+        SyncedTagFold.register(SwivelBearingPlateBlockEntity.class, SyncedTagFold.PositionShape.BLOCK_POS,
+                SWIVEL_PARENT_KEY);
+        SyncedTagFold.register(NavTableBlockEntity.class, SyncedTagFold.PositionShape.VEC3_LIST, NAV_TARGET_KEY);
+        SyncedTagFold.register(LaserPointerBlockEntity.class, SyncedTagFold.PositionShape.VEC3_LIST, LASER_HIT_KEY);
     }
 
     private static @Nullable BlockPos seat(TranslationContext context, @Nullable BlockPos pos) {

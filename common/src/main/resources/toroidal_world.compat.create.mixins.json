@@ -67,7 +67,7 @@
     "SchematicSyncPacketMixin",
     "SchematicannonPrinterMixin",
     "SearchCacheMixin",
-    "SmartBlockEntityControllerMixin",
+    "SmartBlockEntitySyncedTagMixin",
     "StationBlockEntityMixin",
     "StationMapMarkerMixin",
     "SteamEngineBlockEntityMixin",
