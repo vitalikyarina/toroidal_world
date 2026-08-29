@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.decoration.BlockAttachedEntity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.payload.AdvancedAddEntityPayload;
 
@@ -19,7 +20,13 @@ public final class SpawnBufferTranslation {
 
     private static final LogRateGate WARN_GATE = new LogRateGate();
 
+    private static final String TILE_X_KEY = "TileX";
+    private static final String TILE_Y_KEY = "TileY";
+    private static final String TILE_Z_KEY = "TileZ";
+
     public static void register() {
+        SpawnBufferFold.register(BlockAttachedEntity.class, TagPositions.PositionShape.BLOCK_INT_TRIPLE,
+                TILE_X_KEY, TILE_Y_KEY, TILE_Z_KEY);
         PacketTranslator.registerClientboundPayloadRewriter(
                 AdvancedAddEntityPayload.class, SpawnBufferTranslation::seated);
     }

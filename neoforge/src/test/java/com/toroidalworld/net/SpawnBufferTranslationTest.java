@@ -1,7 +1,9 @@
 package com.toroidalworld.net;
 
+import static com.toroidalworld.net.PacketTranslatorFixture.CLIENT_BLOCK;
 import static com.toroidalworld.net.PacketTranslatorFixture.CLIENT_X;
 import static com.toroidalworld.net.PacketTranslatorFixture.CLIENT_Z;
+import static com.toroidalworld.net.PacketTranslatorFixture.SERVER_BLOCK;
 import static com.toroidalworld.net.PacketTranslatorFixture.SERVER_X;
 import static com.toroidalworld.net.PacketTranslatorFixture.SERVER_Z;
 import static com.toroidalworld.net.PacketTranslatorFixture.context;
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import io.netty.buffer.Unpooled;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.ListTag;
@@ -20,6 +23,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.decoration.Painting;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.payload.AdvancedAddEntityPayload;
@@ -30,11 +34,15 @@ class SpawnBufferTranslationTest {
 
     private static final String POS_KEY = "Pos";
     private static final String OFFSET_KEY = "From";
+    private static final String TILE_X_KEY = "TileX";
+    private static final String TILE_Y_KEY = "TileY";
+    private static final String TILE_Z_KEY = "TileZ";
 
     private static final double POS_Y = 64.0;
     private static final byte TAIL_BYTE = 7;
 
     private static final Class<?> REGISTERED_TYPE = ArmorStand.class;
+    private static final Class<?> BLOCK_ATTACHED_TYPE = Painting.class;
     private static final Class<?> UNREGISTERED_TYPE = Boat.class;
 
     static {
@@ -59,6 +67,14 @@ class SpawnBufferTranslationTest {
         CompoundTag tag = new CompoundTag();
         tag.put(POS_KEY, doubleList(x, POS_Y, z));
         tag.put(OFFSET_KEY, doubleList(-1.0, 0.0, -1.0));
+        return tag;
+    }
+
+    private static CompoundTag attachmentData(BlockPos attachment) {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt(TILE_X_KEY, attachment.getX());
+        tag.putInt(TILE_Y_KEY, attachment.getY());
+        tag.putInt(TILE_Z_KEY, attachment.getZ());
         return tag;
     }
 
@@ -91,6 +107,23 @@ class SpawnBufferTranslationTest {
                 packetOf(ENTITY_ID, spawnData(SERVER_X, SERVER_Z), false), contextHolding(REGISTERED_TYPE));
 
         assertEquals(new Vec3(CLIENT_X, POS_Y, CLIENT_Z), vec3In(bufferOf(translated).readNbt(), POS_KEY));
+    }
+
+    @Test
+    void anAttachmentBlockAWorldAwayReachesTheViewerOnItsOwnCopy() {
+        Packet<?> translated = PacketTranslator.toClient(
+                packetOf(ENTITY_ID, attachmentData(SERVER_BLOCK), false), contextHolding(BLOCK_ATTACHED_TYPE));
+
+        CompoundTag seated = bufferOf(translated).readNbt();
+        assertEquals(CLIENT_BLOCK, new BlockPos(seated.getInt(TILE_X_KEY), seated.getInt(TILE_Y_KEY),
+                seated.getInt(TILE_Z_KEY)));
+    }
+
+    @Test
+    void anAttachmentBlockAlreadyInTheViewersFrameIsThePacketBack() {
+        ClientboundCustomPayloadPacket packet = packetOf(ENTITY_ID, attachmentData(CLIENT_BLOCK), false);
+
+        assertSame(packet, PacketTranslator.toClient(packet, contextHolding(BLOCK_ATTACHED_TYPE)));
     }
 
     @Test

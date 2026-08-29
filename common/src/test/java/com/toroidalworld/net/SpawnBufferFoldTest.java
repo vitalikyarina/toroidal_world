@@ -21,6 +21,9 @@ class SpawnBufferFoldTest {
     private static final String POS_KEY = "Pos";
     private static final String ATTACHMENT_KEY = "ControllerPos";
     private static final String UNRELATED_KEY = "From";
+    private static final String TILE_X_KEY = "TileX";
+    private static final String TILE_Y_KEY = "TileY";
+    private static final String TILE_Z_KEY = "TileZ";
 
     private static class SpawningEntity {
     }
@@ -55,6 +58,8 @@ class SpawnBufferFoldTest {
         SpawnBufferFold.register(SpawningEntity.class, TagPositions.PositionShape.VEC3_LIST, POS_KEY);
         SpawnBufferFold.register(SpawningEntity.class, TagPositions.PositionShape.BLOCK_POS, ATTACHMENT_KEY);
         SpawnBufferFold.register(HangingEntity.class, TagPositions.PositionShape.BLOCK_POS, ATTACHMENT_KEY);
+        SpawnBufferFold.register(HangingEntity.class, TagPositions.PositionShape.BLOCK_INT_TRIPLE,
+                TILE_X_KEY, TILE_Y_KEY, TILE_Z_KEY);
     }
 
     private static ListTag doubleList(double x, double y, double z) {
@@ -79,6 +84,20 @@ class SpawnBufferFoldTest {
 
         assertTrue(SpawnBufferFold.carriesPositions(HangingDiagramEntity.class));
         assertEquals(new BlockPos(7, 102, 0), NbtUtils.readBlockPos(seated, ATTACHMENT_KEY).orElseThrow());
+    }
+
+    @Test
+    void aSubclassInheritsTheIntTripleRegisteredOnItsSuperclass() {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt(TILE_X_KEY, 11 + LAP_BLOCKS);
+        tag.putInt(TILE_Y_KEY, 102);
+        tag.putInt(TILE_Z_KEY, 0);
+
+        CompoundTag seated = SpawnBufferFold.seatedIn(HOME, HangingDiagramEntity.class, tag);
+
+        assertEquals(11, seated.getInt(TILE_X_KEY));
+        assertEquals(102, seated.getInt(TILE_Y_KEY));
+        assertEquals(0, seated.getInt(TILE_Z_KEY));
     }
 
     @Test

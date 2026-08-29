@@ -1,7 +1,7 @@
 package com.toroidalworld.net;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,6 +19,11 @@ import net.minecraft.world.phys.Vec3;
 
 public final class TagPositions {
     private static final int VEC3_COMPONENTS = 3;
+    private static final int BLOCK_TRIPLE_KEYS = 3;
+
+    private static final int TRIPLE_X = 0;
+    private static final int TRIPLE_Y = 1;
+    private static final int TRIPLE_Z = 2;
 
     public interface Seat {
         BlockPos seat(BlockPos stored);
@@ -27,33 +32,36 @@ public final class TagPositions {
     }
 
     public enum PositionShape {
-        BLOCK_POS {
+        BLOCK_POS(1) {
             @Override
-            @Nullable Tag seated(Seat seat, CompoundTag tag, String key) {
+            @Nullable CompoundTag seated(Seat seat, CompoundTag tag, List<String> keys) {
+                String key = keys.getFirst();
                 BlockPos stored = NbtUtils.readBlockPos(tag, key).orElse(null);
                 if (stored == null) {
                     return null;
                 }
 
                 BlockPos seated = seat.seat(stored);
-                return seated.equals(stored) ? null : NbtUtils.writeBlockPos(seated);
+                return seated.equals(stored) ? null : fragment(key, NbtUtils.writeBlockPos(seated));
             }
         },
-        PACKED_LONG {
+        PACKED_LONG(1) {
             @Override
-            @Nullable Tag seated(Seat seat, CompoundTag tag, String key) {
+            @Nullable CompoundTag seated(Seat seat, CompoundTag tag, List<String> keys) {
+                String key = keys.getFirst();
                 if (!tag.contains(key, Tag.TAG_LONG)) {
                     return null;
                 }
 
                 BlockPos stored = BlockPos.of(tag.getLong(key));
                 BlockPos seated = seat.seat(stored);
-                return seated.equals(stored) ? null : LongTag.valueOf(seated.asLong());
+                return seated.equals(stored) ? null : fragment(key, LongTag.valueOf(seated.asLong()));
             }
         },
-        VEC3_LIST {
+        VEC3_LIST(1) {
             @Override
-            @Nullable Tag seated(Seat seat, CompoundTag tag, String key) {
+            @Nullable CompoundTag seated(Seat seat, CompoundTag tag, List<String> keys) {
+                String key = keys.getFirst();
                 ListTag list = tag.getList(key, Tag.TAG_DOUBLE);
                 if (list.size() != VEC3_COMPONENTS) {
                     return null;
@@ -61,14 +69,54 @@ public final class TagPositions {
 
                 Vec3 stored = new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
                 Vec3 seated = seat.seat(stored);
-                return seated.equals(stored) ? null : doubleList(seated);
+                return seated.equals(stored) ? null : fragment(key, doubleList(seated));
+            }
+        },
+        BLOCK_INT_TRIPLE(BLOCK_TRIPLE_KEYS) {
+            @Override
+            @Nullable CompoundTag seated(Seat seat, CompoundTag tag, List<String> keys) {
+                for (String key : keys) {
+                    if (!tag.contains(key, Tag.TAG_INT)) {
+                        return null;
+                    }
+                }
+
+                BlockPos stored = new BlockPos(tag.getInt(keys.get(TRIPLE_X)), tag.getInt(keys.get(TRIPLE_Y)),
+                        tag.getInt(keys.get(TRIPLE_Z)));
+                BlockPos seated = seat.seat(stored);
+                if (seated.equals(stored)) {
+                    return null;
+                }
+
+                CompoundTag moved = new CompoundTag();
+                moved.putInt(keys.get(TRIPLE_X), seated.getX());
+                moved.putInt(keys.get(TRIPLE_Y), seated.getY());
+                moved.putInt(keys.get(TRIPLE_Z), seated.getZ());
+                return moved;
             }
         };
 
-        abstract @Nullable Tag seated(Seat seat, CompoundTag tag, String key);
+        private final int keyCount;
+
+        PositionShape(int keyCount) {
+            this.keyCount = keyCount;
+        }
+
+        public int keyCount() {
+            return keyCount;
+        }
+
+        abstract @Nullable CompoundTag seated(Seat seat, CompoundTag tag, List<String> keys);
     }
 
-    public record TagPosition(String key, PositionShape shape) {
+    public record TagPosition(List<String> keys, PositionShape shape) {
+        public TagPosition {
+            keys = List.copyOf(keys);
+            if (keys.size() != shape.keyCount()) {
+                throw new IllegalArgumentException(shape + " spreads a position over " + shape.keyCount()
+                        + " keys, and " + keys.size() + " were given");
+            }
+        }
     }
 
     public static final class Table {
@@ -76,9 +124,15 @@ public final class TagPositions {
         private final Map<Class<?>, List<TagPosition>> resolved = new ConcurrentHashMap<>();
 
         public void register(Class<?> subjectType, PositionShape shape, String... keys) {
+            int keyCount = shape.keyCount();
+            if (keys.length == 0 || keys.length % keyCount != 0) {
+                throw new IllegalArgumentException(shape + " spreads a position over " + keyCount + " keys, and "
+                        + keys.length + " were registered on " + subjectType.getName());
+            }
+
             List<TagPosition> positions = registered.computeIfAbsent(subjectType, type -> new ArrayList<>());
-            for (String key : keys) {
-                positions.add(new TagPosition(key, shape));
+            for (int index = 0; index < keys.length; index += keyCount) {
+                positions.add(new TagPosition(Arrays.asList(keys).subList(index, index + keyCount), shape));
             }
 
             resolved.clear();
@@ -108,29 +162,32 @@ public final class TagPositions {
     }
 
     public static CompoundTag seatedIn(Seat seat, List<TagPosition> positions, CompoundTag tag) {
-        Map<String, Tag> moved = null;
+        CompoundTag folded = null;
         for (TagPosition position : positions) {
-            Tag seated = position.shape().seated(seat, tag, position.key());
-            if (seated != null) {
-                if (moved == null) {
-                    moved = new HashMap<>();
-                }
+            CompoundTag moved = position.shape().seated(seat, tag, position.keys());
+            if (moved == null) {
+                continue;
+            }
 
-                moved.put(position.key(), seated);
+            if (folded == null) {
+                folded = new CompoundTag();
+                for (String key : tag.getAllKeys()) {
+                    folded.put(key, tag.get(key));
+                }
+            }
+
+            for (String key : moved.getAllKeys()) {
+                folded.put(key, moved.get(key));
             }
         }
 
-        if (moved == null) {
-            return tag;
-        }
+        return folded == null ? tag : folded;
+    }
 
-        CompoundTag folded = new CompoundTag();
-        for (String key : tag.getAllKeys()) {
-            folded.put(key, tag.get(key));
-        }
-
-        moved.forEach(folded::put);
-        return folded;
+    private static CompoundTag fragment(String key, Tag value) {
+        CompoundTag moved = new CompoundTag();
+        moved.put(key, value);
+        return moved;
     }
 
     private static ListTag doubleList(Vec3 position) {
