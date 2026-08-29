@@ -12,6 +12,7 @@ import com.toroidalworld.core.FoldedCopies;
 import com.toroidalworld.net.PacketTranslator;
 import com.toroidalworld.net.TranslationContext;
 
+import dev.eriksonn.aeronautics.network.packets.LevititeCatalystCrystallizationPacket;
 import dev.simulated_team.simulated.index.SimEntityDataSerializers;
 import dev.simulated_team.simulated.network.packets.honey_glue.HoneyGlueSyncBoundsPacket;
 import dev.simulated_team.simulated.network.packets.lodestone_compass.UpdateClientLodestonePositionPacket;
@@ -38,6 +39,16 @@ public final class AeronauticsTranslation {
         if (OffroadMod.present()) {
             registerOffroad();
         }
+
+        if (AeronauticsMod.present()) {
+            registerAeronautics();
+        }
+    }
+
+    private static void registerAeronautics() {
+        PacketTranslator.registerServerboundPayloadRewriter(LevititeCatalystCrystallizationPacket.class,
+                (payload, context) ->
+                        new LevititeCatalystCrystallizationPacket(context.toServer(payload.pos()), payload.hand()));
     }
 
     private static void registerOffroad() {

@@ -137,6 +137,7 @@ var aeronauticsModJars = tasks.register('unpackAeronautics', Sync) {
     from(zipTree(configurations.aeronauticsJarJar.singleFile)) {
         include 'META-INF/jarjar/dev.simulated_team.simulated.*.jar'
         include 'META-INF/jarjar/dev.ryanhcode.offroad.*.jar'
+        include 'META-INF/jarjar/dev.eriksonn.aeronautics.*.jar'
         eachFile { it.relativePath = new RelativePath(true, it.name) }
     }
     includeEmptyDirs = false
