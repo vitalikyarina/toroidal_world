@@ -24,6 +24,7 @@ import dev.simulated_team.simulated.content.blocks.swivel_bearing.SwivelBearingB
 import dev.simulated_team.simulated.content.blocks.swivel_bearing.link_block.SwivelBearingPlateBlockEntity;
 import dev.simulated_team.simulated.index.SimEntityDataSerializers;
 import dev.simulated_team.simulated.network.packets.honey_glue.HoneyGlueSyncBoundsPacket;
+import dev.simulated_team.simulated.network.packets.linked_typewriter.TypewriterKeySavePacket;
 import dev.simulated_team.simulated.network.packets.lodestone_compass.UpdateClientLodestonePositionPacket;
 import dev.simulated_team.simulated.network.packets.physics_assembler.PhysicsAssemblerFailedPacket;
 import dev.simulated_team.simulated.network.packets.physics_assembler.PhysicsAssemblerFlickAndHoldLeverPacket;
@@ -83,6 +84,9 @@ public final class AeronauticsTranslation {
 
     private static void registerSimulated() {
         registerSimulatedSyncedTags();
+
+        PacketTranslator.registerServerboundPayloadRewriter(TypewriterKeySavePacket.class, (payload, context) ->
+                new TypewriterKeySavePacket(payload.changedKeys(), context.toServer(payload.pos()), payload.clearAll()));
 
         PacketTranslator.registerClientboundPayloadRewriter(ClientboundRopeDataPacket.class, (payload, context) ->
                 new ClientboundRopeDataPacket(payload.interpolationTick(), seat(context, payload.ownerPos()),
