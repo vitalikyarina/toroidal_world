@@ -51,7 +51,9 @@ public final class SablePoseFold {
 
         centroid.div(counted);
         Vec3 centre = new Vec3(centroid.x, centroid.y, centroid.z);
-        if (!fold.isOver(centre)) {
+        boolean centroidOverBounds = fold.isOver(centre);
+        SableConstraintProbe.groupSpan(level, group, centre, centroidOverBounds);
+        if (!centroidOverBounds) {
             return;
         }
 

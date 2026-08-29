@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.toroidalworld.compat.sable.SableConstraintEdge;
 import com.toroidalworld.compat.sable.SableConstraintEdges;
 import com.toroidalworld.compat.sable.SableConstraintGraph;
+import com.toroidalworld.compat.sable.SableConstraintProbe;
 
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.PhysicsPipelineBody;
@@ -33,6 +34,7 @@ public class RapierPhysicsPipelineMixin implements SableConstraintEdges {
             PhysicsConstraintConfiguration<?> configuration, CallbackInfoReturnable<PhysicsConstraintHandle> cir) {
         PhysicsConstraintHandle handle = cir.getReturnValue();
         if (handle != null && bodyA != null && bodyB != null) {
+            SableConstraintProbe.join(bodyA, bodyB);
             SableConstraintGraph.record((PhysicsPipeline) (Object) this, bodyA, bodyB, handle);
         }
     }
