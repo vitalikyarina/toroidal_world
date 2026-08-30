@@ -29,7 +29,7 @@ public abstract class BeltBlockEntityControllerMixin implements SeamKeyedBlockEn
     @ModifyVariable(method = "setController", at = @At("HEAD"), argsOnly = true)
     private BlockPos toroidal$foldIncomingController(BlockPos stored) {
         BlockEntity self = (BlockEntity) (Object) this;
-        return ControllerFrameFold.inFrameOf(self.getLevel(), self.getBlockPos(), stored);
+        return ControllerFrameFold.inFrameOf(self.getLevel(), stored);
     }
 
     @Inject(method = "read", at = @At("RETURN"))
@@ -51,6 +51,6 @@ public abstract class BeltBlockEntityControllerMixin implements SeamKeyedBlockEn
         }
 
         BlockEntity self = (BlockEntity) (Object) this;
-        this.controller = ControllerFrameFold.inFrameOf(self.getLevel(), self.getBlockPos(), stored);
+        this.controller = ControllerFrameFold.inFrameOf(self.getLevel(), stored);
     }
 }

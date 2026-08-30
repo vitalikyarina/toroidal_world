@@ -1,5 +1,6 @@
 package com.toroidalworld.compat.create;
 
+import com.toroidalworld.compat.create.client.CreateClientFrame;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.net.TagPositions;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -24,25 +25,28 @@ public final class SyncedTagFold {
         }
 
         WorldFold clientTransformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
-        return clientTransformer == null
-                ? tag
-                : seatedIn(clientTransformer, blockEntity.getBlockPos(), blockEntity.getClass(), tag);
+        BlockPos viewer = CreateClientFrame.viewer();
+        if (clientTransformer == null || viewer == null) {
+            return tag;
+        }
+
+        return seatedIn(clientTransformer, viewer, blockEntity.getClass(), tag);
     }
 
-    static CompoundTag seatedIn(WorldFold fold, BlockPos worldPosition, Class<?> blockEntityType, CompoundTag tag) {
-        return TABLE.seatedIn(around(fold, worldPosition), blockEntityType, tag);
+    static CompoundTag seatedIn(WorldFold fold, BlockPos anchor, Class<?> blockEntityType, CompoundTag tag) {
+        return TABLE.seatedIn(around(fold, anchor), blockEntityType, tag);
     }
 
-    private static TagPositions.Seat around(WorldFold fold, BlockPos worldPosition) {
+    private static TagPositions.Seat around(WorldFold fold, BlockPos anchor) {
         return new TagPositions.Seat() {
             @Override
             public BlockPos seat(BlockPos stored) {
-                return fold.nearestCopy(worldPosition, stored);
+                return fold.nearestCopy(anchor, stored);
             }
 
             @Override
             public Vec3 seat(Vec3 stored) {
-                return fold.nearestCopy(Vec3.atCenterOf(worldPosition), stored);
+                return fold.nearestCopy(Vec3.atCenterOf(anchor), stored);
             }
         };
     }

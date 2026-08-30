@@ -83,6 +83,11 @@ public final class CreateClientFrame {
         return cameraEntity == null ? null : cameraEntity.getEyePosition();
     }
 
+    public static @Nullable BlockPos viewer() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        return player == null ? null : player.blockPosition();
+    }
+
     private static boolean holds(Level level, BlockPos pos) {
         return level.getChunkSource().getChunk(SectionPos.blockToSectionCoord(pos.getX()),
                 SectionPos.blockToSectionCoord(pos.getZ()), ChunkStatus.FULL, false) != null;
@@ -90,11 +95,6 @@ public final class CreateClientFrame {
 
     private static @Nullable Level toroidalClientLevel(@Nullable BlockGetter world) {
         return world instanceof Level level && level.isClientSide ? level : null;
-    }
-
-    private static @Nullable BlockPos viewer() {
-        LocalPlayer player = Minecraft.getInstance().player;
-        return player == null ? null : player.blockPosition();
     }
 
     private CreateClientFrame() {

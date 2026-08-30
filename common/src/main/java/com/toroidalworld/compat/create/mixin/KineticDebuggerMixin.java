@@ -9,7 +9,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.kinetics.KineticDebugger;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.client.CreateClientFrame;
 
 import net.minecraft.core.BlockPos;
 
@@ -25,6 +25,6 @@ public abstract class KineticDebuggerMixin {
             return null;
         }
 
-        return CreateTrackFold.nearestCopy(blockEntity.getLevel(), blockEntity.getBlockPos(), canonical);
+        return CreateClientFrame.nearestCopy(blockEntity.getLevel(), canonical);
     }
 }

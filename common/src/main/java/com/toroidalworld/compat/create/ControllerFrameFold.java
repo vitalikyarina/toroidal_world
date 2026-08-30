@@ -2,6 +2,7 @@ package com.toroidalworld.compat.create;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.compat.create.client.CreateClientFrame;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -9,16 +10,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
 public final class ControllerFrameFold {
-    public static BlockPos inFrameOf(@Nullable Level level, BlockPos worldPosition, BlockPos controller) {
+    public static BlockPos inFrameOf(@Nullable Level level, BlockPos controller) {
         if (level == null) {
             return controller;
         }
 
         if (level.isClientSide) {
             WorldFold clientTransformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
-            return clientTransformer == null
+            BlockPos viewer = CreateClientFrame.viewer();
+            return clientTransformer == null || viewer == null
                     ? controller
-                    : clientTransformer.nearestCopy(worldPosition, controller);
+                    : clientTransformer.nearestCopy(viewer, controller);
         }
 
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
