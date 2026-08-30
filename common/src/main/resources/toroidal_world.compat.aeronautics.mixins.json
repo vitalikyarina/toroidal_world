@@ -6,6 +6,8 @@
   "plugin": "com.toroidalworld.compat.aeronautics.AeronauticsMixinPlugin",
   "mixins": [
     "AbstractLinkedReceiverBlockEntityMixin",
+    "BlockHoldInteractionMixin",
+    "DiagramReachMixin",
     "DockingConnectorPairMixin",
     "MergingGlueBlockEntityMixin",
     "SpringBlockEntityMixin",
