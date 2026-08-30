@@ -59,13 +59,19 @@ public final class SablePoseFold {
 
         Vec3 folded = fold.fold(centre);
         Vector3d lap = new Vector3d(folded.x - centre.x, 0.0, folded.z - centre.z);
+        shiftGroup(system, group, lap, subLevel, readback);
+    }
+
+    static void shiftGroup(SubLevelPhysicsSystem system, List<PhysicsPipelineBody> group, Vector3dc lap,
+            @Nullable ServerSubLevel self, @Nullable Pose3d readback) {
+        PhysicsPipeline pipeline = system.getPipeline();
         for (PhysicsPipelineBody body : group) {
-            shift(system, pipeline, body, subLevel, readback, lap);
+            shift(system, pipeline, body, self, readback, lap);
         }
     }
 
     private static void shift(SubLevelPhysicsSystem system, PhysicsPipeline pipeline, PhysicsPipelineBody body,
-            ServerSubLevel self, Pose3d readback, Vector3dc lap) {
+            @Nullable ServerSubLevel self, @Nullable Pose3d readback, Vector3dc lap) {
         Vector3dc position = positionOf(body, self, readback);
         Quaterniondc orientation = orientationOf(body, self, readback);
         if (position == null || orientation == null) {
@@ -115,7 +121,8 @@ public final class SablePoseFold {
         }
     }
 
-    private static @Nullable Vector3dc positionOf(PhysicsPipelineBody body, ServerSubLevel self, Pose3d readback) {
+    private static @Nullable Vector3dc positionOf(PhysicsPipelineBody body, @Nullable ServerSubLevel self,
+            @Nullable Pose3d readback) {
         if (body == self) {
             return readback.position();
         }
@@ -127,7 +134,8 @@ public final class SablePoseFold {
         return body instanceof BoxPhysicsObject box ? box.getPose().position() : null;
     }
 
-    private static @Nullable Quaterniondc orientationOf(PhysicsPipelineBody body, ServerSubLevel self, Pose3d readback) {
+    private static @Nullable Quaterniondc orientationOf(PhysicsPipelineBody body, @Nullable ServerSubLevel self,
+            @Nullable Pose3d readback) {
         if (body == self) {
             return readback.orientation();
         }
