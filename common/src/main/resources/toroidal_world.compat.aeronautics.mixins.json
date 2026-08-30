@@ -7,6 +7,8 @@
   "mixins": [
     "AbstractLinkedReceiverBlockEntityMixin",
     "DockingConnectorPairMixin",
+    "MergingGlueBlockEntityMixin",
+    "SpringBlockEntityMixin",
     "MagnetMapMixin",
     "MagnetPairMixin",
     "RedstoneMagnetBlockEntityMixin",
