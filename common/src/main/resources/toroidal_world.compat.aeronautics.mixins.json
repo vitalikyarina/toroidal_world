@@ -15,7 +15,9 @@
     "MultiMiningSyncAccessor",
     "MapNavigationTargetMixin",
     "NavTableTargetFrameMixin",
-    "PhysicsStaffBeamPacketAccessor"
+    "PhysicsStaffBeamPacketAccessor",
+    "RopeStrandHolderBehaviorMixin",
+    "ServerRopeStrandMixin"
   ],
   "client": [
     "ClientRopeItemHandlerMixin"
