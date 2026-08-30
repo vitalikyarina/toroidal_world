@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "plugin": "com.toroidalworld.compat.aeronautics.AeronauticsMixinPlugin",
   "mixins": [
+    "AbstractLinkedReceiverBlockEntityMixin",
     "DockingConnectorPairMixin",
     "MagnetMapMixin",
     "MagnetPairMixin",
