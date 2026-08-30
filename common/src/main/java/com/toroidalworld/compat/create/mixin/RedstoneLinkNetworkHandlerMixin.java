@@ -27,12 +27,15 @@ public class RedstoneLinkNetworkHandlerMixin {
             return original.call(from, to);
         }
 
-        BlockPos target = to.getLocation();
-        BlockPos folded = CreateSeamFold.foldPosition(level, from.getLocation(), target);
-        if (folded.equals(target)) {
+        BlockPos storedFrom = from.getLocation();
+        BlockPos storedTo = to.getLocation();
+        BlockPos seatedFrom = CreateSeamFold.worldSeat(level, storedFrom);
+        BlockPos seatedTo = CreateSeamFold.worldSeat(level, storedTo);
+        BlockPos foldedTo = CreateSeamFold.foldPosition(level, seatedFrom, seatedTo);
+        if (seatedFrom.equals(storedFrom) && foldedTo.equals(storedTo)) {
             return original.call(from, to);
         }
 
-        return original.call(from, new FoldedLinkable(to, folded));
+        return original.call(new FoldedLinkable(from, seatedFrom), new FoldedLinkable(to, foldedTo));
     }
 }

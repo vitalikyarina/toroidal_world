@@ -2,6 +2,7 @@ package com.toroidalworld.compat.create;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.ForeignFrames;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -21,6 +22,15 @@ public final class CreateSeamFold {
         }
 
         return delta(WorldLoopAttachments.wrappedTransformerOfReader(level), anchor, target, rawDelta);
+    }
+
+    public static BlockPos worldSeat(@Nullable Level level, BlockPos stored) {
+        if (level == null) {
+            return stored;
+        }
+
+        Vec3 seated = ForeignFrames.seatInWorld(level, Vec3.atCenterOf(stored));
+        return BlockPos.containing(seated);
     }
 
     public static BlockPos foldPosition(@Nullable Level level, BlockPos anchor, BlockPos target) {
