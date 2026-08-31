@@ -14,6 +14,8 @@
     "PhysicsChunkTicketManagerMixin",
     "PlayerReachFrameMixin",
     "Pose3dcMixin",
+    "RapierConstraintHandleMixin",
+    "RapierGenericConstraintHandleMixin",
     "RapierPhysicsPipelineMixin",
     "ServerboundPunchSubLevelPacketMixin",
     "ServerEntityFrameMixin",

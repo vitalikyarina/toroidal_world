@@ -17,6 +17,8 @@ import com.toroidalworld.compat.sable.SableConstraintEdge;
 import com.toroidalworld.compat.sable.SableConstraintEdges;
 import com.toroidalworld.compat.sable.SableConstraintGraph;
 import com.toroidalworld.compat.sable.SableConstraintJoin;
+import com.toroidalworld.compat.sable.SableMotorGoal;
+import com.toroidalworld.compat.sable.SableMotorGoals;
 
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.PhysicsPipelineBody;
@@ -51,8 +53,17 @@ public class RapierPhysicsPipelineMixin implements SableConstraintEdges {
     private void toroidal$recordConstraint(PhysicsPipelineBody bodyA, PhysicsPipelineBody bodyB,
             PhysicsConstraintConfiguration<?> configuration, CallbackInfoReturnable<PhysicsConstraintHandle> cir) {
         PhysicsConstraintHandle handle = cir.getReturnValue();
-        if (handle != null && bodyA != null && bodyB != null) {
+        if (handle == null) {
+            return;
+        }
+
+        if (bodyA != null && bodyB != null) {
             SableConstraintGraph.record((PhysicsPipeline) (Object) this, bodyA, bodyB, handle);
+            return;
+        }
+
+        if (bodyA == null && bodyB != null && handle instanceof SableMotorGoals goals) {
+            goals.toroidal$motorGoal(SableMotorGoal.of(this.level, bodyB, configuration));
         }
     }
 }

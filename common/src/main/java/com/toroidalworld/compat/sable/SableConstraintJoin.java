@@ -141,7 +141,7 @@ public final class SableConstraintJoin {
         return new Vec3(anchor.x(), anchor.y(), anchor.z());
     }
 
-    private static @Nullable Vec3 bodyFrame(PhysicsPipelineBody body, Vector3dc anchor) {
+    static @Nullable Vec3 bodyFrame(PhysicsPipelineBody body, Vector3dc anchor) {
         if (body instanceof ServerSubLevel subLevel) {
             Vector3d world = subLevel.logicalPose().transformPosition(anchor, new Vector3d());
             return new Vec3(world.x, world.y, world.z);
