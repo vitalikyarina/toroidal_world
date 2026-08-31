@@ -2,9 +2,6 @@ package com.toroidalworld.compat.aeronautics;
 
 import org.joml.Vector3d;
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-
-import com.mojang.logging.LogUtils;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -17,7 +14,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 
 public final class MagnetSeamFrame {
-    private static final Logger LOGGER = LogUtils.getLogger();
     private static final double HALF = 0.5;
 
     public static Vector3d midpoint(DockingConnectorBlockEntity dock1, DockingConnectorBlockEntity dock2, Vector3d average) {
@@ -33,9 +29,6 @@ public final class MagnetSeamFrame {
             return average;
         }
 
-        LOGGER.info("[aeronautics-compat] magnet_dock_midpoint raw_x_blocks={} raw_z_blocks={} "
-                        + "folded_x_blocks={} folded_z_blocks={}",
-                average.x, average.z, midpoint.x, midpoint.z);
         return average.set(midpoint.x, midpoint.y, midpoint.z);
     }
 
