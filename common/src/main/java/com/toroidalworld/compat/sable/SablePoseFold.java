@@ -68,6 +68,8 @@ public final class SablePoseFold {
         for (PhysicsPipelineBody body : group) {
             shift(system, pipeline, body, self, readback, lap);
         }
+
+        SableBodyShift.fire(system.getLevel(), group, lap);
     }
 
     private static void shift(SubLevelPhysicsSystem system, PhysicsPipeline pipeline, PhysicsPipelineBody body,
