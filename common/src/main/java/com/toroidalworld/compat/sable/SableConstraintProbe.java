@@ -20,22 +20,6 @@ public final class SableConstraintProbe {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final LogRateGate SPAN_GATE = new LogRateGate();
 
-    public static void join(@Nullable PhysicsPipelineBody first, @Nullable PhysicsPipelineBody second) {
-        Vec3 firstPosition = positionOf(first);
-        Vec3 secondPosition = positionOf(second);
-        WorldFold fold = foldOf(levelOf(first) != null ? levelOf(first) : levelOf(second));
-        if (fold == null || firstPosition == null || secondPosition == null) {
-            return;
-        }
-
-        Vec3 raw = secondPosition.subtract(firstPosition);
-        Vec3 folded = fold.foldDelta(firstPosition, secondPosition);
-        LOGGER.info("[sable-compat] constraint_join first_x_blocks={} first_z_blocks={} second_x_blocks={} "
-                        + "second_z_blocks={} raw_gap_blocks={} folded_gap_blocks={} lap_apart={}",
-                firstPosition.x, firstPosition.z, secondPosition.x, secondPosition.z,
-                raw.length(), folded.length(), raw.length() != folded.length());
-    }
-
     public static void groupSpan(Level level, List<PhysicsPipelineBody> group, Vec3 centroid, boolean centroidOverBounds) {
         WorldFold fold = foldOf(level);
         if (fold == null || !SPAN_GATE.tryPass()) {
@@ -68,10 +52,6 @@ public final class SableConstraintProbe {
         }
 
         return null;
-    }
-
-    private static @Nullable Level levelOf(@Nullable PhysicsPipelineBody body) {
-        return body instanceof ServerSubLevel subLevel ? subLevel.getLevel() : null;
     }
 
     private static @Nullable WorldFold foldOf(@Nullable Level level) {
