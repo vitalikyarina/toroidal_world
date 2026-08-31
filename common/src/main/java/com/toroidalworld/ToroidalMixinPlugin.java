@@ -18,7 +18,10 @@ public class ToroidalMixinPlugin implements IMixinConfigPlugin {
 
     private static final String PARROT_MIXIN = "com.toroidalworld.mixin.ParrotMixin";
 
-    private static final Set<String> SABLE_CLAIMED_MIXINS = Set.of(PARROT_MIXIN);
+    private static final String GAME_EVENT_LISTENER_RANGE_MIXIN =
+            "com.toroidalworld.mixin.EuclideanGameEventListenerRegistryMixin";
+
+    private static final Set<String> SABLE_CLAIMED_MIXINS = Set.of(PARROT_MIXIN, GAME_EVENT_LISTENER_RANGE_MIXIN);
 
     @Override
     public void onLoad(String mixinPackage) {
