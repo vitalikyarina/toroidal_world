@@ -21,25 +21,38 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 public final class WorldShapeReport {
     public static List<String> lines(MinecraftServer server) {
         List<String> lines = new ArrayList<>();
+        boolean anyShaped = false;
         for (ServerLevel level : server.getAllLevels()) {
             FlatShape shape = wrappedShapeOf(level);
-            if (shape == null) {
-                continue;
-            }
-
-            WorldLoopBounds bounds = shape.bounds();
-            lines.add("World shape: " + level.dimension().location()
-                    + " generator=" + generatorId(level.getChunkSource().getGenerator())
-                    + " identification=" + shape.identification()
-                    + " x=" + axisSpan(bounds.x()) + " z=" + axisSpan(bounds.z()) + " chunks"
-                    + ", " + widths(bounds)
-                    + netherScale(server, level, bounds)
-                    + " | mod=" + Platforms.get().modVersion()
-                    + " mc=" + SharedConstants.getCurrentVersion().getName()
-                    + " loader=" + Platforms.get().loaderName() + " " + Platforms.get().loaderVersion());
+            lines.add(shape == null ? unshapedLine(level) : shapedLine(server, level, shape));
+            anyShaped |= shape != null;
         }
 
-        return lines;
+        return anyShaped ? lines : List.of();
+    }
+
+    private static String shapedLine(MinecraftServer server, ServerLevel level, FlatShape shape) {
+        WorldLoopBounds bounds = shape.bounds();
+        return "World shape: " + level.dimension().location()
+                + " generator=" + generatorId(level.getChunkSource().getGenerator())
+                + " identification=" + shape.identification()
+                + " x=" + axisSpan(bounds.x()) + " z=" + axisSpan(bounds.z()) + " chunks"
+                + ", " + widths(bounds)
+                + netherScale(server, level, bounds)
+                + environment();
+    }
+
+    private static String unshapedLine(ServerLevel level) {
+        return "World shape: " + level.dimension().location()
+                + " generator=" + generatorId(level.getChunkSource().getGenerator())
+                + " unshaped"
+                + environment();
+    }
+
+    private static String environment() {
+        return " | mod=" + Platforms.get().modVersion()
+                + " mc=" + SharedConstants.getCurrentVersion().getName()
+                + " loader=" + Platforms.get().loaderName() + " " + Platforms.get().loaderVersion();
     }
 
     private static @Nullable FlatShape wrappedShapeOf(@Nullable ServerLevel level) {
