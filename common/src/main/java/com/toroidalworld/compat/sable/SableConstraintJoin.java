@@ -16,6 +16,9 @@ import dev.ryanhcode.sable.api.physics.constraint.FreeConstraintConfiguration;
 import dev.ryanhcode.sable.api.physics.constraint.GenericConstraintConfiguration;
 import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintConfiguration;
 import dev.ryanhcode.sable.api.physics.constraint.RotaryConstraintConfiguration;
+import dev.ryanhcode.sable.api.physics.object.box.BoxPhysicsObject;
+import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem;
 
@@ -26,13 +29,54 @@ public final class SableConstraintJoin {
     private record Anchors(Vector3dc first, Vector3dc second) {
     }
 
-    public static void seat(ServerLevel level, PhysicsPipeline pipeline, @Nullable PhysicsPipelineBody bodyA,
-            @Nullable PhysicsPipelineBody bodyB, PhysicsConstraintConfiguration<?> configuration) {
+    public static PhysicsConstraintConfiguration<?> seat(ServerLevel level, PhysicsPipeline pipeline,
+            @Nullable PhysicsPipelineBody bodyA, @Nullable PhysicsPipelineBody bodyB,
+            PhysicsConstraintConfiguration<?> configuration) {
         WorldFold fold = WorldLoopAttachments.wrappedTransformerOf(level);
-        if (fold == null || bodyA == null || bodyB == null || bodyA == bodyB) {
-            return;
+        if (fold == null || bodyA == bodyB) {
+            return configuration;
         }
 
+        if (bodyA == null || bodyB == null) {
+            return seatStaticAnchor(level, fold, bodyA == null, bodyA == null ? bodyB : bodyA, configuration);
+        }
+
+        shiftSmallerGroup(level, fold, pipeline, bodyA, bodyB, configuration);
+        return configuration;
+    }
+
+    private static PhysicsConstraintConfiguration<?> seatStaticAnchor(ServerLevel level, WorldFold fold,
+            boolean staticIsFirst, @Nullable PhysicsPipelineBody body,
+            PhysicsConstraintConfiguration<?> configuration) {
+        if (body == null || body.isRemoved()) {
+            return configuration;
+        }
+
+        Anchors anchors = anchorsOf(configuration);
+        Vector3dc staticAnchor = staticIsFirst ? anchors.first() : anchors.second();
+        Vec3 raw = new Vec3(staticAnchor.x(), staticAnchor.y(), staticAnchor.z());
+        Vec3 bodyAnchor = bodyFrame(body, staticIsFirst ? anchors.second() : anchors.first());
+        if (bodyAnchor == null) {
+            return configuration;
+        }
+
+        Vec3 seated = fold.nearestCopy(bodyAnchor, raw);
+        if (seated.x == raw.x && seated.z == raw.z) {
+            return configuration;
+        }
+
+        Vector3d anchor = new Vector3d(seated.x, seated.y, seated.z);
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (container == null || container.inBounds(anchor)) {
+            return configuration;
+        }
+
+        return withAnchor(configuration, staticIsFirst, anchor);
+    }
+
+    private static void shiftSmallerGroup(ServerLevel level, WorldFold fold, PhysicsPipeline pipeline,
+            PhysicsPipelineBody bodyA, PhysicsPipelineBody bodyB,
+            PhysicsConstraintConfiguration<?> configuration) {
         if (bodyA.isRemoved() || bodyB.isRemoved()) {
             return;
         }
@@ -59,6 +103,26 @@ public final class SableConstraintJoin {
         SablePoseFold.shiftGroup(system, movingIsB ? groupB : groupA, new Vector3d(lapX, 0.0, lapZ), null, null);
     }
 
+    private static PhysicsConstraintConfiguration<?> withAnchor(PhysicsConstraintConfiguration<?> configuration,
+            boolean first, Vector3dc anchor) {
+        return switch (configuration) {
+            case FixedConstraintConfiguration config -> first
+                    ? new FixedConstraintConfiguration(anchor, config.pos2(), config.orientation())
+                    : new FixedConstraintConfiguration(config.pos1(), anchor, config.orientation());
+            case FreeConstraintConfiguration config -> first
+                    ? new FreeConstraintConfiguration(anchor, config.pos2(), config.orientation())
+                    : new FreeConstraintConfiguration(config.pos1(), anchor, config.orientation());
+            case RotaryConstraintConfiguration config -> first
+                    ? new RotaryConstraintConfiguration(anchor, config.pos2(), config.normal1(), config.normal2())
+                    : new RotaryConstraintConfiguration(config.pos1(), anchor, config.normal1(), config.normal2());
+            case GenericConstraintConfiguration config -> first
+                    ? new GenericConstraintConfiguration(anchor, config.pos2(), config.orientation1(),
+                            config.orientation2(), config.lockedAxes())
+                    : new GenericConstraintConfiguration(config.pos1(), anchor, config.orientation1(),
+                            config.orientation2(), config.lockedAxes());
+        };
+    }
+
     private static Anchors anchorsOf(PhysicsConstraintConfiguration<?> configuration) {
         return switch (configuration) {
             case FixedConstraintConfiguration config -> new Anchors(config.pos1(), config.pos2());
@@ -75,6 +139,20 @@ public final class SableConstraintJoin {
         }
 
         return new Vec3(anchor.x(), anchor.y(), anchor.z());
+    }
+
+    private static @Nullable Vec3 bodyFrame(PhysicsPipelineBody body, Vector3dc anchor) {
+        if (body instanceof ServerSubLevel subLevel) {
+            Vector3d world = subLevel.logicalPose().transformPosition(anchor, new Vector3d());
+            return new Vec3(world.x, world.y, world.z);
+        }
+
+        if (body instanceof BoxPhysicsObject box) {
+            Vector3dc position = box.getPose().position();
+            return new Vec3(position.x(), position.y(), position.z());
+        }
+
+        return null;
     }
 
     private SableConstraintJoin() {

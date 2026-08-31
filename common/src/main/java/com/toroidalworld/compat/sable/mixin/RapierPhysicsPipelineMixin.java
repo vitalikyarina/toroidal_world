@@ -9,8 +9,10 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import com.toroidalworld.compat.sable.SableConstraintEdge;
 import com.toroidalworld.compat.sable.SableConstraintEdges;
 import com.toroidalworld.compat.sable.SableConstraintGraph;
@@ -37,10 +39,12 @@ public class RapierPhysicsPipelineMixin implements SableConstraintEdges {
         return this.toroidal$constraintEdges;
     }
 
-    @Inject(method = "addConstraint", at = @At("HEAD"))
-    private void toroidal$seatBeforeConstraint(PhysicsPipelineBody bodyA, PhysicsPipelineBody bodyB,
-            PhysicsConstraintConfiguration<?> configuration, CallbackInfoReturnable<PhysicsConstraintHandle> cir) {
-        SableConstraintJoin.seat(this.level, (PhysicsPipeline) (Object) this, bodyA, bodyB, configuration);
+    @ModifyVariable(method = "addConstraint", at = @At("HEAD"), argsOnly = true)
+    private PhysicsConstraintConfiguration<?> toroidal$seatBeforeConstraint(
+            PhysicsConstraintConfiguration<?> configuration,
+            @Local(argsOnly = true, ordinal = 0) PhysicsPipelineBody bodyA,
+            @Local(argsOnly = true, ordinal = 1) PhysicsPipelineBody bodyB) {
+        return SableConstraintJoin.seat(this.level, (PhysicsPipeline) (Object) this, bodyA, bodyB, configuration);
     }
 
     @Inject(method = "addConstraint", at = @At("RETURN"))
