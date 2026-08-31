@@ -12,10 +12,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.toroidalworld.accessors.RelocatableBlockEntity;
 import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.accessors.TransformerHolder;
+import com.toroidalworld.core.FoldedBoxQuery;
 import com.toroidalworld.core.ForeignFrame;
 import com.toroidalworld.core.ForeignFrames;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFold.Folded;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.gen.ShapedChunkGenerator;
 import com.toroidalworld.noise.GenerationTransformerContext;
@@ -24,10 +24,7 @@ import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
-import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 
 import net.minecraft.core.BlockPos;
@@ -106,24 +103,15 @@ public class LevelMixin implements TransformerCache {
                     target = "Lnet/minecraft/world/level/entity/LevelEntityGetter;get(Lnet/minecraft/world/phys/AABB;Ljava/util/function/Consumer;)V"))
     private void toroidal$entitiesThroughSeam(LevelEntityGetter<Entity> entities, AABB box, Consumer<Entity> output,
             Operation<Void> original) {
-        if (!toroidal$crossesSeam(box)) {
-            original.call(entities, box, output);
-            return;
-        }
-
-        List<Folded<AABB>> pieces = toroidal$transformer().split(box);
+        List<AABB> pieces = FoldedBoxQuery.pieces(toroidal$transformer(), box);
         if (pieces.size() == 1) {
-            original.call(entities, pieces.getFirst().value(), output);
+            original.call(entities, pieces.getFirst(), output);
             return;
         }
 
-        Set<Entity> seen = Collections.newSetFromMap(new IdentityHashMap<>());
-        for (Folded<AABB> piece : pieces) {
-            original.call(entities, piece.value(), (Consumer<Entity>) entity -> {
-                if (seen.add(entity)) {
-                    output.accept(entity);
-                }
-            });
+        Consumer<Entity> once = FoldedBoxQuery.deduplicating(output);
+        for (AABB piece : pieces) {
+            original.call(entities, piece, once);
         }
     }
 
@@ -134,28 +122,16 @@ public class LevelMixin implements TransformerCache {
                     target = "Lnet/minecraft/world/level/entity/LevelEntityGetter;get(Lnet/minecraft/world/level/entity/EntityTypeTest;Lnet/minecraft/world/phys/AABB;Lnet/minecraft/util/AbortableIterationConsumer;)V"))
     private <U extends Entity> void toroidal$typedEntitiesThroughSeam(LevelEntityGetter<Entity> entities,
             EntityTypeTest<Entity, U> type, AABB box, AbortableIterationConsumer<U> output, Operation<Void> original) {
-        if (!toroidal$crossesSeam(box)) {
-            original.call(entities, type, box, output);
-            return;
-        }
-
-        List<Folded<AABB>> pieces = toroidal$transformer().split(box);
+        List<AABB> pieces = FoldedBoxQuery.pieces(toroidal$transformer(), box);
         if (pieces.size() == 1) {
-            original.call(entities, type, pieces.getFirst().value(), output);
+            original.call(entities, type, pieces.getFirst(), output);
             return;
         }
 
-        Set<Entity> seen = Collections.newSetFromMap(new IdentityHashMap<>());
-        for (Folded<AABB> piece : pieces) {
-            original.call(entities, type, piece.value(), (AbortableIterationConsumer<U>) entity ->
-                    seen.add(entity) ? output.accept(entity) : AbortableIterationConsumer.Continuation.CONTINUE);
+        AbortableIterationConsumer<U> once = FoldedBoxQuery.deduplicating(output);
+        for (AABB piece : pieces) {
+            original.call(entities, type, piece, once);
         }
-    }
-
-    @Unique
-    private boolean toroidal$crossesSeam(AABB box) {
-        WorldFold transformer = toroidal$transformer();
-        return transformer.isWrapped() && transformer.crossesBounds(box);
     }
 
     @Unique
