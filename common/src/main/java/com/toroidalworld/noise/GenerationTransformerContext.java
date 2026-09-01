@@ -12,10 +12,13 @@ public final class GenerationTransformerContext {
     private static final double UNSCALED = 1.0;
     private static final double UNDIVIDED = 1.0;
 
+    public static final double UNDECLARED_VERTICAL_SHARE = -1.0;
+
     public static final class Context {
         private WorldFold transformer = WorldFolds.NOOP;
         private @Nullable WorldFold routerBuild;
         private double horizontalScale = UNSCALED;
+        private double verticalShare = UNDECLARED_VERTICAL_SHARE;
         private double xDivisor = UNDIVIDED;
         private double zDivisor = UNDIVIDED;
         private SlotAxes slotAxes = SlotAxes.DEFAULT;
@@ -39,6 +42,10 @@ public final class GenerationTransformerContext {
             return this.horizontalScale;
         }
 
+        public double verticalShare() {
+            return this.verticalShare;
+        }
+
         public double xDivisor() {
             return this.xDivisor;
         }
@@ -54,6 +61,13 @@ public final class GenerationTransformerContext {
         public ScaleScope withScale(double scale) {
             this.scaleScope.push();
             this.horizontalScale = scale;
+            return this.scaleScope;
+        }
+
+        public ScaleScope withScale(double scale, double verticalShare) {
+            this.scaleScope.push();
+            this.horizontalScale = scale;
+            this.verticalShare = verticalShare;
             return this.scaleScope;
         }
 
@@ -74,6 +88,7 @@ public final class GenerationTransformerContext {
             this.transformer = boundTransformer;
             this.slotAxes = boundAxes;
             this.horizontalScale = boundScale;
+            this.verticalShare = UNDECLARED_VERTICAL_SHARE;
             return this.bindingScope;
         }
 
@@ -81,6 +96,7 @@ public final class GenerationTransformerContext {
             private WorldFold[] previousTransformers = new WorldFold[8];
             private SlotAxes[] previousAxes = new SlotAxes[8];
             private double[] previousScales = new double[8];
+            private double[] previousShares = new double[8];
             private int depth;
 
             private BindingScope() {
@@ -91,11 +107,13 @@ public final class GenerationTransformerContext {
                     this.previousTransformers = Arrays.copyOf(this.previousTransformers, this.depth * 2);
                     this.previousAxes = Arrays.copyOf(this.previousAxes, this.depth * 2);
                     this.previousScales = Arrays.copyOf(this.previousScales, this.depth * 2);
+                    this.previousShares = Arrays.copyOf(this.previousShares, this.depth * 2);
                 }
 
                 this.previousTransformers[this.depth] = transformer;
                 this.previousAxes[this.depth] = slotAxes;
                 this.previousScales[this.depth] = horizontalScale;
+                this.previousShares[this.depth] = verticalShare;
                 this.depth++;
             }
 
@@ -105,11 +123,13 @@ public final class GenerationTransformerContext {
                 transformer = this.previousTransformers[this.depth];
                 slotAxes = this.previousAxes[this.depth];
                 horizontalScale = this.previousScales[this.depth];
+                verticalShare = this.previousShares[this.depth];
             }
         }
 
         public final class ScaleScope implements AutoCloseable {
             private double[] previousScales = new double[8];
+            private double[] previousShares = new double[8];
             private int depth;
 
             private ScaleScope() {
@@ -118,9 +138,11 @@ public final class GenerationTransformerContext {
             private void push() {
                 if (this.depth == this.previousScales.length) {
                     this.previousScales = Arrays.copyOf(this.previousScales, this.depth * 2);
+                    this.previousShares = Arrays.copyOf(this.previousShares, this.depth * 2);
                 }
 
-                this.previousScales[this.depth++] = horizontalScale;
+                this.previousScales[this.depth] = horizontalScale;
+                this.previousShares[this.depth++] = verticalShare;
             }
 
             public void rescale(double scale) {
@@ -134,6 +156,7 @@ public final class GenerationTransformerContext {
             @Override
             public void close() {
                 horizontalScale = this.previousScales[--this.depth];
+                verticalShare = this.previousShares[this.depth];
             }
         }
 
