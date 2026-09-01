@@ -12,7 +12,6 @@ public final class GenerationTransformerContext {
     private static final double UNSCALED = 1.0;
     private static final double UNDIVIDED = 1.0;
 
-    // No call site has declared its vertical-to-horizontal scale ratio — the octave variance correction stays off.
     public static final double UNDECLARED_VERTICAL_SHARE = -1.0;
 
     public static final class Context {
@@ -43,9 +42,6 @@ public final class GenerationTransformerContext {
             return this.horizontalScale;
         }
 
-        // The sampled field's vertical-to-horizontal scale ratio (0 = vertically flat, UNDECLARED_VERTICAL_SHARE =
-        // unknown, correction off). Set at the density-function call sites that know both scales; inner scopes (the
-        // detune layer, the octave walk) inherit it, so it describes the field, not the innermost scale push.
         public double verticalShare() {
             return this.verticalShare;
         }

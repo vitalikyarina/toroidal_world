@@ -56,18 +56,9 @@ public final class PeriodicNoiseSampler {
             ys = y + yOffset;
             zs = foldAndScale(zDomain, zPeriod, scale, z) + zOffset;
 
-            // The variance correction is a per-octave constant, so scaling the sample scales the whole field
-            // uniformly. verticalShare is the caller's vertical-to-horizontal scale ratio (negative = undeclared,
-            // correction off); the deeper the field really varies with Y, the less damping its floored octaves need
-            // (see the correction class), and most octaves fold to periods above the floored bound, where the factor
-            // is 1.
             double verticalShare = context.verticalShare();
             correction = OctaveVarianceCorrection.factor(xDomain, zDomain, xPeriod, zPeriod, scale, verticalShare);
 
-            // The DC restoration: a fixed-lattice-point sample of the same octave — constant across the whole world,
-            // Y included, so it shifts the field without adding any variance the damp calibration already accounts
-            // for. A constant cannot open the seam, and for the flat router fields it is what spreads toroidal worlds
-            // across vanilla's ocean-to-inland range instead of parking every one at the coast band.
             double anchorGain = OctaveVarianceCorrection.anchorGain(xDomain, zDomain, xPeriod, zPeriod, scale,
                     verticalShare);
             if (anchorGain > 0.0) {
@@ -129,13 +120,6 @@ public final class PeriodicNoiseSampler {
         return foldAndScale(domain, period, scale, coord);
     }
 
-    // An octave whose rounding falls under 2 is degenerate: at period 1 every cell index wraps to 0, all corners
-    // hash to the same gradient, and the octave collapses to a single smoothstep-warped plane spanning the world —
-    // a monotone ramp no amplitude correction can turn back into noise. Those octaves are floored to 4 cells per lap
-    // rather than the minimal 2: a 2-cell closed walk is an axis-aligned lattice whose 256-block wavelength (on a
-    // 512-block world) reads as square mountains in-game, while 4 cells halves the wavelength to 128 blocks and
-    // blurs the axis alignment. Octaves whose natural rounding reaches 2 already match vanilla's window and keep it;
-    // the amplitude the floored structure over-delivers is damped back by OctaveVarianceCorrection.
     static long period(WrapDomain domain, double scale) {
         if (domain instanceof WrapDomain.Noop) {
             return UNBOUNDED_PERIOD;
