@@ -205,7 +205,7 @@ class NetherColumnProbeTest {
 
     private Relief measureRelief(RandomState randomState, WorldFold fold, int originX, int originZ,
             double stepX, double stepZ, ColumnSampler sampler) {
-        int minY = heightAccessor.getMinY();
+        int minY = heightAccessor.getMinBuildHeight();
         int height = heightAccessor.getHeight();
         int[][] floors = new int[GRID][GRID];
         int[][] ceilings = new int[GRID][GRID];
@@ -265,7 +265,7 @@ class NetherColumnProbeTest {
 
     private boolean[] chainColumn(RandomState randomState, int blockX, int blockZ) {
         NoiseColumn column = generator.getBaseColumn(blockX, blockZ, heightAccessor, randomState);
-        int minY = heightAccessor.getMinY();
+        int minY = heightAccessor.getMinBuildHeight();
         boolean[] solid = new boolean[heightAccessor.getHeight()];
         for (int i = 0; i < solid.length; i++) {
             solid[i] = column.getBlock(minY + i) == defaultBlock;
@@ -276,7 +276,7 @@ class NetherColumnProbeTest {
 
     private boolean[] densityColumn(RandomState randomState, int blockX, int blockZ) {
         DensityFunction density = randomState.router().finalDensity();
-        int minY = heightAccessor.getMinY();
+        int minY = heightAccessor.getMinBuildHeight();
         boolean[] solid = new boolean[heightAccessor.getHeight()];
         for (int i = 0; i < solid.length; i++) {
             solid[i] = density.compute(new DensityFunction.SinglePointContext(blockX, minY + i, blockZ)) > 0.0;
