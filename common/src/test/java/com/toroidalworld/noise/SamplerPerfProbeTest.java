@@ -72,8 +72,6 @@ class SamplerPerfProbeTest {
         double sample(double x, double z);
     }
 
-    // The scope is opened around the whole timed loop, not per sample: the probe prices the sampler, not the
-    // context push.
     private String measure(String label, double scale, double verticalShare) {
         GenerationTransformerContext.Context context = GenerationTransformerContext.context();
 
