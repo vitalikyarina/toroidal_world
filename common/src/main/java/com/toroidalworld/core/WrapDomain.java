@@ -182,6 +182,14 @@ public class WrapDomain {
         return (halfWorld + step - 1) / step;
     }
 
+    public boolean spansSeam(double fromCoord, double toCoord) {
+        if (isForeign(fromCoord) || isForeign(toCoord)) {
+            return false;
+        }
+
+        return !fitsInHalf(Math.abs(toCoord - fromCoord));
+    }
+
     public boolean spansSeam(int fromCoord, int toCoord) {
         if (isForeign(fromCoord) || isForeign(toCoord)) {
             return false;

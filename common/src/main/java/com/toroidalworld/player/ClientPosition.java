@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import com.toroidalworld.core.LogRateGate;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
+import com.toroidalworld.core.WrapDomain;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.BlockPos;
@@ -56,14 +56,14 @@ public final class ClientPosition {
     public void setX(double x, MirrorWriter writer) {
         Mirror currMirror = this.mirror;
         double seatedX = clientCopy(writer, Direction.Axis.X, currMirror, x);
-        checkStep(writer, Direction.Axis.X, currMirror.transformer().bounds().x(), currMirror.x(), seatedX, currMirror.space());
+        checkStep(writer, Direction.Axis.X, currMirror, seatedX);
         this.mirror = new Mirror(seatedX, currMirror.z(), currMirror.space(), currMirror.transformer());
     }
 
     public void setZ(double z, MirrorWriter writer) {
         Mirror currMirror = this.mirror;
         double seatedZ = clientCopy(writer, Direction.Axis.Z, currMirror, z);
-        checkStep(writer, Direction.Axis.Z, currMirror.transformer().bounds().z(), currMirror.z(), seatedZ, currMirror.space());
+        checkStep(writer, Direction.Axis.Z, currMirror, seatedZ);
         this.mirror = new Mirror(currMirror.x(), seatedZ, currMirror.space(), currMirror.transformer());
     }
 
@@ -71,8 +71,8 @@ public final class ClientPosition {
         Mirror currMirror = this.mirror;
         double seatedX = clientCopy(writer, Direction.Axis.X, currMirror, x);
         double seatedZ = clientCopy(writer, Direction.Axis.Z, currMirror, z);
-        checkStep(writer, Direction.Axis.X, currMirror.transformer().bounds().x(), currMirror.x(), seatedX, currMirror.space());
-        checkStep(writer, Direction.Axis.Z, currMirror.transformer().bounds().z(), currMirror.z(), seatedZ, currMirror.space());
+        checkStep(writer, Direction.Axis.X, currMirror, seatedX);
+        checkStep(writer, Direction.Axis.Z, currMirror, seatedZ);
         this.mirror = new Mirror(seatedX, seatedZ, currMirror.space(), currMirror.transformer());
     }
 
@@ -127,14 +127,15 @@ public final class ClientPosition {
         return currMirror.transformer().blockDomain(axis).unwrapAround(current, reported);
     }
 
-    private void checkStep(MirrorWriter writer, Direction.Axis axis, AxisBounds bounds, double from, double to,
-            @Nullable ResourceKey<Level> space) {
-        if (bounds.fitsInHalf(Math.abs(to - from)) || !warnGate.tryPass()) {
+    private void checkStep(MirrorWriter writer, Direction.Axis axis, Mirror currMirror, double to) {
+        WrapDomain domain = currMirror.transformer().blockDomain(axis);
+        double from = axis == Direction.Axis.X ? currMirror.x() : currMirror.z();
+        if (!domain.spansSeam(from, to) || !warnGate.tryPass()) {
             return;
         }
 
         LOGGER.warn("Half-world step invariant violated in {} by {}: mirror {} stepped from {} to {} without a rebase",
-                spaceName(space), writer.key(), axis.getName(), from, to);
+                spaceName(currMirror.space()), writer.key(), axis.getName(), from, to);
     }
 
     private static Object spaceName(@Nullable ResourceKey<Level> space) {

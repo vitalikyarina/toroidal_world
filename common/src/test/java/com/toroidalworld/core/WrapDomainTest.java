@@ -177,6 +177,7 @@ class WrapDomainTest {
         void nothingSpansTheSeamHoweverLongTheStretch() {
             assertFalse(noop.spansSeam(-30_000_000, 30_000_000));
             assertFalse(noop.spansSeam(0, Integer.MAX_VALUE));
+            assertFalse(noop.spansSeam(-30_000_000.5, 30_000_000.5));
         }
 
         @Test
@@ -288,6 +289,18 @@ class WrapDomainTest {
         }
 
         @Test
+        void aStepSpansTheSeamOnlyBeyondHalfAndNeverWithAForeignEnd() {
+            assertFalse(bare.spansSeam(0.0, 32.0));
+            assertTrue(bare.spansSeam(0.0, 32.5));
+            assertTrue(bare.spansSeam(20.5, PLOT + 0.5));
+
+            assertFalse(domain.spansSeam(20.5, PLOT + 0.5));
+            assertFalse(domain.spansSeam(PLOT + 0.5, 20.5));
+            assertFalse(domain.spansSeam(PLOT + 0.5, PLOT + 3.5));
+            assertFalse(domain.spansSeam(20.5, 30.5));
+        }
+
+        @Test
         void everythingOutsideTheSpanFoldsAsBefore() {
             Random random = new Random(SEED);
             for (int i = 0; i < SAMPLES; i++) {
@@ -299,6 +312,7 @@ class WrapDomainTest {
                 assertEquals(bare.isOver(coord), domain.isOver(coord));
                 assertEquals(bare.overshoot(coord), domain.overshoot(coord));
                 assertEquals(bare.spansSeam(ref, coord), domain.spansSeam(ref, coord));
+                assertEquals(bare.spansSeam(ref + 0.25, coord + 0.75), domain.spansSeam(ref + 0.25, coord + 0.75));
             }
 
             assertEquals(bare.wrap(-PLOT), domain.wrap(-PLOT));

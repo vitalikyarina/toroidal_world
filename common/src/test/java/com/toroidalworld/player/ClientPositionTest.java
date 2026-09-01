@@ -16,6 +16,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.toroidalworld.core.ForeignFrame;
+import com.toroidalworld.core.ForeignSpan;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.WorldLoopBounds;
@@ -27,8 +29,16 @@ import net.minecraft.world.level.Level;
 class ClientPositionTest {
     private static final int WIDTH_CHUNKS = 32;
     private static final double WIDTH_BLOCKS = 512.0;
-    private static final WorldFold TORUS = WorldFolds.of(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(WIDTH_CHUNKS), 0));
+    private static final FlatShape TORUS_SHAPE = FlatShape.latticeTorus(WorldLoopBounds.ofWidth(WIDTH_CHUNKS), 0);
+    private static final WorldFold TORUS = WorldFolds.of(TORUS_SHAPE);
     private static final WorldFold CYLINDER_X = WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, WIDTH_CHUNKS)));
+    private static final int PLOT_MIN_CHUNK = 1_280_000;
+    private static final int PLOT_MAX_CHUNK = 1_296_384;
+    private static final ForeignSpan PLOT_CHUNKS = new ForeignSpan(PLOT_MIN_CHUNK, PLOT_MAX_CHUNK);
+    private static final WorldFold FRAMED =
+            WorldFolds.of(TORUS_SHAPE, List.of(new ForeignFrame(PLOT_CHUNKS, PLOT_CHUNKS)));
+    private static final double PLOT_X = 20_481_032.0;
+    private static final double PLOT_Z = 20_481_032.0;
     private static final double MIRROR_X = 100.5;
     private static final double MIRROR_Z = -20.25;
     private static final String HALF_WORLD_WARNING = "Half-world step invariant violated";
@@ -108,6 +118,40 @@ class ClientPositionTest {
         assertTrue(warning.startsWith(HALF_WORLD_WARNING), warning);
         assertTrue(warning.contains("by position_packet"), warning);
         assertTrue(warning.contains("mirror x stepped from 100.5 to 612.5"), warning);
+    }
+
+    @Test
+    void aServerAuthoredStepIntoAForeignFrameLandsRawAndDoesNotWarn() {
+        ClientPosition mirror = seeded(FRAMED);
+
+        mirror.set(PLOT_X, PLOT_Z, MirrorWriter.POSITION_PACKET);
+
+        assertEquals(PLOT_X, mirror.x());
+        assertEquals(PLOT_Z, mirror.z());
+        assertEquals(List.of(), warnings);
+    }
+
+    @Test
+    void aServerAuthoredStepOutOfAForeignFrameLandsRawAndDoesNotWarn() {
+        ClientPosition mirror = new ClientPosition();
+        mirror.rebase(PLOT_X, PLOT_Z, Level.OVERWORLD, FRAMED);
+
+        mirror.set(MIRROR_X, MIRROR_Z, MirrorWriter.POSITION_PACKET);
+
+        assertEquals(MIRROR_X, mirror.x());
+        assertEquals(MIRROR_Z, mirror.z());
+        assertEquals(List.of(), warnings);
+    }
+
+    @Test
+    void aFrameLeavesTheInvariantStandingInsideTheWorld() {
+        ClientPosition mirror = seeded(FRAMED);
+
+        mirror.set(MIRROR_X + WIDTH_BLOCKS, MIRROR_Z, MirrorWriter.POSITION_PACKET);
+
+        assertEquals(MIRROR_X + WIDTH_BLOCKS, mirror.x());
+        assertEquals(1, warnings.size(), warnings.toString());
+        assertTrue(warnings.get(0).contains("mirror x stepped from 100.5 to 612.5"), warnings.get(0));
     }
 
     @Test
