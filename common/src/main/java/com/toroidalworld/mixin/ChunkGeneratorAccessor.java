@@ -17,8 +17,6 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 
-// The probe of one candidate cell — presence check first, then the start itself — is vanilla's own and stays
-// vanilla's; the folded ring scan only needs to call it per cell it names, and vanilla keeps it private.
 @Mixin(ChunkGenerator.class)
 public interface ChunkGeneratorAccessor {
     @Invoker("getStructureGeneratingAt")

@@ -10,15 +10,8 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Vex;
+import net.minecraft.world.phys.Vec3;
 
-// A vex chasing something turns its body to face it directly, from a raw difference, while the flight itself is steered
-// through the move control and already folded. Across the seam the two disagree: the vex flies at its target with its
-// back to it.
-//
-// Wrapped where the yaw is written rather than where the difference is taken: the goal reaches its vex through the
-// enclosing instance, so the coordinate reads inside it name no object this can hold. The write does — vanilla's own
-// receiver is the vex — and the angle is small enough to state again here. The other call this method makes, for a vex
-// with no target, faces its own movement and has nothing to fold.
 @Mixin(targets = "net.minecraft.world.entity.monster.Vex$VexMoveControl")
 public class VexYawMixin {
     @WrapOperation(
@@ -31,8 +24,9 @@ public class VexYawMixin {
             return;
         }
 
-        double deltaX = SeamAim.foldX(vex, target.getX() - vex.getX());
-        double deltaZ = SeamAim.foldZ(vex, target.getZ() - vex.getZ());
+        Vec3 delta = SeamAim.deltaTo(vex, target.position());
+        double deltaX = delta.x;
+        double deltaZ = delta.z;
         original.call(vex, -((float) Mth.atan2(deltaX, deltaZ)) * (180.0F / (float) Math.PI));
     }
 }

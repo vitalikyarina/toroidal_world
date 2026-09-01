@@ -1,12 +1,14 @@
 package com.toroidalworld.client.shape.mixin;
 
-import com.toroidalworld.client.shape.WorldShape;
-import com.toroidalworld.client.shape.WorldShapes;
+import com.toroidalworld.client.shape.ShapeCustomizers;
+import com.toroidalworld.shape.WorldShape;
+import com.toroidalworld.shape.WorldShapes;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.layouts.GridLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -34,9 +36,6 @@ public class WorldTabMixin {
     @Unique
     private Button toroidal$customizeShapeButton;
 
-    // The shape row mirrors the World Type row right above it — a cycle button and its Customize button — because the
-    // two choices are siblings: one picks how the terrain is generated, the other what shape the world has. Injecting
-    // in front of the seed field is what places it there.
     @Inject(
             method = "<init>",
             at = @At(
@@ -46,6 +45,7 @@ public class WorldTabMixin {
     private void toroidal$addWorldShapeRow(CallbackInfo ci, @Local GridLayout.RowHelper helper) {
         helper.addChild(CycleButton.builder(WorldShape::label, WorldShapes.selected())
                 .withValues(WorldShapes.shapes())
+                .withTooltip(shape -> Tooltip.create(shape.hint()))
                 .create(0, 0, toroidal$SHAPE_BUTTON_WIDTH, toroidal$SHAPE_BUTTON_HEIGHT, toroidal$SHAPE_LABEL,
                         (button, shape) -> {
                             WorldShapes.select(shape);
@@ -57,15 +57,14 @@ public class WorldTabMixin {
         toroidal$refreshCustomizeButton();
     }
 
-    // A shape without a customizer leaves the button inactive, exactly as a world type without a preset editor does.
     @Unique
     private void toroidal$refreshCustomizeButton() {
-        this.toroidal$customizeShapeButton.active = WorldShapes.selected().customizer() != null;
+        this.toroidal$customizeShapeButton.active = ShapeCustomizers.of(WorldShapes.selected()) != null;
     }
 
     @Unique
     private static void toroidal$openCustomizer() {
-        WorldShape.Customizer customizer = WorldShapes.selected().customizer();
+        ShapeCustomizers.Customizer customizer = ShapeCustomizers.of(WorldShapes.selected());
         if (customizer == null) {
             return;
         }

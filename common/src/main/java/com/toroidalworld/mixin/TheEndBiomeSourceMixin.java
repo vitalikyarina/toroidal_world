@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -12,17 +12,12 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.TheEndBiomeSource;
 import net.minecraft.world.level.levelgen.DensityFunction;
 
-// The biome split repeats the density function's raw-coordinate reasoning once more: a radial main-island test on the
-// column's chunk coordinates, then erosion — which in the End router is the same end_islands function the density
-// mixin already folds. Only the radial test needs its own fold: a caller sampling past the bounds (structure
-// placement scans near the seam) would otherwise measure the distance to the origin through coordinates a world
-// apart. The chunk coordinates are folded once and everything downstream reads them folded, so the erosion sample
-// also lands inside the world.
 @Mixin(TheEndBiomeSource.class)
 public class TheEndBiomeSourceMixin {
     @Shadow
@@ -45,18 +40,20 @@ public class TheEndBiomeSourceMixin {
     @Final
     private Holder<Biome> barrens;
 
-    // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.
     @WrapMethod(method = "getNoiseBiome(IIILnet/minecraft/world/level/biome/Climate$Sampler;)Lnet/minecraft/core/Holder;")
     private Holder<Biome> toroidal$loopedNoiseBiome(int quartX, int quartY, int quartZ, Climate.Sampler sampler,
             Operation<Holder<Biome>> original) {
-        WorldLoopTransformer transformer = GenerationTransformerContext.context().wrappedTransformer();
+        WorldFold transformer = GenerationTransformerContext.context().wrappedTransformer();
         if (transformer == null) {
             return original.call(quartX, quartY, quartZ, sampler);
         }
 
         int blockY = QuartPos.toBlock(quartY);
-        int chunkX = transformer.chunks.x.wrap(SectionPos.blockToSectionCoord(QuartPos.toBlock(quartX)));
-        int chunkZ = transformer.chunks.z.wrap(SectionPos.blockToSectionCoord(QuartPos.toBlock(quartZ)));
+        long chunk = transformer.foldChunkKey(ChunkPos.pack(
+                SectionPos.blockToSectionCoord(QuartPos.toBlock(quartX)),
+                SectionPos.blockToSectionCoord(QuartPos.toBlock(quartZ))));
+        int chunkX = ChunkPos.getX(chunk);
+        int chunkZ = ChunkPos.getZ(chunk);
         if ((long) chunkX * chunkX + (long) chunkZ * chunkZ <= 4096L) {
             return this.end;
         }

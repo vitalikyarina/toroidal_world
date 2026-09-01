@@ -13,16 +13,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
-// The bridge the Xaero's Minimap mixins talk to. Xaero reads the client level and the raw player position, which
-// near the seam run whole world widths from the server's truth, and it has no public API to hook — so its render
-// and distance reads are taken to the copy nearest the camera (a waypoint across the seam draws beside the player
-// and measures the short way), and the spawn its multiplayer waypoint-store identity is derived from is folded to
-// the canonical copy (the anchor sync legitimately re-sends the spawn as the copy nearest the player, so every lap
-// would shift the id by a world width and open a fresh waypoint "world"). On an unwrapped level the shape is
-// absent and every operation is the identity, byte-for-byte.
-//
-// The shape is re-resolved per call rather than cached: the synced bounds can arrive or change after the level
-// exists, and a cached adapter would keep answering with the transformer it was built on.
 public final class XaeroFold {
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -43,9 +33,6 @@ public final class XaeroFold {
         return folded.getX() == spawn.getX() && folded.getZ() == spawn.getZ() ? spawn : folded;
     }
 
-    // The camera entity rather than the player: the element handlers measure everything against the render
-    // position, which follows whatever entity the camera rides (spectating included). Null only between levels,
-    // where nothing renders from these reads anyway — identity keeps the call harmless.
     private static double cameraCoord(Direction.Axis axis) {
         Entity camera = Minecraft.getInstance().getCameraEntity();
         if (camera == null) {
@@ -56,8 +43,6 @@ public final class XaeroFold {
         return axis == Direction.Axis.X ? position.x : position.z;
     }
 
-    // An element render coordinate (already in map space) taken to the copy nearest the camera — the shared choke
-    // point all three element-render handlers subtract the render position from.
     public static double nearestElementCoord(Direction.Axis axis, double coord) {
         ToroidalShape shape = shape();
         if (shape == null) {
@@ -72,8 +57,6 @@ public final class XaeroFold {
         return shape.nearestCoord(axis, ref, coord);
     }
 
-    // A waypoint block coordinate taken to the copy nearest the camera. The offset between copies is a whole
-    // number of world widths, so the rounding only strips float error, never moves the block.
     public static int nearestWaypointBlock(Direction.Axis axis, int coord) {
         ToroidalShape shape = shape();
         if (shape == null) {
@@ -88,11 +71,6 @@ public final class XaeroFold {
         return (int) Math.round(shape.nearestCoord(axis, ref, coord));
     }
 
-    // The player position handed to the coordinate readouts under the minimap (coords / overworld coords / chunk
-    // coords lines), folded canonical. Only those three displays: the others on the same pipeline (biome, light)
-    // query the client level at this position, and the client's loaded chunks sit at the mirror coordinates — a
-    // folded position would read unloaded ground. The displays are told apart by identity against the three
-    // BuiltInInfoDisplays constants, resolved reflectively once — there is no compile dependency on Xaero.
     public static BlockPos foldInfoDisplayPos(Object infoDisplay, BlockPos playerPos) {
         ToroidalShape shape = shape();
         if (shape == null || playerPos == null) {

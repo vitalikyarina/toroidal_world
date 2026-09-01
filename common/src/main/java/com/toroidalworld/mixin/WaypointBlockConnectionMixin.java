@@ -16,14 +16,13 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.waypoints.WaypointTransmitter;
 
-// The update gate widened for the block-grained connection — WaypointLapGate holds the mechanism and the projection
-// memory. Created on first use because a mixin's @Unique field initializers never run.
 @Mixin(WaypointTransmitter.EntityBlockConnection.class)
 public class WaypointBlockConnectionMixin {
     @Shadow
     @Final
     private ServerPlayer receiver;
 
+    // Created on first use: a mixin's @Unique field initialisers never run.
     @Unique
     private @Nullable WaypointLapGate toroidal$lapGate;
 

@@ -10,26 +10,28 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.mojang.blaze3d.platform.Window;
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
+import com.toroidalworld.compat.journeymap.JourneyMapSeamPass;
 
+import journeymap.api.v2.client.util.UIState;
+import journeymap.api.v2.common.Context;
+import journeymap.client.render.JmRenderRouter;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.state.gui.ColoredRectangleRenderState;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
+import org.joml.Matrix3x2f;
+import org.joml.Matrix3x2fStack;
 
-// Keeps the map view consistent with the canonical region files RegionCoordMixin produces. The center a map is
-// drawn around comes in as the camera's mirror coordinate — folded here, so the tile grid, the center region and
-// the pixel math all live in canonical space. Draw steps (entities, waypoints) hand getBlockPixelInGrid whatever
-// space their source used, so those inputs are taken to the copy nearest the folded center.
-//
-// Two callers deliberately escape the pixel fold. The BlockPos overload serves the renderer's own canvas anchor —
-// centerBlock minus half a region, a point that legitimately sits half a world away, which the fold would flip to
-// the far side on any fractional center and shove the whole canvas a world off screen ("the map disappears").
-// getBlockPixelInGridExact is not folded at all: its callers are the CORNERS of API overlay spans (image/polygon),
-// and folding a span's corners point-by-point tears the span the same way.
 @Mixin(targets = "journeymap.client.render.map.MapRenderer", remap = false)
-public abstract class MapRendererMixin {
+public abstract class MapRendererMixin implements JourneyMapSeamPass {
     @Shadow(remap = false)
     protected double centerBlockX;
 
@@ -37,7 +39,19 @@ public abstract class MapRendererMixin {
     protected double centerBlockZ;
 
     @Shadow(remap = false)
+    protected int zoom;
+
+    @Shadow(remap = false)
     public abstract void clear();
+
+    @Shadow(remap = false)
+    public abstract UIState getUIState();
+
+    @Shadow(remap = false)
+    public abstract Point2D.Double getBlockPixelInGrid(BlockPos pos);
+
+    @Unique
+    private static final int SEAM_ARGB = 0x59FFFFFF;
 
     // Render-thread only, like every caller of these methods.
     @Unique
@@ -46,13 +60,7 @@ public abstract class MapRendererMixin {
     @Unique
     private ResourceKey<Level> toroidal$lastLevelDimension;
 
-    // JourneyMap never evicts tiles on a dimension change — only an explicit clear() removes them — so a tile from
-    // the previous dimension keeps rendering at the same region cell as the new dimension's tile, and one such
-    // render with the new state poisons the region-image cache with a cross-dimension holder that
-    // loadInMemoryRegions (which has no dimension filter) then re-seeds into every freshly cleared grid. Dropping
-    // the grid at this funnel — the one place both UIs pass the new dimension through before any render — kills
-    // the stale tiles before they can draw, which also starves the poisoning path. A latent JourneyMap defect;
-    // our death-respawn bounds sync made it visible and persistent.
+    // JourneyMap never evicts tiles on a dimension change, and one render with the new state poisons the region-image cache.
     @Inject(method = "center(Ljava/io/File;Ljourneymap/client/model/map/MapType;DDI)Z", at = @At("HEAD"))
     private void toroidal$dropTilesOnDimensionChange(CallbackInfoReturnable<Boolean> cir) {
         ClientLevel level = Minecraft.getInstance().level;
@@ -110,13 +118,46 @@ public abstract class MapRendererMixin {
                 : JourneyMapFold.nearestPixelCoord(Direction.Axis.Z, this.centerBlockZ, blockZ);
     }
 
-    // The tile ring must never shrink below the whole canonical world: the glued copies render from these tiles,
-    // so a far-side region leaving the ring takes its copies with it.
     @Inject(method = "getCalculatedGridSize(I)I", at = @At("RETURN"), cancellable = true)
     private void toroidal$floorGridSizeToWorld(int zoom, CallbackInfoReturnable<Integer> cir) {
         int floor = JourneyMapFold.minGridSize();
         if (floor > cir.getReturnValue()) {
             cir.setReturnValue(floor);
         }
+    }
+
+    @ModifyVariable(method = "setZoom(D)Z", at = @At("HEAD"), argsOnly = true)
+    private double toroidal$floorFullscreenZoom(double zoom) {
+        return Context.UI.Fullscreen.equals(this.getUIState().ui) ? Math.max(zoom, JourneyMapFold.zoomFloor()) : zoom;
+    }
+
+    @Override
+    public void toroidal$drawSeams(GuiGraphicsExtractor graphics, Matrix3x2fStack pose, double offsetX, double offsetZ) {
+        if (!Context.UI.Fullscreen.equals(this.getUIState().ui) || JourneyMapFold.loopedAxes() == 0) {
+            return;
+        }
+
+        Window window = Minecraft.getInstance().getWindow();
+        int[] spanX = JourneyMapFold.viewSpan(this.centerBlockX, window.getWidth(), this.zoom);
+        int[] spanZ = JourneyMapFold.viewSpan(this.centerBlockZ, window.getHeight(), this.zoom);
+        int[] seamsX = JourneyMapFold.copies(Direction.Axis.X).seams(spanX[0], spanX[1]);
+        int[] seamsZ = JourneyMapFold.copies(Direction.Axis.Z).seams(spanZ[0], spanZ[1]);
+
+        Matrix3x2f poseSnapshot = new Matrix3x2f(pose);
+        for (int seam : seamsX) {
+            int pixelX = (int) (this.getBlockPixelInGrid(new BlockPos(seam, 0, 0)).x + offsetX);
+            toroidal$fillSeam(graphics, poseSnapshot, pixelX, 0, pixelX + 1, window.getHeight());
+        }
+
+        for (int seam : seamsZ) {
+            int pixelZ = (int) (this.getBlockPixelInGrid(new BlockPos(0, 0, seam)).y + offsetZ);
+            toroidal$fillSeam(graphics, poseSnapshot, 0, pixelZ, window.getWidth(), pixelZ + 1);
+        }
+    }
+
+    @Unique
+    private static void toroidal$fillSeam(GuiGraphicsExtractor graphics, Matrix3x2f pose, int x0, int y0, int x1, int y1) {
+        JmRenderRouter.addGuiElement(graphics, new ColoredRectangleRenderState(
+                RenderPipelines.GUI, TextureSetup.noTexture(), pose, x0, y0, x1, y1, SEAM_ARGB, SEAM_ARGB, null));
     }
 }

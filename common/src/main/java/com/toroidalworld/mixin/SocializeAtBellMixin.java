@@ -13,10 +13,6 @@ import net.minecraft.core.Position;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.behavior.SocializeAtBell;
 
-// Villagers only strike up a conversation while gathered at the bell, within four blocks of the meeting point. The
-// meeting point is remembered where it stands and the villager is wrapped, so a village straddling the seam has the
-// half on the far side judged to be elsewhere: they never take each other as an interaction target, never turn to face
-// one another, and the gossip that travels along those meetings stops at the boundary.
 @Mixin(SocializeAtBell.class)
 public class SocializeAtBellMixin {
     @WrapOperation(

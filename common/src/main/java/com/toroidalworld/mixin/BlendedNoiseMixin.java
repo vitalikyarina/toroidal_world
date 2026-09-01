@@ -49,11 +49,6 @@ public class BlendedNoiseMixin {
     @Final
     private double smearScaleMultiplier;
 
-    // Same vanilla algorithm, except the horizontal coordinates reach ImprovedNoise raw: it maps them onto the world
-    // circle itself, so the octave scaling and PerlinNoise.wrap folding vanilla applies would tear the seam open. The
-    // horizontal scale of each octave travels through the context instead, where it sizes that circle.
-    //
-    // Vanilla-body re-implementation — verified against 26.2; re-diff on a platform bump.
     @SuppressWarnings("deprecation")
     @WrapMethod(method = "compute(Lnet/minecraft/world/level/levelgen/DensityFunction$FunctionContext;)D")
     private double toroidal$periodicCompute(DensityFunction.FunctionContext context, Operation<Double> original) {

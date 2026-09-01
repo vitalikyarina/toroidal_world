@@ -62,13 +62,31 @@ public interface ToroidalShape {
      */
     int widthBlocks(Direction.Axis axis);
 
-    /** One block-unit coordinate folded into the world. Identity on a non-looping axis. */
+    /**
+     * One block-unit coordinate folded into the world. Identity on a non-looping axis.
+     *
+     * @throws IllegalStateException if this shape does not {@linkplain #decomposesPerAxis() decompose per axis}
+     *         — where the axes are coupled one of them cannot be folded without the other, and the
+     *         whole-position folds are the only correct route
+     */
     double foldCoord(Direction.Axis axis, double coord);
 
-    /** One block-unit coordinate folded into the world. Identity on a non-looping axis. */
+    /**
+     * One block-unit coordinate folded into the world. Identity on a non-looping axis.
+     *
+     * @throws IllegalStateException if this shape does not {@linkplain #decomposesPerAxis() decompose per axis}
+     *         — where the axes are coupled one of them cannot be folded without the other, and the
+     *         whole-position folds are the only correct route
+     */
     int foldBlock(Direction.Axis axis, int coord);
 
-    /** One chunk-unit coordinate folded into the world. Identity on a non-looping axis. */
+    /**
+     * One chunk-unit coordinate folded into the world. Identity on a non-looping axis.
+     *
+     * @throws IllegalStateException if this shape does not {@linkplain #decomposesPerAxis() decompose per axis}
+     *         — where the axes are coupled one of them cannot be folded without the other, and the
+     *         whole-position folds are the only correct route
+     */
     int foldChunk(Direction.Axis axis, int chunk);
 
     /** The position folded into the world on both horizontal axes; Y and in-bounds positions pass through as-is. */
@@ -87,7 +105,13 @@ public interface ToroidalShape {
      */
     Vec3 nearestCopy(Vec3 ref, Vec3 target);
 
-    /** {@link #nearestCopy(Vec3, Vec3)} for one block-unit coordinate. Identity on a non-looping axis. */
+    /**
+     * {@link #nearestCopy(Vec3, Vec3)} for one block-unit coordinate. Identity on a non-looping axis.
+     *
+     * @throws IllegalStateException if this shape does not {@linkplain #decomposesPerAxis() decompose per axis}
+     *         — where the axes are coupled one of them cannot be folded without the other, and the
+     *         whole-position folds are the only correct route
+     */
     double nearestCoord(Direction.Axis axis, double ref, double coord);
 
     /** {@link #nearestCopy(Vec3, Vec3)} on the block grid. */
@@ -99,4 +123,71 @@ public interface ToroidalShape {
      * {@code nearestCopy(from, to).subtract(from)}.
      */
     Vec3 shortestDelta(Vec3 from, Vec3 to);
+
+    /**
+     * Whether this shape's horizontal axes fold independently of one another. {@code false} where crossing a seam
+     * on one axis moves or flips the other, and there the per-axis members throw: only the whole-position folds
+     * answer correctly.
+     */
+    boolean decomposesPerAxis();
+
+    /**
+     * Whether a fold leaves a position's index inside its own chunk alone. {@code false} on a shape whose seam
+     * mirrors, where crossing it reverses the local indices, so anything keyed by the low bits of a coordinate —
+     * block state arrays, heightmaps, post-processing shorts — must be rebuilt rather than carried across.
+     */
+    boolean preservesLocalIndices();
+
+    /**
+     * How a fold turned the space around the position it folded: which horizontal axes it reversed. Always
+     * {@link Orientation#IDENTITY} on a shape that {@link ToroidalShape#preservesLocalIndices() preserves local indices};
+     * {@link Direction.Axis#Y} is never reversed.
+     */
+    record Orientation(boolean flipsX, boolean flipsZ) {
+        /** The fold reversed nothing — the only orientation an unmirrored shape ever reports. */
+        public static final Orientation IDENTITY = new Orientation(false, false);
+
+        public boolean isIdentity() {
+            return !this.flipsX && !this.flipsZ;
+        }
+
+        /** Whether the fold kept handedness: a reversal on both axes is a half turn, not a mirror. */
+        public boolean preservesHandedness() {
+            return this.flipsX == this.flipsZ;
+        }
+
+        /**
+         * A direction, velocity or offset carried across the same fold. Apply this to any vector that travelled
+         * with the folded position, or it will point the wrong way on the far side of a mirrored seam.
+         */
+        public Vec3 applyToDelta(Vec3 delta) {
+            if (isIdentity()) {
+                return delta;
+            }
+
+            return new Vec3(this.flipsX ? -delta.x : delta.x, delta.y, this.flipsZ ? -delta.z : delta.z);
+        }
+    }
+
+    /** A folded value together with the {@link Orientation} the fold applied to reach it. */
+    record Oriented<T>(T value, Orientation orientation) {
+        public boolean isIdentity() {
+            return this.orientation.isIdentity();
+        }
+    }
+
+    /** {@link #fold(BlockPos)}, reporting the orientation the fold applied. */
+    Oriented<BlockPos> foldOriented(BlockPos pos);
+
+    /** {@link #fold(Vec3)}, reporting the orientation the fold applied. */
+    Oriented<Vec3> foldOriented(Vec3 pos);
+
+    /** {@link #fold(ChunkPos)}, reporting the orientation the fold applied. */
+    Oriented<ChunkPos> foldOriented(ChunkPos pos);
+
+    /** {@link #nearestCopy(Vec3, Vec3)}, reporting the orientation of the copy it chose. */
+    Oriented<Vec3> nearestCopyOriented(Vec3 ref, Vec3 target);
+
+    /** {@link #nearestCopy(BlockPos, BlockPos)}, reporting the orientation of the copy it chose. */
+    Oriented<BlockPos> nearestCopyOriented(BlockPos ref, BlockPos target);
 }

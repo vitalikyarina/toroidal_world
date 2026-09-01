@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -24,26 +24,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.raid.Raid;
 import net.minecraft.world.phys.Vec3;
 
-// The raid's own housekeeping measures raw distances too. A raider that chases a villager across the seam reads a
-// world away from the centre and is silently dropped from the raid — the wave "dies" while its raiders fight on; and
-// a centre that lost its village status searches for replacement village ground in raw section coordinates, blind to
-// the half of the village lying across the seam, and declares the raid lost with the village still standing.
 @Mixin(Raid.class)
 public class RaidMixin {
     @Shadow
     private BlockPos center;
 
-    // The horn is the one raid sound the raid aims itself instead of handing to PlayerList.broadcast, so the seam-aware
-    // distance that covers every other sound never touches it. Both of its readings are taken in raw coordinates: the
-    // 64-block gate that decides who hears it at all, and the 13 blocks the horn is pinned to from the listener along the
-    // direction to the raid. Across the seam that direction points the long way round and that distance is a whole world,
-    // so a player twenty blocks from the raid is told nothing — unless the raid bossbar already holds them, and then the
-    // horn blows from behind them.
-    //
-    // Both readings are built from this one point, so folding the raid to the copy nearest the listener is the whole fix:
-    // the gate then measures the walk that exists, and the horn is pinned toward the raid where it really stands.
-    // Vanilla's 13 and 64 blocks are untouched, and a horn placed beyond the bounds is what the packet translation is
-    // for — it lays the position back into the listener's own space.
     @ModifyExpressionValue(
             method = "playSound",
             at = @At(
@@ -51,12 +36,12 @@ public class RaidMixin {
                     target = "Lnet/minecraft/world/phys/Vec3;atCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$raidHornThroughSeam(Vec3 raidLoc, @Local(argsOnly = true) ServerLevel level,
             @Local ServerPlayer listener) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return raidLoc;
         }
 
-        return transformer.vectors.nearestCopy(listener.position(), raidLoc);
+        return transformer.nearestCopy(listener.position(), raidLoc);
     }
 
     @WrapOperation(
@@ -67,9 +52,6 @@ public class RaidMixin {
         return SeamRange.sqr(level, raidCenter, raiderPos);
     }
 
-    // The candidate cube is walked in raw section coordinates, and the village-distance tracker only ever holds
-    // canonical sections — a section past the bounds is never a village, whatever stands there. Each candidate is
-    // restated as the section that physically exists; Y has no seam and passes through.
     @WrapOperation(
             method = "moveRaidCenterToNearbyVillageSection",
             at = @At(
@@ -78,23 +60,21 @@ public class RaidMixin {
     private Stream<SectionPos> toroidal$villageSectionsThroughSeam(SectionPos cubeCenter, int radius,
             Operation<Stream<SectionPos>> original, @Local(argsOnly = true) ServerLevel level) {
         Stream<SectionPos> sections = original.call(cubeCenter, radius);
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return sections;
         }
 
-        return sections.map(transformer.chunks::wrapSection).distinct();
+        return sections.map(section -> transformer.fold(section)).distinct();
     }
 
-    // With the candidates canonical, the winner must be picked by the distance the world actually walks: a section
-    // across the seam reads raw-far and would lose to any same-side candidate, however close it really is.
     @ModifyArg(
             method = "moveRaidCenterToNearbyVillageSection",
             at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;min(Ljava/util/Comparator;)Ljava/util/Optional;"),
             index = 0)
     private Comparator<BlockPos> toroidal$nearestVillageSectionThroughSeam(Comparator<BlockPos> original,
             @Local(argsOnly = true) ServerLevel level) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
         if (transformer == null) {
             return original;
         }

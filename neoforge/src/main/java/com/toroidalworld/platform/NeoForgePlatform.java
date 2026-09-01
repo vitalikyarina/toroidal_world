@@ -3,7 +3,7 @@ package com.toroidalworld.platform;
 import java.util.function.IntFunction;
 
 import com.toroidalworld.net.WrappingSettingsPayload;
-import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.shape.FlatShape;
 
 import io.netty.buffer.Unpooled;
 
@@ -16,8 +16,6 @@ import net.neoforged.neoforge.common.NeoForgeVersion;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public final class NeoForgePlatform implements Platform {
-    // The entrypoint already holds the mod's own container, and the container is where FML keeps the version it read
-    // off the jar — taking it here beats looking the mod up in ModList by its own id.
     private final ModContainer modContainer;
 
     public NeoForgePlatform(ModContainer modContainer) {
@@ -44,12 +42,10 @@ public final class NeoForgePlatform implements Platform {
         return NeoForgeVersion.getVersion();
     }
 
-    // hasChannel is the optional-payload guard, mirroring FabricPlatform's canSend: a vanilla client never negotiated
-    // the channel, and NeoForge treats sending to one as an error rather than a no-op.
     @Override
-    public void sendWrappingBounds(ServerPlayer player, WorldLoopBounds bounds) {
+    public void sendWorldShape(ServerPlayer player, FlatShape shape) {
         if (player.connection.hasChannel(WrappingSettingsPayload.TYPE)) {
-            PacketDistributor.sendToPlayer(player, new WrappingSettingsPayload(bounds));
+            PacketDistributor.sendToPlayer(player, new WrappingSettingsPayload(shape));
         }
     }
 

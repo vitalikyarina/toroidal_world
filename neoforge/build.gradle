@@ -35,7 +35,22 @@ tasks.named('jar', Jar) {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    // MixinSquared — the C2ME compat mixin injects into C2ME's own handler.
+    maven {
+        name = 'Bawnorton'
+        url = 'https://maven.bawnorton.com/releases'
+        content {
+            includeGroup 'com.github.bawnorton.mixinsquared'
+        }
+    }
+    // C2ME, for the AST classes the density-function fold test builds by hand.
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
 }
 
 // Mojang ships Java 25 to end users, so mods should target Java 25.
@@ -86,8 +101,10 @@ neoForge {
     }
 
     // Creates the test source set with the Minecraft classes on its classpath and runs tests through the FML JUnit
-    // launcher, so registries are bootstrapped and the mod's mixins are applied. The suite lives here rather than in
-    // common because part of it reads packets through accessor mixins, which only exist once a loader applies them.
+    // launcher, so registries are bootstrapped and the mod's mixins are applied. Only tests that need a loader live
+    // here: packets read through accessor mixins, density-function samples whose expected values come from the noise
+    // mixins, and the C2ME fold test — C2ME's own access transformer opens the NoiseChunk internals its AST walks.
+    // Everything else runs as plain JUnit in common.
     unitTest {
         enable()
         testedMod = mods.toroidal_world
@@ -96,21 +113,58 @@ neoForge {
 
 dependencies {
     implementation project(':common')
+
+    // Bundled rather than borrowed from C2ME's own jar-in-jar: that copy is C2ME's implementation detail, and leaning
+    // on it would make the fold vanish the day C2ME drops or renames it. The open range is a floor, not a pin — where
+    // C2ME already carries a newer MixinSquared, JarJar keeps that one and ours is dropped.
+    jarJar(implementation("com.github.bawnorton.mixinsquared:mixinsquared-neoforge")) {
+        version {
+            require "[${mixinsquared_version},)"
+            prefer "${mixinsquared_version}"
+        }
+    }
+
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// The loader-bound tests are shared with the fabric module: written once next to the code they cover, run under
+// each loader's own JUnit launcher.
+sourceSets.test.java.srcDir '../common/src/loaderTest/java'
+
 test {
     useJUnitPlatform()
+    // The math this jar ships is tested in common; the loader suite alone would let a red common through.
+    dependsOn(':common:test')
 }
 
-// Sets up a dependency configuration called 'localRuntime'.
-// This configuration should be used instead of 'runtimeOnly' to declare
-// a dependency that will be present for runtime testing but that is
-// "optional", meaning it will not be pulled by dependents of this mod.
+// C2ME's module jars are jar-in-jar payloads FML cannot load: fold-test compile only, the outer artifact runs as a mod.
 configurations {
-    runtimeClasspath.extendsFrom localRuntime
+    c2meModules
+}
+
+dependencies {
+    c2meModules "maven.modrinth:c2me-neoforge:${c2me_version}"
+    testRuntimeOnly "maven.modrinth:c2me-neoforge:${c2me_version}"
+}
+
+var c2meModuleJars = tasks.register('unpackC2meModules', Sync) {
+    from(zipTree(configurations.c2meModules.singleFile)) {
+        include 'META-INF/jars/c2me-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('c2me-modules')
+}
+
+dependencies {
+    testCompileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
+}
+
+// The test runtime has no JarJar to drop one of the two MixinSquared copies, and the launcher refuses the duplicate.
+configurations.testRuntimeClasspath {
+    exclude group: 'com.github.bawnorton.mixinsquared'
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

@@ -11,11 +11,6 @@ import net.minecraft.core.Direction;
 
 import xaero.map.mods.minimap.element.MinimapElementReaderWrapper;
 
-// Every minimap-owned element shown on the full map (tracked players, claims and the rest) reads its position
-// through this wrapper, and those positions are raw mirror coordinates. Folded canonical at the source, the one
-// point positioning, hover and culling all read through — the map draws the canonical world once, so elements sit
-// at their canonical spot. Waypoints ride a different wrapper (the full map's own Waypoint), folded in its own
-// mixin.
 @Mixin(value = MinimapElementReaderWrapper.class, remap = false)
 public abstract class MinimapElementReaderWrapperMixin {
     @Inject(method = "getRenderX", at = @At("RETURN"), cancellable = true)

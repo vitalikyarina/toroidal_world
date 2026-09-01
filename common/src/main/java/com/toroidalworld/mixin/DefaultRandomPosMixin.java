@@ -11,8 +11,6 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.phys.Vec3;
 
-// The land-and-water default of the family (see SeamSteering): both directed entry points subtract absolute positions,
-// and the argument they subtract is read for nothing else.
 @Mixin(DefaultRandomPos.class)
 public class DefaultRandomPosMixin {
     @ModifyVariable(method = "getPosTowards", at = @At("HEAD"), argsOnly = true)

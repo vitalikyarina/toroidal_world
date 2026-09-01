@@ -4,7 +4,11 @@
 
   "gui.toroidal_world.world_shape": "Forme du monde",
   "gui.toroidal_world.world_shape.normal": "Normale",
+  "gui.toroidal_world.world_shape.normal.hint": "Le monde classique : un plan infini dans toutes les directions.",
   "gui.toroidal_world.world_shape.toroidal": "Toroïdale",
+  "gui.toroidal_world.world_shape.toroidal.hint": "Les deux axes horizontaux se referment sur eux-mêmes : marchez assez loin dans n'importe quelle direction et vous revenez à votre point de départ.",
+  "gui.toroidal_world.world_shape.cylinder": "Cylindrique",
+  "gui.toroidal_world.world_shape.cylinder.hint": "Un axe horizontal se referme sur lui-même, l'autre continue à l'infini comme dans le monde classique.",
 
   "gui.toroidal_world.toroidal_settings.title": "Réglages du monde toroïdal",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Minuscule",
@@ -26,5 +30,9 @@
   "gui.toroidal_world.toroidal_settings.end_hint": "L'End se referme sur sa propre largeur, indépendamment de la taille du monde. En dessous du minimum, il n'y a plus d'îles extérieures — ni cités de l'End, ni élytres.",
   "gui.toroidal_world.toroidal_settings.end_effective": "End : %s tronçons = %s blocs",
   "gui.toroidal_world.toroidal_settings.too_small": "Trop petit — au moins %s tronçons.",
-  "gui.toroidal_world.toroidal_settings.too_large": "Trop grand — au plus %s tronçons."
+  "gui.toroidal_world.toroidal_settings.too_large": "Trop grand — au plus %s tronçons.",
+
+  "gui.toroidal_world.cylinder_settings.title": "Réglages du monde cylindrique",
+  "gui.toroidal_world.cylinder_settings.axis": "Axe de bouclage",
+  "gui.toroidal_world.cylinder_settings.axis_hint": "Le monde se referme sur lui-même le long de cet axe et continue à l'infini le long de l'autre."
 }

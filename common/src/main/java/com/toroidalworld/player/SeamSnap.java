@@ -1,21 +1,31 @@
 package com.toroidalworld.player;
 
+import org.jspecify.annotations.Nullable;
+
 import com.toroidalworld.accessors.NavigationShifter;
+import com.toroidalworld.mixin.EntityAccessor;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 
-// The one way to move an entity across the seam: the whole passenger stack shifts by the same vector in the same
-// moment, or vehicle and rider spend time a world apart and every distance check between them lies. absSnapTo also
-// resets the old position, so nothing interpolates across the whole world; a player's chunk source follows, because
-// the shift is a whole-world jump the tracker must see at once. A mob's navigation shifts too — its path was laid out
-// in the coordinate space the mob just left (see NavigationShifter).
 public final class SeamSnap {
     public static void withPassengers(Entity entity, Vec3 shift) {
         Vec3 to = entity.position().add(shift);
-        entity.absSnapTo(to.x, to.y, to.z);
+        entity.setPos(to.x, to.y, to.z);
+        entity.xo += shift.x;
+        entity.yo += shift.y;
+        entity.zo += shift.z;
+        entity.xOld += shift.x;
+        entity.yOld += shift.y;
+        entity.zOld += shift.z;
+        EntityAccessor stored = (EntityAccessor) entity;
+        @Nullable Vec3 known = stored.toroidal$lastKnownPosition();
+        if (known != null) {
+            stored.toroidal$setLastKnownPosition(known.add(shift));
+        }
+
         if (entity instanceof Mob mob) {
             int shiftX = (int) Math.round(shift.x);
             int shiftZ = (int) Math.round(shift.z);

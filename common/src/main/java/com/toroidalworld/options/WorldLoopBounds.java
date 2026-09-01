@@ -6,35 +6,123 @@ import com.toroidalworld.core.CoordinateConstants;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import io.netty.buffer.ByteBuf;
+import net.minecraft.core.Direction;
+import net.minecraft.network.VarInt;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.level.border.WorldBorder;
 
-// Where a looped dimension wraps: one span per horizontal axis, each either a real chunk span or no loop at all. This
-// is the piece of the loop that persists — generators serialize it, the settings screen edits it, and the transformer
-// derives all four wrap domains from it.
 public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
 
-    // One axis of the loop: either the half-open chunk span [minChunk, maxChunk) coordinates fold into, or unbounded —
-    // no seam, no width, nothing to fold. A sum type rather than a sentinel-radius span, so an axis that does not loop
-    // has no numeric bounds for anyone to read, let alone compare a real distance against.
     public sealed interface AxisBounds {
         String MIN_CHUNK_KEY = "min_chunk";
         String MAX_CHUNK_KEY = "max_chunk";
 
         record Looped(int minChunk, int maxChunk) implements AxisBounds {
+            public static Looped ofWidth(int chunkWidth) {
+                int minChunk = -(chunkWidth / 2);
+                return new Looped(minChunk, chunkWidth + minChunk);
+            }
+
             public int chunkWidth() {
                 return maxChunk - minChunk;
+            }
+
+            public int minBlock() {
+                return minChunk * CoordinateConstants.CHUNK_WIDTH;
+            }
+
+            public int maxBlock() {
+                return maxChunk * CoordinateConstants.CHUNK_WIDTH;
+            }
+
+            public int blockWidth() {
+                return chunkWidth() * CoordinateConstants.CHUNK_WIDTH;
+            }
+
+            @Override
+            public boolean isOver(double blockCoord) {
+                return blockCoord < minBlock() || blockCoord >= maxBlock();
+            }
+
+            @Override
+            public boolean fitsInHalf(double blockSpan) {
+                return 2 * blockSpan <= blockWidth();
+            }
+
+            @Override
+            public boolean coversWorld(double blockSpan) {
+                return blockSpan >= blockWidth();
+            }
+
+            @Override
+            public boolean foldsOntoItself(int chunkCount) {
+                return chunkCount > chunkWidth();
+            }
+
+            @Override
+            public int maxViewDistance() {
+                return Math.max(1, chunkWidth() / 2 - CoordinateConstants.VIEW_DISTANCE_MARGIN);
             }
         }
 
         record Unbounded() implements AxisBounds {
             public static final Unbounded INSTANCE = new Unbounded();
+
+            @Override
+            public boolean isOver(double blockCoord) {
+                return false;
+            }
+
+            @Override
+            public boolean fitsInHalf(double blockSpan) {
+                return true;
+            }
+
+            @Override
+            public boolean coversWorld(double blockSpan) {
+                return false;
+            }
+
+            @Override
+            public boolean foldsOntoItself(int chunkCount) {
+                return false;
+            }
+
+            @Override
+            public int maxViewDistance() {
+                return Integer.MAX_VALUE;
+            }
         }
 
-        // An unbounded axis is written with both bounds absent. Reading accepts three shapes: a real span, an absent
-        // pair, and the legacy sentinel span — files from before the explicit model spelled "does not loop" as a loop
-        // out at ±LEGACY_DISABLED_AXIS_RADIUS chunks, and a hand-edited JSON may still say it that way.
+        boolean isOver(double blockCoord);
+
+        boolean fitsInHalf(double blockSpan);
+
+        boolean coversWorld(double blockSpan);
+
+        boolean foldsOntoItself(int chunkCount);
+
+        int maxViewDistance();
+
+        StreamCodec<ByteBuf, AxisBounds> STREAM_CODEC = StreamCodec.of(
+                (buffer, axis) -> {
+                    switch (axis) {
+                        case Looped looped -> {
+                            buffer.writeBoolean(true);
+                            VarInt.write(buffer, looped.minChunk());
+                            VarInt.write(buffer, looped.maxChunk());
+                        }
+                        case Unbounded() -> buffer.writeBoolean(false);
+                    }
+                },
+                buffer -> buffer.readBoolean()
+                        ? new Looped(VarInt.read(buffer), VarInt.read(buffer))
+                        : Unbounded.INSTANCE);
+
         Codec<AxisBounds> CODEC = Codec.mapPair(
                         Codec.INT.optionalFieldOf(MIN_CHUNK_KEY),
                         Codec.INT.optionalFieldOf(MAX_CHUNK_KEY))
@@ -73,19 +161,27 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
         }
     }
 
-    // What the sentinel model wrote for a non-looping axis: a wrap radius past every chunk the vanilla world border
-    // allows, plus slack. Kept verbatim as a parsing detail so a legacy file keeps its meaning — nothing writes it.
+    // The frozen literal the retired sentinel model wrote for a non-looping axis; legacy save files still carry it.
     private static final int LEGACY_DISABLED_AXIS_RADIUS =
             (int) (WorldBorder.MAX_CENTER_COORDINATE / CoordinateConstants.CHUNK_WIDTH) + 8192;
 
     private static final String X_KEY = "x";
     private static final String Z_KEY = "z";
 
-    public static final Codec<WorldLoopBounds> CODEC = RecordCodecBuilder.create(
+    private static final String NOT_A_HORIZONTAL_AXIS = "Not a horizontal axis: ";
+
+    public static final MapCodec<WorldLoopBounds> MAP_CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                     AxisBounds.CODEC.fieldOf(X_KEY).forGetter(WorldLoopBounds::x),
                     AxisBounds.CODEC.fieldOf(Z_KEY).forGetter(WorldLoopBounds::z)
             ).apply(instance, instance.stable(WorldLoopBounds::new)));
+
+    public static final Codec<WorldLoopBounds> CODEC = MAP_CODEC.codec();
+
+    public static final StreamCodec<ByteBuf, WorldLoopBounds> STREAM_CODEC = StreamCodec.composite(
+            AxisBounds.STREAM_CODEC, WorldLoopBounds::x,
+            AxisBounds.STREAM_CODEC, WorldLoopBounds::z,
+            WorldLoopBounds::new);
 
     public static final WorldLoopBounds UNBOUNDED =
             new WorldLoopBounds(AxisBounds.Unbounded.INSTANCE, AxisBounds.Unbounded.INSTANCE);
@@ -94,18 +190,50 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
         this(new AxisBounds.Looped(xMinChunk, xMaxChunk), new AxisBounds.Looped(zMinChunk, zMaxChunk));
     }
 
-    // A world this many chunks wide, sitting on spawn as evenly as the width allows — an odd width just leaves one more
-    // chunk on the far side. The bounds are half-open, so the width is exactly the difference between them.
     public static WorldLoopBounds ofWidth(int chunkWidth) {
-        int min = -(chunkWidth / 2);
-        int max = chunkWidth + min;
-        return new WorldLoopBounds(min, max, min, max);
+        AxisBounds.Looped looped = AxisBounds.Looped.ofWidth(chunkWidth);
+        return new WorldLoopBounds(looped, looped);
     }
 
-    // The one shape the creation flow builds and the settings screen can represent: both axes looped at the same
-    // positive chunk width. The restore path reads foreign save data only through this guard — a single-axis,
-    // rectangular or degenerate world is real for the engine but has no representation on the screen, so it must not
-    // be read through the partial chunkWidth() below.
+    public static WorldLoopBounds ofWidth(Direction.Axis axis, int chunkWidth) {
+        AxisBounds.Looped looped = AxisBounds.Looped.ofWidth(chunkWidth);
+        return switch (axis) {
+            case X -> new WorldLoopBounds(looped, AxisBounds.Unbounded.INSTANCE);
+            case Z -> new WorldLoopBounds(AxisBounds.Unbounded.INSTANCE, looped);
+            case Y -> throw new IllegalArgumentException(NOT_A_HORIZONTAL_AXIS + axis);
+        };
+    }
+
+    public AxisBounds axis(Direction.Axis axis) {
+        return switch (axis) {
+            case X -> x;
+            case Z -> z;
+            case Y -> throw new IllegalArgumentException(NOT_A_HORIZONTAL_AXIS + axis);
+        };
+    }
+
+    public boolean loops(Direction.Axis axis) {
+        return axis(axis) instanceof AxisBounds.Looped;
+    }
+
+    public int chunkWidth(Direction.Axis axis) {
+        return switch (axis(axis)) {
+            case AxisBounds.Looped looped -> looped.chunkWidth();
+            case AxisBounds.Unbounded() -> throw new IllegalStateException("chunkWidth() of the unbounded axis " + axis);
+        };
+    }
+
+    public WorldLoopBounds scaledDown(int scale) {
+        return new WorldLoopBounds(scaledDown(x, scale), scaledDown(z, scale));
+    }
+
+    private static AxisBounds scaledDown(AxisBounds axis, int scale) {
+        return switch (axis) {
+            case AxisBounds.Looped looped -> AxisBounds.Looped.ofWidth(looped.chunkWidth() / scale);
+            case AxisBounds.Unbounded() -> axis;
+        };
+    }
+
     public boolean isSquare() {
         return x instanceof AxisBounds.Looped xLooped
                 && z instanceof AxisBounds.Looped zLooped
@@ -113,12 +241,14 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
                 && xLooped.chunkWidth() > 0;
     }
 
-    // The one width a fully looped square world is described by — the creation flow builds no other shape. Asking it
-    // of bounds with an unbounded axis is a programming error, not a case to handle.
     public int chunkWidth() {
         return switch (x) {
             case AxisBounds.Looped looped -> looped.chunkWidth();
             case AxisBounds.Unbounded() -> throw new IllegalStateException("chunkWidth() of an unbounded axis");
         };
+    }
+
+    public int maxViewDistance() {
+        return Math.min(x.maxViewDistance(), z.maxViewDistance());
     }
 }

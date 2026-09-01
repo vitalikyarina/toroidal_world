@@ -8,8 +8,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
-// The fields are readable through getters, but vanilla hides the constructor behind create(BlockEntity) factories
-// that demand a live block entity — this is the only route to an instance with a moved position.
 @Mixin(ClientboundBlockEntityDataPacket.class)
 public interface BlockEntityDataPacketAccessor {
     @Invoker("<init>")

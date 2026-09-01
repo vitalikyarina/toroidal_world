@@ -27,7 +27,7 @@ repositories {
         name = 'BlameJared'
         url = 'https://maven.blamejared.com'
     }
-    // Xaero's Minimap / World Map jars for the compat mixins.
+    // JourneyMap / Xaero's Minimap / World Map jars for the compat mixins.
     maven {
         name = 'Modrinth'
         url = 'https://api.modrinth.com/maven'
@@ -35,17 +35,88 @@ repositories {
             includeGroup 'maven.modrinth'
         }
     }
+    // MixinSquared — the C2ME compat mixin injects into C2ME's own handler.
+    maven {
+        name = 'Bawnorton'
+        url = 'https://maven.bawnorton.com/releases'
+        content {
+            includeGroup 'com.github.bawnorton.mixinsquared'
+        }
+    }
+}
+
+// C2ME publishes one jar that carries no classes of its own — every module rides inside it as a jar-in-jar, and no
+// maven serves them separately. The chunk-system compat mixins name C2ME types in their signatures, so the inner jars
+// are unpacked here and put on the compile classpath alone; at runtime those classes come from the installed C2ME.
+configurations {
+    c2meModules
+}
+
+dependencies {
+    c2meModules "maven.modrinth:c2me-neoforge:${c2me_version}"
+}
+
+var c2meModuleJars = tasks.register('unpackC2meModules', Sync) {
+    from(zipTree(configurations.c2meModules.singleFile)) {
+        include 'META-INF/jars/c2me-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('c2me-modules')
+}
+
+// Xaero's World Map bundles XaeroLib as a jar-in-jar; the fullscreen-map glue names its texture holder when it fetches
+// a canonical slot's texture for the copies. Unpacked the same way, compile classpath alone.
+configurations {
+    xaeroLib
+}
+
+dependencies {
+    xaeroLib "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
+}
+
+var xaeroLibJars = tasks.register('unpackXaeroLib', Sync) {
+    from(zipTree(configurations.xaeroLib.singleFile)) {
+        include 'META-INF/jarjar/xaerolib-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('xaerolib')
 }
 
 // NeoForm brings only vanilla; the mixin annotations the sources carry come from the same artifacts the NeoForge
 // runtime ships (pinned in gradle.properties from the neo_version userdev config). compileOnly — applying them is
 // the loaders' business.
 dependencies {
+    compileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     compileOnly "net.fabricmc:sponge-mixin:${mixin_version}"
     compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
     compileOnly "info.journeymap:journeymap-api-neoforge:${journeymap_api_version}"
+    compileOnly "maven.modrinth:journeymap:${journeymap_version}"
     compileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
     compileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
+    compileOnly files(xaeroLibJars).asFileTree.matching { include '*.jar' }
+    compileOnly "com.github.bawnorton.mixinsquared:mixinsquared-common:${mixinsquared_version}"
+}
+
+// Plain JUnit on the NeoForm vanilla classpath: NeoForm mode has no FML, hence no junit run-type and no applied
+// mixins — a test that needs a mixin at runtime belongs to a loader module. The registries are filled by the
+// launcher-session listener under src/test, ahead of any test class initialisation.
+neoForge.addModdingDependenciesTo(sourceSets.test)
+
+dependencies {
+    testCompileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
+    testRuntimeOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
+    testImplementation platform("org.junit:junit-bom:${junit_version}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    // The vanilla log4j config writes logs/latest.log into the working directory — kept under build/, as FML does.
+    workingDir = layout.buildDirectory.dir('test-run').get().asFile
+    doFirst { workingDir.mkdirs() }
 }
 
 tasks.withType(JavaCompile).configureEach {

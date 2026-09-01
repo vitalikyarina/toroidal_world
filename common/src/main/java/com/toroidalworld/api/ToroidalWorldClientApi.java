@@ -2,7 +2,7 @@ package com.toroidalworld.api;
 
 import java.util.Optional;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -23,8 +23,8 @@ public final class ToroidalWorldClientApi {
      * bounds have not arrived yet — they are synced on login and dimension change, before the first chunk).
      */
     public static Optional<ToroidalShape> shapeOf(ClientLevel level) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
-        return transformer == null ? Optional.empty() : Optional.of(new TransformerToroidalShape(transformer));
+        WorldFold transformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
+        return transformer == null ? Optional.empty() : Optional.of(new WorldFoldToroidalShape(transformer));
     }
 
     private ToroidalWorldClientApi() {

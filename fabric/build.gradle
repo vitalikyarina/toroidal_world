@@ -44,7 +44,7 @@ repositories {
         name = 'BlameJared'
         url = 'https://maven.blamejared.com'
     }
-    // Xaero's Minimap / World Map jars for the compat mixins.
+    // JourneyMap / Xaero's Minimap / World Map jars for the compat mixins.
     maven {
         name = 'Modrinth'
         url = 'https://api.modrinth.com/maven'
@@ -52,9 +52,54 @@ repositories {
             includeGroup 'maven.modrinth'
         }
     }
+    // MixinSquared — the C2ME compat mixin injects into C2ME's own handler.
+    maven {
+        name = 'Bawnorton'
+        url = 'https://maven.bawnorton.com/releases'
+        content {
+            includeGroup 'com.github.bawnorton.mixinsquared'
+        }
+    }
+}
+
+// Same unpack as in common, for the same reason: common's sources compile in this module too, and the chunk-system
+// compat mixins name C2ME types. compileOnly on both sides — the classes come from the installed C2ME at runtime.
+configurations {
+    c2meModules
 }
 
 dependencies {
+    c2meModules "maven.modrinth:c2me-neoforge:${c2me_version}"
+}
+
+var c2meModuleJars = tasks.register('unpackC2meModules', Sync) {
+    from(zipTree(configurations.c2meModules.singleFile)) {
+        include 'META-INF/jars/c2me-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('c2me-modules')
+}
+
+configurations {
+    xaeroLib
+}
+
+dependencies {
+    xaeroLib "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
+}
+
+var xaeroLibJars = tasks.register('unpackXaeroLib', Sync) {
+    from(zipTree(configurations.xaeroLib.singleFile)) {
+        include 'META-INF/jarjar/xaerolib-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('xaerolib')
+}
+
+dependencies {
+    compileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     minecraft "com.mojang:minecraft:${minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
@@ -62,14 +107,42 @@ dependencies {
     // Bundled into the jar for production; no annotation processor — with no remapping there is no refmap to generate.
     include(implementation("io.github.llamalad7:mixinextras-fabric:${mixinextras_version}"))
 
-    // 26.x is unobfuscated, so the neoforge API flavor compiles fine here; only the plugin class touches it.
+    // Bundled rather than borrowed from C2ME's own jar-in-jar: that copy is C2ME's implementation detail, and leaning
+    // on it would make the fold vanish the day C2ME drops or renames it. Loader JiJ keeps the highest version present,
+    // so shipping ours costs nothing where C2ME already carries a newer one.
+    include(implementation("com.github.bawnorton.mixinsquared:mixinsquared-fabric:${mixinsquared_version}"))
+
+    // 26.x is unobfuscated, so the neoforge flavors compile fine here; the tile mixin reads Context.UI off the API.
     compileOnly "info.journeymap:journeymap-api-neoforge:${journeymap_api_version}"
+    compileOnly "maven.modrinth:journeymap:${journeymap_version}"
     compileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
     compileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
+    compileOnly files(xaeroLibJars).asFileTree.matching { include '*.jar' }
 }
 
 tasks.named('jar', Jar) {
     archiveFileName = "${mod_id}-fabric-${jarVersion}.jar"
+}
+
+// The loader-bound tests shared with the neoforge module, run here under Fabric Loader's JUnit launcher so the
+// mixins this jar ships are exercised by the loader that applies them.
+sourceSets.test.java.srcDir '../common/src/loaderTest/java'
+
+dependencies {
+    testImplementation "net.fabricmc:fabric-loader-junit:${fabric_loader_version}"
+    testImplementation platform("org.junit:junit-bom:${junit_version}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
+    // The vanilla log4j config writes logs/latest.log into the working directory — kept under build/, as FML does.
+    workingDir = layout.buildDirectory.dir('test-run').get().asFile
+    doFirst { workingDir.mkdirs() }
+    // The math this jar ships is tested in common; the loader suite alone would let a red common through.
+    dependsOn(':common:test')
 }
 
 processResources {

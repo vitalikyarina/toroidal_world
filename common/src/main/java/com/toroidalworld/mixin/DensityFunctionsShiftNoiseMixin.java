@@ -6,14 +6,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.toroidalworld.noise.ContextScaledNoise;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.noise.NoiseConstants;
+import com.toroidalworld.noise.SlotAxes;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
 
-// The 0.25 scale stays applied to Y directly; horizontally it travels through the context, because scaling X/Z would
-// shift the phase of the wrapped noise.
 @Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$ShiftNoise")
 public interface DensityFunctionsShiftNoiseMixin {
     @Shadow
@@ -26,8 +26,13 @@ public interface DensityFunctionsShiftNoiseMixin {
             return;
         }
 
-        try (Context.ScaleScope _ = generation.withScale(NoiseConstants.SHIFT_SCALE)) {
-            cir.setReturnValue(this.offsetNoise().getValue(localX, localY * NoiseConstants.SHIFT_SCALE, localZ) * 4.0);
-        }
+        SlotAxes axes = generation.slotAxes();
+
+        cir.setReturnValue(ContextScaledNoise.sample(generation, this.offsetNoise(),
+                axes.x().samplerInput(localX, NoiseConstants.SHIFT_SCALE),
+                axes.y().samplerInput(localY, NoiseConstants.SHIFT_SCALE),
+                axes.z().samplerInput(localZ, NoiseConstants.SHIFT_SCALE),
+                NoiseConstants.SHIFT_SCALE)
+                * NoiseConstants.SHIFT_AMPLITUDE);
     }
 }

@@ -11,8 +11,6 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.util.LandRandomPos;
 import net.minecraft.world.phys.Vec3;
 
-// The ground-walking arm of the family (see SeamSteering). The shorter getPosAway is an overload that hands its work to
-// the one taken here, so both reach the fold.
 @Mixin(LandRandomPos.class)
 public class LandRandomPosMixin {
     @ModifyVariable(method = "getPosTowards", at = @At("HEAD"), argsOnly = true)

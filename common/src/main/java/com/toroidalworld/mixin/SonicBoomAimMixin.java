@@ -11,15 +11,6 @@ import net.minecraft.world.entity.ai.behavior.warden.SonicBoom;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.phys.Vec3;
 
-// The warden's boom is a straight line from its chest to the target's eyes, and everything about it comes from that one
-// vector: the particles are laid along it a block apart, its length says how many, and the knockback pushes the victim
-// along it. Across the seam it points the long way round — so the shove throws the player toward the boundary instead
-// of away from the warden, and the trail is drawn half a world long, which is also several hundred particle packets
-// sent for one roar. The reach test above it is already folded, so the boom does fire; only its direction was raw.
-//
-// The boom is written inside a lambda, which compiles to a method of its own — so unlike every other fold in this
-// family, this one names a synthetic method and will stop matching if vanilla's lambda ordering shifts. That failure
-// is loud: mixin refuses to apply and the game says so at startup.
 @Mixin(SonicBoom.class)
 public class SonicBoomAimMixin {
     @ModifyExpressionValue(

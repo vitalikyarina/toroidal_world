@@ -4,26 +4,29 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.entity.SeamAim;
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.equine.Llama;
 
-// The llama's performRangedAttack hands the work straight to a private spit, so the shot arithmetic — and with it the
-// fold — sits one method deeper than the family it belongs to.
 @Mixin(Llama.class)
 public class LlamaSpitAimMixin {
-    @ModifyExpressionValue(
+    @WrapOperation(
             method = "spit(Lnet/minecraft/world/entity/LivingEntity;)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getX()D"))
-    private double toroidal$aimTargetX(double targetX) {
-        return SeamAim.nearX((Entity) (Object) this, targetX);
+    private double toroidal$aimTargetX(LivingEntity target, Operation<Double> original) {
+        return SeamAim.nearestTo((Entity) (Object) this,
+                target.position().with(Direction.Axis.X, original.call(target))).x;
     }
 
-    @ModifyExpressionValue(
+    @WrapOperation(
             method = "spit(Lnet/minecraft/world/entity/LivingEntity;)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getZ()D"))
-    private double toroidal$aimTargetZ(double targetZ) {
-        return SeamAim.nearZ((Entity) (Object) this, targetZ);
+    private double toroidal$aimTargetZ(LivingEntity target, Operation<Double> original) {
+        return SeamAim.nearestTo((Entity) (Object) this,
+                target.position().with(Direction.Axis.Z, original.call(target))).z;
     }
 }

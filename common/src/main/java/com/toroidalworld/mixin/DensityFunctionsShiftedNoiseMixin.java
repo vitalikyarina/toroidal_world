@@ -4,6 +4,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
+import com.toroidalworld.noise.ContextScaledNoise;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -11,8 +12,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
 
-// The horizontal shifts warp the sampling domain, which breaks the phase of the wrapped noise — only the vertical
-// shift survives, X/Z reach the noise raw, and xzScale travels through the context.
 @Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$ShiftedNoise")
 public class DensityFunctionsShiftedNoiseMixin {
     @Shadow
@@ -42,8 +41,9 @@ public class DensityFunctionsShiftedNoiseMixin {
 
         double verticalShare = this.xzScale == 0.0 ? GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE
                 : this.yScale / this.xzScale;
-        try (Context.ScaleScope _ = generation.withScale(this.xzScale, verticalShare)) {
-            return this.noise.getValue(context.blockX(), y, context.blockZ());
-        }
+
+        return ContextScaledNoise.sample(generation, this.noise,
+                context.blockX(), y, context.blockZ(), this.xzScale,
+                verticalShare);
     }
 }

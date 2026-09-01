@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldLoopTransformer;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -20,12 +20,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.portal.PortalForcer;
 
-// Which existing portal an arriving player is sent to is decided by plain distance, so across the seam a portal a few
-// blocks away is a whole world off and loses to anything else — or to nothing at all, and a second portal gets built
-// beside the first.
-//
-// The comparison is replaced rather than the distance call inside it: vanilla measures in a static lambda, which has no
-// route back to the level and therefore none to the transformer.
 @Mixin(PortalForcer.class)
 public class PortalForcerMixin {
     @Shadow
@@ -42,13 +36,13 @@ public class PortalForcerMixin {
             BlockPos approximateExitPos,
             boolean toNether,
             WorldBorder worldBorder) {
-        WorldLoopTransformer transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
             return original.call(candidates, byDistance);
         }
 
         Comparator<BlockPos> throughSeam = Comparator
-                .<BlockPos>comparingDouble(candidate -> transformer.coords.sqrDistToBounds(
+                .<BlockPos>comparingDouble(candidate -> transformer.sqrDistance(
                         candidate.getX(), candidate.getY(), candidate.getZ(),
                         approximateExitPos.getX(), approximateExitPos.getY(), approximateExitPos.getZ()))
                 .thenComparingInt(Vec3i::getY);
