@@ -1,7 +1,8 @@
 package com.toroidalworld.noise;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static com.toroidalworld.noise.BlendedNoiseFixture.mix;
+import static com.toroidalworld.noise.BlendedNoiseFixture.sample;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -13,15 +14,16 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.toroidalworld.noise.BlendedNoiseFixture.Octave;
+import com.toroidalworld.noise.BlendedNoiseFixture.Params;
+import com.toroidalworld.noise.BlendedNoiseFixture.Replica;
+
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.core.Direction;
-import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.synth.ImprovedNoise;
 import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 
@@ -79,43 +81,7 @@ class FieldDistributionProbeTest {
             0xDEADBEEFL, 31337L, -777L, 0x1CEB00DAL, 987654321987654321L, -424242424242L
     };
 
-    // Full-avalanche mixer (splitmix64 finalizer) for deriving octave seeds. Linearly-related raw seeds must never
-    // reach LegacyRandomSource directly: its LCG keeps first-output correlations across a linear seed family, which
-    // correlates the octave instances and inflates the measured field variance through cross-octave covariance.
-    private static long mix(long seed) {
-        long mixed = seed;
-        mixed = (mixed ^ (mixed >>> 30)) * 0xBF58476D1CE4E5B9L;
-        mixed = (mixed ^ (mixed >>> 27)) * 0x94D049BB133111EBL;
-        return mixed ^ (mixed >>> 31);
-    }
 
-    // One vanilla octave beside the replica of its private permutation table (same replay as PeriodicNoiseSamplerTest;
-    // the offset equality assertions catch a drifted replay).
-    private record Octave(ImprovedNoise vanilla, byte[] permutations, double xo, double yo, double zo) {
-        static Octave of(long seed) {
-            ImprovedNoise vanilla = new ImprovedNoise(new LegacyRandomSource(seed));
-            RandomSource random = new LegacyRandomSource(seed);
-            double xo = random.nextDouble() * 256.0;
-            double yo = random.nextDouble() * 256.0;
-            double zo = random.nextDouble() * 256.0;
-            byte[] permutations = new byte[256];
-            for (int i = 0; i < 256; i++) {
-                permutations[i] = (byte) i;
-            }
-
-            for (int i = 0; i < 256; i++) {
-                int offset = random.nextInt(256 - i);
-                byte tmp = permutations[i];
-                permutations[i] = permutations[i + offset];
-                permutations[i + offset] = tmp;
-            }
-
-            assertEquals(vanilla.xo, xo);
-            assertEquals(vanilla.yo, yo);
-            assertEquals(vanilla.zo, zo);
-            return new Octave(vanilla, permutations, xo, yo, zo);
-        }
-    }
 
     private enum WalkMode { CURRENT, CORRECTED }
 
@@ -542,122 +508,6 @@ class FieldDistributionProbeTest {
     // vanilla finalDensity never crosses 0 aloft). This measures the full blended walk, vanilla window vs the
     // period-quantized fold, at the two altitudes the in-game sweep used: pooled mean/std, the positive tail shares
     // P(v > 0.2) and P(v > 0.3), the across-seed spread of the slice mean, and the mean per-seed maximum.
-    private static final double BLEND_XZ_MULTIPLIER = 684.412 * 0.25;
-    private static final double BLEND_Y_MULTIPLIER = 684.412 * 0.125;
-    private static final double BLEND_XZ_FACTOR = 80.0;
-    private static final double BLEND_Y_FACTOR = 160.0;
-    private static final double BLEND_SMEAR = 8.0;
-    private static final int BLEND_MAIN_OCTAVES = 8;
-    private static final int BLEND_LIMIT_OCTAVES = 16;
-
-    private record BlendedReplica(Octave[] mainOctaves, Octave[] minOctaves, Octave[] maxOctaves) {
-        static BlendedReplica of(long seed) {
-            Octave[] mainOctaves = new Octave[BLEND_MAIN_OCTAVES];
-            Octave[] minOctaves = new Octave[BLEND_LIMIT_OCTAVES];
-            Octave[] maxOctaves = new Octave[BLEND_LIMIT_OCTAVES];
-            for (int i = 0; i < BLEND_LIMIT_OCTAVES; i++) {
-                minOctaves[i] = Octave.of(mix(seed + 0x9E3779B97F4A7C15L * (i + 1L)));
-                maxOctaves[i] = Octave.of(mix(seed + 0x9E3779B97F4A7C15L * (i + 101L)));
-                if (i < BLEND_MAIN_OCTAVES) {
-                    mainOctaves[i] = Octave.of(mix(seed + 0x9E3779B97F4A7C15L * (i + 201L)));
-                }
-            }
-            return new BlendedReplica(mainOctaves, minOctaves, maxOctaves);
-        }
-    }
-
-    // Vanilla BlendedNoise.compute verbatim over the replica octaves (verified against the 26.2 source; the mixin
-    // runs the same body with the horizontal coordinates raw and the octave scale in the context instead).
-    @SuppressWarnings("deprecation")
-    private double blendedVanilla(BlendedReplica replica, double blockX, double blockY, double blockZ) {
-        double limitX = blockX * BLEND_XZ_MULTIPLIER;
-        double limitY = blockY * BLEND_Y_MULTIPLIER;
-        double limitZ = blockZ * BLEND_XZ_MULTIPLIER;
-        double mainX = limitX / BLEND_XZ_FACTOR;
-        double mainY = limitY / BLEND_Y_FACTOR;
-        double mainZ = limitZ / BLEND_XZ_FACTOR;
-        double limitSmear = BLEND_Y_MULTIPLIER * BLEND_SMEAR;
-        double mainSmear = limitSmear / BLEND_Y_FACTOR;
-        double mainNoiseValue = 0.0;
-        double pow = 1.0;
-        for (int i = 0; i < BLEND_MAIN_OCTAVES; i++) {
-            Octave octave = replica.mainOctaves()[i];
-            mainNoiseValue += octave.vanilla().noise(PerlinNoise.wrap(mainX * pow), PerlinNoise.wrap(mainY * pow),
-                    PerlinNoise.wrap(mainZ * pow), mainSmear * pow, mainY * pow) / pow;
-            pow /= 2.0;
-        }
-
-        double factor = (mainNoiseValue / 10.0 + 1.0) / 2.0;
-        boolean isMax = factor >= 1.0;
-        boolean isMin = factor <= 0.0;
-        double blendMin = 0.0;
-        double blendMax = 0.0;
-        pow = 1.0;
-        for (int i = 0; i < BLEND_LIMIT_OCTAVES; i++) {
-            double wx = PerlinNoise.wrap(limitX * pow);
-            double wy = PerlinNoise.wrap(limitY * pow);
-            double wz = PerlinNoise.wrap(limitZ * pow);
-            double yScalePow = limitSmear * pow;
-            if (!isMax) {
-                blendMin += replica.minOctaves()[i].vanilla().noise(wx, wy, wz, yScalePow, limitY * pow) / pow;
-            }
-
-            if (!isMin) {
-                blendMax += replica.maxOctaves()[i].vanilla().noise(wx, wy, wz, yScalePow, limitY * pow) / pow;
-            }
-
-            pow /= 2.0;
-        }
-
-        return Mth.clampedLerp(factor, blendMin / 512.0, blendMax / 512.0) / 128.0;
-    }
-
-    // The BlendedNoiseMixin walk: raw block X/Z into the periodic sampler, per-octave scale as cells per block,
-    // verticalShare undeclared — exactly what production computes for base_3d_noise inside finalDensity.
-    private double blendedWrapped(BlendedReplica replica, double blockX, double blockY, double blockZ) {
-        double limitY = blockY * BLEND_Y_MULTIPLIER;
-        double mainY = limitY / BLEND_Y_FACTOR;
-        double mainScale = BLEND_XZ_MULTIPLIER / BLEND_XZ_FACTOR;
-        double limitSmear = BLEND_Y_MULTIPLIER * BLEND_SMEAR;
-        double mainSmear = limitSmear / BLEND_Y_FACTOR;
-        double mainNoiseValue = 0.0;
-        double pow = 1.0;
-        for (int i = 0; i < BLEND_MAIN_OCTAVES; i++) {
-            Octave octave = replica.mainOctaves()[i];
-            mainNoiseValue += sample(octave.permutations(), octave.xo(), octave.yo(),
-                    octave.zo(), WORLD, mainScale * pow, blockX, PerlinNoise.wrap(mainY * pow), blockZ,
-                    mainSmear * pow, mainY * pow, -1.0) / pow;
-            pow /= 2.0;
-        }
-
-        double factor = (mainNoiseValue / 10.0 + 1.0) / 2.0;
-        boolean isMax = factor >= 1.0;
-        boolean isMin = factor <= 0.0;
-        double blendMin = 0.0;
-        double blendMax = 0.0;
-        pow = 1.0;
-        for (int i = 0; i < BLEND_LIMIT_OCTAVES; i++) {
-            double wy = PerlinNoise.wrap(limitY * pow);
-            double yScalePow = limitSmear * pow;
-            double limitScale = BLEND_XZ_MULTIPLIER * pow;
-            if (!isMax) {
-                Octave octave = replica.minOctaves()[i];
-                blendMin += sample(octave.permutations(), octave.xo(), octave.yo(), octave.zo(),
-                        WORLD, limitScale, blockX, wy, blockZ, yScalePow, limitY * pow, -1.0) / pow;
-            }
-
-            if (!isMin) {
-                Octave octave = replica.maxOctaves()[i];
-                blendMax += sample(octave.permutations(), octave.xo(), octave.yo(), octave.zo(),
-                        WORLD, limitScale, blockX, wy, blockZ, yScalePow, limitY * pow, -1.0) / pow;
-            }
-
-            pow /= 2.0;
-        }
-
-        return Mth.clampedLerp(factor, blendMin / 512.0, blendMax / 512.0) / 128.0;
-    }
-
     private void appendBlendedFoldCalibration(StringBuilder report) {
         int seeds = 256;
         int grid = 32;
@@ -676,7 +526,7 @@ class FieldDistributionProbeTest {
             double foldedMaxSum = 0.0;
             long points = 0;
             for (int s = 0; s < seeds; s++) {
-                BlendedReplica replica = BlendedReplica.of(0xB1E4DEDL + s * 7919L);
+                Replica replica = Replica.of(0xB1E4DEDL + s * 7919L);
                 double windowX = windows.nextDouble() * 1.0E6;
                 double windowZ = windows.nextDouble() * 1.0E6;
                 double vanillaSeedSum = 0.0;
@@ -687,8 +537,8 @@ class FieldDistributionProbeTest {
                     double x = i * (WORLD_BLOCKS / (double) grid);
                     for (int j = 0; j < grid; j++) {
                         double z = j * (WORLD_BLOCKS / (double) grid);
-                        double vanilla = blendedVanilla(replica, windowX + x, ySlice, windowZ + z);
-                        double folded = blendedWrapped(replica, x - 256.0, ySlice, z - 256.0);
+                        double vanilla = BlendedNoiseFixture.vanilla(replica, Params.OVERWORLD, windowX + x, ySlice, windowZ + z);
+                        double folded = BlendedNoiseFixture.folded(replica, Params.OVERWORLD, WORLD, x - 256.0, ySlice, z - 256.0);
                         vanillaSums[0] += vanilla;
                         vanillaSums[1] += vanilla * vanilla;
                         foldedSums[0] += folded;
@@ -986,16 +836,5 @@ class FieldDistributionProbeTest {
             }
         }
         return 100.0 * outside / total;
-    }
-
-    private static double sample(byte[] permutations, double xOffset, double yOffset, double zOffset,
-            WorldFold transformer, double scale,
-            double x, double y, double z, double yScale, double yFudge, double verticalShare) {
-        GenerationTransformerContext.Context context = GenerationTransformerContext.context();
-
-        try (GenerationTransformerContext.Context.ScaleScope scope = context.withScale(scale, verticalShare)) {
-            return PeriodicNoiseSampler.sample(permutations, xOffset, yOffset, zOffset, transformer, context,
-                    x, y, z, yScale, yFudge);
-        }
     }
 }
