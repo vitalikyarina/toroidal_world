@@ -15,6 +15,8 @@ import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.FlatShape;
 
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.synth.ImprovedNoise;
@@ -66,6 +68,56 @@ class SamplerPerfProbeTest {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private static final DoubleList TEMPERATURE_AMPLITUDES = DoubleArrayList.of(1.5, 0.0, 1.0, 0.0, 0.0, 0.0);
+
+    private static final DoubleList CONTINENTALNESS_AMPLITUDES =
+            DoubleArrayList.of(1.0, 1.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0);
+
+    @Test
+    void measuresTheOctaveWalkAgainstItsPreCompressionCost() {
+        StringBuilder report = new StringBuilder();
+        report.append("Octave walk perf probe — ").append(SAMPLES).append(" samples/rep, best of ")
+                .append(TIMED_REPS).append(" reps after ").append(WARMUP_REPS)
+                .append(" warmups, 512-block world. An undeclared vertical share is the pre-compression cost:")
+                .append(" ClimateScaleCompression.factor returns on its first comparison.")
+                .append(System.lineSeparator());
+
+        report.append(measureWalk("temperature ladder, undeclared (pre-compression)", TEMPERATURE_AMPLITUDES, -10,
+                GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE));
+        report.append(measureWalk("temperature ladder, declared, compressed x6.24", TEMPERATURE_AMPLITUDES, -10,
+                0.0));
+        report.append(measureWalk("continentalness ladder, undeclared (pre-compression)",
+                CONTINENTALNESS_AMPLITUDES, -9, GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE));
+        report.append(measureWalk("continentalness ladder, declared, factor exactly 1",
+                CONTINENTALNESS_AMPLITUDES, -9, 0.0));
+
+        Path out = Path.of("build", "reports", "octave-walk-perf-probe.txt");
+        try {
+            Files.createDirectories(out.getParent());
+            Files.writeString(out, report.toString());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private String measureWalk(String label, DoubleList amplitudes, int firstOctave, double verticalShare) {
+        ImprovedNoise[] levels = new ImprovedNoise[amplitudes.size()];
+        for (int i = 0; i < levels.length; i++) {
+            if (amplitudes.getDouble(i) != 0.0) {
+                levels[i] = new ImprovedNoise(new LegacyRandomSource(0x9E3779B9L + i));
+            }
+        }
+
+        double lowestFreqInputFactor = Math.pow(2.0, firstOctave);
+        return GenerationTransformerContext.withTransformer(WORLD, () -> {
+            GenerationTransformerContext.Context context = GenerationTransformerContext.context();
+            try (GenerationTransformerContext.Context.ScaleScope _ = context.withScale(0.25, verticalShare)) {
+                return measure(label, (x, z) -> PeriodicOctaveSampler.sample(context, levels, amplitudes,
+                        lowestFreqInputFactor, 1.0, x, 0.0, z, 0.0, 0.0));
+            }
+        });
     }
 
     private interface Sampler {
