@@ -59,15 +59,12 @@ public final class OctaveVarianceCorrection {
     // extra lattice structure over-delivers amplitude.
     private static final double FLOORED_BOUND = 1.5;
 
-    private static final long UNBOUNDED = 0L;
-
     // The vertical span every ν is measured against. Dimensions differ (the nether is shorter), which shifts ν by a
     // constant factor; the liveness surface is smooth enough that the resulting k error stays under ~0.05.
     private static final double NOMINAL_HEIGHT_BLOCKS = 384.0;
 
-    public static double factor(WrapDomain xDomain, WrapDomain zDomain, long xPeriod, long zPeriod, double scale,
-            double verticalShare) {
-        if (verticalShare < 0.0 || xPeriod == UNBOUNDED || zPeriod == UNBOUNDED) {
+    public static double factor(WrapDomain xDomain, WrapDomain zDomain, double scale, double verticalShare) {
+        if (verticalShare < 0.0 || !xDomain.loops() || !zDomain.loops()) {
             return 1.0;
         }
         double xCells = xDomain.domainLength * scale;
@@ -120,9 +117,8 @@ public final class OctaveVarianceCorrection {
     // The anchor gain for a floored octave of a declared field, faded out as the octave's real vertical variation
     // grows — a live column carries its own DC through Y, and the liveness-calibrated damp already accounts for the
     // total variance there; by one vertical cell the anchor is gone. Zero when the damp does not apply.
-    public static double anchorGain(WrapDomain xDomain, WrapDomain zDomain, long xPeriod, long zPeriod, double scale,
-            double verticalShare) {
-        if (verticalShare < 0.0 || xPeriod == UNBOUNDED || zPeriod == UNBOUNDED) {
+    public static double anchorGain(WrapDomain xDomain, WrapDomain zDomain, double scale, double verticalShare) {
+        if (verticalShare < 0.0 || !xDomain.loops() || !zDomain.loops()) {
             return 0.0;
         }
         double xCells = xDomain.domainLength * scale;

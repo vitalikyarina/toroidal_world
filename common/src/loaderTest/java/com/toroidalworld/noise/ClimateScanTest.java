@@ -1,5 +1,6 @@
 package com.toroidalworld.noise;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -8,8 +9,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
+import java.util.function.IntFunction;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -21,6 +25,7 @@ import com.toroidalworld.options.WorldLoopPresets;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.SharedConstants;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderLookup;
@@ -48,7 +53,15 @@ class ClimateScanTest {
 
     private static final double MAX_TOP_SHARE = 0.45;
 
+    private static final int UNBOUNDED_SPAN_BLOCKS = 8192;
+
+    private static final int CONTROL_LINE_SPREAD_BLOCKS = 65536;
+
+    private static final double MAX_ZONE_DRIFT = 0.20;
+
     private static final Path REPORT = Path.of("build", "reports", "climate-scan.txt");
+
+    private static final Path AXIS_REPORT = Path.of("build", "reports", "climate-cylinder-axis.txt");
 
     private static HolderLookup.Provider holders;
     private static HolderGetter<NormalNoise.NoiseParameters> noises;
@@ -71,7 +84,17 @@ class ClimateScanTest {
             new WorldType("nether", NoiseGeneratorSettings.NETHER,
                     MultiNoiseBiomeSourceParameterLists.NETHER, true, false));
 
+    private record Shape(String name, IntFunction<WorldFold> foldOfWidth) {
+    }
+
+    private static final List<Shape> SHAPES = List.of(
+            new Shape("torus", ClimateScanTest::torusOfWidth),
+            new Shape("cylinder", ClimateScanTest::cylinderOfWidth));
+
     private record Scan(double distinctBiomes, double topShare, double temperatureSpread) {
+    }
+
+    private record AxisScan(double distinctBiomes, double temperatureSpread) {
     }
 
     @BeforeAll
@@ -88,9 +111,13 @@ class ClimateScanTest {
         return MultiNoiseBiomeSource.createFromPreset(preset);
     }
 
-    private static WorldFold foldOfWidth(int widthBlocks) {
+    private static WorldFold torusOfWidth(int widthBlocks) {
         return WorldFolds.of(
                 FlatShape.latticeTorus(WorldLoopBounds.ofWidth(widthBlocks / 16), FlatShape.NO_SKEW));
+    }
+
+    private static WorldFold cylinderOfWidth(int widthBlocks) {
+        return WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, widthBlocks / 16)));
     }
 
     private static RandomState randomState(WorldType type, WorldFold fold, long seed) {
@@ -121,32 +148,40 @@ class ClimateScanTest {
 
         for (WorldType type : TYPES) {
             MultiNoiseBiomeSource source = biomeSource(type);
-            report.append("  ").append(type.name()).append(System.lineSeparator());
-            report.append(String.format("    %-8s %-14s %25s %25s%n", "preset", "width", "folded", "control"));
+            Map<Integer, Scan> controls = new HashMap<>();
 
-            for (WorldLoopPresets preset : WorldLoopPresets.values()) {
-                int widthBlocks = type.widthBlocks(preset);
-                Scan folded = meanScan(type, source, widthBlocks, foldOfWidth(widthBlocks));
-                Scan control = meanScan(type, source, widthBlocks, WorldFolds.NOOP);
+            for (Shape shape : SHAPES) {
+                report.append("  ").append(type.name()).append(", ").append(shape.name())
+                        .append(System.lineSeparator());
+                report.append(String.format("    %-8s %-14s %25s %25s%n", "preset", "width", "folded", "control"));
 
-                report.append(String.format("    %-8s %-14s %6.1f biomes %5.2f %6.3f %6.1f biomes %5.2f %6.3f%n",
-                        preset.id(), widthBlocks + " blocks",
-                        folded.distinctBiomes(), folded.topShare(), folded.temperatureSpread(),
-                        control.distinctBiomes(), control.topShare(), control.temperatureSpread()));
+                for (WorldLoopPresets preset : WorldLoopPresets.values()) {
+                    int widthBlocks = type.widthBlocks(preset);
+                    Scan folded = meanScan(type, source, widthBlocks, shape.foldOfWidth().apply(widthBlocks));
+                    Scan control = controls.computeIfAbsent(widthBlocks,
+                            width -> meanScan(type, source, width, WorldFolds.NOOP));
 
-                if (control.distinctBiomes() <= 1.0) {
-                    thin.add(type.name() + " " + preset.id());
+                    report.append(String.format(
+                            "    %-8s %-14s %6.1f biomes %5.2f %6.3f %6.1f biomes %5.2f %6.3f%n",
+                            preset.id(), widthBlocks + " blocks",
+                            folded.distinctBiomes(), folded.topShare(), folded.temperatureSpread(),
+                            control.distinctBiomes(), control.topShare(), control.temperatureSpread()));
+
+                    if (control.distinctBiomes() <= 1.0) {
+                        thin.add(type.name() + " " + preset.id());
+                    }
+
+                    if (type.gated() && folded.topShare() > MAX_TOP_SHARE) {
+                        dominated.add(String.format("%s %s %s at %.2f",
+                                type.name(), shape.name(), preset.id(), folded.topShare()));
+                    }
                 }
 
-                if (type.gated() && folded.topShare() > MAX_TOP_SHARE) {
-                    dominated.add(String.format("%s %s at %.2f", type.name(), preset.id(), folded.topShare()));
-                }
+                report.append(System.lineSeparator());
             }
-
-            report.append(System.lineSeparator());
         }
 
-        write(report.toString());
+        write(REPORT, report.toString());
 
         assertTrue(thin.isEmpty(),
                 "the control window itself carries no biome spread, so the scan measures nothing: " + thin);
@@ -158,7 +193,7 @@ class ClimateScanTest {
         WorldType type = TYPES.getFirst();
         MultiNoiseBiomeSource source = biomeSource(type);
         int width = WorldLoopPresets.TINY.blockWidth();
-        WorldFold fold = foldOfWidth(width);
+        WorldFold fold = torusOfWidth(width);
         Climate.Sampler sampler = randomState(type, fold, SEED_BASE).sampler();
         int quartY = QuartPos.fromBlock(SCAN_Y_BLOCKS);
         Map<String, Integer> broken = new HashMap<>();
@@ -182,6 +217,136 @@ class ClimateScanTest {
 
         assertTrue(broken.isEmpty(), "the scan is not sampling a folded world, mismatches of " + GRID
                 + " samples per field: " + broken);
+    }
+
+    @Test
+    void theCylinderScanRepeatsOnItsLoopedAxisAlone() {
+        WorldType type = TYPES.getFirst();
+        int width = WorldLoopPresets.TINY.blockWidth();
+        WorldFold fold = cylinderOfWidth(width);
+        Climate.Sampler sampler = randomState(type, fold, SEED_BASE).sampler();
+        int quartY = QuartPos.fromBlock(SCAN_Y_BLOCKS);
+        Map<String, Integer> broken = new HashMap<>();
+        Map<String, Integer> varyingAcross = new HashMap<>();
+
+        GenerationTransformerContext.runWithTransformer(fold, () -> {
+            for (int i = 0; i < GRID; i++) {
+                int x = i * (width / GRID);
+                int z = (i * 37) % width;
+                Climate.TargetPoint here = sampler.sample(QuartPos.fromBlock(x), quartY, QuartPos.fromBlock(z));
+                Climate.TargetPoint alongX =
+                        sampler.sample(QuartPos.fromBlock(x + width), quartY, QuartPos.fromBlock(z));
+                Climate.TargetPoint alongZ =
+                        sampler.sample(QuartPos.fromBlock(x), quartY, QuartPos.fromBlock(z + width));
+                collect(broken, "temperature", here.temperature(), alongX.temperature());
+                collect(broken, "humidity", here.humidity(), alongX.humidity());
+                collect(broken, "continentalness", here.continentalness(), alongX.continentalness());
+                collect(broken, "erosion", here.erosion(), alongX.erosion());
+                collect(broken, "depth", here.depth(), alongX.depth());
+                collect(broken, "weirdness", here.weirdness(), alongX.weirdness());
+                collect(varyingAcross, "temperature", alongZ.temperature(), here.temperature());
+                collect(varyingAcross, "continentalness", alongZ.continentalness(), here.continentalness());
+            }
+        });
+
+        assertTrue(broken.isEmpty(), "the looped axis does not repeat one width away, mismatches of " + GRID
+                + " samples per field: " + broken);
+        assertEquals(2, varyingAcross.size(),
+                "the unbounded axis repeats one width away, so the scan is not sampling a cylinder");
+    }
+
+    @Test
+    void theCylinderCarriesVanillaClimateAlongItsUnboundedAxis() {
+        StringBuilder report = new StringBuilder();
+        report.append("Cylinder, climate along the unbounded axis - the axis that carries no lap and so is")
+                .append(" starved of nothing.").append(System.lineSeparator())
+                .append(GRID).append(" lines, spread across the ring and across ")
+                .append(CONTROL_LINE_SPREAD_BLOCKS).append(" blocks for the control, which has no ring; each is ")
+                .append(GRID).append(" points over ").append(UNBOUNDED_SPAN_BLOCKS).append(" blocks of Z at y=")
+                .append(SCAN_Y_BLOCKS).append(" blocks, ").append(SEEDS).append(" seeds, mean per line.")
+                .append(System.lineSeparator())
+                .append("The ring's own variation never enters a line, so this is the unbounded axis alone,")
+                .append(" against the same measure taken on an unbounded vanilla world.")
+                .append(System.lineSeparator())
+                .append("Zones per line is the scale measure and is gated at ")
+                .append(String.format("%.0f%%", MAX_ZONE_DRIFT * 100))
+                .append("; the spread is reported and not gated, its residual being the amplitude of the")
+                .append(" floored ring rather than the scale of this axis.")
+                .append(System.lineSeparator()).append(System.lineSeparator());
+
+        List<String> off = new ArrayList<>();
+
+        for (WorldType type : TYPES) {
+            MultiNoiseBiomeSource source = biomeSource(type);
+            report.append("  ").append(type.name()).append(System.lineSeparator());
+            report.append(String.format("    %-8s %-14s %22s %22s%n", "preset", "width", "cylinder", "control"));
+
+            for (WorldLoopPresets preset : WorldLoopPresets.values()) {
+                int widthBlocks = type.widthBlocks(preset);
+                AxisScan folded = meanAlongZ(type, source, widthBlocks, cylinderOfWidth(widthBlocks));
+                AxisScan control = meanAlongZ(type, source, CONTROL_LINE_SPREAD_BLOCKS, WorldFolds.NOOP);
+
+                report.append(String.format("    %-8s %-14s %6.2f biomes %8.4f %6.2f biomes %8.4f%n",
+                        preset.id(), widthBlocks + " blocks",
+                        folded.distinctBiomes(), folded.temperatureSpread(),
+                        control.distinctBiomes(), control.temperatureSpread()));
+
+                double drift = Math.abs(folded.distinctBiomes() - control.distinctBiomes())
+                        / control.distinctBiomes();
+                if (drift > MAX_ZONE_DRIFT) {
+                    off.add(String.format("%s %s off by %.0f%%", type.name(), preset.id(), drift * 100));
+                }
+            }
+
+            report.append(System.lineSeparator());
+        }
+
+        write(AXIS_REPORT, report.toString());
+
+        assertTrue(off.isEmpty(), "the unbounded axis does not carry vanilla's zone size: " + off);
+    }
+
+    private static AxisScan meanAlongZ(WorldType type, MultiNoiseBiomeSource source, int lineSpreadBlocks,
+            WorldFold fold) {
+        double distinct = 0.0;
+        double spread = 0.0;
+
+        for (int s = 0; s < SEEDS; s++) {
+            AxisScan scan = alongZ(type, source, lineSpreadBlocks, fold, SEED_BASE + s * SEED_STEP);
+            distinct += scan.distinctBiomes();
+            spread += scan.temperatureSpread();
+        }
+
+        return new AxisScan(distinct / SEEDS, spread / SEEDS);
+    }
+
+    private static AxisScan alongZ(WorldType type, MultiNoiseBiomeSource source, int lineSpreadBlocks,
+            WorldFold fold, long seed) {
+        Climate.Sampler sampler = randomState(type, fold, seed).sampler();
+        int quartY = QuartPos.fromBlock(SCAN_Y_BLOCKS);
+        double xStep = lineSpreadBlocks / (double) GRID;
+        double zStep = UNBOUNDED_SPAN_BLOCKS / (double) GRID;
+        double[] totals = new double[2];
+
+        GenerationTransformerContext.runWithTransformer(fold, () -> {
+            double[] temperatures = new double[GRID];
+
+            for (int ix = 0; ix < GRID; ix++) {
+                int quartX = QuartPos.fromBlock((int) Math.round(ix * xStep));
+                Set<Holder<Biome>> biomes = new HashSet<>();
+
+                for (int iz = 0; iz < GRID; iz++) {
+                    int quartZ = QuartPos.fromBlock((int) Math.round(iz * zStep));
+                    biomes.add(source.getNoiseBiome(quartX, quartY, quartZ, sampler));
+                    temperatures[iz] = Climate.unquantizeCoord(sampler.sample(quartX, quartY, quartZ).temperature());
+                }
+
+                totals[0] += biomes.size();
+                totals[1] += standardDeviation(temperatures);
+            }
+        });
+
+        return new AxisScan(totals[0] / GRID, totals[1] / GRID);
     }
 
     private static void collect(Map<String, Integer> broken, String field, long here, long lapAway) {
@@ -245,10 +410,10 @@ class ClimateScanTest {
         return Math.sqrt(sum / values.length);
     }
 
-    private static void write(String report) {
+    private static void write(Path path, String report) {
         try {
-            Files.createDirectories(REPORT.getParent());
-            Files.writeString(REPORT, report);
+            Files.createDirectories(path.getParent());
+            Files.writeString(path, report);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
