@@ -19,15 +19,19 @@ public final class CreateInventoryFold {
             return null;
         }
 
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        if (transformer == null) {
+        return fold(WorldLoopAttachments.wrappedTransformerOf(level), identifier);
+    }
+
+    static @Nullable InventoryIdentifier fold(@Nullable WorldFold transformer,
+            @Nullable InventoryIdentifier identifier) {
+        if (identifier == null || transformer == null) {
             return identifier;
         }
 
         return new SeamIdentifier(canonical(transformer, identifier), transformer);
     }
 
-    private static InventoryIdentifier canonical(WorldFold transformer, InventoryIdentifier identifier) {
+    static InventoryIdentifier canonical(WorldFold transformer, InventoryIdentifier identifier) {
         return switch (identifier) {
             case InventoryIdentifier.Single single ->
                     new InventoryIdentifier.Single(transformer.fold(single.pos()));

@@ -46,7 +46,11 @@ public final class CreateSeamFold {
             return position;
         }
 
-        return nearest(WorldLoopAttachments.wrappedTransformerOfReader(level), box.getCenter(), position);
+        return foldPositionToBox(WorldLoopAttachments.wrappedTransformerOfReader(level), box, position);
+    }
+
+    static BlockPos foldPositionToBox(@Nullable WorldFold transformer, BoundingBox box, BlockPos position) {
+        return nearest(transformer, box.getCenter(), position);
     }
 
     public static Vec3 foldPointToBox(@Nullable Level level, AABB box, Vec3 point) {
@@ -68,8 +72,16 @@ public final class CreateSeamFold {
     }
 
     public static BlockHitResult canonical(@Nullable ServerLevel level, BlockHitResult hit) {
+        if (level == null) {
+            return hit;
+        }
+
+        return canonical(WorldLoopAttachments.wrappedTransformerOf(level), hit);
+    }
+
+    static BlockHitResult canonical(@Nullable WorldFold transformer, BlockHitResult hit) {
         BlockPos raw = hit.getBlockPos();
-        BlockPos wrapped = canonical(level, raw);
+        BlockPos wrapped = canonical(transformer, raw);
         if (wrapped.equals(raw)) {
             return hit;
         }
@@ -86,11 +98,14 @@ public final class CreateSeamFold {
             return position;
         }
 
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        return canonical(WorldLoopAttachments.wrappedTransformerOf(level), position);
+    }
+
+    static BlockPos canonical(@Nullable WorldFold transformer, BlockPos position) {
         return transformer == null ? position : transformer.fold(position);
     }
 
-    private static BlockPos delta(@Nullable WorldFold transformer, BlockPos anchor, BlockPos target,
+    static BlockPos delta(@Nullable WorldFold transformer, BlockPos anchor, BlockPos target,
             BlockPos rawDelta) {
         BlockPos nearest = nearest(transformer, anchor, target);
         if (nearest.equals(target)) {
@@ -100,7 +115,7 @@ public final class CreateSeamFold {
         return nearest.subtract(anchor);
     }
 
-    private static BlockPos nearest(@Nullable WorldFold transformer, BlockPos anchor, BlockPos target) {
+    static BlockPos nearest(@Nullable WorldFold transformer, BlockPos anchor, BlockPos target) {
         if (transformer == null) {
             return target;
         }
