@@ -988,8 +988,6 @@ class FieldDistributionProbeTest {
         return 100.0 * outside / total;
     }
 
-    // The scale and the declared vertical share reach the sampler through the generation context; the probes hand
-    // them over per sample.
     private static double sample(byte[] permutations, double xOffset, double yOffset, double zOffset,
             WorldFold transformer, double scale,
             double x, double y, double z, double yScale, double yFudge, double verticalShare) {
