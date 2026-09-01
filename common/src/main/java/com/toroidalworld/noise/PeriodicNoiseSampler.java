@@ -57,10 +57,9 @@ public final class PeriodicNoiseSampler {
             zs = foldAndScale(zDomain, zPeriod, scale, z) + zOffset;
 
             double verticalShare = context.verticalShare();
-            correction = OctaveVarianceCorrection.factor(xDomain, zDomain, xPeriod, zPeriod, scale, verticalShare);
+            correction = OctaveVarianceCorrection.factor(xDomain, zDomain, scale, verticalShare);
 
-            double anchorGain = OctaveVarianceCorrection.anchorGain(xDomain, zDomain, xPeriod, zPeriod, scale,
-                    verticalShare);
+            double anchorGain = OctaveVarianceCorrection.anchorGain(xDomain, zDomain, scale, verticalShare);
             if (anchorGain > 0.0) {
                 anchor = anchorGain * anchorSample(permutations, xDomain, zDomain, xPeriod, zPeriod, scale,
                         xOffset, yOffset, zOffset);
@@ -121,7 +120,7 @@ public final class PeriodicNoiseSampler {
     }
 
     static long period(WrapDomain domain, double scale) {
-        if (domain instanceof WrapDomain.Noop) {
+        if (!domain.loops()) {
             return UNBOUNDED_PERIOD;
         }
 
