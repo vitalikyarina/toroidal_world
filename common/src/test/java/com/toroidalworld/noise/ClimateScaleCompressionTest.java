@@ -138,10 +138,15 @@ class ClimateScaleCompressionTest {
     }
 
     @Test
-    void aCylinderTakesItsLapFromTheLoopingAxisAlone() {
-        WorldFold cylinder = WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, 32)));
+    void aCylinderIsNeverCompressed() {
+        for (Direction.Axis axis : new Direction.Axis[] {Direction.Axis.X, Direction.Axis.Z}) {
+            for (int chunkWidth : new int[] {32, 64, 128, 256, 512}) {
+                WorldFold cylinder = WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(axis, chunkWidth)));
+                String where = axis + " cylinder of " + chunkWidth * 16 + " blocks";
 
-        assertEquals(expected(TEMPERATURE, 512.0), actual(TEMPERATURE, cylinder, HORIZONTAL), TOLERANCE,
-                "unbounded Z must not decide the compression");
+                assertEquals(1.0, actual(TEMPERATURE, cylinder, HORIZONTAL), 0.0, "temperature on a " + where);
+                assertEquals(1.0, actual(VEGETATION, cylinder, HORIZONTAL), 0.0, "vegetation on a " + where);
+            }
+        }
     }
 }
