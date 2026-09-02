@@ -1,5 +1,6 @@
 package com.toroidalworld;
 
+import com.toroidalworld.advancement.WorldLoopCriteria;
 import com.toroidalworld.compat.aeronautics.AeronauticsTranslation;
 import com.toroidalworld.compat.create.CreateTranslation;
 import com.toroidalworld.compat.aeronautics.AeronauticsMod;
@@ -35,6 +36,9 @@ public class ToroidalWorldFabric implements ModInitializer {
         Registry.register(BuiltInRegistries.CHUNK_GENERATOR,
                 ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopGenerators.TOROIDAL_FLAT_ID),
                 LoopedFlatChunkGenerator.CODEC);
+        Registry.register(BuiltInRegistries.TRIGGER_TYPES,
+                ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopCriteria.CIRCUMNAVIGATE_ID),
+                WorldLoopCriteria.CIRCUMNAVIGATE);
 
         PayloadTypeRegistry.playS2C().register(WrappingSettingsPayload.TYPE, WrappingSettingsPayload.STREAM_CODEC);
     }

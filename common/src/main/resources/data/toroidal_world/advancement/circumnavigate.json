@@ -1,0 +1,20 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:compass"
+    },
+    "title": {
+      "translate": "advancements.toroidal_world.circumnavigate.title"
+    },
+    "description": {
+      "translate": "advancements.toroidal_world.circumnavigate.description"
+    },
+    "frame": "goal"
+  },
+  "criteria": {
+    "circumnavigated": {
+      "trigger": "toroidal_world:circumnavigate"
+    }
+  }
+}

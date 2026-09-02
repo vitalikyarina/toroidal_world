@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "Там, де почав",
+  "advancements.toroidal_world.circumnavigate.description": "Пройди повне коло навколо світу",
+
   "argument.toroidal_world.pos.outside_world": "%s поза межами цього світу — має бути між %s і %s",
   "commands.toroidal_world.region.across_seam": "Ця область перетинає шов світу й може означати будь-який його бік — виконай команду окремо для кожного",
   "message.toroidal_world.schematic.selection_wider_than_world": "Це виділення ширше за світ і накрило б частину блоків двічі — постав другий кут ближче до першого",

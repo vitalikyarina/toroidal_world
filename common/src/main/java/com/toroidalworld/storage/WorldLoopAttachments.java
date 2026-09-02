@@ -4,10 +4,12 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.ClientBoundsHolder;
 import com.toroidalworld.accessors.ClientPositionHolder;
+import com.toroidalworld.accessors.SeamTravelHolder;
 import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.player.ClientPosition;
+import com.toroidalworld.player.SeamTravel;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -68,6 +70,10 @@ public final class WorldLoopAttachments {
 
         WorldFold clientBounds = wrappedClientBoundsTransformerOf(level);
         return clientBounds != null ? clientBounds : wrappedTransformerOf(level);
+    }
+
+    public static SeamTravel travelOf(ServerPlayer player) {
+        return ((SeamTravelHolder) player).toroidal$travel();
     }
 
     public static ClientPosition clientPositionOf(ServerPlayer player) {

@@ -1,5 +1,6 @@
 package com.toroidalworld;
 
+import com.toroidalworld.advancement.WorldLoopCriteria;
 import com.toroidalworld.compat.aeronautics.AeronauticsTranslation;
 import com.toroidalworld.compat.create.CreateTranslation;
 import com.toroidalworld.compat.aeronautics.AeronauticsMod;
@@ -16,6 +17,7 @@ import com.toroidalworld.platform.Platforms;
 import com.toroidalworld.shape.WorldShapeSetup;
 import com.mojang.serialization.MapCodec;
 
+import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.neoforged.bus.api.IEventBus;
@@ -29,6 +31,9 @@ public final class WorldLoop {
     private static final DeferredRegister<MapCodec<? extends ChunkGenerator>> CHUNK_GENERATORS =
             DeferredRegister.create(Registries.CHUNK_GENERATOR, ToroidalWorld.MODID);
 
+    private static final DeferredRegister<CriterionTrigger<?>> CRITERIA =
+            DeferredRegister.create(Registries.TRIGGER_TYPE, ToroidalWorld.MODID);
+
     public static void init(IEventBus modEventBus, ModContainer modContainer) {
         Platforms.set(new NeoForgePlatform(modContainer));
         WorldShapeSetup.registerAll();
@@ -40,6 +45,9 @@ public final class WorldLoop {
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_ID, () -> LoopedChunkGenerator.CODEC);
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_FLAT_ID, () -> LoopedFlatChunkGenerator.CODEC);
         CHUNK_GENERATORS.register(modEventBus);
+
+        CRITERIA.register(WorldLoopCriteria.CIRCUMNAVIGATE_ID, () -> WorldLoopCriteria.CIRCUMNAVIGATE);
+        CRITERIA.register(modEventBus);
 
         AuxiliaryLightTranslation.register();
         BlockParticleTranslation.register();

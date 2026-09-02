@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "回到原点",
+  "advancements.toroidal_world.circumnavigate.description": "环游世界一周",
+
   "argument.toroidal_world.pos.outside_world": "%s 超出了这个世界的范围——必须在 %s 和 %s 之间",
   "commands.toroidal_world.region.across_seam": "该区域跨越世界接缝，可能指接缝的任意一侧——请在每一侧分别执行该命令",
   "message.toroidal_world.schematic.selection_wider_than_world": "此选区宽于整个世界，会把部分方块算两次 — 请将第二个角放得离第一个更近",

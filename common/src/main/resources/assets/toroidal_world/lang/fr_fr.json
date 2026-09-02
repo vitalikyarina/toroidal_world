@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "Retour au point de départ",
+  "advancements.toroidal_world.circumnavigate.description": "Faites un tour complet du monde",
+
   "argument.toroidal_world.pos.outside_world": "%s est en dehors de ce monde — doit être entre %s et %s",
   "commands.toroidal_world.region.across_seam": "Cette zone traverse la couture du monde et peut désigner l'un ou l'autre côté — exécutez la commande une fois par côté",
   "message.toroidal_world.schematic.selection_wider_than_world": "Cette sélection est plus large que le monde et couvrirait certains blocs deux fois — place le second coin plus près du premier",

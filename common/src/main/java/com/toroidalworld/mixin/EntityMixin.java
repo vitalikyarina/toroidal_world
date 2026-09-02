@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.TransformerSource;
+import com.toroidalworld.advancement.CircumnavigationTracker;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamAim;
 import com.toroidalworld.player.VehicleDismountResync;
@@ -22,6 +23,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -142,6 +144,20 @@ public class EntityMixin implements TransformerSource {
     private BlockPos toroidal$canonicalOnPos(BlockPos raw) {
         WorldFold transformer = toroidal$wrappedTransformer();
         return transformer == null ? raw : transformer.fold(raw);
+    }
+
+    @Inject(method = "moveTo(DDDFF)V", at = @At("TAIL"))
+    private void toroidal$sampleTravelOnPlacement(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
+        if ((Object) this instanceof ServerPlayer player) {
+            CircumnavigationTracker.sample(player);
+        }
+    }
+
+    @Inject(method = "absMoveTo(DDDFF)V", at = @At("TAIL"))
+    private void toroidal$sampleTravelOnTeleport(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
+        if ((Object) this instanceof ServerPlayer player) {
+            CircumnavigationTracker.sample(player);
+        }
     }
 
     @Inject(method = "removeVehicle", at = @At("HEAD"))

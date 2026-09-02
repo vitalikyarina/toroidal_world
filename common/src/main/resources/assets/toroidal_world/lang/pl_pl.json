@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "Z powrotem na starcie",
+  "advancements.toroidal_world.circumnavigate.description": "Okrąż świat dookoła",
+
   "argument.toroidal_world.pos.outside_world": "%s znajduje się poza tym światem — musi być pomiędzy %s a %s",
   "commands.toroidal_world.region.across_seam": "Ten obszar przecina szew świata i może oznaczać każdą z jego stron — wykonaj komendę osobno dla każdej strony",
   "message.toroidal_world.schematic.selection_wider_than_world": "Ten zaznaczony obszar jest szerszy niż świat i objąłby część bloków dwa razy — postaw drugi róg bliżej pierwszego",

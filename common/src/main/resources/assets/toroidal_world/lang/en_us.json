@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "Back Where You Started",
+  "advancements.toroidal_world.circumnavigate.description": "Travel a full lap around the world",
+
   "argument.toroidal_world.pos.outside_world": "%s is outside this world — it must be between %s and %s",
   "commands.toroidal_world.region.across_seam": "That area crosses the world seam and could mean either side of it — run the command once per side",
   "message.toroidal_world.schematic.selection_wider_than_world": "That selection is wider than the world and would cover some blocks twice — place the second corner closer to the first",
