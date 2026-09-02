@@ -4,6 +4,7 @@ import com.toroidalworld.accessors.ClientBoundsHolder;
 import com.toroidalworld.core.ForeignFrames;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.storage.CurrentClientLevel;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -13,6 +14,7 @@ public final class WorldLoopClientNetwork {
         ClientLevel level = Minecraft.getInstance().level;
         if (level != null) {
             ((ClientBoundsHolder) level).toroidal$setClientBounds(WorldFolds.of(shape, ForeignFrames.of(level)));
+            CurrentClientLevel.publish(() -> Minecraft.getInstance().level);
         }
     }
 

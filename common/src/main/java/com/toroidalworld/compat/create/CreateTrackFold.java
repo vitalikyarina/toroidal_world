@@ -3,6 +3,7 @@ package com.toroidalworld.compat.create;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.storage.CurrentClientLevel;
 import com.toroidalworld.storage.CurrentServer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -32,11 +33,20 @@ public final class CreateTrackFold {
 
         MinecraftServer server = CurrentServer.get();
         if (server == null) {
-            return null;
+            return clientTransformerOf(dimension);
         }
 
         ServerLevel serverLevel = server.getLevel(dimension);
         return serverLevel == null ? null : WorldLoopAttachments.wrappedTransformerOf(serverLevel);
+    }
+
+    private static @Nullable WorldFold clientTransformerOf(ResourceKey<Level> dimension) {
+        Level clientLevel = CurrentClientLevel.get();
+        if (clientLevel == null || !clientLevel.dimension().equals(dimension)) {
+            return null;
+        }
+
+        return WorldLoopAttachments.wrappedTransformerOfReader(clientLevel);
     }
 
     public static Vec3i canonicalNodeKey(WorldFold transformer, Vec3i key) {

@@ -46,7 +46,6 @@
     "GantryShaftBlockMixin",
     "GirderPlacementHelperMixin",
     "GlueCommandMixin",
-    "ITrackBlockMixin",
     "InventoryIdentifierMixin",
     "LecternControllerBlockEntityMixin",
     "LinearActuatorBlockEntityMixin",
