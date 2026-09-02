@@ -44,10 +44,14 @@ public class ServerPlayerMixin implements SeamTravelHolder {
     private static final String TRAVEL_KEY = "toroidal_world:travel";
 
     @Unique
-    private final SeamTravel toroidal$travel = new SeamTravel();
+    private SeamTravel toroidal$travel;
 
     @Override
     public SeamTravel toroidal$travel() {
+        if (this.toroidal$travel == null) {
+            this.toroidal$travel = new SeamTravel();
+        }
+
         return this.toroidal$travel;
     }
 
@@ -55,19 +59,19 @@ public class ServerPlayerMixin implements SeamTravelHolder {
     private void toroidal$readTravel(CompoundTag tag, CallbackInfo ci) {
         Tag travel = tag.get(TRAVEL_KEY);
         if (travel != null) {
-            SeamTravel.CODEC.parse(NbtOps.INSTANCE, travel).result().ifPresent(this.toroidal$travel::copyFrom);
+            SeamTravel.CODEC.parse(NbtOps.INSTANCE, travel).result().ifPresent(this.toroidal$travel()::copyFrom);
         }
     }
 
     @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
     private void toroidal$writeTravel(CompoundTag tag, CallbackInfo ci) {
-        SeamTravel.CODEC.encodeStart(NbtOps.INSTANCE, this.toroidal$travel).result()
+        SeamTravel.CODEC.encodeStart(NbtOps.INSTANCE, this.toroidal$travel()).result()
                 .ifPresent(travel -> tag.put(TRAVEL_KEY, travel));
     }
 
     @Inject(method = "restoreFrom", at = @At("TAIL"))
     private void toroidal$carryTravelThroughRespawn(ServerPlayer oldPlayer, boolean restoreAll, CallbackInfo ci) {
-        this.toroidal$travel.copyFrom(((SeamTravelHolder) oldPlayer).toroidal$travel());
+        this.toroidal$travel().copyFrom(((SeamTravelHolder) oldPlayer).toroidal$travel());
     }
 
     @ModifyVariable(method = "setRespawnPosition(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/BlockPos;FZZ)V",
