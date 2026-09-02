@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "De volta ao início",
+  "advancements.toroidal_world.circumnavigate.description": "Dê uma volta completa ao mundo",
+
   "argument.toroidal_world.pos.outside_world": "%s está fora deste mundo — deve estar entre %s e %s",
   "commands.toroidal_world.region.across_seam": "Essa área cruza a emenda do mundo e pode significar qualquer um dos lados — execute o comando uma vez por lado",
 
