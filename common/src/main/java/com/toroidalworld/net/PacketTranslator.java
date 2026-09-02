@@ -1,7 +1,6 @@
 package com.toroidalworld.net;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -139,20 +138,20 @@ public final class PacketTranslator {
             Map.entry(ClientboundMoveMinecartPacket.class, rewriter(PacketTranslator::moveMinecart)),
             Map.entry(ClientboundCustomPayloadPacket.class, rewriter(PacketTranslator::clientboundCustomPayload)));
 
-    private static final Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
-            CLIENTBOUND_PAYLOAD_REWRITERS = new HashMap<>();
+    private static final StartupRegistry<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
+            CLIENTBOUND_PAYLOAD_REWRITERS = new StartupRegistry<>("Clientbound payload rewriters");
 
-    private static final Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
-            SERVERBOUND_PAYLOAD_REWRITERS = new HashMap<>();
+    private static final StartupRegistry<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
+            SERVERBOUND_PAYLOAD_REWRITERS = new StartupRegistry<>("Serverbound payload rewriters");
 
     public static <P extends CustomPacketPayload> void registerClientboundPayloadRewriter(Class<P> payloadType,
             BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
-        CLIENTBOUND_PAYLOAD_REWRITERS.put(payloadType, castingRewriter(payloadType, payloadRewriter));
+        CLIENTBOUND_PAYLOAD_REWRITERS.register(payloadType, castingRewriter(payloadType, payloadRewriter));
     }
 
     public static <P extends CustomPacketPayload> void registerServerboundPayloadRewriter(Class<P> payloadType,
             BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
-        SERVERBOUND_PAYLOAD_REWRITERS.put(payloadType, castingRewriter(payloadType, payloadRewriter));
+        SERVERBOUND_PAYLOAD_REWRITERS.register(payloadType, castingRewriter(payloadType, payloadRewriter));
     }
 
     private static <P extends CustomPacketPayload> BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>
@@ -164,16 +163,23 @@ public final class PacketTranslator {
         ParticleOptions rewrite(P particle, TranslationContext context, Vec3 clientOrigin);
     }
 
-    private static final Map<Class<?>, ParticleRewriter<ParticleOptions>> PARTICLE_REWRITERS = new HashMap<>();
+    private static final StartupRegistry<Class<?>, ParticleRewriter<ParticleOptions>> PARTICLE_REWRITERS =
+            new StartupRegistry<>("Particle rewriters");
 
     public static <P extends ParticleOptions> void registerParticleRewriter(Class<P> particleType,
             ParticleRewriter<P> particleRewriter) {
-        PARTICLE_REWRITERS.put(particleType,
+        PARTICLE_REWRITERS.register(particleType,
                 (particle, context, clientOrigin) -> particleRewriter.rewrite(particleType.cast(particle), context, clientOrigin));
     }
 
     private static @Nullable ParticleRewriter<ParticleOptions> particleRewriterFor(ParticleOptions particle) {
-        return PARTICLE_REWRITERS.get(particle.getClass());
+        return PARTICLE_REWRITERS.entries().get(particle.getClass());
+    }
+
+    public static void closeRewriters() {
+        CLIENTBOUND_PAYLOAD_REWRITERS.close();
+        SERVERBOUND_PAYLOAD_REWRITERS.close();
+        PARTICLE_REWRITERS.close();
     }
 
     private static final Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> TO_SERVER = Map.ofEntries(
@@ -306,12 +312,12 @@ public final class PacketTranslator {
     }
 
     private static Packet<?> clientboundCustomPayload(ClientboundCustomPayloadPacket packet, TranslationContext context) {
-        CustomPacketPayload rewritten = rewritePayload(CLIENTBOUND_PAYLOAD_REWRITERS, packet.payload(), context);
+        CustomPacketPayload rewritten = rewritePayload(CLIENTBOUND_PAYLOAD_REWRITERS.entries(), packet.payload(), context);
         return rewritten == packet.payload() ? packet : new ClientboundCustomPayloadPacket(rewritten);
     }
 
     private static Packet<?> serverboundCustomPayload(ServerboundCustomPayloadPacket packet, TranslationContext context) {
-        CustomPacketPayload rewritten = rewritePayload(SERVERBOUND_PAYLOAD_REWRITERS, packet.payload(), context);
+        CustomPacketPayload rewritten = rewritePayload(SERVERBOUND_PAYLOAD_REWRITERS.entries(), packet.payload(), context);
         return rewritten == packet.payload() ? packet : new ServerboundCustomPayloadPacket(rewritten);
     }
 
