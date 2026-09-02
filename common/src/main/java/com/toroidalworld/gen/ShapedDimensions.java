@@ -32,17 +32,37 @@ public final class ShapedDimensions {
         return new WorldDimensions(stems);
     }
 
+    public static WorldDimensions stripShapes(WorldDimensions dimensions) {
+        Map<ResourceKey<LevelStem>, LevelStem> stripped = null;
+        for (Map.Entry<ResourceKey<LevelStem>, LevelStem> entry : dimensions.dimensions().entrySet()) {
+            LevelStem stem = entry.getValue();
+            if (!(stem.generator() instanceof ShapedChunkGenerator shaped)) {
+                continue;
+            }
+
+            if (stripped == null) {
+                stripped = new HashMap<>(dimensions.dimensions());
+            }
+
+            stripped.put(entry.getKey(), new LevelStem(stem.type(), shaped.unshaped()));
+        }
+
+        return stripped == null ? dimensions : new WorldDimensions(stripped);
+    }
+
     public static @Nullable FlatShape shapeOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {
         LevelStem stem = dimensions.get(key).orElse(null);
         return stem != null && stem.generator() instanceof ShapedChunkGenerator shaped ? shaped.shape() : null;
     }
 
     private static @Nullable ChunkGenerator shapedGeneratorFor(ChunkGenerator generator, FlatShape shape) {
-        if (generator instanceof NoiseBasedChunkGenerator noise) {
+        ChunkGenerator base = generator instanceof ShapedChunkGenerator shaped ? shaped.unshaped() : generator;
+
+        if (base instanceof NoiseBasedChunkGenerator noise) {
             return new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), shape);
         }
 
-        if (generator instanceof FlatLevelSource flat) {
+        if (base instanceof FlatLevelSource flat) {
             return new LoopedFlatChunkGenerator(flat.settings(), shape);
         }
 
