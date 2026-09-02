@@ -21,6 +21,8 @@ public interface ShapedChunkGenerator {
 
     WorldFold transformer();
 
+    ChunkGenerator unshaped();
+
     default ChunkGeneratorStructureState stampTransformer(ChunkGeneratorStructureState state) {
         ((TransformerHolder) (Object) state).toroidal$setTransformer(transformer());
         return state;
