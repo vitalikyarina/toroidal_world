@@ -8,6 +8,7 @@ import java.util.function.IntPredicate;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
+import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.LogRateGate;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
@@ -49,6 +50,9 @@ public record TranslationContext(
 
     // Vanilla's own floor for a client's requested view distance, below which ChunkMap will not go.
     private static final int MIN_VIEW_DISTANCE = 2;
+
+    private static final double REACH_MARGIN_BLOCKS =
+            (double) CoordinateConstants.VIEW_DISTANCE_MARGIN * CoordinateConstants.CHUNK_WIDTH;
 
     // Two chunks: one of lighting border vanilla tracks past the view, one more where it forgets what fell out.
     private static final LogRateGate WARN_GATE = new LogRateGate();
@@ -105,9 +109,8 @@ public record TranslationContext(
         }
 
         int viewReach = viewReach();
-        int distanceX = Math.abs(clientPos.x - anchor.x);
-        int distanceZ = Math.abs(clientPos.z - anchor.z);
-        if (distanceX > viewReach || distanceZ > viewReach) {
+        if (chunkOutOfView(Direction.Axis.X, clientPos.x - anchor.x, viewReach)
+                || chunkOutOfView(Direction.Axis.Z, clientPos.z - anchor.z, viewReach)) {
             warnChunkFarFromAnchor(traffic, chunkPos, clientPos, anchor, viewReach);
         }
         return clientPos;
@@ -197,13 +200,26 @@ public record TranslationContext(
 
     private void guardReach(PacketReach reach, Direction.Axis axis, double serverValue, double clientValue,
             double anchor) {
-        if (!withinReach(clientValue, anchor, reach) && !isForeign(axis, serverValue)) {
-            warnCoordFarFromAnchor(reach, axis.getName(), serverValue, clientValue, anchor);
+        if (!withinReach(clientValue, anchor, reach) && !isForeign(axis, serverValue)
+                && carriesReach(transformer.blockDomain(axis), reach)) {
+            warnCoordFarFromAnchor(reach, axis, serverValue, clientValue, anchor);
         }
+    }
+
+    private boolean chunkOutOfView(Direction.Axis axis, int delta, int viewReach) {
+        return Math.abs(delta) > viewReach && carriesView(transformer.chunkDomain(axis), viewReach);
     }
 
     static boolean withinReach(double clientValue, double anchor, PacketReach reach) {
         return Math.abs(clientValue - anchor) <= reach.blocks() + reach.slackBlocks();
+    }
+
+    static boolean carriesReach(WrapDomain blockDomain, PacketReach reach) {
+        return blockDomain.fitsInHalf(reach.blocks() + reach.slackBlocks() + REACH_MARGIN_BLOCKS);
+    }
+
+    static boolean carriesView(WrapDomain chunkDomain, int viewReach) {
+        return chunkDomain.fitsInHalf(viewReach + CoordinateConstants.VIEW_DISTANCE_MARGIN);
     }
 
     public double nearestCopyX(double x) {
@@ -225,7 +241,7 @@ public record TranslationContext(
                 traffic.key(), dimension.location(), serverPos, clientPos, anchor, viewReach);
     }
 
-    private void warnCoordFarFromAnchor(PacketReach reach, String axis,
+    private void warnCoordFarFromAnchor(PacketReach reach, Direction.Axis axis,
             double serverValue, double clientValue, double anchor) {
         if (!WARN_GATE.tryPass()) {
             return;
@@ -233,7 +249,7 @@ public record TranslationContext(
 
         LOGGER.warn("A {} packet's {} lands farther from the client anchor than it can reach in {}:"
                         + " server {} translated to client {} around anchor {}, reach {} blocks, slack {} blocks",
-                reach.kind(), axis, dimension.location(), serverValue, clientValue, anchor,
+                reach.kind(), axis.getName(), dimension.location(), serverValue, clientValue, anchor,
                 reach.blocks(), reach.slackBlocks());
     }
 
