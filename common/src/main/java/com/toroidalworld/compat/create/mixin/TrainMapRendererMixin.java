@@ -13,19 +13,19 @@ import net.minecraft.core.BlockPos;
 public abstract class TrainMapRendererMixin {
     @WrapMethod(method = "setPixel")
     private void toroidal$setFoldedPixel(int xCoord, int zCoord, int color, Operation<Void> original) {
-        BlockPos pixel = TrainMapViewFold.wrapPixel(xCoord, zCoord);
-        original.call(pixel.getX(), pixel.getZ(), color);
+        long pixel = TrainMapViewFold.foldPixelNode(xCoord, zCoord);
+        original.call(BlockPos.getX(pixel), BlockPos.getZ(pixel), color);
     }
 
     @WrapMethod(method = "getPixel")
     private int toroidal$getFoldedPixel(int xCoord, int zCoord, Operation<Integer> original) {
-        BlockPos pixel = TrainMapViewFold.wrapPixel(xCoord, zCoord);
-        return original.call(pixel.getX(), pixel.getZ());
+        long pixel = TrainMapViewFold.foldPixelNode(xCoord, zCoord);
+        return original.call(BlockPos.getX(pixel), BlockPos.getZ(pixel));
     }
 
     @WrapMethod(method = "blendPixel")
     private void toroidal$blendFoldedPixel(int xCoord, int zCoord, int color, int alpha, Operation<Void> original) {
-        BlockPos pixel = TrainMapViewFold.wrapPixel(xCoord, zCoord);
-        original.call(pixel.getX(), pixel.getZ(), color, alpha);
+        long pixel = TrainMapViewFold.foldPixelNode(xCoord, zCoord);
+        original.call(BlockPos.getX(pixel), BlockPos.getZ(pixel), color, alpha);
     }
 }

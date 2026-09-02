@@ -67,25 +67,25 @@ class TrainMapViewFoldTest {
     @Test
     void aPixelPastTheXBoundLandsOneWorldWidthBack() {
         for (WorldFold fold : List.of(PER_AXIS, DECK_TORUS, SKEWED)) {
-            BlockPos pixel = TrainMapViewFold.wrapPixel(fold, 300, 10);
+            long pixel = TrainMapViewFold.foldPixelNode(fold, 300, 10);
 
-            assertEquals(new BlockPos(300 - WORLD_BLOCKS, 0, 10), pixel, "in " + fold);
+            assertEquals(BlockPos.asLong(300 - WORLD_BLOCKS, 0, 10), pixel, "in " + fold);
         }
     }
 
     @Test
     void aPixelPastTheGlideSeamOfAMirroredWorldLandsOnTheMirroredColumn() {
-        BlockPos pixel = TrainMapViewFold.wrapPixel(MIRRORED, 300, 10);
+        long pixel = TrainMapViewFold.foldPixelNode(MIRRORED, 300, 10);
 
-        assertEquals(new BlockPos(300 - WORLD_BLOCKS, 0, 2 * MIRROR_LINE_BLOCKS - 10 - 1), pixel);
+        assertEquals(BlockPos.asLong(300 - WORLD_BLOCKS, 0, 2 * MIRROR_LINE_BLOCKS - 10 - 1), pixel);
     }
 
     @Test
     void aPixelInsideTheBoundsKeepsItsCoordinates() {
         for (WorldFold fold : TORI) {
-            BlockPos pixel = TrainMapViewFold.wrapPixel(fold, 30, 10);
+            long pixel = TrainMapViewFold.foldPixelNode(fold, 30, 10);
 
-            assertEquals(new BlockPos(30, 0, 10), pixel, "in " + fold);
+            assertEquals(BlockPos.asLong(30, 0, 10), pixel, "in " + fold);
         }
     }
 

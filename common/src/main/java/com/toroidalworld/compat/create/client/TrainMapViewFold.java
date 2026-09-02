@@ -41,13 +41,14 @@ public final class TrainMapViewFold {
         return folded;
     }
 
-    public static BlockPos wrapPixel(int x, int z) {
+    public static long foldPixelNode(int x, int z) {
         WorldFold transformer = transformer();
-        return transformer == null ? new BlockPos(x, 0, z) : wrapPixel(transformer, x, z);
+        long node = BlockPos.asLong(x, 0, z);
+        return transformer == null ? node : transformer.foldBlockNode(node);
     }
 
-    public static BlockPos wrapPixel(WorldFold transformer, int x, int z) {
-        return transformer.fold(new BlockPos(x, 0, z));
+    public static long foldPixelNode(WorldFold transformer, int x, int z) {
+        return transformer.foldBlockNode(BlockPos.asLong(x, 0, z));
     }
 
     public static Vec3 canonical(Vec3 position) {
