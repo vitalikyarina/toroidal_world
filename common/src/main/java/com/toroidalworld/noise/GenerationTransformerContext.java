@@ -14,6 +14,10 @@ public final class GenerationTransformerContext {
 
     public static final double UNDECLARED_VERTICAL_SHARE = -1.0;
 
+    public static double verticalShare(double xzScale, double yScale) {
+        return xzScale == 0.0 ? UNDECLARED_VERTICAL_SHARE : yScale / xzScale;
+    }
+
     public static final class Context {
         private WorldFold transformer = WorldFolds.NOOP;
         private @Nullable WorldFold routerBuild;
@@ -83,12 +87,13 @@ public final class GenerationTransformerContext {
             return this.scaleScope;
         }
 
-        public BindingScope bind(WorldFold boundTransformer, SlotAxes boundAxes, double boundScale) {
+        public BindingScope bind(WorldFold boundTransformer, SlotAxes boundAxes, double boundScale,
+                double boundVerticalShare) {
             this.bindingScope.push();
             this.transformer = boundTransformer;
             this.slotAxes = boundAxes;
             this.horizontalScale = boundScale;
-            this.verticalShare = UNDECLARED_VERTICAL_SHARE;
+            this.verticalShare = boundVerticalShare;
             return this.bindingScope;
         }
 
