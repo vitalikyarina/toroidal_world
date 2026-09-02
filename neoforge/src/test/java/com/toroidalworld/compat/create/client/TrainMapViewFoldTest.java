@@ -35,6 +35,7 @@ class TrainMapViewFoldTest {
     private static final int VIEW_BLOCKS = 20;
     private static final int SURFACE_REACH = 5;
     private static final int MANY_WORLDS = 40;
+    private static final int CLEAR_OF_THE_BOUND_BLOCKS = 100;
 
     private static final WorldLoopBounds BOUNDS =
             new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
@@ -58,6 +59,10 @@ class TrainMapViewFoldTest {
     private static final BlockPos PIXEL_BEYOND_THE_X_SEAM = new BlockPos(300, 0, 10);
     private static final DeckTransformation ONE_LAP_ALONG_X =
             new DeckTransformation(SeamTransform.translation(WORLD_BLOCKS, 0));
+    private static final DeckTransformation ONE_LAP_BACK_ALONG_X =
+            new DeckTransformation(SeamTransform.translation(-WORLD_BLOCKS, 0));
+    private static final Rect2i ENDING_ON_THE_X_BOUND = new Rect2i(0, 0, WORLD_BLOCKS / 2, VIEW_BLOCKS);
+    private static final Rect2i STARTING_ON_THE_X_BOUND = new Rect2i(WORLD_MIN, 0, WORLD_BLOCKS / 2, VIEW_BLOCKS);
 
     @Test
     void aPixelPastTheXBoundLandsOneWorldWidthBack() {
@@ -152,6 +157,45 @@ class TrainMapViewFoldTest {
     }
 
     @Test
+    void aViewEndingOnTheBoundStillDrawsTheCopyPastIt() {
+        for (WorldFold fold : TORI) {
+            assertEquals(List.of(DeckTransformation.IDENTITY),
+                    TrainMapViewFold.copies(fold, EVERYWHERE, ENDING_ON_THE_X_BOUND), "in " + fold);
+            assertEquals(2, TrainMapViewFold.copiesDrawnFor(fold, EVERYWHERE, ENDING_ON_THE_X_BOUND).size(),
+                    "in " + fold);
+        }
+
+        for (WorldFold fold : PLAIN_TORI) {
+            assertEquals(List.of(DeckTransformation.IDENTITY, ONE_LAP_ALONG_X),
+                    TrainMapViewFold.copiesDrawnFor(fold, EVERYWHERE, ENDING_ON_THE_X_BOUND), "in " + fold);
+        }
+    }
+
+    @Test
+    void aViewStartingOnTheBoundStillDrawsTheCopyBeforeIt() {
+        for (WorldFold fold : TORI) {
+            assertEquals(List.of(DeckTransformation.IDENTITY),
+                    TrainMapViewFold.copies(fold, EVERYWHERE, STARTING_ON_THE_X_BOUND), "in " + fold);
+            assertEquals(2, TrainMapViewFold.copiesDrawnFor(fold, EVERYWHERE, STARTING_ON_THE_X_BOUND).size(),
+                    "in " + fold);
+        }
+
+        for (WorldFold fold : PLAIN_TORI) {
+            assertEquals(List.of(DeckTransformation.IDENTITY, ONE_LAP_BACK_ALONG_X),
+                    TrainMapViewFold.copiesDrawnFor(fold, EVERYWHERE, STARTING_ON_THE_X_BOUND), "in " + fold);
+        }
+    }
+
+    @Test
+    void aViewClearOfTheBoundDrawsTheIdentityAlone() {
+        Rect2i clearOfTheBound = new Rect2i(0, 0, WORLD_BLOCKS / 2 - CLEAR_OF_THE_BOUND_BLOCKS, VIEW_BLOCKS);
+        for (WorldFold fold : TORI) {
+            assertEquals(List.of(DeckTransformation.IDENTITY),
+                    TrainMapViewFold.copiesDrawnFor(fold, EVERYWHERE, clearOfTheBound), "in " + fold);
+        }
+    }
+
+    @Test
     void aViewOfManyWorldsIsCutAtTheSurfaceReach() {
         Rect2i manyWorlds = new Rect2i(WORLD_MIN - MANY_WORLDS * WORLD_BLOCKS, 0, 2 * MANY_WORLDS * WORLD_BLOCKS,
                 VIEW_BLOCKS);
@@ -212,6 +256,16 @@ class TrainMapViewFoldTest {
         List<DeckTransformation> copies = TrainMapViewFold.copies(CYLINDER, EVERYWHERE, alongTheUnboundedAxis);
 
         assertEquals(List.of(DeckTransformation.IDENTITY), copies);
+    }
+
+    @Test
+    void theDrawnMarginHoldsPerAxis() {
+        Rect2i alongTheUnboundedAxis = new Rect2i(-100, -1000, 200, 5000);
+
+        assertEquals(List.of(DeckTransformation.IDENTITY, ONE_LAP_ALONG_X),
+                TrainMapViewFold.copiesDrawnFor(CYLINDER, EVERYWHERE, ENDING_ON_THE_X_BOUND));
+        assertEquals(List.of(DeckTransformation.IDENTITY),
+                TrainMapViewFold.copiesDrawnFor(CYLINDER, EVERYWHERE, alongTheUnboundedAxis));
     }
 
     private static BoundingBox box(Rect2i view) {

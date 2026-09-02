@@ -95,7 +95,8 @@ public abstract class TrainMapManagerMixin {
             boolean linearFiltering, Rect2i bounds, Operation<List<FormattedText>> original) {
         PoseStack pose = graphics.pose();
         List<FormattedText> hovered = null;
-        for (DeckTransformation copy : TrainMapViewFold.copies(bounds)) {
+        for (DeckTransformation copy : TrainMapViewFold.copiesDrawnFor(bounds)) {
+            // Create grows whatever rect it is handed, so a copy drawing the already grown one gets a doubled margin.
             Rect2i view = TrainMapViewFold.canonicalView(copy, bounds);
             BlockPos mouse = TrainMapViewFold.canonicalPixel(copy, mouseX, mouseY);
             SeamTransform blocks = copy.blocks();

@@ -18,6 +18,9 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.Vec3;
 
 public final class TrainMapViewFold {
+    // Create's TrainMapManager.renderAndPick grows the rect it is handed by this margin before it draws anything.
+    private static final int OFF_SCREEN_MARGIN = 32;
+
     public record NearestNodeKey(Vec3i raw, Vec3i nearest) {
     }
 
@@ -56,13 +59,19 @@ public final class TrainMapViewFold {
         return transformer.fold(position);
     }
 
-    public static List<DeckTransformation> copies(Rect2i view) {
+    public static List<DeckTransformation> copiesDrawnFor(Rect2i bounds) {
         WorldFold transformer = transformer();
         if (transformer == null) {
             return List.of(DeckTransformation.IDENTITY);
         }
 
-        return copies(transformer, MapSurfaceCopies.current(), view);
+        return copiesDrawnFor(transformer, MapSurfaceCopies.current(), bounds);
+    }
+
+    public static List<DeckTransformation> copiesDrawnFor(WorldFold transformer, Copies surface, Rect2i bounds) {
+        Rect2i drawn = new Rect2i(bounds.getX() - OFF_SCREEN_MARGIN, bounds.getY() - OFF_SCREEN_MARGIN,
+                bounds.getWidth() + 2 * OFF_SCREEN_MARGIN, bounds.getHeight() + 2 * OFF_SCREEN_MARGIN);
+        return copies(transformer, surface, drawn);
     }
 
     public static List<DeckTransformation> copies(WorldFold transformer, Copies surface, Rect2i view) {
