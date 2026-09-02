@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
+import com.toroidalworld.core.FoldedOrder;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -79,7 +80,6 @@ public class RaidMixin {
             return original;
         }
 
-        BlockPos raidCenter = this.center;
-        return Comparator.comparingDouble(pos -> SeamRange.sqr(level, raidCenter, pos));
+        return FoldedOrder.around(original, transformer, this.center);
     }
 }

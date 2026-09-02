@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.core.CoordinateConstants;
+import com.toroidalworld.core.FoldedOrder;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -88,7 +89,7 @@ public class PoiManagerMixin {
             return original;
         }
 
-        return Comparator.comparingDouble(pos -> toroidal$distSqr(transformer, center, pos));
+        return FoldedOrder.around(original, transformer, center);
     }
 
     @ModifyArg(
@@ -116,7 +117,11 @@ public class PoiManagerMixin {
             return original;
         }
 
-        return Comparator.comparingDouble(pair -> toroidal$distSqr(transformer, center, pair.getSecond()));
+        return FoldedOrder.of(original, pair -> {
+            BlockPos pos = pair.getSecond();
+            BlockPos nearest = transformer.nearestCopy(center, pos);
+            return nearest == pos ? pair : Pair.of(pair.getFirst(), nearest);
+        });
     }
 
     @WrapOperation(
