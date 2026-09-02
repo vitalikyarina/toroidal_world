@@ -6,10 +6,11 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.entity.SeamRange;
 import com.toroidalworld.entity.SeamSteering;
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.animal.Bee;
 
 @Mixin(Bee.class)
@@ -19,11 +20,10 @@ public class BeeMixin {
         return SeamSteering.nearestCopy((Bee) (Object) this, targetPos);
     }
 
-    @ModifyExpressionValue(
+    @WrapOperation(
             method = "pathfindRandomlyTowards",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;distManhattan(Lnet/minecraft/core/Vec3i;)I"))
-    private int toroidal$stepDistanceThroughSeam(int distance, @Local(argsOnly = true) BlockPos targetPos) {
-        Bee bee = (Bee) (Object) this;
-        return SeamRange.manhattan(bee, bee.blockPosition(), targetPos);
+    private int toroidal$stepDistanceThroughSeam(BlockPos beePos, Vec3i targetPos, Operation<Integer> original) {
+        return SeamRange.manhattan((Bee) (Object) this, beePos, targetPos);
     }
 }
