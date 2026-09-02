@@ -13,7 +13,7 @@ import com.toroidalworld.platform.Platforms;
 import com.toroidalworld.shape.WorldShapeSetup;
 import com.mojang.serialization.MapCodec;
 
-import net.minecraft.advancements.triggers.CriterionTrigger;
+import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.chunk.ChunkGenerator;
