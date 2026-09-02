@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.Vec3;
 
 public record DeckTransformation(SeamTransform blocks) {
     public static final DeckTransformation IDENTITY = new DeckTransformation(SeamTransform.IDENTITY);
@@ -14,6 +15,14 @@ public record DeckTransformation(SeamTransform blocks) {
 
     public FoldOrientation orientation() {
         return this.blocks.orientation();
+    }
+
+    public Vec3 apply(Vec3 pos) {
+        if (isIdentity()) {
+            return pos;
+        }
+
+        return new Vec3(this.blocks.applyX(pos.x), pos.y, this.blocks.applyZ(pos.z));
     }
 
     public BlockPos apply(BlockPos pos) {

@@ -225,6 +225,12 @@ public final class DeckGroupFold implements WorldFold {
     }
 
     @Override
+    public DeckTransformation foldTransformation(Vec3 pos) {
+        SeamTransform applied = this.blocks.foldCoords(pos.x, pos.z);
+        return applied.isIdentity() ? DeckTransformation.IDENTITY : new DeckTransformation(applied);
+    }
+
+    @Override
     public DeckTransformation deckTransformation(ChunkPos chunk, ChunkPos copy) {
         if (chunk.equals(copy)) {
             return DeckTransformation.IDENTITY;

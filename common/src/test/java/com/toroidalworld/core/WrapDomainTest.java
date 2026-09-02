@@ -40,6 +40,16 @@ class WrapDomainTest {
         return wrapped;
     }
 
+    private static double nudge(double value, int ulps) {
+        double nudged = value;
+        double toward = ulps > 0 ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
+        for (int step = 0; step < Math.abs(ulps); step++) {
+            nudged = Math.nextAfter(nudged, toward);
+        }
+
+        return nudged;
+    }
+
     private static String in(WrapDomain domain) {
         return "in [" + domain.lowerBound + ", " + domain.upperBound + ")";
     }
@@ -221,6 +231,37 @@ class WrapDomainTest {
                     assertFalse(domain.isOver(wrappedD), () -> "isOver(wrap(" + coordD + ")) " + in(domain));
                     assertEquals(wrappedD, domain.wrap(wrappedD), 0.0, () -> "wrap∘wrap(" + coordD + ") " + in(domain));
                     assertEquals(wrapNaive(domain, coordD), wrappedD, 1e-9, () -> "wrap(" + coordD + ") " + in(domain));
+                }
+            }
+        }
+
+        @Test
+        void lapsOverIsTheCountWrapItselfSubtracts() {
+            Random random = new Random(SEED);
+            for (WrapDomain domain : DOMAINS) {
+                for (int i = 0; i < SAMPLES; i++) {
+                    double coord = sampleCoord(random, domain) + random.nextDouble();
+                    int laps = domain.lapsOver(coord);
+
+                    assertEquals(domain.isOver(coord), laps != 0,
+                            () -> "lapsOver(" + coord + ") is " + laps + " " + in(domain));
+                    assertEquals(domain.wrap(coord), coord - (double) laps * domain.domainLength, 0.0,
+                            () -> "wrap(" + coord + ") is not its own lap count " + in(domain));
+                }
+            }
+        }
+
+        @Test
+        void everyLapBoundarySeatsInsideTheBounds() {
+            for (WrapDomain domain : DOMAINS) {
+                for (int lap = -3; lap <= 3; lap++) {
+                    double boundary = domain.lowerBound + (double) lap * domain.domainLength;
+                    for (int ulps = -2; ulps <= 2; ulps++) {
+                        double coord = nudge(boundary, ulps);
+                        double wrapped = domain.wrap(coord);
+                        assertFalse(domain.isOver(wrapped),
+                                () -> "wrap(" + coord + ") gave " + wrapped + " " + in(domain));
+                    }
                 }
             }
         }
