@@ -268,6 +268,10 @@ public record TranslationContext(
         return transformer.fold(pos);
     }
 
+    public WorldFold.Folded<BlockPos> toServerOriented(BlockPos pos) {
+        return transformer.foldOriented(pos);
+    }
+
     public Vec3 toServer(Vec3 position) {
         return transformer.fold(position);
     }

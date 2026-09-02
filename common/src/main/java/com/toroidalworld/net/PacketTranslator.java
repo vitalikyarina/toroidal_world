@@ -14,6 +14,7 @@ import java.util.function.UnaryOperator;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.SeamDelta;
+import com.toroidalworld.core.SeamHit;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.mixin.BlockEntityDataPacketAccessor;
 import com.toroidalworld.mixin.BlockPositionSourceAccessor;
@@ -92,7 +93,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.BlockPositionSource;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class PacketTranslator {
@@ -689,19 +689,16 @@ public final class PacketTranslator {
 
     private static ServerboundUseItemOnPacket useItemOn(ServerboundUseItemOnPacket packet, TranslationContext context) {
         BlockHitResult hit = packet.getHitResult();
-        BlockPos pos = context.toServer(hit.getBlockPos());
-        Vec3 offsetInBlock = hit.getLocation().subtract(Vec3.atLowerCornerOf(hit.getBlockPos()));
-        Vec3 location = Vec3.atLowerCornerOf(pos).add(offsetInBlock);
-
-        BlockHitResult wrapped = hit.getType() == HitResult.Type.MISS
-                ? BlockHitResult.miss(location, hit.getDirection(), pos)
-                : new BlockHitResult(location, hit.getDirection(), pos, hit.isInside());
-        return new ServerboundUseItemOnPacket(packet.getHand(), wrapped, packet.getSequence());
+        BlockHitResult wrapped = SeamHit.reseat(hit, context.toServerOriented(hit.getBlockPos()));
+        return wrapped == hit
+                ? packet
+                : new ServerboundUseItemOnPacket(packet.getHand(), wrapped, packet.getSequence());
     }
 
     private static ServerboundPlayerActionPacket playerAction(ServerboundPlayerActionPacket packet, TranslationContext context) {
-        return new ServerboundPlayerActionPacket(packet.getAction(), context.toServer(packet.getPos()),
-                packet.getDirection(), packet.getSequence());
+        WorldFold.Folded<BlockPos> folded = context.toServerOriented(packet.getPos());
+        return new ServerboundPlayerActionPacket(packet.getAction(), folded.value(),
+                folded.orientation().applyToFace(packet.getDirection()), packet.getSequence());
     }
 
     private static ServerboundSignUpdatePacket signUpdate(ServerboundSignUpdatePacket packet, TranslationContext context) {

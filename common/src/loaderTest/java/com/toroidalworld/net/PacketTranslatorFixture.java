@@ -3,14 +3,17 @@ package com.toroidalworld.net;
 import java.util.function.IntFunction;
 import java.util.function.IntPredicate;
 
+import com.toroidalworld.core.DeckGroupFold;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.shape.FlatShape;
 
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -23,6 +26,9 @@ import net.minecraft.world.phys.Vec3;
 final class PacketTranslatorFixture {
     static final WorldFold TRANSFORMER =
             WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(-32, 32, -32, 32), FlatShape.NO_SKEW));
+    static final WorldFold MIRRORED_TRANSFORMER = new DeckGroupFold(FlatShape.mirrored(
+            new WorldLoopBounds(new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE),
+            Direction.Axis.Z, 0));
     static final RegistryAccess.Frozen REGISTRIES =
             RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
 
@@ -31,6 +37,7 @@ final class PacketTranslatorFixture {
 
     static final BlockPos SERVER_BLOCK = new BlockPos(-510, 64, -505);
     static final BlockPos CLIENT_BLOCK = new BlockPos(514, 64, -505);
+    static final BlockPos MIRRORED_SERVER_BLOCK = new BlockPos(-510, 64, 504);
     static final BlockPos SERVER_CARRIED_BLOCK = new BlockPos(-510, 64, -100);
     static final BlockPos CLIENT_CARRIED_BLOCK = new BlockPos(514, 64, -100);
     static final BlockPos MIRROR_CARRIED_BLOCK = new BlockPos(514, 64, -1124);
@@ -73,6 +80,14 @@ final class PacketTranslatorFixture {
 
     static TranslationContext context() {
         return context(entityId -> false, entityId -> null);
+    }
+
+    static TranslationContext mirroredContext() {
+        ClientPosition mirror = new ClientPosition();
+        mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, MIRRORED_TRANSFORMER);
+        return new TranslationContext(MIRRORED_TRANSFORMER, mirror, REGISTRIES, BUFFERS, Level.OVERWORLD,
+                VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, entityId -> null, () -> {},
+                REWRITERS);
     }
 
     static TranslationContext context(IntPredicate ownVehicle, IntFunction<Vec3> entityPosition) {
