@@ -89,13 +89,48 @@ class CreateSeamFoldTest {
     }
 
     @Test
-    void theDeltaIsAntisymmetricWhereTheFoldIsATranslation() {
+    void theFarEndDeltaIsTheDeltaTheFarEndStores() {
+        for (WorldFold fold : ALL) {
+            BlockPos forward = CreateSeamFold.delta(fold, ANCHOR, TARGET_ACROSS, rawDelta(ANCHOR, TARGET_ACROSS));
+            BlockPos stored = CreateSeamFold.delta(fold, TARGET_ACROSS, ANCHOR, rawDelta(TARGET_ACROSS, ANCHOR));
+
+            assertEquals(stored, CreateSeamFold.farEndDelta(fold, ANCHOR, forward, forward.multiply(-1)),
+                    "in " + fold);
+        }
+    }
+
+    @Test
+    void aNegatedDeltaIsTheFarEndsOnlyWhereTheFoldIsATranslation() {
         for (WorldFold fold : TRANSLATING) {
             BlockPos forward = CreateSeamFold.delta(fold, ANCHOR, TARGET_ACROSS, rawDelta(ANCHOR, TARGET_ACROSS));
-            BlockPos backward = CreateSeamFold.delta(fold, TARGET_ACROSS, ANCHOR, rawDelta(TARGET_ACROSS, ANCHOR));
+            BlockPos stored = CreateSeamFold.delta(fold, TARGET_ACROSS, ANCHOR, rawDelta(TARGET_ACROSS, ANCHOR));
 
-            assertEquals(forward, backward.multiply(-1), "in " + fold);
+            assertEquals(forward.multiply(-1), stored, "in " + fold);
         }
+
+        BlockPos forward = CreateSeamFold.delta(MIRRORED, ANCHOR, TARGET_ACROSS, rawDelta(ANCHOR, TARGET_ACROSS));
+        BlockPos stored = CreateSeamFold.delta(MIRRORED, TARGET_ACROSS, ANCHOR, rawDelta(TARGET_ACROSS, ANCHOR));
+
+        assertNotEquals(forward.multiply(-1), stored);
+    }
+
+    @Test
+    void aConnectionInsideTheBoundsGivesTheNegationBackByIdentity() {
+        BlockPos delta = rawDelta(ANCHOR, new BlockPos(240, 64, 10));
+        BlockPos raw = delta.multiply(-1);
+        for (WorldFold fold : ALL) {
+            assertSame(raw, CreateSeamFold.farEndDelta(fold, ANCHOR, delta, raw), "in " + fold);
+        }
+    }
+
+    @Test
+    void anUnwrappedWorldGivesTheFarEndDeltaBackByIdentity() {
+        BlockPos delta = rawDelta(ANCHOR, TARGET_ACROSS);
+        BlockPos raw = delta.multiply(-1);
+
+        assertSame(raw, CreateSeamFold.farEndDelta(WorldFolds.NOOP, ANCHOR, delta, raw));
+        assertSame(raw, CreateSeamFold.farEndDelta((WorldFold) null, ANCHOR, delta, raw));
+        assertSame(raw, CreateSeamFold.farEndDelta((Level) null, ANCHOR, delta, raw));
     }
 
     @Test

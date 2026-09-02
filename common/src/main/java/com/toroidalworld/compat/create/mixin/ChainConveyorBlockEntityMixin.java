@@ -24,4 +24,16 @@ public class ChainConveyorBlockEntityMixin {
         return CreateSeamFold.foldDelta(self.getLevel(), self.getBlockPos(), target,
                 original.call(target, anchorPos));
     }
+
+    @WrapOperation(
+            method = "removeInvalidConnections",
+            at = @At(value = "INVOKE",
+                    target = "Lnet/minecraft/core/BlockPos;multiply(I)Lnet/minecraft/core/BlockPos;"),
+            require = 1,
+            allow = 1)
+    private BlockPos toroidal$foldFarEndKey(BlockPos delta, int factor, Operation<BlockPos> original) {
+        ChainConveyorBlockEntity self = (ChainConveyorBlockEntity) (Object) this;
+        return CreateSeamFold.farEndDelta(self.getLevel(), self.getBlockPos(), delta,
+                original.call(delta, factor));
+    }
 }

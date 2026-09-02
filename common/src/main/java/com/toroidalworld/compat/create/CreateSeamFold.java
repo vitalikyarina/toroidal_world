@@ -24,6 +24,14 @@ public final class CreateSeamFold {
         return delta(WorldLoopAttachments.wrappedTransformerOfReader(level), anchor, target, rawDelta);
     }
 
+    public static BlockPos farEndDelta(@Nullable Level level, BlockPos anchor, BlockPos delta, BlockPos rawFarEnd) {
+        if (level == null) {
+            return rawFarEnd;
+        }
+
+        return farEndDelta(WorldLoopAttachments.wrappedTransformerOfReader(level), anchor, delta, rawFarEnd);
+    }
+
     public static BlockPos worldSeat(@Nullable Level level, BlockPos stored) {
         if (level == null) {
             return stored;
@@ -113,6 +121,21 @@ public final class CreateSeamFold {
         }
 
         return nearest.subtract(anchor);
+    }
+
+    static BlockPos farEndDelta(@Nullable WorldFold transformer, BlockPos anchor, BlockPos delta,
+            BlockPos rawFarEnd) {
+        if (transformer == null) {
+            return rawFarEnd;
+        }
+
+        BlockPos farEnd = canonical(transformer, anchor.offset(delta));
+        BlockPos nearestAnchor = nearest(transformer, farEnd, anchor);
+        if (nearestAnchor.equals(anchor)) {
+            return rawFarEnd;
+        }
+
+        return nearestAnchor.subtract(farEnd);
     }
 
     static BlockPos nearest(@Nullable WorldFold transformer, BlockPos anchor, BlockPos target) {
