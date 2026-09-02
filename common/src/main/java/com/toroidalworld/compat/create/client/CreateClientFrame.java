@@ -59,6 +59,15 @@ public final class CreateClientFrame {
         return FoldedCopies.of(canonical, position -> CreateTrackFold.nearestCopy(level, anchor, position));
     }
 
+    public static BlockPos nearestCopy(@Nullable BlockPos anchor, BlockPos target) {
+        Level level = Minecraft.getInstance().level;
+        if (level == null || anchor == null) {
+            return target;
+        }
+
+        return CreateTrackFold.nearestCopy(level, anchor, target);
+    }
+
     public static Vec3 nearestCopy(@Nullable Vec3 anchor, Vec3 target) {
         Level level = Minecraft.getInstance().level;
         if (level == null || anchor == null) {

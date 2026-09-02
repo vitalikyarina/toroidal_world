@@ -3,9 +3,10 @@ package com.toroidalworld.compat.create.mixin;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.equipment.symmetryWand.SymmetryEffectPacket;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
@@ -22,12 +23,11 @@ public abstract class SymmetryEffectPacketMixin {
         return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, canonical);
     }
 
-    @ModifyArg(method = "handle",
+    @WrapOperation(method = "handle",
             at = @At(value = "INVOKE",
                     target = "Lcom/simibubi/create/content/equipment/symmetryWand/SymmetryHandler;"
-                            + "drawEffect(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)V"),
-            index = 1)
-    private BlockPos toroidal$placedBlockInTheViewerFrame(BlockPos canonical) {
-        return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, canonical);
+                            + "drawEffect(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)V"))
+    private void toroidal$drawTheSegmentInOneFrame(BlockPos mirror, BlockPos placed, Operation<Void> original) {
+        original.call(mirror, CreateClientFrame.nearestCopy(mirror, placed));
     }
 }
