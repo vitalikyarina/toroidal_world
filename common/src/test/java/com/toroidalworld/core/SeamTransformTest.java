@@ -1,6 +1,7 @@
 package com.toroidalworld.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -16,6 +17,16 @@ class SeamTransformTest {
     private static final long SEED = 0x5EA3L;
     private static final int[] COORDS = {0, 1, -1, 7, -7, 255, -256, 4097, -4097};
 
+    private static final int POWER_REACH = 5;
+
+    private static final int[] CHUNK_ALIGNED_SHIFTS = {
+            0,
+            CoordinateConstants.CHUNK_WIDTH,
+            -CoordinateConstants.CHUNK_WIDTH,
+            3 * CoordinateConstants.CHUNK_WIDTH,
+            -6 * CoordinateConstants.CHUNK_WIDTH,
+            16 * CoordinateConstants.CHUNK_WIDTH};
+
     private static List<SeamTransform> transforms() {
         List<SeamTransform> built = new ArrayList<>();
         for (int xSign : new int[] {1, -1}) {
@@ -28,6 +39,27 @@ class SeamTransformTest {
         }
 
         return built;
+    }
+
+    private static List<SeamTransform> chunkAlignedTransforms() {
+        List<SeamTransform> built = new ArrayList<>();
+        for (int xSign : new int[] {1, -1}) {
+            for (int zSign : new int[] {1, -1}) {
+                for (int shift : CHUNK_ALIGNED_SHIFTS) {
+                    built.add(new SeamTransform(xSign, zSign, shift, -shift));
+                    built.add(new SeamTransform(xSign, zSign, -shift, shift));
+                }
+            }
+        }
+
+        return built;
+    }
+
+    private static void assertChunkAligned(SeamTransform transform, String what) {
+        assertEquals(0, transform.xShift() % CoordinateConstants.CHUNK_WIDTH,
+                what + " carries an x shift off the chunk grid: " + transform.xShift());
+        assertEquals(0, transform.zShift() % CoordinateConstants.CHUNK_WIDTH,
+                what + " carries a z shift off the chunk grid: " + transform.zShift());
     }
 
     @Nested
@@ -151,6 +183,37 @@ class SeamTransformTest {
             assertEquals(0.0, mirror.applyZ(0.0), "the coordinate 0 does not reflect onto itself");
             assertTrue(mirror.applyCellZ(5) == -6 && mirror.applyZ(5.0) == -5.0,
                     "the cell form and the coordinate form of a mirror are the same map");
+        }
+    }
+
+    @Nested
+    class ShiftGranularity {
+        @Test
+        void chunkAlignedShiftsSurviveCompositionInversionAndPower() {
+            for (SeamTransform transform : chunkAlignedTransforms()) {
+                assertChunkAligned(transform.inverse(), "the inverse of " + transform);
+                for (int exponent = -POWER_REACH; exponent <= POWER_REACH; exponent++) {
+                    assertChunkAligned(transform.power(exponent), transform + " to the power " + exponent);
+                }
+
+                for (SeamTransform next : chunkAlignedTransforms()) {
+                    assertChunkAligned(transform.then(next), transform + " then " + next);
+                }
+            }
+        }
+
+        @Test
+        void aShiftOffTheChunkGridStaysOffItThroughEveryComposition() {
+            SeamTransform offGrid = SeamTransform.translation(CoordinateConstants.CHUNK_WIDTH / 2, 0);
+            assertNotEquals(0, offGrid.xShift() % CoordinateConstants.CHUNK_WIDTH,
+                    "half a chunk counted as chunk-aligned");
+
+            for (SeamTransform aligned : chunkAlignedTransforms()) {
+                assertNotEquals(0, offGrid.then(aligned).xShift() % CoordinateConstants.CHUNK_WIDTH,
+                        "an off-grid shift then " + aligned + " came back aligned");
+                assertNotEquals(0, aligned.then(offGrid).xShift() % CoordinateConstants.CHUNK_WIDTH,
+                        aligned + " then an off-grid shift came back aligned");
+            }
         }
     }
 }

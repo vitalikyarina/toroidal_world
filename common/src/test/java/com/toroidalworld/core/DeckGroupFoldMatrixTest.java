@@ -47,6 +47,11 @@ class DeckGroupFoldMatrixTest {
     private static final int SAMPLES = 300;
     private static final long SEED = 0x70201DL;
 
+    private static final double[] HALF_BLOCK_OFFSETS = {0.0, 0.5};
+
+    private static final double[] SEAM_COORDINATES =
+            {LOWER - 0.5, LOWER, LOWER + 0.5, UPPER - 0.5, UPPER, UPPER + 0.5};
+
     private static final AxisBounds.Looped LOOPED = new AxisBounds.Looped(MIN_CHUNK, MAX_CHUNK);
     private static final AxisBounds UNBOUNDED = AxisBounds.Unbounded.INSTANCE;
     private static final WorldLoopBounds BOTH = new WorldLoopBounds(LOOPED, LOOPED);
@@ -236,6 +241,44 @@ class DeckGroupFoldMatrixTest {
             assertTrue(z >= LOWER && z < UPPER,
                     testCase.name() + ": " + what + " z " + z + " outside [" + LOWER + ", " + UPPER + ")");
         }
+    }
+
+    private record Subject(String name, WorldFold fold) {
+    }
+
+    private static List<Subject> subjects() {
+        List<Subject> built = new ArrayList<>();
+        for (Case testCase : cases()) {
+            built.add(new Subject(testCase.name(), testCase.fold()));
+        }
+
+        for (Case testCase : decomposableCases()) {
+            built.add(new Subject(testCase.name() + ", per-axis",
+                    new WorldLoopTransformer(testCase.shape().bounds())));
+        }
+
+        return built;
+    }
+
+    private static double coordinateShift(double folded, double original, boolean mirrored) {
+        return mirrored ? folded + original : folded - original;
+    }
+
+    private static int alignedCellShift(int folded, int original, boolean mirrored) {
+        return mirrored ? folded + original + 1 : folded - original;
+    }
+
+    private static void assertChunkAlignedShift(double shift, String what) {
+        assertEquals(shift, Math.rint(shift), what + ": the shift " + shift + " is not a whole number of blocks");
+        assertEquals(0L, Math.round(shift) % UNIT,
+                what + ": the shift " + shift + " is not a whole number of chunks");
+    }
+
+    private static void assertWholeBlockMove(Vec3 moved, Vec3 original, String what) {
+        double shiftX = moved.x - original.x;
+        double shiftZ = moved.z - original.z;
+        assertEquals(shiftX, Math.rint(shiftX), what + ": x moved by " + shiftX + ", not a whole number of blocks");
+        assertEquals(shiftZ, Math.rint(shiftZ), what + ": z moved by " + shiftZ + ", not a whole number of blocks");
     }
 
     @Nested
@@ -1310,6 +1353,109 @@ class DeckGroupFoldMatrixTest {
             int minZ = LOWER + random.nextInt(WIDTH);
             return new BoundingBox(minX, 60, minZ,
                     minX + random.nextInt(UPPER - minX), 68, minZ + random.nextInt(UPPER - minZ));
+        }
+    }
+
+    @Nested
+    class Displacement {
+        @Test
+        void everyCoordinateShiftIsAWholeNumberOfChunks() {
+            for (Subject subject : subjects()) {
+                Random random = new Random(SEED + 31);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    Vec3 ref = new Vec3(sample(random) + 0.5, 64.0, sample(random) + 0.5);
+                    Vec3 target = new Vec3(sample(random) + 0.5, 70.0, sample(random) + 0.5);
+
+                    Folded<Vec3> folded = subject.fold().foldOriented(target);
+                    assertChunkAlignedShift(
+                            coordinateShift(folded.value().x, target.x, folded.orientation().flipsX()),
+                            subject.name() + ": fold x");
+                    assertChunkAlignedShift(
+                            coordinateShift(folded.value().z, target.z, folded.orientation().flipsZ()),
+                            subject.name() + ": fold z");
+
+                    Folded<Vec3> nearest = subject.fold().nearestCopyOriented(ref, target);
+                    assertChunkAlignedShift(
+                            coordinateShift(nearest.value().x, target.x, nearest.orientation().flipsX()),
+                            subject.name() + ": nearestCopy x");
+                    assertChunkAlignedShift(
+                            coordinateShift(nearest.value().z, target.z, nearest.orientation().flipsZ()),
+                            subject.name() + ": nearestCopy z");
+                }
+            }
+        }
+
+        @Test
+        void theCellShiftIsChunkAlignedLessOneExactlyWhereTheFoldMirrors() {
+            for (Subject subject : subjects()) {
+                Random random = new Random(SEED + 32);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    BlockPos block = new BlockPos(sample(random), 64, sample(random));
+                    BlockPos ref = new BlockPos(sample(random), 64, sample(random));
+
+                    assertCellShiftIsChunkAligned(subject.fold().foldOriented(block), block,
+                            subject.name() + ": block fold");
+                    assertCellShiftIsChunkAligned(subject.fold().nearestCopyOriented(ref, block), block,
+                            subject.name() + ": block nearestCopy");
+                }
+            }
+        }
+
+        @Test
+        void theBlockLatticeShiftIsChunkWidthTimesTheChunkLatticeShift() {
+            for (Subject subject : subjects()) {
+                Random random = new Random(SEED + 33);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    int x = sample(random);
+                    int z = sample(random);
+                    ChunkPos chunk = chunkOf(x, z);
+
+                    Folded<BlockPos> foldedBlock = subject.fold().foldOriented(new BlockPos(x, 64, z));
+                    Folded<ChunkPos> foldedChunk = subject.fold().foldOriented(chunk);
+                    assertEquals(foldedBlock.orientation(), foldedChunk.orientation(),
+                            subject.name() + ": the block and chunk forms disagree on the orientation");
+
+                    boolean flipsX = foldedChunk.orientation().flipsX();
+                    boolean flipsZ = foldedChunk.orientation().flipsZ();
+                    assertEquals(UNIT * alignedCellShift(foldedChunk.value().x, chunk.x, flipsX),
+                            alignedCellShift(foldedBlock.value().getX(), x, flipsX),
+                            subject.name() + ": the block and chunk lattices disagree on the x shift");
+                    assertEquals(UNIT * alignedCellShift(foldedChunk.value().z, chunk.z, flipsZ),
+                            alignedCellShift(foldedBlock.value().getZ(), z, flipsZ),
+                            subject.name() + ": the block and chunk lattices disagree on the z shift");
+                }
+            }
+        }
+
+        @Test
+        void aHalfBlockCoordinateIsDisplacedByAWholeNumberOfBlocks() {
+            for (Subject subject : subjects()) {
+                Random random = new Random(SEED + 34);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    for (double offset : HALF_BLOCK_OFFSETS) {
+                        Vec3 ref = new Vec3(sample(random) + offset, 64.0, sample(random) + offset);
+                        Vec3 target = new Vec3(sample(random) + offset, 70.0, sample(random) + offset);
+
+                        assertWholeBlockMove(subject.fold().fold(target), target, subject.name() + ": fold");
+                        assertWholeBlockMove(subject.fold().nearestCopy(ref, target), target,
+                                subject.name() + ": nearestCopy");
+                    }
+                }
+
+                for (double coord : SEAM_COORDINATES) {
+                    Vec3 target = new Vec3(coord, 64.0, coord);
+                    assertWholeBlockMove(subject.fold().fold(target), target, subject.name() + ": seam fold");
+                }
+            }
+        }
+
+        private void assertCellShiftIsChunkAligned(Folded<BlockPos> moved, BlockPos original, String what) {
+            int shiftX = alignedCellShift(moved.value().getX(), original.getX(), moved.orientation().flipsX());
+            int shiftZ = alignedCellShift(moved.value().getZ(), original.getZ(), moved.orientation().flipsZ());
+            assertEquals(0, shiftX % UNIT, what + " x: the cell shift, read as " + shiftX
+                    + " once the off-by-one is undone, is not a multiple of " + UNIT);
+            assertEquals(0, shiftZ % UNIT, what + " z: the cell shift, read as " + shiftZ
+                    + " once the off-by-one is undone, is not a multiple of " + UNIT);
         }
     }
 }
