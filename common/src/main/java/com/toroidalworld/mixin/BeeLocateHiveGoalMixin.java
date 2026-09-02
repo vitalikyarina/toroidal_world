@@ -1,16 +1,15 @@
 package com.toroidalworld.mixin;
 
-import java.util.Comparator;
+import java.util.function.ToDoubleFunction;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.entity.SeamSteering;
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.core.BlockPos;
@@ -22,18 +21,18 @@ public class BeeLocateHiveGoalMixin {
     @Final
     private Bee bee;
 
-    @ModifyExpressionValue(
+    @ModifyArg(
             method = "findNearbyHivesWithSpace",
             at = @At(value = "INVOKE",
-                    target = "Ljava/util/Comparator;comparingDouble(Ljava/util/function/ToDoubleFunction;)Ljava/util/Comparator;"))
-    private Comparator<BlockPos> toroidal$rankHivesThroughSeam(Comparator<BlockPos> byRawDistance,
+                    target = "Ljava/util/Comparator;comparingDouble(Ljava/util/function/ToDoubleFunction;)Ljava/util/Comparator;"),
+            index = 0)
+    private ToDoubleFunction<BlockPos> toroidal$rankHivesThroughSeam(ToDoubleFunction<BlockPos> byRawDistance,
             @Local BlockPos beePos) {
-        Bee rankingBee = this.bee;
-        WorldFold transformer = ((TransformerSource) rankingBee).toroidal$wrappedTransformer();
+        WorldFold transformer = ((TransformerSource) this.bee).toroidal$wrappedTransformer();
         if (transformer == null) {
             return byRawDistance;
         }
 
-        return Comparator.comparingDouble(hivePos -> SeamSteering.nearestCopy(rankingBee, hivePos).distSqr(beePos));
+        return hivePos -> byRawDistance.applyAsDouble(transformer.nearestCopy(beePos, hivePos));
     }
 }
