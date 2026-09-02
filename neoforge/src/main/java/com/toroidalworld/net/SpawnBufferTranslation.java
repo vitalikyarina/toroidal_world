@@ -31,7 +31,7 @@ public final class SpawnBufferTranslation {
                 AdvancedAddEntityPayload.class, SpawnBufferTranslation::seated);
     }
 
-    private static CustomPacketPayload seated(AdvancedAddEntityPayload payload, TranslationContext context) {
+    static CustomPacketPayload seated(AdvancedAddEntityPayload payload, TranslationContext context) {
         Class<?> entityClass = context.entityClass().apply(payload.entityId());
         if (entityClass == null || !SpawnBufferFold.carriesPositions(entityClass)) {
             return payload;

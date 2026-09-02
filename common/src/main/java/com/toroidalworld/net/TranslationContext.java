@@ -40,7 +40,8 @@ public record TranslationContext(
         IntPredicate ownVehicle,
         IntFunction<@Nullable Vec3> entityPosition,
         IntFunction<@Nullable Class<?>> entityClass,
-        Runnable rebase) {
+        Runnable rebase,
+        PacketRewriters rewriters) {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -65,7 +66,8 @@ public record TranslationContext(
                 entityId -> isControlledVehicle(player, entityId),
                 entityId -> positionOf(player, entityId),
                 entityId -> classOf(player, entityId),
-                () -> WorldLoopAttachments.rebaseClientPositionOf(player));
+                () -> WorldLoopAttachments.rebaseClientPositionOf(player),
+                PacketTranslator.production());
     }
 
     private static int trackedViewDistanceOf(ServerPlayer player, WorldFold transformer) {

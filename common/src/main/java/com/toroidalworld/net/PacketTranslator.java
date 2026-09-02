@@ -1,7 +1,6 @@
 package com.toroidalworld.net;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -165,57 +164,30 @@ public final class PacketTranslator {
             Map.entry(ClientboundDamageEventPacket.class, rewriter(PacketTranslator::damageEvent)),
             Map.entry(ClientboundCustomPayloadPacket.class, rewriter(PacketTranslator::clientboundCustomPayload)));
 
-    private static final Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
-            CLIENTBOUND_PAYLOAD_REWRITERS = new HashMap<>();
+    private static final PacketRewriters PRODUCTION = new PacketRewriters();
 
-    private static final Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
-            SERVERBOUND_PAYLOAD_REWRITERS = new HashMap<>();
+    static PacketRewriters production() {
+        return PRODUCTION;
+    }
 
     public static <P extends CustomPacketPayload> void registerClientboundPayloadRewriter(Class<P> payloadType,
             BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
-        CLIENTBOUND_PAYLOAD_REWRITERS.put(payloadType, castingRewriter(payloadType, payloadRewriter));
+        PRODUCTION.registerClientboundPayload(payloadType, payloadRewriter);
     }
 
     public static <P extends CustomPacketPayload> void registerServerboundPayloadRewriter(Class<P> payloadType,
             BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
-        SERVERBOUND_PAYLOAD_REWRITERS.put(payloadType, castingRewriter(payloadType, payloadRewriter));
+        PRODUCTION.registerServerboundPayload(payloadType, payloadRewriter);
     }
-
-    private static <P extends CustomPacketPayload> BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>
-            castingRewriter(Class<P> payloadType, BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
-        return (payload, context) -> payloadRewriter.apply(payloadType.cast(payload), context);
-    }
-
-    public interface ParticleRewriter<P extends ParticleOptions> {
-        ParticleOptions rewrite(P particle, TranslationContext context, Vec3 clientOrigin);
-    }
-
-    private static final Map<Class<?>, ParticleRewriter<ParticleOptions>> PARTICLE_REWRITERS = new HashMap<>();
 
     public static <P extends ParticleOptions> void registerParticleRewriter(Class<P> particleType,
-            ParticleRewriter<P> particleRewriter) {
-        PARTICLE_REWRITERS.put(particleType,
-                (particle, context, clientOrigin) -> particleRewriter.rewrite(particleType.cast(particle), context, clientOrigin));
+            PacketRewriters.ParticleRewriter<P> particleRewriter) {
+        PRODUCTION.registerParticle(particleType, particleRewriter);
     }
 
-    private static @Nullable ParticleRewriter<ParticleOptions> particleRewriterFor(ParticleOptions particle) {
-        return PARTICLE_REWRITERS.get(particle.getClass());
-    }
-
-    public interface EntityDataRewriter<T> {
-        T rewrite(T value, TranslationContext context, Vec3 anchor);
-    }
-
-    private static final Map<EntityDataSerializer<?>, EntityDataRewriter<Object>> DATA_REWRITERS = new HashMap<>();
-
-    @SuppressWarnings("unchecked")
     public static <T> void registerEntityDataRewriter(EntityDataSerializer<T> serializer,
-            EntityDataRewriter<T> dataRewriter) {
-        DATA_REWRITERS.put(serializer, (value, context, anchor) -> dataRewriter.rewrite((T) value, context, anchor));
-    }
-
-    private static @Nullable EntityDataRewriter<Object> dataRewriterFor(SynchedEntityData.DataValue<?> item) {
-        return DATA_REWRITERS.get(item.serializer());
+            PacketRewriters.EntityDataRewriter<T> dataRewriter) {
+        PRODUCTION.registerEntityData(serializer, dataRewriter);
     }
 
     private static final Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> TO_SERVER = Map.ofEntries(
@@ -345,21 +317,13 @@ public final class PacketTranslator {
     }
 
     private static Packet<?> clientboundCustomPayload(ClientboundCustomPayloadPacket packet, TranslationContext context) {
-        CustomPacketPayload rewritten = rewritePayload(CLIENTBOUND_PAYLOAD_REWRITERS, packet.payload(), context);
+        CustomPacketPayload rewritten = context.rewriters().rewriteClientbound(packet.payload(), context);
         return rewritten == packet.payload() ? packet : new ClientboundCustomPayloadPacket(rewritten);
     }
 
     private static Packet<?> serverboundCustomPayload(ServerboundCustomPayloadPacket packet, TranslationContext context) {
-        CustomPacketPayload rewritten = rewritePayload(SERVERBOUND_PAYLOAD_REWRITERS, packet.payload(), context);
+        CustomPacketPayload rewritten = context.rewriters().rewriteServerbound(packet.payload(), context);
         return rewritten == packet.payload() ? packet : new ServerboundCustomPayloadPacket(rewritten);
-    }
-
-    private static CustomPacketPayload rewritePayload(
-            Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>> rewriters,
-            CustomPacketPayload payload, TranslationContext context) {
-        BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload> payloadRewriter =
-                rewriters.get(payload.getClass());
-        return payloadRewriter == null ? payload : payloadRewriter.apply(payload, context);
     }
 
     private static ClientboundPlayerPositionPacket playerPosition(ClientboundPlayerPositionPacket packet, TranslationContext context) {
@@ -511,7 +475,7 @@ public final class PacketTranslator {
 
     private static SynchedEntityData.DataValue<?> toClientData(SynchedEntityData.DataValue<?> item,
             Supplier<Vec3> anchor, TranslationContext context) {
-        EntityDataRewriter<Object> dataRewriter = dataRewriterFor(item);
+        PacketRewriters.EntityDataRewriter<Object> dataRewriter = context.rewriters().entityDataFor(item);
         if (dataRewriter != null) {
             Object rewritten = dataRewriter.rewrite(item.value(), context, anchor.get());
             return rewritten == item.value() ? item : withValue(item, rewritten);
@@ -641,7 +605,7 @@ public final class PacketTranslator {
                         new BlockPositionSource(clientDestination), vibration.getArrivalInTicks());
             }
             default -> {
-                ParticleRewriter<ParticleOptions> particleRewriter = particleRewriterFor(particle);
+                PacketRewriters.ParticleRewriter<ParticleOptions> particleRewriter = context.rewriters().particleFor(particle);
                 return particleRewriter == null ? particle : particleRewriter.rewrite(particle, context, clientOrigin);
             }
         }

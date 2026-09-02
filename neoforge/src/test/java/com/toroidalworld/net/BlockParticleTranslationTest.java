@@ -6,7 +6,7 @@ import static com.toroidalworld.net.PacketTranslatorFixture.CLIENT_Z;
 import static com.toroidalworld.net.PacketTranslatorFixture.SERVER_BLOCK;
 import static com.toroidalworld.net.PacketTranslatorFixture.SERVER_X;
 import static com.toroidalworld.net.PacketTranslatorFixture.SERVER_Z;
-import static com.toroidalworld.net.PacketTranslatorFixture.context;
+import static com.toroidalworld.net.PacketTranslatorFixture.productionContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -32,7 +32,7 @@ class BlockParticleTranslationTest {
                 new ClientboundLevelParticlesPacket(
                         new BlockParticleOption(ParticleTypes.BLOCK, state).setPos(SERVER_BLOCK), false,
                         SERVER_X, 64.0, SERVER_Z, 0.0F, 0.0F, 0.0F, 0.0F, 1),
-                context());
+                productionContext());
 
         BlockParticleOption block = (BlockParticleOption) translated.getParticle();
         assertEquals(CLIENT_BLOCK, block.getPos());
@@ -49,7 +49,7 @@ class BlockParticleTranslationTest {
                         new BlockParticleOption(ParticleTypes.BLOCK, state).setPos(SERVER_BLOCK),
                         new BlockParticleOption(ParticleTypes.BLOCK, state).setPos(SERVER_BLOCK),
                         SoundEvents.GENERIC_EXPLODE),
-                context());
+                productionContext());
 
         assertEquals(CLIENT_X, translated.getX());
         assertEquals(CLIENT_Z, translated.getZ());

@@ -59,8 +59,10 @@ final class PacketTranslatorFixture {
     static final EntityDataSerializer<Vec3> UNFOLDED_POSITION_SERIALIZER =
             EntityDataSerializer.forValueType(POSITION_CODEC);
 
+    static final PacketRewriters REWRITERS = new PacketRewriters();
+
     static {
-        PacketTranslator.registerEntityDataRewriter(FOLDED_POSITION_SERIALIZER,
+        REWRITERS.registerEntityData(FOLDED_POSITION_SERIALIZER,
                 (position, context, anchor) -> context.transformer().nearestCopy(anchor, position));
     }
 
@@ -79,10 +81,19 @@ final class PacketTranslatorFixture {
 
     static TranslationContext context(IntPredicate ownVehicle, IntFunction<Vec3> entityPosition,
             IntFunction<Class<?>> entityClass) {
+        return context(ownVehicle, entityPosition, entityClass, REWRITERS);
+    }
+
+    static TranslationContext productionContext() {
+        return context(entityId -> false, entityId -> null, entityId -> null, PacketTranslator.production());
+    }
+
+    static TranslationContext context(IntPredicate ownVehicle, IntFunction<Vec3> entityPosition,
+            IntFunction<Class<?>> entityClass, PacketRewriters rewriters) {
         ClientPosition mirror = new ClientPosition();
         mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, TRANSFORMER);
         return new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS, Level.OVERWORLD,
-                VIEW_DISTANCE, VIEW_DISTANCE, ownVehicle, entityPosition, entityClass, () -> {});
+                VIEW_DISTANCE, VIEW_DISTANCE, ownVehicle, entityPosition, entityClass, () -> {}, rewriters);
     }
 
     private PacketTranslatorFixture() {
