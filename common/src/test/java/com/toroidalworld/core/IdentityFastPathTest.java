@@ -148,6 +148,24 @@ class IdentityFastPathTest {
     }
 
     @Test
+    void theFoldTransformationSeatsThePositionAndStandsDownInsideTheBounds() {
+        forEach(FOLDS, (fold, random) -> {
+            Vec3 vec = sampleVec(random, fold);
+            DeckTransformation lap = fold.foldTransformation(vec);
+
+            assertEquals(fold.fold(vec), lap.apply(vec),
+                    () -> "foldTransformation(" + vec + ").apply is not fold(" + vec + ") " + in(fold));
+
+            if (!fold.isOver(vec)) {
+                assertSame(DeckTransformation.IDENTITY, lap,
+                        () -> "foldTransformation(" + vec + ") allocated an identity " + in(fold));
+                assertSame(vec, lap.apply(vec),
+                        () -> "foldTransformation(" + vec + ").apply rebuilt its argument " + in(fold));
+            }
+        });
+    }
+
+    @Test
     void vectorFoldKeepsItsValueAndReturnsAnInBoundsArgumentUntouched() {
         forEach(FOLDS, (fold, random) -> {
             Vec3 vec = sampleVec(random, fold);

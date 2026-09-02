@@ -14,6 +14,8 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.toroidalworld.compat.create.CarriageEntityFrame;
 import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.core.DeckTransformation;
+import com.toroidalworld.core.SeamTransform;
 import com.toroidalworld.player.SeamSnap;
 
 import net.minecraft.server.level.ServerLevel;
@@ -154,8 +156,10 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
         }
 
         Vec3 shift = renamed.subtract(standing);
+        DeckTransformation lap = new DeckTransformation(
+                SeamTransform.translation((int) Math.round(shift.x), (int) Math.round(shift.z)));
         for (Entity passenger : carriage.getPassengers()) {
-            SeamSnap.withPassengers(passenger, shift);
+            SeamSnap.withPassengers(passenger, lap);
         }
 
         if (carriage instanceof ContraptionColliderAccessor colliders) {
@@ -164,7 +168,7 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
                     continue;
                 }
 
-                SeamSnap.withPassengers(aboard, shift);
+                SeamSnap.withPassengers(aboard, lap);
             }
         }
     }

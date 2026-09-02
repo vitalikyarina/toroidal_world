@@ -80,6 +80,8 @@ public interface WorldFold {
 
     Folded<BlockPos> nearestCopyOriented(BlockPos ref, BlockPos target);
 
+    DeckTransformation foldTransformation(Vec3 pos);
+
     DeckTransformation deckTransformation(ChunkPos chunk, ChunkPos copy);
 
     BlockPos reseat(BlockPos pos, ChunkPos copy);

@@ -689,6 +689,39 @@ class DeckGroupFoldMatrixTest {
         }
 
         @Test
+        void theFoldTransformationCarriesTheOrientationAndSeatsThePosition() {
+            for (Case testCase : cases()) {
+                DeckGroupFold fold = testCase.fold();
+                Random random = new Random(SEED + 9);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    Vec3 pos = new Vec3(sample(random) + 0.5, 64.0, sample(random) + 0.5);
+                    DeckTransformation lap = fold.foldTransformation(pos);
+                    Folded<Vec3> folded = fold.foldOriented(pos);
+
+                    assertEquals(folded.orientation(), lap.orientation(),
+                            testCase.name() + ": the transformation dropped the orientation of " + pos);
+                    assertEquals(folded.value(), lap.apply(pos),
+                            testCase.name() + ": applying the transformation did not seat " + pos);
+                }
+            }
+        }
+
+        @Test
+        void aMirroredShapeReportsTheMirrorOnTheTransformationToo() {
+            for (Case testCase : mirroredCases()) {
+                DeckGroupFold fold = testCase.fold();
+                boolean sawMirror = false;
+                Random random = new Random(SEED + 9);
+                for (int sample = 0; sample < SAMPLES && !sawMirror; sample++) {
+                    Vec3 pos = new Vec3(sample(random) + 0.5, 64.0, sample(random) + 0.5);
+                    sawMirror = fold.foldTransformation(pos).orientation() == testCase.group().mirrorOrientation();
+                }
+
+                assertTrue(sawMirror, testCase.name() + ": no sample ever folded through the mirror");
+            }
+        }
+
+        @Test
         void aDoubleMirrorKeepsHandednessAndComposesAwayToTheIdentity() {
             assertTrue(FoldOrientation.HALF_TURN.preservesHandedness(), "a half turn reverses handedness");
             assertFalse(FoldOrientation.MIRROR_X.preservesHandedness(), "a single mirror keeps handedness");
