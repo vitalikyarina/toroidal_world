@@ -961,6 +961,45 @@ class PacketTranslatorTest {
         }
 
         @Test
+        void useItemOnMirrorsTheHitOffsetAndFaceAcrossAGlide() {
+            Vec3 location = Vec3.atLowerCornerOf(CLIENT_BLOCK).add(0.3, 0.5, 0.75);
+            BlockHitResult hit = new BlockHitResult(location, Direction.NORTH, CLIENT_BLOCK, false);
+
+            ServerboundUseItemOnPacket translated = (ServerboundUseItemOnPacket) PacketTranslator.toServer(
+                    new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, hit, 4), mirroredContext());
+
+            BlockHitResult translatedHit = translated.getHitResult();
+            assertEquals(MIRRORED_SERVER_BLOCK, translatedHit.getBlockPos());
+            Vec3 expected = Vec3.atLowerCornerOf(MIRRORED_SERVER_BLOCK).add(0.3, 0.5, 0.25);
+            assertEquals(expected.x, translatedHit.getLocation().x, 1.0e-9);
+            assertEquals(expected.y, translatedHit.getLocation().y, 1.0e-9);
+            assertEquals(expected.z, translatedHit.getLocation().z, 1.0e-9);
+            assertEquals(Direction.SOUTH, translatedHit.getDirection());
+        }
+
+        @Test
+        void playerActionMirrorsItsFaceAcrossAGlide() {
+            ServerboundPlayerActionPacket translated = (ServerboundPlayerActionPacket) PacketTranslator.toServer(
+                    new ServerboundPlayerActionPacket(
+                            ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, CLIENT_BLOCK, Direction.NORTH, 3),
+                    mirroredContext());
+
+            assertEquals(MIRRORED_SERVER_BLOCK, translated.getPos());
+            assertEquals(Direction.SOUTH, translated.getDirection());
+            assertEquals(3, translated.getSequence());
+        }
+
+        @Test
+        void playerActionKeepsAFaceTheGlideDoesNotTurn() {
+            ServerboundPlayerActionPacket translated = (ServerboundPlayerActionPacket) PacketTranslator.toServer(
+                    new ServerboundPlayerActionPacket(
+                            ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, CLIENT_BLOCK, Direction.UP, 3),
+                    mirroredContext());
+
+            assertEquals(Direction.UP, translated.getDirection());
+        }
+
+        @Test
         void pickItemFromBlockReturnsToTheServerFrame() {
             ServerboundPickItemFromBlockPacket translated = (ServerboundPickItemFromBlockPacket) PacketTranslator.toServer(
                     new ServerboundPickItemFromBlockPacket(CLIENT_BLOCK, true), context());
