@@ -1,11 +1,12 @@
 package com.toroidalworld.shape;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.gen.ShapedDimensions;
+import com.toroidalworld.registry.StartupRegistry;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
@@ -23,18 +24,19 @@ public final class WorldShapes {
             Component.translatable(NORMAL_HINT_KEY),
             (registries, dimensions) -> dimensions);
 
-    private static final List<WorldShape> SHAPES = new ArrayList<>(List.of(NORMAL));
+    private static final StartupRegistry<Identifier, WorldShape> SHAPES = new StartupRegistry<>("World shapes");
 
     private static WorldShape selected = NORMAL;
 
     public static void register(WorldShape shape) {
-        SHAPES.add(shape);
+        SHAPES.register(shape.id(), shape);
     }
 
     public static List<WorldShape> shapes() {
-        return SHAPES.stream()
-                .sorted(Comparator.comparing((WorldShape shape) -> shape != NORMAL)
-                        .thenComparing(shape -> shape.id().toString()))
+        return Stream.concat(
+                Stream.of(NORMAL),
+                SHAPES.entries().values().stream()
+                        .sorted(Comparator.comparing((WorldShape shape) -> shape.id().toString())))
                 .toList();
     }
 
@@ -48,7 +50,7 @@ public final class WorldShapes {
 
     public static void resetToDefault() {
         selected = NORMAL;
-        SHAPES.forEach(shape -> shape.resetSettings().run());
+        shapes().forEach(shape -> shape.resetSettings().run());
     }
 
     public static void restoreFromExisting(RegistryAccess.Frozen registries, WorldDimensions dimensions) {

@@ -27,6 +27,7 @@ import com.toroidalworld.mixin.Vec3iWaypointAccessor;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
 import com.toroidalworld.player.MirrorWriter;
+import com.toroidalworld.registry.StartupRegistry;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -174,12 +175,6 @@ public final class PacketTranslator {
 
     private static @Nullable ParticleRewriter<ParticleOptions> particleRewriterFor(ParticleOptions particle) {
         return PARTICLE_REWRITERS.entries().get(particle.getClass());
-    }
-
-    public static void closeRewriters() {
-        CLIENTBOUND_PAYLOAD_REWRITERS.close();
-        SERVERBOUND_PAYLOAD_REWRITERS.close();
-        PARTICLE_REWRITERS.close();
     }
 
     private static final Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> TO_SERVER = Map.ofEntries(
