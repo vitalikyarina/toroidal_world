@@ -13,10 +13,10 @@ public final class C2meFoldedNoiseLoop {
     // A null axis array means C2ME const-eliminated that input; its value is the paired constant.
     public static void fill(WorldFold transformer, SlotAxes axes, DensityFunction.NoiseHolder noise,
             double[] res, double @Nullable [] xs, double xConst, double @Nullable [] ys, double yConst,
-            double @Nullable [] zs, double zConst, double horizontalScale) {
+            double @Nullable [] zs, double zConst, double horizontalScale, double verticalShare) {
         Context context = GenerationTransformerContext.context();
 
-        try (Context.BindingScope bindingScope = context.bind(transformer, axes, horizontalScale)) {
+        try (Context.BindingScope bindingScope = context.bind(transformer, axes, horizontalScale, verticalShare)) {
             for (int i = 0; i < res.length; i++) {
                 double x = xs != null ? xs[i] : xConst;
                 double y = ys != null ? ys[i] : yConst;

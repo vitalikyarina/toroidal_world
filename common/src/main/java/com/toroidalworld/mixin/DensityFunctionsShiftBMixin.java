@@ -29,7 +29,7 @@ public class DensityFunctionsShiftBMixin {
         }
 
         try (Context.BindingScope bindingScope = generation.bind(transformer, DensityFunctionSlotAxes.SHIFT_B,
-                NoiseConstants.SHIFT_SCALE)) {
+                NoiseConstants.SHIFT_SCALE, GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE)) {
             return this.offsetNoise.getValue(context.blockZ(), context.blockX(), 0.0)
                     * NoiseConstants.SHIFT_AMPLITUDE;
         }

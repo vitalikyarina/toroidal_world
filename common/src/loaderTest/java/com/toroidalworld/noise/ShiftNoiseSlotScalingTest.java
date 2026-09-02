@@ -82,7 +82,8 @@ class ShiftNoiseSlotScalingTest {
     private static double folded(SlotAxes axes, double x, double y, double z) {
         Context generation = GenerationTransformerContext.context();
 
-        try (Context.BindingScope bindingScope = generation.bind(SQUARE, axes, generation.horizontalScale())) {
+        try (Context.BindingScope bindingScope = generation.bind(SQUARE, axes, generation.horizontalScale(),
+                GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE)) {
             return SHIFT_NOISE.compute(x, y, z);
         }
     }
@@ -90,7 +91,8 @@ class ShiftNoiseSlotScalingTest {
     private static double reference(SlotAxes axes, double x, double y, double z) {
         Context generation = GenerationTransformerContext.context();
 
-        try (Context.BindingScope bindingScope = generation.bind(SQUARE, axes, generation.horizontalScale())) {
+        try (Context.BindingScope bindingScope = generation.bind(SQUARE, axes, generation.horizontalScale(),
+                GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE)) {
             return ContextScaledNoise.sample(generation, NOISE, x, y, z, NoiseConstants.SHIFT_SCALE)
                     * NoiseConstants.SHIFT_AMPLITUDE;
         }

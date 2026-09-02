@@ -64,19 +64,23 @@ public final class C2meDfcAst {
 
     private static @Nullable Fold foldOf(DensityFunction source) {
         return switch (source) {
-            case DensityFunctions.Noise noise -> new Fold(SlotAxes.DEFAULT, horizontalScale(noise), false);
-            case DensityFunctions.ShiftedNoise shifted -> new Fold(SlotAxes.DEFAULT, shifted.xzScale(), false);
-            case DensityFunctions.Shift shift -> new Fold(SlotAxes.DEFAULT, NoiseConstants.SHIFT_SCALE, true);
-            case DensityFunctions.ShiftA shiftA -> new Fold(SlotAxes.DEFAULT, NoiseConstants.SHIFT_SCALE, true);
-            case DensityFunctions.ShiftB shiftB ->
-                    new Fold(DensityFunctionSlotAxes.SHIFT_B, NoiseConstants.SHIFT_SCALE, true);
+            case DensityFunctions.Noise noise -> noiseFold(noise);
+            case DensityFunctions.ShiftedNoise shifted -> new Fold(SlotAxes.DEFAULT, shifted.xzScale(),
+                    GenerationTransformerContext.verticalShare(shifted.xzScale(), shifted.yScale()), false);
+            case DensityFunctions.Shift shift -> new Fold(SlotAxes.DEFAULT, NoiseConstants.SHIFT_SCALE,
+                    GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE, true);
+            case DensityFunctions.ShiftA shiftA -> new Fold(SlotAxes.DEFAULT, NoiseConstants.SHIFT_SCALE,
+                    GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE, true);
+            case DensityFunctions.ShiftB shiftB -> new Fold(DensityFunctionSlotAxes.SHIFT_B, NoiseConstants.SHIFT_SCALE,
+                    GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE, true);
             default -> null;
         };
     }
 
     @SuppressWarnings("deprecation")
-    private static double horizontalScale(DensityFunctions.Noise noise) {
-        return noise.xzScale();
+    private static Fold noiseFold(DensityFunctions.Noise noise) {
+        return new Fold(SlotAxes.DEFAULT, noise.xzScale(),
+                GenerationTransformerContext.verticalShare(noise.xzScale(), noise.yScale()), false);
     }
 
     private static AstNode foldNoise(GenericShiftedNoiseNode noise, Fold fold, WorldFold transformer) {
@@ -84,7 +88,7 @@ public final class C2meDfcAst {
 
         return new C2meFoldedNoiseNode(noise.inputX, noise.inputY, noise.inputZ, noise.noise,
                 slotNode(axes.x(), noise.inputX), slotNode(axes.y(), noise.inputY), slotNode(axes.z(), noise.inputZ),
-                axes, fold.horizontalScale(), transformer);
+                axes, fold.horizontalScale(), fold.verticalShare(), transformer);
     }
 
     private static AstNode slotNode(SlotAxis axis, AstNode ownInput) {
@@ -101,7 +105,7 @@ public final class C2meDfcAst {
                 + " — C2ME no longer compiles this function to the node the toroidal fold replaces");
     }
 
-    private record Fold(SlotAxes axes, double horizontalScale, boolean amplified) {
+    private record Fold(SlotAxes axes, double horizontalScale, double verticalShare, boolean amplified) {
     }
 
     private C2meDfcAst() {
