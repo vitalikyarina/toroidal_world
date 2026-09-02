@@ -20,17 +20,20 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
 
     public final double horizontalScale;
 
+    public final double verticalShare;
+
     public final WorldFold transformer;
 
     public C2meFoldedNoiseNode(AstNode inputX, AstNode inputY, AstNode inputZ, DensityFunction.NoiseHolder noise,
             AstNode foldedX, AstNode foldedY, AstNode foldedZ, SlotAxes slotAxes,
-            double horizontalScale, WorldFold transformer) {
+            double horizontalScale, double verticalShare, WorldFold transformer) {
         super(inputX, inputY, inputZ, noise);
         this.foldedX = Objects.requireNonNull(foldedX);
         this.foldedY = Objects.requireNonNull(foldedY);
         this.foldedZ = Objects.requireNonNull(foldedZ);
         this.slotAxes = Objects.requireNonNull(slotAxes);
         this.horizontalScale = horizontalScale;
+        this.verticalShare = verticalShare;
         this.transformer = Objects.requireNonNull(transformer);
     }
 
@@ -58,7 +61,7 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
                 ? this
                 : new C2meFoldedNoiseNode(transformedInputX, transformedInputY, transformedInputZ, this.noise,
                         transformedFoldedX, transformedFoldedY, transformedFoldedZ, this.slotAxes,
-                        this.horizontalScale, this.transformer));
+                        this.horizontalScale, this.verticalShare, this.transformer));
     }
 
     @Override
@@ -69,6 +72,7 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
 
         C2meFoldedNoiseNode that = (C2meFoldedNoiseNode) o;
         return Double.compare(this.horizontalScale, that.horizontalScale) == 0
+                && Double.compare(this.verticalShare, that.verticalShare) == 0
                 && this.transformer == that.transformer
                 && this.slotAxes.equals(that.slotAxes)
                 && this.foldedX.equals(that.foldedX)
@@ -84,6 +88,7 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
         result = 31 * result + this.foldedZ.hashCode();
         result = 31 * result + this.slotAxes.hashCode();
         result = 31 * result + Double.hashCode(this.horizontalScale);
+        result = 31 * result + Double.hashCode(this.verticalShare);
         return 31 * result + System.identityHashCode(this.transformer);
     }
 
@@ -95,6 +100,7 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
 
         C2meFoldedNoiseNode that = (C2meFoldedNoiseNode) o;
         return Double.compare(this.horizontalScale, that.horizontalScale) == 0
+                && Double.compare(this.verticalShare, that.verticalShare) == 0
                 && this.transformer == that.transformer
                 && this.slotAxes.equals(that.slotAxes)
                 && this.foldedX.relaxedEquals(that.foldedX)
@@ -110,6 +116,7 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
         result = 31 * result + this.foldedZ.relaxedHashCode();
         result = 31 * result + this.slotAxes.hashCode();
         result = 31 * result + Double.hashCode(this.horizontalScale);
+        result = 31 * result + Double.hashCode(this.verticalShare);
         return 31 * result + System.identityHashCode(this.transformer);
     }
 }

@@ -33,11 +33,8 @@ public class DensityFunctionsNoiseMixin {
             return original.call(context);
         }
 
-        double verticalShare = this.xzScale == 0.0 ? GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE
-                : this.yScale / this.xzScale;
-
         return ContextScaledNoise.sample(generation, this.noise,
                 context.blockX(), context.blockY() * this.yScale, context.blockZ(), this.xzScale,
-                verticalShare);
+                GenerationTransformerContext.verticalShare(this.xzScale, this.yScale));
     }
 }
