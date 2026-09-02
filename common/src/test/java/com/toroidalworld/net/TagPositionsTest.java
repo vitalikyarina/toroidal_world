@@ -45,6 +45,12 @@ class TagPositionsTest {
     private static final class AnchoredSubject implements Anchored {
     }
 
+    private static class Hung {
+    }
+
+    private static final class HungSubject extends Hung {
+    }
+
     private static final class PackedSubject {
     }
 
@@ -230,6 +236,34 @@ class TagPositionsTest {
 
             assertEquals(new BlockPos(7, 102, 0), NbtUtils.readBlockPos(seated, BLOCK_POS_KEY).orElseThrow());
             assertEquals(new BlockPos(3, 102, 0), BlockPos.of(seated.getLong(PACKED_KEY)));
+        }
+
+        @Test
+        void aTypeCarriesTheKeysRegisteredOnItsSuperclass() {
+            TagPositions.Table table = new TagPositions.Table();
+            table.register(Hung.class, TagPositions.PositionShape.BLOCK_POS, BLOCK_POS_KEY);
+
+            CompoundTag tag = new CompoundTag();
+            tag.put(BLOCK_POS_KEY, NbtUtils.writeBlockPos(new BlockPos(7 + LAP_BLOCKS, 102, 0)));
+
+            CompoundTag seated = table.seatedIn(new HomeLap(), HungSubject.class, tag);
+
+            assertTrue(table.carriesPositions(HungSubject.class));
+            assertEquals(new BlockPos(7, 102, 0), NbtUtils.readBlockPos(seated, BLOCK_POS_KEY).orElseThrow());
+        }
+
+        @Test
+        void anIntTripleRegisteredOnASuperclassSeatsTheSubclassTag() {
+            TagPositions.Table table = new TagPositions.Table();
+            table.register(Hung.class, TagPositions.PositionShape.BLOCK_INT_TRIPLE,
+                    TILE_X_KEY, TILE_Y_KEY, TILE_Z_KEY);
+
+            CompoundTag tag = new CompoundTag();
+            putTriple(tag, new BlockPos(11 + LAP_BLOCKS, 102, 0));
+
+            CompoundTag seated = table.seatedIn(new HomeLap(), HungSubject.class, tag);
+
+            assertEquals(new BlockPos(11, 102, 0), tripleIn(seated));
         }
 
         @Test
