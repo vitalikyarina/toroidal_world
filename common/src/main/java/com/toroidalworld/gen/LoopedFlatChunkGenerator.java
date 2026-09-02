@@ -41,6 +41,11 @@ public class LoopedFlatChunkGenerator extends FlatLevelSource implements ShapedC
     }
 
     @Override
+    public ChunkGenerator unshaped() {
+        return new FlatLevelSource(settings());
+    }
+
+    @Override
     public ChunkGeneratorStructureState createState(HolderLookup<StructureSet> structureSets, RandomState randomState,
             long legacyLevelSeed) {
         return stampTransformer(super.createState(structureSets, randomState, legacyLevelSeed));

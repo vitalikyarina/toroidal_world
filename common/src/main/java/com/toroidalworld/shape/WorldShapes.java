@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.toroidalworld.ToroidalWorld;
+import com.toroidalworld.gen.ShapedDimensions;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
@@ -60,7 +61,7 @@ public final class WorldShapes {
     }
 
     public static WorldDimensions applyAtCreation(RegistryAccess.Frozen registries, WorldDimensions dimensions) {
-        return selected.atCreation().apply(registries, dimensions);
+        return selected.atCreation().apply(registries, ShapedDimensions.stripShapes(dimensions));
     }
 
     private WorldShapes() {
