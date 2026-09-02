@@ -30,11 +30,12 @@ public final class SyncedTagFold {
             return tag;
         }
 
-        return seatedIn(clientTransformer, viewer, blockEntity.getClass(), tag);
+        return seatedIn(TABLE, clientTransformer, viewer, blockEntity.getClass(), tag);
     }
 
-    static CompoundTag seatedIn(WorldFold fold, BlockPos anchor, Class<?> blockEntityType, CompoundTag tag) {
-        return TABLE.seatedIn(around(fold, anchor), blockEntityType, tag);
+    static CompoundTag seatedIn(TagPositions.Table table, WorldFold fold, BlockPos anchor,
+            Class<?> blockEntityType, CompoundTag tag) {
+        return table.seatedIn(around(fold, anchor), blockEntityType, tag);
     }
 
     private static TagPositions.Seat around(WorldFold fold, BlockPos anchor) {

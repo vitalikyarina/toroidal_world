@@ -1,6 +1,7 @@
 package com.toroidalworld.net;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -8,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import net.minecraft.core.BlockPos;
@@ -36,6 +38,18 @@ class TagPositionsTest {
             new TagPositions.TagPosition(List.of(VEC3_KEY), TagPositions.PositionShape.VEC3_LIST),
             new TagPositions.TagPosition(List.of(TILE_X_KEY, TILE_Y_KEY, TILE_Z_KEY),
                     TagPositions.PositionShape.BLOCK_INT_TRIPLE));
+
+    private interface Anchored {
+    }
+
+    private static final class AnchoredSubject implements Anchored {
+    }
+
+    private static final class PackedSubject {
+    }
+
+    private static final class UnregisteredSubject {
+    }
 
     private static final class HomeLap implements TagPositions.Seat {
         private final List<String> overloads = new ArrayList<>();
@@ -198,5 +212,89 @@ class TagPositionsTest {
         tag.putLong(PACKED_KEY, new BlockPos(3 + LAP_BLOCKS, 102, 0).asLong());
 
         assertSame(tag, TagPositions.seatedIn(new HomeLap(), List.of(), tag));
+    }
+
+    @Nested
+    class Tables {
+        @Test
+        void aTypeCarriesTheKeysRegisteredOnItAndOnEverySupertype() {
+            TagPositions.Table table = new TagPositions.Table();
+            table.register(Anchored.class, TagPositions.PositionShape.BLOCK_POS, BLOCK_POS_KEY);
+            table.register(AnchoredSubject.class, TagPositions.PositionShape.PACKED_LONG, PACKED_KEY);
+
+            CompoundTag tag = new CompoundTag();
+            tag.put(BLOCK_POS_KEY, NbtUtils.writeBlockPos(new BlockPos(7 + LAP_BLOCKS, 102, 0)));
+            tag.putLong(PACKED_KEY, new BlockPos(3 + LAP_BLOCKS, 102, 0).asLong());
+
+            CompoundTag seated = table.seatedIn(new HomeLap(), AnchoredSubject.class, tag);
+
+            assertEquals(new BlockPos(7, 102, 0), NbtUtils.readBlockPos(seated, BLOCK_POS_KEY).orElseThrow());
+            assertEquals(new BlockPos(3, 102, 0), BlockPos.of(seated.getLong(PACKED_KEY)));
+        }
+
+        @Test
+        void registeringATypeAgainKeepsTheKeysItAlreadyCarried() {
+            TagPositions.Table table = new TagPositions.Table();
+            table.register(PackedSubject.class, TagPositions.PositionShape.PACKED_LONG, PACKED_KEY);
+            table.register(PackedSubject.class, TagPositions.PositionShape.VEC3_LIST, VEC3_KEY);
+
+            CompoundTag tag = new CompoundTag();
+            tag.putLong(PACKED_KEY, new BlockPos(3 + LAP_BLOCKS, 102, 0).asLong());
+            tag.put(VEC3_KEY, doubleList(0.5 + LAP_BLOCKS, 0.5, 0.5));
+
+            CompoundTag seated = table.seatedIn(new HomeLap(), PackedSubject.class, tag);
+
+            assertEquals(new BlockPos(3, 102, 0), BlockPos.of(seated.getLong(PACKED_KEY)));
+            assertEquals(new Vec3(0.5, 0.5, 0.5), vec3In(seated, VEC3_KEY));
+        }
+
+        @Test
+        void aRegistrationMadeAfterAFirstReadReachesTheNextOne() {
+            TagPositions.Table table = new TagPositions.Table();
+            table.register(PackedSubject.class, TagPositions.PositionShape.PACKED_LONG, PACKED_KEY);
+
+            CompoundTag read = new CompoundTag();
+            read.put(VEC3_KEY, doubleList(0.5 + LAP_BLOCKS, 0.5, 0.5));
+            assertSame(read, table.seatedIn(new HomeLap(), PackedSubject.class, read));
+
+            table.register(PackedSubject.class, TagPositions.PositionShape.VEC3_LIST, VEC3_KEY);
+            CompoundTag seated = table.seatedIn(new HomeLap(), PackedSubject.class, read);
+
+            assertEquals(new Vec3(0.5, 0.5, 0.5), vec3In(seated, VEC3_KEY));
+        }
+
+        @Test
+        void aTypeNobodyRegisteredCarriesNothingAndGetsItsTagBack() {
+            TagPositions.Table table = new TagPositions.Table();
+            table.register(PackedSubject.class, TagPositions.PositionShape.PACKED_LONG, PACKED_KEY);
+
+            CompoundTag tag = new CompoundTag();
+            tag.putLong(PACKED_KEY, new BlockPos(3 + LAP_BLOCKS, 102, 0).asLong());
+
+            assertTrue(table.carriesPositions(PackedSubject.class));
+            assertFalse(table.carriesPositions(UnregisteredSubject.class));
+            assertSame(tag, table.seatedIn(new HomeLap(), UnregisteredSubject.class, tag));
+        }
+
+        @Test
+        void aKeyCountThatDoesNotFillTheShapeIsRefused() {
+            TagPositions.Table table = new TagPositions.Table();
+
+            assertThrows(IllegalArgumentException.class, () -> table.register(
+                    PackedSubject.class, TagPositions.PositionShape.BLOCK_INT_TRIPLE, TILE_X_KEY, TILE_Y_KEY));
+            assertThrows(IllegalArgumentException.class, () -> table.register(
+                    PackedSubject.class, TagPositions.PositionShape.PACKED_LONG));
+        }
+
+        @Test
+        void oneTableKnowsNothingOfWhatAnotherWasGiven() {
+            TagPositions.Table registeredInto = new TagPositions.Table();
+            TagPositions.Table untouched = new TagPositions.Table();
+
+            registeredInto.register(PackedSubject.class, TagPositions.PositionShape.PACKED_LONG, PACKED_KEY);
+
+            assertTrue(registeredInto.carriesPositions(PackedSubject.class));
+            assertFalse(untouched.carriesPositions(PackedSubject.class));
+        }
     }
 }

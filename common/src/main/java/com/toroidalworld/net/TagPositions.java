@@ -121,7 +121,7 @@ public final class TagPositions {
 
     public static final class Table {
         private final Map<Class<?>, List<TagPosition>> registered = new ConcurrentHashMap<>();
-        private final Map<Class<?>, List<TagPosition>> resolved = new ConcurrentHashMap<>();
+        private volatile Map<Class<?>, List<TagPosition>> resolved = new ConcurrentHashMap<>();
 
         public void register(Class<?> subjectType, PositionShape shape, String... keys) {
             int keyCount = shape.keyCount();
@@ -130,12 +130,13 @@ public final class TagPositions {
                         + keys.length + " were registered on " + subjectType.getName());
             }
 
-            List<TagPosition> positions = registered.computeIfAbsent(subjectType, type -> new ArrayList<>());
+            List<TagPosition> added = new ArrayList<>();
             for (int index = 0; index < keys.length; index += keyCount) {
-                positions.add(new TagPosition(Arrays.asList(keys).subList(index, index + keyCount), shape));
+                added.add(new TagPosition(Arrays.asList(keys).subList(index, index + keyCount), shape));
             }
 
-            resolved.clear();
+            registered.merge(subjectType, List.copyOf(added), Table::joined);
+            resolved = new ConcurrentHashMap<>();
         }
 
         public boolean carriesPositions(Class<?> subjectType) {
@@ -158,6 +159,12 @@ public final class TagPositions {
 
                 return List.copyOf(positions);
             });
+        }
+
+        private static List<TagPosition> joined(List<TagPosition> existing, List<TagPosition> added) {
+            List<TagPosition> all = new ArrayList<>(existing);
+            all.addAll(added);
+            return List.copyOf(all);
         }
     }
 
