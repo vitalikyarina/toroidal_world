@@ -62,6 +62,11 @@ public final class CreateTrackFold {
         return nearestCopy(transformerOf(null, dimension), anchor, target);
     }
 
+    public static Vec3 nearestCopy(@Nullable Level level, @Nullable ResourceKey<Level> dimension, Vec3 anchor,
+            Vec3 target) {
+        return nearestCopy(transformerOf(level, dimension), anchor, target);
+    }
+
     public static BlockPos nearestCopy(@Nullable Level level, BlockPos anchor, BlockPos target) {
         WorldFold transformer = transformerOf(level, null);
         return transformer == null ? target : transformer.nearestCopy(anchor, target);
