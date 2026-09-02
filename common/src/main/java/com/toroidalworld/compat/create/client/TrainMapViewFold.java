@@ -56,11 +56,6 @@ public final class TrainMapViewFold {
         return transformer.fold(position);
     }
 
-    public static Vec3 nearestTo(Vec3 anchor, Vec3 position) {
-        WorldFold transformer = transformer();
-        return transformer == null ? position : transformer.nearestCopy(anchor, position);
-    }
-
     public static List<DeckTransformation> copies(Rect2i view) {
         WorldFold transformer = transformer();
         if (transformer == null) {

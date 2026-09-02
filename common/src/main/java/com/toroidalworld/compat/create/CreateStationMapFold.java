@@ -13,20 +13,31 @@ import net.minecraft.world.phys.Vec3;
 public final class CreateStationMapFold {
     public static BlockPos canonicalTarget(ResourceKey<Level> dimension, BlockPos target) {
         WorldFold transformer = transformerFor(dimension);
-        return transformer == null ? target : transformer.fold(target);
+        return transformer == null ? target : canonicalTarget(transformer, target);
+    }
+
+    public static BlockPos canonicalTarget(WorldFold transformer, BlockPos target) {
+        return transformer.fold(target);
     }
 
     public static BlockPos targetInMapFrame(ResourceKey<Level> dimension, int centreX, int centreZ, BlockPos target) {
         WorldFold transformer = transformerFor(dimension);
-        return transformer == null
-                ? target
-                : transformer.nearestCopy(new BlockPos(centreX, target.getY(), centreZ), target);
+        return transformer == null ? target : targetInMapFrame(transformer, centreX, centreZ, target);
+    }
+
+    public static BlockPos targetInMapFrame(WorldFold transformer, int centreX, int centreZ, BlockPos target) {
+        return transformer.nearestCopy(new BlockPos(centreX, target.getY(), centreZ), target);
     }
 
     public static Vec3 centreInMapFrame(ResourceKey<Level> dimension, int centreX, int centreZ, double x, double z) {
-        Vec3 raw = new Vec3(x, 0.0, z);
         WorldFold transformer = transformerFor(dimension);
-        return transformer == null ? raw : transformer.nearestCopy(new Vec3(centreX, 0.0, centreZ), raw);
+        return transformer == null
+                ? new Vec3(x, 0.0, z)
+                : centreInMapFrame(transformer, centreX, centreZ, x, z);
+    }
+
+    public static Vec3 centreInMapFrame(WorldFold transformer, int centreX, int centreZ, double x, double z) {
+        return transformer.nearestCopy(new Vec3(centreX, 0.0, centreZ), new Vec3(x, 0.0, z));
     }
 
     private static @Nullable WorldFold transformerFor(ResourceKey<Level> dimension) {

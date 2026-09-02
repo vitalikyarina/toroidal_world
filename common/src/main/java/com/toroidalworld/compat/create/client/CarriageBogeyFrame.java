@@ -1,15 +1,18 @@
 package com.toroidalworld.compat.create.client;
 
+import java.util.function.Supplier;
+
 import org.jspecify.annotations.Nullable;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.simibubi.create.compat.trainmap.TrainMapSync.TrainMapSyncEntry;
+import com.toroidalworld.core.WorldFold;
 
 import net.minecraft.world.phys.Vec3;
 
 public final class CarriageBogeyFrame {
-    private @Nullable TrainMapSyncEntry entry;
+    private @Nullable Object train;
 
     private int carriageIndex;
 
@@ -23,30 +26,30 @@ public final class CarriageBogeyFrame {
             frameRef.set(frame);
         }
 
+        WorldFold transformer = TrainMapViewFold.transformer();
         Vec3 raw = original.call(entry, carriageIndex, firstBogey, time);
         return firstBogey
-                ? frame.lead(entry, carriageIndex, raw)
-                : frame.trail(entry, carriageIndex, time, raw, original);
+                ? frame.lead(transformer, entry, carriageIndex, raw)
+                : frame.trail(transformer, entry, carriageIndex, raw,
+                        () -> original.call(entry, carriageIndex, true, time));
     }
 
-    private Vec3 lead(TrainMapSyncEntry leadingEntry, int leadingCarriage, Vec3 raw) {
-        Vec3 canonical = TrainMapViewFold.canonical(raw);
-        this.entry = leadingEntry;
+    public Vec3 lead(@Nullable WorldFold transformer, Object leadingTrain, int leadingCarriage, Vec3 raw) {
+        Vec3 canonical = transformer == null ? raw : transformer.fold(raw);
+        this.train = leadingTrain;
         this.carriageIndex = leadingCarriage;
         this.leading = canonical;
         return canonical;
     }
 
-    private Vec3 trail(TrainMapSyncEntry trailingEntry, int trailingCarriage, double time, Vec3 raw,
-            Operation<Vec3> original) {
-        Vec3 known = leading;
-        if (known == null || entry != trailingEntry || carriageIndex != trailingCarriage) {
-            known = TrainMapViewFold.canonical(original.call(trailingEntry, trailingCarriage, true, time));
+    public Vec3 trail(@Nullable WorldFold transformer, Object trailingTrain, int trailingCarriage, Vec3 raw,
+            Supplier<Vec3> leadingBogey) {
+        Vec3 known = this.leading;
+        if (known == null || this.train != trailingTrain || this.carriageIndex != trailingCarriage) {
+            Vec3 rawLeading = leadingBogey.get();
+            known = transformer == null ? rawLeading : transformer.fold(rawLeading);
         }
 
-        return TrainMapViewFold.nearestTo(known, raw);
-    }
-
-    private CarriageBogeyFrame() {
+        return transformer == null ? raw : transformer.nearestCopy(known, raw);
     }
 }
