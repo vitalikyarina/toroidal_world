@@ -190,6 +190,10 @@ public final class PacketTranslator {
         PRODUCTION.registerEntityData(serializer, dataRewriter);
     }
 
+    public static void closeRewriters() {
+        PRODUCTION.close();
+    }
+
     private static final Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> TO_SERVER = Map.ofEntries(
             Map.entry(ServerboundUseItemOnPacket.class, rewriter(PacketTranslator::useItemOn)),
             Map.entry(ServerboundPlayerActionPacket.class, rewriter(PacketTranslator::playerAction)),

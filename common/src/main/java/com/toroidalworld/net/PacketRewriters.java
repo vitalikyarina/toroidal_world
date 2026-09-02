@@ -1,6 +1,5 @@
 package com.toroidalworld.net;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -21,50 +20,59 @@ public final class PacketRewriters {
         T rewrite(T value, TranslationContext context, Vec3 anchor);
     }
 
-    private final Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
-            clientboundPayloads = new HashMap<>();
+    private final StartupRegistry<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
+            clientboundPayloads = new StartupRegistry<>("Clientbound payload rewriters");
 
-    private final Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
-            serverboundPayloads = new HashMap<>();
+    private final StartupRegistry<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
+            serverboundPayloads = new StartupRegistry<>("Serverbound payload rewriters");
 
-    private final Map<Class<?>, ParticleRewriter<ParticleOptions>> particles = new HashMap<>();
+    private final StartupRegistry<Class<?>, ParticleRewriter<ParticleOptions>> particles =
+            new StartupRegistry<>("Particle rewriters");
 
-    private final Map<EntityDataSerializer<?>, EntityDataRewriter<Object>> entityData = new HashMap<>();
+    private final StartupRegistry<EntityDataSerializer<?>, EntityDataRewriter<Object>> entityData =
+            new StartupRegistry<>("Entity data rewriters");
 
     <P extends CustomPacketPayload> void registerClientboundPayload(Class<P> payloadType,
             BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
-        clientboundPayloads.put(payloadType, castingRewriter(payloadType, payloadRewriter));
+        clientboundPayloads.register(payloadType, castingRewriter(payloadType, payloadRewriter));
     }
 
     <P extends CustomPacketPayload> void registerServerboundPayload(Class<P> payloadType,
             BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
-        serverboundPayloads.put(payloadType, castingRewriter(payloadType, payloadRewriter));
+        serverboundPayloads.register(payloadType, castingRewriter(payloadType, payloadRewriter));
     }
 
     <P extends ParticleOptions> void registerParticle(Class<P> particleType, ParticleRewriter<P> particleRewriter) {
-        particles.put(particleType,
+        particles.register(particleType,
                 (particle, context, clientOrigin) -> particleRewriter.rewrite(particleType.cast(particle), context, clientOrigin));
     }
 
     @SuppressWarnings("unchecked")
     <T> void registerEntityData(EntityDataSerializer<T> serializer, EntityDataRewriter<T> dataRewriter) {
-        entityData.put(serializer, (value, context, anchor) -> dataRewriter.rewrite((T) value, context, anchor));
+        entityData.register(serializer, (value, context, anchor) -> dataRewriter.rewrite((T) value, context, anchor));
     }
 
     CustomPacketPayload rewriteClientbound(CustomPacketPayload payload, TranslationContext context) {
-        return rewritten(clientboundPayloads, payload, context);
+        return rewritten(clientboundPayloads.entries(), payload, context);
     }
 
     CustomPacketPayload rewriteServerbound(CustomPacketPayload payload, TranslationContext context) {
-        return rewritten(serverboundPayloads, payload, context);
+        return rewritten(serverboundPayloads.entries(), payload, context);
     }
 
     @Nullable ParticleRewriter<ParticleOptions> particleFor(ParticleOptions particle) {
-        return particles.get(particle.getClass());
+        return particles.entries().get(particle.getClass());
     }
 
     @Nullable EntityDataRewriter<Object> entityDataFor(SynchedEntityData.DataValue<?> item) {
-        return entityData.get(item.serializer());
+        return entityData.entries().get(item.serializer());
+    }
+
+    void close() {
+        clientboundPayloads.close();
+        serverboundPayloads.close();
+        particles.close();
+        entityData.close();
     }
 
     private static CustomPacketPayload rewritten(
