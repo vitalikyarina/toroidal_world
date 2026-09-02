@@ -9,10 +9,13 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.toroidalworld.accessors.SeamTravelHolder;
 import com.toroidalworld.accessors.TrackedEntityRefresher;
+import com.toroidalworld.advancement.CircumnavigationTracker;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamAim;
 import com.toroidalworld.net.ClientAnchorSync;
+import com.toroidalworld.player.SeamTravel;
 import com.toroidalworld.net.WorldShapeSync;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
@@ -26,15 +29,43 @@ import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.level.storage.LevelData;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 @Mixin(ServerPlayer.class)
-public class ServerPlayerMixin {
+public class ServerPlayerMixin implements SeamTravelHolder {
     @Unique
     private static final double BED_REACH_HORIZONTAL = 3.0;
 
     @Unique
     private static final double BED_REACH_VERTICAL = 2.0;
+
+    @Unique
+    private static final String TRAVEL_KEY = "toroidal_world:travel";
+
+    @Unique
+    private final SeamTravel toroidal$travel = new SeamTravel();
+
+    @Override
+    public SeamTravel toroidal$travel() {
+        return this.toroidal$travel;
+    }
+
+    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
+    private void toroidal$readTravel(ValueInput input, CallbackInfo ci) {
+        input.read(TRAVEL_KEY, SeamTravel.CODEC).ifPresent(this.toroidal$travel::copyFrom);
+    }
+
+    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
+    private void toroidal$writeTravel(ValueOutput output, CallbackInfo ci) {
+        output.store(TRAVEL_KEY, SeamTravel.CODEC, this.toroidal$travel);
+    }
+
+    @Inject(method = "restoreFrom", at = @At("TAIL"))
+    private void toroidal$carryTravelThroughRespawn(ServerPlayer oldPlayer, boolean restoreAll, CallbackInfo ci) {
+        this.toroidal$travel.copyFrom(((SeamTravelHolder) oldPlayer).toroidal$travel());
+    }
 
     @ModifyVariable(method = "setRespawnPosition", at = @At("HEAD"), argsOnly = true)
     private ServerPlayer.@Nullable RespawnConfig toroidal$storeRespawnInsideBounds(
@@ -72,6 +103,13 @@ public class ServerPlayerMixin {
                     shift = At.Shift.AFTER))
     private void toroidal$refreshClientAnchors(CallbackInfo ci) {
         ClientAnchorSync.refresh((ServerPlayer) (Object) this);
+    }
+
+    @Inject(method = "doTick",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;tick()V",
+                    shift = At.Shift.AFTER))
+    private void toroidal$sampleTravel(CallbackInfo ci) {
+        CircumnavigationTracker.sample((ServerPlayer) (Object) this);
     }
 
     @Inject(method = "updateOptions", at = @At("HEAD"))

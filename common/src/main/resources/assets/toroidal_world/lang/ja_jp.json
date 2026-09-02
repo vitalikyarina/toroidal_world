@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "振り出しに戻る",
+  "advancements.toroidal_world.circumnavigate.description": "世界を一周する",
+
   "argument.toroidal_world.pos.outside_world": "%s はこのワールドの外にあります — %s と %s の間でなければなりません",
   "commands.toroidal_world.region.across_seam": "この範囲はワールドの継ぎ目をまたいでおり、どちら側とも解釈できます — 片側ずつコマンドを実行してください",
 

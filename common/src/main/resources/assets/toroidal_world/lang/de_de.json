@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "Zurück am Anfang",
+  "advancements.toroidal_world.circumnavigate.description": "Umrunde die Welt einmal vollständig",
+
   "argument.toroidal_world.pos.outside_world": "%s liegt außerhalb dieser Welt — muss zwischen %s und %s liegen",
   "commands.toroidal_world.region.across_seam": "Dieser Bereich kreuzt die Weltnaht und kann beide Seiten meinen — führe den Befehl je Seite einmal aus",
 
