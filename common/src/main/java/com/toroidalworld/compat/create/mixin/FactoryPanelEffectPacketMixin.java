@@ -3,6 +3,7 @@ package com.toroidalworld.compat.create.mixin;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelEffectPacket;
@@ -14,11 +15,11 @@ import net.minecraft.core.BlockPos;
 
 @Mixin(value = FactoryPanelEffectPacket.class, remap = false)
 public abstract class FactoryPanelEffectPacketMixin {
-    @ModifyExpressionValue(method = "handle",
-            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
-                    target = "Lcom/simibubi/create/content/logistics/factoryBoard/FactoryPanelEffectPacket;"
-                            + "fromPos:Lcom/simibubi/create/content/logistics/factoryBoard/FactoryPanelPosition;"))
-    private FactoryPanelPosition toroidal$sourcePanelInTheViewerFrame(FactoryPanelPosition canonical) {
+    @ModifyArg(method = "handle",
+            at = @At(value = "INVOKE",
+                    target = "Lnet/minecraft/client/multiplayer/ClientLevel;getBlockState"
+                            + "(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
+    private BlockPos toroidal$sourceBlockInTheViewerFrame(BlockPos canonical) {
         return inViewerFrame(canonical);
     }
 
@@ -27,11 +28,11 @@ public abstract class FactoryPanelEffectPacketMixin {
                     target = "Lcom/simibubi/create/content/logistics/factoryBoard/FactoryPanelEffectPacket;"
                             + "toPos:Lcom/simibubi/create/content/logistics/factoryBoard/FactoryPanelPosition;"))
     private FactoryPanelPosition toroidal$targetPanelInTheViewerFrame(FactoryPanelPosition canonical) {
-        return inViewerFrame(canonical);
+        BlockPos folded = inViewerFrame(canonical.pos());
+        return folded == canonical.pos() ? canonical : new FactoryPanelPosition(folded, canonical.slot());
     }
 
-    private static FactoryPanelPosition inViewerFrame(FactoryPanelPosition canonical) {
-        BlockPos folded = CreateClientFrame.nearestCopy(Minecraft.getInstance().level, canonical.pos());
-        return folded == canonical.pos() ? canonical : new FactoryPanelPosition(folded, canonical.slot());
+    private static BlockPos inViewerFrame(BlockPos canonical) {
+        return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, canonical);
     }
 }
