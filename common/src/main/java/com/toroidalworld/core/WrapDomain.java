@@ -19,16 +19,26 @@ public class WrapDomain {
         this.halfLength = this.domainLength / 2.0;
     }
 
-    public double wrap(double coord) {
-        if (isOver(coord)) {
-            double laps = Math.floor((coord - lowerBound) / domainLength);
-            double wrapped = coord - laps * domainLength;
-            if (wrapped < lowerBound) {
-                wrapped += domainLength;
-            }
-            return wrapped >= upperBound ? lowerBound : wrapped;
+    public int lapsOver(double coord) {
+        if (!isOver(coord)) {
+            return 0;
         }
-        return coord;
+
+        long laps = (long) Math.floor((coord - lowerBound) / domainLength);
+        if (coord - (double) laps * domainLength < lowerBound) {
+            laps--;
+        }
+
+        return Math.toIntExact(laps);
+    }
+
+    public double wrap(double coord) {
+        if (!isOver(coord)) {
+            return coord;
+        }
+
+        double wrapped = coord - (double) lapsOver(coord) * domainLength;
+        return wrapped >= upperBound ? lowerBound : wrapped;
     }
 
     public int wrap(int coord) {

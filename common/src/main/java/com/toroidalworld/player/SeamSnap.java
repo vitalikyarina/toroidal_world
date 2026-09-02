@@ -3,6 +3,8 @@ package com.toroidalworld.player;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.NavigationShifter;
+import com.toroidalworld.core.DeckTransformation;
+import com.toroidalworld.core.SeamTransform;
 import com.toroidalworld.mixin.EntityAccessor;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -11,24 +13,24 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 
 public final class SeamSnap {
-    public static void withPassengers(Entity entity, Vec3 shift) {
-        Vec3 to = entity.position().add(shift);
+    public static void withPassengers(Entity entity, DeckTransformation lap) {
+        SeamTransform applied = lap.blocks();
+        Vec3 from = entity.position();
+        Vec3 to = lap.apply(from);
         entity.setPos(to.x, to.y, to.z);
-        entity.xo += shift.x;
-        entity.yo += shift.y;
-        entity.zo += shift.z;
-        entity.xOld += shift.x;
-        entity.yOld += shift.y;
-        entity.zOld += shift.z;
+        entity.xo = applied.applyX(entity.xo);
+        entity.zo = applied.applyZ(entity.zo);
+        entity.xOld = applied.applyX(entity.xOld);
+        entity.zOld = applied.applyZ(entity.zOld);
         EntityAccessor stored = (EntityAccessor) entity;
         @Nullable Vec3 known = stored.toroidal$lastKnownPosition();
         if (known != null) {
-            stored.toroidal$setLastKnownPosition(known.add(shift));
+            stored.toroidal$setLastKnownPosition(lap.apply(known));
         }
 
         if (entity instanceof Mob mob) {
-            int shiftX = (int) Math.round(shift.x);
-            int shiftZ = (int) Math.round(shift.z);
+            int shiftX = (int) Math.round(to.x - from.x);
+            int shiftZ = (int) Math.round(to.z - from.z);
             ((NavigationShifter) mob.getNavigation()).toroidal$shiftBy(shiftX, shiftZ);
             ((NavigationShifter) mob.getMoveControl()).toroidal$shiftBy(shiftX, shiftZ);
             ((NavigationShifter) mob.getLookControl()).toroidal$shiftBy(shiftX, shiftZ);
@@ -39,7 +41,7 @@ public final class SeamSnap {
         }
 
         for (Entity passenger : entity.getPassengers()) {
-            withPassengers(passenger, shift);
+            withPassengers(passenger, lap);
         }
     }
 

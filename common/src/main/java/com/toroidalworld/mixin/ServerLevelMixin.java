@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.accessors.TransformerHolder;
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.net.PacketReach;
 import com.toroidalworld.noise.GenerationTransformerContext;
@@ -83,9 +84,9 @@ public class ServerLevelMixin {
             return;
         }
 
-        if (transformer.isOver(entity.position())) {
-            Vec3 wrapped = transformer.fold(entity.position());
-            SeamSnap.withPassengers(entity, wrapped.subtract(entity.position()));
+        DeckTransformation lap = transformer.foldTransformation(entity.position());
+        if (!lap.isIdentity()) {
+            SeamSnap.withPassengers(entity, lap);
         }
     }
 
