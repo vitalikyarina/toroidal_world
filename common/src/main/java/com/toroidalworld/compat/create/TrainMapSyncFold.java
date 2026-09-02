@@ -24,7 +24,8 @@ public final class TrainMapSyncFold {
             return;
         }
 
-        Float[] anchor = null;
+        int anchorAt = 0;
+        ResourceKey<Level> anchorDimension = null;
         for (int carriage = 0; carriage * FLOATS_PER_CARRIAGE + FLOATS_PER_CARRIAGE <= positions.length; carriage++) {
             ResourceKey<Level> dimension = carriage < dimensions.size() ? dimensions.get(carriage) : null;
             WorldFold transformer = dimension == null ? null : transformers.apply(dimension);
@@ -33,14 +34,16 @@ public final class TrainMapSyncFold {
             }
 
             int base = carriage * FLOATS_PER_CARRIAGE;
-            if (anchor == null) {
-                anchor = new Float[] {positions[base + X_OFFSET], positions[base + Z_OFFSET]};
-            } else {
-                rebase(transformer, positions, base, anchor[0], anchor[1]);
-            }
+            for (int bogey = 0; bogey < BOGEYS_PER_CARRIAGE; bogey++) {
+                int at = base + bogey * FLOATS_PER_BOGEY;
+                if (dimension == anchorDimension) {
+                    rebase(transformer, positions, at, positions[anchorAt + X_OFFSET],
+                            positions[anchorAt + Z_OFFSET]);
+                }
 
-            rebase(transformer, positions, base + FLOATS_PER_BOGEY, positions[base + X_OFFSET],
-                    positions[base + Z_OFFSET]);
+                anchorAt = at;
+                anchorDimension = dimension;
+            }
         }
     }
 
