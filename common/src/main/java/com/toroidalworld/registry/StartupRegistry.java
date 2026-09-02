@@ -1,20 +1,25 @@
-package com.toroidalworld.net;
+package com.toroidalworld.registry;
 
 import java.util.HashMap;
 import java.util.Map;
 
-final class StartupRegistry<K, V> {
+public final class StartupRegistry<K, V> {
     private final String subject;
 
     private volatile Map<K, V> entries = Map.of();
 
     private boolean closed;
 
-    StartupRegistry(String subject) {
-        this.subject = subject;
+    public StartupRegistry(String subject) {
+        this(RegistrationBoundary.STARTUP, subject);
     }
 
-    synchronized void register(K key, V value) {
+    StartupRegistry(RegistrationBoundary boundary, String subject) {
+        this.subject = subject;
+        boundary.enrol(this);
+    }
+
+    public synchronized void register(K key, V value) {
         if (closed) {
             throw new IllegalStateException(subject + " must be registered before the server starts.");
         }
@@ -24,7 +29,7 @@ final class StartupRegistry<K, V> {
         entries = Map.copyOf(grown);
     }
 
-    Map<K, V> entries() {
+    public Map<K, V> entries() {
         return entries;
     }
 

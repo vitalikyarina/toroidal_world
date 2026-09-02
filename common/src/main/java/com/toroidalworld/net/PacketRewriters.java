@@ -5,6 +5,8 @@ import java.util.function.BiFunction;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.registry.StartupRegistry;
+
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.syncher.EntityDataSerializer;
@@ -66,13 +68,6 @@ public final class PacketRewriters {
 
     @Nullable EntityDataRewriter<Object> entityDataFor(SynchedEntityData.DataValue<?> item) {
         return entityData.entries().get(item.serializer());
-    }
-
-    void close() {
-        clientboundPayloads.close();
-        serverboundPayloads.close();
-        particles.close();
-        entityData.close();
     }
 
     private static CustomPacketPayload rewritten(

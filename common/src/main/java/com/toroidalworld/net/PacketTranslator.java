@@ -29,6 +29,7 @@ import com.toroidalworld.mixin.TeleportEntityPacketAccessor;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
 import com.toroidalworld.player.MirrorWriter;
+import com.toroidalworld.registry.StartupRegistry;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -188,10 +189,6 @@ public final class PacketTranslator {
     public static <T> void registerEntityDataRewriter(EntityDataSerializer<T> serializer,
             PacketRewriters.EntityDataRewriter<T> dataRewriter) {
         PRODUCTION.registerEntityData(serializer, dataRewriter);
-    }
-
-    public static void closeRewriters() {
-        PRODUCTION.close();
     }
 
     private static final Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> TO_SERVER = Map.ofEntries(
