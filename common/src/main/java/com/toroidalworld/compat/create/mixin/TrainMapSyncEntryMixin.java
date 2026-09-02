@@ -10,7 +10,7 @@ import java.util.List;
 
 import com.simibubi.create.compat.trainmap.TrainMapSync;
 import com.toroidalworld.compat.create.TrainMapSyncFold;
-import com.toroidalworld.compat.create.client.TrainMapViewFold;
+import com.toroidalworld.compat.create.client.TrainMapFrame;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -30,6 +30,6 @@ public abstract class TrainMapSyncEntryMixin {
     private void toroidal$carryPreviousAcrossSeam(TrainMapSync.TrainMapSyncEntry other, boolean light,
             CallbackInfo ci) {
         TrainMapSyncFold.rebaseOnto(this.prevPositions, this.positions, this.dimensions,
-                dimension -> TrainMapViewFold.transformer());
+                TrainMapFrame::transformerOf);
     }
 }

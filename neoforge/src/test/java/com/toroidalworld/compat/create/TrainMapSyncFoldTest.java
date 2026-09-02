@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,9 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
 class TrainMapSyncFoldTest {
+    private record TwoWorlds(WorldFold wide, WorldFold narrow) {
+    }
+
     private static final int WORLD_CHUNKS = 16;
     private static final int WORLD_BLOCKS = WORLD_CHUNKS * 2 * 16;
     private static final int SKEW_CHUNKS = 4;
@@ -28,6 +32,8 @@ class TrainMapSyncFoldTest {
     private static final float TRACK_Z = 10.0F;
     private static final int FLOATS_PER_BOGEY = 3;
     private static final int FLOATS_PER_CARRIAGE = 6;
+    private static final int NETHER_CHUNKS = 4;
+    private static final int NETHER_BLOCKS = NETHER_CHUNKS * 2 * 16;
 
     private static final WorldLoopBounds BOUNDS =
             new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
@@ -40,6 +46,18 @@ class TrainMapSyncFoldTest {
 
     private static final List<WorldFold> TRANSLATING = List.of(PER_AXIS, DECK_TORUS, SKEWED);
 
+    private static final WorldLoopBounds NETHER_BOUNDS =
+            new WorldLoopBounds(-NETHER_CHUNKS, NETHER_CHUNKS, -NETHER_CHUNKS, NETHER_CHUNKS);
+
+    private static final WorldFold NETHER_PER_AXIS =
+            WorldFolds.of(FlatShape.latticeTorus(NETHER_BOUNDS, FlatShape.NO_SKEW));
+
+    private static final WorldFold NETHER_DECK_TORUS =
+            new DeckGroupFold(FlatShape.latticeTorus(NETHER_BOUNDS, FlatShape.NO_SKEW));
+
+    private static final List<TwoWorlds> WIDE_AND_NARROW =
+            List.of(new TwoWorlds(PER_AXIS, NETHER_PER_AXIS), new TwoWorlds(DECK_TORUS, NETHER_DECK_TORUS));
+
     private static final List<ResourceKey<Level>> TWO_CARRIAGES = List.of(Level.OVERWORLD, Level.OVERWORLD);
 
     private static final List<ResourceKey<Level>> FOUR_CARRIAGES =
@@ -47,6 +65,9 @@ class TrainMapSyncFoldTest {
 
     private static final List<ResourceKey<Level>> ACROSS_A_PORTAL =
             List.of(Level.OVERWORLD, Level.OVERWORLD, Level.NETHER);
+
+    private static final List<ResourceKey<Level>> A_CARRIAGE_IN_EACH_DIMENSION =
+            List.of(Level.OVERWORLD, Level.NETHER);
 
     private static final List<ResourceKey<Level>> A_CARRIAGE_IN_NO_DIMENSION =
             Arrays.asList(Level.OVERWORLD, null, Level.OVERWORLD);
@@ -129,6 +150,41 @@ class TrainMapSyncFoldTest {
 
             assertEquals(-254 + WORLD_BLOCKS, stale[6], "second leading x in " + fold);
             assertEquals(-250 + WORLD_BLOCKS, stale[9], "second trailing x in " + fold);
+        }
+    }
+
+    @Test
+    void eachCarriageIsRebasedWithItsOwnDimensionsWidth() {
+        for (TwoWorlds worlds : WIDE_AND_NARROW) {
+            Float[] stale = train(-200, 10, -196, 10, -60, 10, -56, 10);
+            Float[] current = train(200, 10, 204, 10, 60, 10, 64, 10);
+            Map<ResourceKey<Level>, WorldFold> byDimension =
+                    Map.of(Level.OVERWORLD, worlds.wide(), Level.NETHER, worlds.narrow());
+
+            TrainMapSyncFold.rebaseOnto(stale, current, A_CARRIAGE_IN_EACH_DIMENSION, byDimension::get);
+
+            assertEquals(-200 + WORLD_BLOCKS, stale[0], "leading x in " + worlds.wide());
+            assertEquals(-196 + WORLD_BLOCKS, stale[3], "trailing x in " + worlds.wide());
+            assertEquals(-60 + NETHER_BLOCKS, stale[6], "nether leading x in " + worlds.narrow());
+            assertEquals(-56 + NETHER_BLOCKS, stale[9], "nether trailing x in " + worlds.narrow());
+        }
+    }
+
+    @Test
+    void aCarriageInADimensionTheCallerCannotResolveIsLeftAlone() {
+        for (TwoWorlds worlds : WIDE_AND_NARROW) {
+            Float[] stale = train(-200, 10, -196, 10, -200, 10, -196, 10);
+            Float[] current = train(200, 10, 204, 10, 200, 10, 204, 10);
+            Float[] before = stale.clone();
+            Map<ResourceKey<Level>, WorldFold> byDimension = Map.of(Level.OVERWORLD, worlds.wide());
+
+            TrainMapSyncFold.rebaseOnto(stale, current, A_CARRIAGE_IN_EACH_DIMENSION, byDimension::get);
+
+            assertEquals(-200 + WORLD_BLOCKS, stale[0], "leading x in " + worlds.wide());
+            assertEquals(-196 + WORLD_BLOCKS, stale[3], "trailing x in " + worlds.wide());
+            for (int index = FLOATS_PER_CARRIAGE; index < stale.length; index++) {
+                assertSame(before[index], stale[index], "float " + index + " in " + worlds.narrow());
+            }
         }
     }
 

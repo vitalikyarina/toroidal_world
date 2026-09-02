@@ -42,17 +42,22 @@ public final class TrainMapFrame {
         return bound ? frame : resolve(TrainMapRenderer.INSTANCE.trackingDim);
     }
 
+    public static @Nullable WorldFold transformerOf(ResourceKey<Level> dimension) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null || dimension != level.dimension()) {
+            return null;
+        }
+
+        return CreateTrackFold.transformerOf(level, null);
+    }
+
     private static @Nullable WorldFold resolve(@Nullable ResourceKey<Level> drawnDimension) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
             return null;
         }
 
-        if (drawnDimension != null && drawnDimension != level.dimension()) {
-            return null;
-        }
-
-        return CreateTrackFold.transformerOf(level, null);
+        return transformerOf(drawnDimension == null ? level.dimension() : drawnDimension);
     }
 
     private TrainMapFrame() {
