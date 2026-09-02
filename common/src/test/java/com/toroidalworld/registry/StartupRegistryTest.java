@@ -1,4 +1,4 @@
-package com.toroidalworld.net;
+package com.toroidalworld.registry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -12,9 +12,15 @@ import org.junit.jupiter.api.Test;
 class StartupRegistryTest {
     private static final String SUBJECT = "Test rewriters";
 
+    private final RegistrationBoundary boundary = new RegistrationBoundary();
+
+    private StartupRegistry<String, Integer> registry() {
+        return new StartupRegistry<>(boundary, SUBJECT);
+    }
+
     @Test
     void aRegisteredValueIsThereToRead() {
-        StartupRegistry<String, Integer> registry = new StartupRegistry<>(SUBJECT);
+        StartupRegistry<String, Integer> registry = registry();
 
         registry.register("one", 1);
 
@@ -23,14 +29,12 @@ class StartupRegistryTest {
 
     @Test
     void anUnregisteredKeyReadsAsNull() {
-        StartupRegistry<String, Integer> registry = new StartupRegistry<>(SUBJECT);
-
-        assertNull(registry.entries().get("one"));
+        assertNull(registry().entries().get("one"));
     }
 
     @Test
     void theEntriesHandedToAReaderAreImmutable() {
-        StartupRegistry<String, Integer> registry = new StartupRegistry<>(SUBJECT);
+        StartupRegistry<String, Integer> registry = registry();
         registry.register("one", 1);
 
         Map<String, Integer> entries = registry.entries();
@@ -40,7 +44,7 @@ class StartupRegistryTest {
 
     @Test
     void aRegistrationLeavesASnapshotAlreadyHandedOutAlone() {
-        StartupRegistry<String, Integer> registry = new StartupRegistry<>(SUBJECT);
+        StartupRegistry<String, Integer> registry = registry();
         registry.register("one", 1);
         Map<String, Integer> held = registry.entries();
 
@@ -52,9 +56,9 @@ class StartupRegistryTest {
 
     @Test
     void aRegistrationAfterTheCloseFailsAndNamesTheBoundary() {
-        StartupRegistry<String, Integer> registry = new StartupRegistry<>(SUBJECT);
+        StartupRegistry<String, Integer> registry = registry();
 
-        registry.close();
+        boundary.close();
 
         IllegalStateException refused =
                 assertThrows(IllegalStateException.class, () -> registry.register("one", 1));
@@ -64,20 +68,45 @@ class StartupRegistryTest {
 
     @Test
     void whatWasRegisteredBeforeTheCloseIsStillRead() {
-        StartupRegistry<String, Integer> registry = new StartupRegistry<>(SUBJECT);
+        StartupRegistry<String, Integer> registry = registry();
         registry.register("one", 1);
 
-        registry.close();
+        boundary.close();
 
         assertEquals(Integer.valueOf(1), registry.entries().get("one"));
     }
 
     @Test
-    void closingTwiceLeavesTheRegistryClosed() {
-        StartupRegistry<String, Integer> registry = new StartupRegistry<>(SUBJECT);
-        registry.close();
+    void everyRegistryEnrolledInTheBoundaryClosesWithIt() {
+        StartupRegistry<String, Integer> first = registry();
+        StartupRegistry<String, Integer> second = registry();
+        first.register("one", 1);
+        second.register("two", 2);
 
-        registry.close();
+        boundary.close();
+
+        assertThrows(IllegalStateException.class, () -> first.register("three", 3));
+        assertThrows(IllegalStateException.class, () -> second.register("four", 4));
+        assertEquals(Integer.valueOf(1), first.entries().get("one"));
+        assertEquals(Integer.valueOf(2), second.entries().get("two"));
+    }
+
+    @Test
+    void aRegistryBuiltAfterTheCloseIsBornClosed() {
+        boundary.close();
+
+        StartupRegistry<String, Integer> late = registry();
+
+        assertThrows(IllegalStateException.class, () -> late.register("one", 1));
+        assertTrue(late.entries().isEmpty());
+    }
+
+    @Test
+    void closingTwiceLeavesTheRegistriesClosed() {
+        StartupRegistry<String, Integer> registry = registry();
+        boundary.close();
+
+        boundary.close();
 
         assertThrows(IllegalStateException.class, () -> registry.register("one", 1));
     }

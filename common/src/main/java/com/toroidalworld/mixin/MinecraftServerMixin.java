@@ -10,8 +10,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.gen.WorldShapeReport;
-import com.toroidalworld.net.PacketTranslator;
 import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.registry.RegistrationBoundary;
 import com.toroidalworld.storage.CurrentServer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
@@ -40,8 +40,8 @@ public class MinecraftServerMixin {
     }
 
     @Inject(method = "runServer", at = @At("HEAD"))
-    private void toroidal$closePacketRewriters(CallbackInfo ci) {
-        PacketTranslator.closeRewriters();
+    private void toroidal$closeRegistrationBoundary(CallbackInfo ci) {
+        RegistrationBoundary.STARTUP.close();
     }
 
     @Inject(method = "createLevels", at = @At("TAIL"))
