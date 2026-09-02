@@ -22,7 +22,9 @@ public abstract class TrainRelocatorMixin {
     static List<Vec3> toVisualise;
 
     @ModifyArg(method = "relocate",
-            at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
+            at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"),
+            require = 2,
+            allow = 2)
     private static Object toroidal$previewPointInTheViewerFrame(Object point) {
         if (!(point instanceof Vec3 raw)) {
             return point;

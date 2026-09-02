@@ -91,7 +91,6 @@
     "TrainCollisionMixin",
     "TrainMapSyncMixin",
     "TrainMigrationMixin",
-    "TrainRelocatorMixin",
     "TreeCutterMixin"
   ],
   "client": [
@@ -134,6 +133,7 @@
     "TrainMapManagerMixin",
     "TrainMapRendererMixin",
     "TrainMapSyncEntryMixin",
+    "TrainRelocatorMixin",
     "WiFiEffectPacketMixin",
     "XaeroTrainMapMixin",
     "ZapperBeamPacketMixin"
