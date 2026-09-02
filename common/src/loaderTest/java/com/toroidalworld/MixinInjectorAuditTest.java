@@ -7,15 +7,31 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.Mixins;
 import org.spongepowered.asm.mixin.transformer.Config;
 import org.spongepowered.asm.mixin.transformer.IMixinTransformer;
+import org.spongepowered.asm.service.IClassProvider;
+import org.spongepowered.asm.service.MixinService;
 
 @Timeout(300)
 class MixinInjectorAuditTest {
+    @BeforeAll
+    static void bootstrapVanilla() {
+        try {
+            IClassProvider classes = MixinService.getService().getClassProvider();
+            classes.findClass("net.minecraft.SharedConstants", true).getMethod("tryDetectVersion").invoke(null);
+            classes.findClass("net.minecraft.server.Bootstrap", true).getMethod("bootStrap").invoke(null);
+        } catch (ReflectiveOperationException | LinkageError unbootstrappable) {
+            Assumptions.abort("the class provider audit() force-loads through cannot bootstrap vanilla here: "
+                    + unbootstrappable);
+        }
+    }
+
     @Test
     void everyInjectorTheModShipsStillMatchesTheInstructionItNames() throws IOException {
         MixinEnvironment environment = MixinEnvironment.getCurrentEnvironment();
