@@ -32,8 +32,7 @@ public class StructureCheckBiomeMixin {
 
     @Unique
     private WorldFold toroidal$transformer() {
-        return this.chunkGenerator instanceof ShapedChunkGenerator shaped
-                ? shaped.transformer()
-                : WorldFolds.NOOP;
+        WorldFold transformer = ShapedChunkGenerator.wrappedTransformerOf(this.chunkGenerator);
+        return transformer == null ? WorldFolds.NOOP : transformer;
     }
 }

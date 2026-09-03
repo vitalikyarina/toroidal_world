@@ -187,9 +187,9 @@ public class LevelMixin implements TransformerCache {
 
     @Unique
     private static WorldFold toroidal$generatorTransformer(ServerLevel level) {
-        return level.getChunkSource().getGenerator() instanceof ShapedChunkGenerator shaped
-                ? shaped.transformer()
-                : WorldFolds.NOOP;
+        WorldFold transformer =
+                ShapedChunkGenerator.wrappedTransformerOf(level.getChunkSource().getGenerator());
+        return transformer == null ? WorldFolds.NOOP : transformer;
     }
 
     @WrapMethod(method = "precipitationAt")

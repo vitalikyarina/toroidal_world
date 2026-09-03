@@ -36,6 +36,7 @@
     "ChargeAttackMixin",
     "ChunkGenerationTaskMixin",
     "ChunkGeneratorAccessor",
+    "ChunkGeneratorMixin",
     "ChunkGeneratorNearestRingMixin",
     "ChunkGeneratorRandomSpreadSearchMixin",
     "ChunkGeneratorReferencesMixin",
@@ -230,6 +231,7 @@
     "WorkAtPoiMixin",
     "WorldBorderCommandMixin",
     "WorldBorderMixin",
+    "WorldDimensionsMixin",
     "WorldGenRegionMixin"
   ],
   "client": [
