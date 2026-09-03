@@ -5,6 +5,7 @@
   "argument.toroidal_world.pos.outside_world": "%s está fora deste mundo — deve estar entre %s e %s",
   "commands.toroidal_world.region.across_seam": "Essa área cruza a emenda do mundo e pode significar qualquer um dos lados — execute o comando uma vez por lado",
   "message.toroidal_world.schematic.selection_wider_than_world": "Essa seleção é mais larga que o mundo e cobriria alguns blocos duas vezes — coloque o segundo canto mais perto do primeiro",
+  "message.toroidal_world.create.structure_circles_the_world": "Essa construção dá a volta completa no mundo, então não pode se mover como uma única engenhoca — deixe uma abertura nela",
 
   "gui.toroidal_world.world_shape": "Formato do mundo",
   "gui.toroidal_world.world_shape.normal": "Normal",

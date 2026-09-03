@@ -29,7 +29,7 @@ public final class CanonicalPositionKeys {
         return transformer == null ? new HashMap<>() : new CanonicalMap<>(transformer);
     }
 
-    private static @Nullable WorldFold transformerOf(@Nullable BlockGetter reader) {
+    static @Nullable WorldFold transformerOf(@Nullable BlockGetter reader) {
         return reader instanceof LevelReader levelReader ? WorldLoopAttachments.wrappedTransformerOfReader(levelReader) : null;
     }
 

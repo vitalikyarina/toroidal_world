@@ -4,18 +4,22 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.google.common.collect.Multimap;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.StructureTransform;
 import com.toroidalworld.compat.create.ChassisWalkFrame;
 import com.toroidalworld.compat.create.CreateTranslation;
 import com.toroidalworld.compat.create.CreateSeamFold;
+import com.toroidalworld.compat.create.LappedKeys;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -28,6 +32,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -37,6 +42,8 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = Contraption.class, remap = false)
 public class ContraptionMixin {
+    private static final String CIRCLES_THE_WORLD_KEY = "message.toroidal_world.create.structure_circles_the_world";
+
     @Shadow
     public BlockPos anchor;
 
@@ -48,6 +55,32 @@ public class ContraptionMixin {
 
     @Shadow
     protected Multimap<BlockPos, StructureBlockInfo> capturedMultiblocks;
+
+    @ModifyVariable(method = "searchMovedStructure", at = @At("STORE"), ordinal = 0)
+    private Set<BlockPos> toroidal$closeTheWalkOnCanonicalKeys(Set<BlockPos> visited, Level world, BlockPos pos,
+            Direction forcedDirection) {
+        return LappedKeys.set(world);
+    }
+
+    @Inject(method = "moveBlock", at = @At("HEAD"), cancellable = true)
+    private void toroidal$dropANameItsOwnCopyAlreadyClaimed(Level world, Direction forcedDirection,
+            Queue<BlockPos> frontier, Set<BlockPos> visited, CallbackInfoReturnable<Boolean> cir) {
+        BlockPos polled = frontier.peek();
+        if (polled == null || !visited.contains(polled)) {
+            return;
+        }
+
+        frontier.poll();
+        cir.setReturnValue(true);
+    }
+
+    @Inject(method = "searchMovedStructure", at = @At("RETURN"))
+    private void toroidal$refuseAStructureThatCirclesTheWorld(Level world, BlockPos pos, Direction forcedDirection,
+            CallbackInfoReturnable<Boolean> cir, @Local Set<BlockPos> visited) throws AssemblyException {
+        if (visited instanceof LappedKeys keys && keys.lapped() != null) {
+            throw new AssemblyException(Component.translatable(CIRCLES_THE_WORLD_KEY));
+        }
+    }
 
     @ModifyExpressionValue(
             method = "captureMultiblock",

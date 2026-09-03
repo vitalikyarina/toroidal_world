@@ -5,6 +5,7 @@
   "argument.toroidal_world.pos.outside_world": "%s is outside this world — it must be between %s and %s",
   "commands.toroidal_world.region.across_seam": "That area crosses the world seam and could mean either side of it — run the command once per side",
   "message.toroidal_world.schematic.selection_wider_than_world": "That selection is wider than the world and would cover some blocks twice — place the second corner closer to the first",
+  "message.toroidal_world.create.structure_circles_the_world": "That structure goes all the way around the world, so it cannot move as one contraption — leave a gap in it",
 
   "gui.toroidal_world.world_shape": "World Shape",
   "gui.toroidal_world.world_shape.normal": "Normal",
