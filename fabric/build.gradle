@@ -182,6 +182,9 @@ dependencies {
     // there is no fabric flavor of Create to remap, and none is wanted — Create cannot be installed on this loader,
     // so the compat config stays gated off and remapJar has nothing to resolve.
     compileOnly "maven.modrinth:create:${create_version}"
+    // One DH jar carries both loaders' builds, so there is no separate fabric flavor to remap: plain compileOnly.
+    // The sources name DH's own core types; the per-loader chunk wrapper is reached by name, not by import.
+    compileOnly "maven.modrinth:distanthorizons:${distanthorizons_version}"
 }
 
 // Two jars on this game version, and only the second one ships. Minecraft is obfuscated here, so Loom compiles into a

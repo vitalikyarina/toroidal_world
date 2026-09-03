@@ -1,0 +1,68 @@
+package com.toroidalworld.compat.distanthorizons.mixin;
+
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+
+import com.toroidalworld.api.ToroidalShape;
+import com.toroidalworld.compat.distanthorizons.DhClientShapes;
+import com.toroidalworld.compat.distanthorizons.DhFold;
+import com.toroidalworld.compat.distanthorizons.DhKeys;
+import com.toroidalworld.compat.distanthorizons.DhProbes;
+import com.toroidalworld.compat.distanthorizons.DhShapes;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.seibel.distanthorizons.core.level.IDhClientLevel;
+import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos2D;
+import com.seibel.distanthorizons.core.render.QuadTree.LodQuadTree;
+import com.seibel.distanthorizons.core.util.objects.quadTree.QuadTree;
+
+@Mixin(LodQuadTree.class)
+public class LodQuadTreeMixin {
+    @Shadow
+    @Final
+    private IDhClientLevel level;
+
+    @WrapMethod(method = "queuePosToReload")
+    private void toroidal$reloadTheNearestCopy(long pos, Operation<Void> original) {
+        ToroidalShape shape = DhShapes.of(this.level);
+        if (shape == null) {
+            original.call(pos);
+            return;
+        }
+
+        DhBlockPos2D center = ((QuadTree<?>) (Object) this).getCenterBlockPos();
+        original.call(DhKeys.nearestSection(shape, center.x, center.z, pos));
+    }
+
+    @ModifyReturnValue(
+            method = "calcExpectedDetailLevel(Lcom/seibel/distanthorizons/core/pos/blockPos/DhBlockPos2D;IID)B",
+            at = @At("RETURN"))
+    private byte toroidal$capDetailAtTheWorld(byte expected) {
+        ToroidalShape shape = DhShapes.of(this.level);
+        if (shape == null) {
+            return expected;
+        }
+
+        byte cap = DhFold.maxExactDetailLevel(shape);
+        if (expected <= cap) {
+            return expected;
+        }
+
+        DhProbes.detailCapped(expected, cap);
+        return cap;
+    }
+
+    @WrapOperation(
+            method = "lambda$updateAllRenderSections$1",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lcom/seibel/distanthorizons/core/pos/DhSectionPos;contains(JJ)Z"))
+    private static boolean toroidal$cancelByTheFoldedSection(long sectionPos, long genPos, Operation<Boolean> original) {
+        ToroidalShape shape = DhClientShapes.ofCurrentLevel();
+        return original.call(shape == null ? sectionPos : DhKeys.foldSection(shape, sectionPos), genPos);
+    }
+}

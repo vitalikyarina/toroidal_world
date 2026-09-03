@@ -1,0 +1,25 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.toroidalworld.compat.distanthorizons.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "com.toroidalworld.compat.distanthorizons.DhMixinPlugin",
+  "mixins": [
+    "AbstractDhLevelMixin",
+    "AbstractDhRepoMixin",
+    "BeaconBeamRepoMixin",
+    "ChunkHashRepoMixin",
+    "ChunkWrapperMixin",
+    "FullDataSourceProviderV2Mixin",
+    "FullDataSourceV2RepoMixin",
+    "GeneratedFullDataSourceProviderMixin"
+  ],
+  "client": [
+    "ConfigEntryMixin",
+    "LodQuadTreeMixin",
+    "RenderBufferHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
