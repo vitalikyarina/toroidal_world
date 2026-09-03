@@ -44,6 +44,7 @@ public class NoiseBasedChunkGeneratorMixin {
 
     @Unique
     private WorldFold toroidal$transformer() {
-        return (Object) this instanceof ShapedChunkGenerator shaped ? shaped.transformer() : WorldFolds.NOOP;
+        WorldFold transformer = ShapedChunkGenerator.wrappedTransformerOf((NoiseBasedChunkGenerator) (Object) this);
+        return transformer == null ? WorldFolds.NOOP : transformer;
     }
 }

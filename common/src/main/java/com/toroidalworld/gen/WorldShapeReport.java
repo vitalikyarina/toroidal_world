@@ -19,37 +19,55 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 
 public final class WorldShapeReport {
+    private static final String CODEC_SOURCE = "codec";
+    private static final String STAMP_SOURCE = "stamp";
+
     public static List<String> lines(MinecraftServer server) {
+        FlatShape overworldShape = wrappedShapeOf(server.overworld());
         List<String> lines = new ArrayList<>();
-        boolean anyShaped = false;
         for (ServerLevel level : server.getAllLevels()) {
             FlatShape shape = wrappedShapeOf(level);
-            lines.add(shape == null ? unshapedLine(level) : shapedLine(server, level, shape));
-            anyShaped |= shape != null;
+            if (shape != null) {
+                lines.add(wrappedLine(server, level, shape));
+            } else if (overworldShape != null) {
+                lines.add(unwrappedLine(server, level, overworldShape));
+            }
         }
 
-        return anyShaped ? lines : List.of();
+        return lines;
     }
 
-    private static String shapedLine(MinecraftServer server, ServerLevel level, FlatShape shape) {
+    private static String wrappedLine(MinecraftServer server, ServerLevel level, FlatShape shape) {
         WorldLoopBounds bounds = shape.bounds();
         return "World shape: " + level.dimension().location()
                 + " generator=" + generatorId(level.getChunkSource().getGenerator())
+                + " shape=" + shapeSource(level)
                 + " identification=" + shape.identification()
                 + " x=" + axisSpan(bounds.x()) + " z=" + axisSpan(bounds.z()) + " chunks"
                 + ", " + widths(bounds)
                 + netherScale(server, level, bounds)
-                + environment();
+                + tail();
     }
 
-    private static String unshapedLine(ServerLevel level) {
-        return "World shape: " + level.dimension().location()
+    private static String unwrappedLine(MinecraftServer server, ServerLevel level, FlatShape overworldShape) {
+        double overworldScale = server.overworld().dimensionType().coordinateScale();
+        double scale = level.dimensionType().coordinateScale();
+        FlatShape derived = ShapedDimensions.derivedShape(overworldShape, overworldScale, scale);
+        String reason = derived == null
+                ? "coordinate scale " + scale + " derives no whole-chunk width in range from the overworld's "
+                        + widths(overworldShape.bounds())
+                : "a derivable " + widths(derived.bounds()) + " never reached the generator";
+        return "World shape: " + level.dimension().location() + " not wrapped"
                 + " generator=" + generatorId(level.getChunkSource().getGenerator())
-                + " unshaped"
-                + environment();
+                + ", " + reason
+                + tail();
     }
 
-    private static String environment() {
+    private static String shapeSource(ServerLevel level) {
+        return level.getChunkSource().getGenerator() instanceof ShapedChunkGenerator ? CODEC_SOURCE : STAMP_SOURCE;
+    }
+
+    private static String tail() {
         return " | mod=" + Platforms.get().modVersion()
                 + " mc=" + SharedConstants.getCurrentVersion().getName()
                 + " loader=" + Platforms.get().loaderName() + " " + Platforms.get().loaderVersion();

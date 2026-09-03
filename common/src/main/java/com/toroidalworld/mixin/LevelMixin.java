@@ -18,6 +18,7 @@ import com.toroidalworld.core.ForeignFrames;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.gen.ShapedChunkGenerator;
+import com.toroidalworld.shape.FlatShape;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -37,6 +38,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.entity.EntityTypeTest;
@@ -176,17 +178,17 @@ public class LevelMixin implements TransformerCache {
 
     @Unique
     private static WorldFold toroidal$generatorTransformer(ServerLevel level) {
-        if (!(level.getChunkSource().getGenerator() instanceof ShapedChunkGenerator shaped)) {
+        ChunkGenerator generator = level.getChunkSource().getGenerator();
+        WorldFold generatorTransformer = ShapedChunkGenerator.wrappedTransformerOf(generator);
+        if (generatorTransformer == null) {
             return WorldFolds.NOOP;
         }
 
-        WorldFold generatorTransformer = shaped.transformer();
-        if (!generatorTransformer.isWrapped()) {
-            return generatorTransformer;
-        }
-
+        FlatShape shape = ShapedChunkGenerator.wrappedShapeOf(generator);
         List<ForeignFrame> foreignFrames = ForeignFrames.of(level);
-        return foreignFrames.isEmpty() ? generatorTransformer : WorldFolds.of(shaped.shape(), foreignFrames);
+        return shape == null || foreignFrames.isEmpty()
+                ? generatorTransformer
+                : WorldFolds.of(shape, foreignFrames);
     }
 
     // Whether rain falls on a block is the same temperature field the ice is placed from, asked outside any
