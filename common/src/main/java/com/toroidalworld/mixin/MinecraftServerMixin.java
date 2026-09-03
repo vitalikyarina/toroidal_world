@@ -46,8 +46,12 @@ public class MinecraftServerMixin {
 
     @Inject(method = "createLevels", at = @At("TAIL"))
     private void toroidal$logWorldShape(CallbackInfo ci) {
-        for (String line : WorldShapeReport.lines((MinecraftServer) (Object) this)) {
-            ToroidalWorld.LOGGER.info(line);
+        for (WorldShapeReport.Line line : WorldShapeReport.lines((MinecraftServer) (Object) this)) {
+            if (line.broken()) {
+                ToroidalWorld.LOGGER.warn(line.text());
+            } else {
+                ToroidalWorld.LOGGER.info(line.text());
+            }
         }
     }
 

@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import com.mojang.serialization.DataResult;
 import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.options.WorldLoopPresets;
+import com.toroidalworld.options.WorldLoopSizes;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.shape.FlatShape;
 
@@ -43,6 +45,40 @@ class WorldFoldsTest {
 
     private static List<FlatShape> coupled() {
         return Stream.concat(Stream.of(SKEWED), mirrored().stream()).toList();
+    }
+
+    @Test
+    void aWorldTooNarrowToGenerateIsRefused() {
+        assertTrue(WorldFolds.verifyGeneratable(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(8), 0)).isError());
+        assertTrue(WorldFolds.verifyGeneratable(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, 8)))
+                .isError());
+    }
+
+    @Test
+    void aWorldAtTheGenerationFloorAndAnEndlessAxisAreAccepted() {
+        assertTrue(WorldFolds.verifyGeneratable(
+                FlatShape.latticeTorus(WorldLoopBounds.ofWidth(WorldLoopSizes.MIN_CHUNK_WIDTH), 0))
+                .result().isPresent());
+        assertTrue(WorldFolds.verifyGeneratable(FlatShape.rectangle()).result().isPresent());
+    }
+
+    @Test
+    void everyShippedPresetClearsTheGenerationFloor() {
+        for (WorldLoopPresets preset : WorldLoopPresets.values()) {
+            for (int chunkWidth : new int[] {preset.chunkWidth(), preset.endChunkWidth(),
+                    preset.chunkWidth() / preset.netherScale()}) {
+                assertTrue(WorldFolds.verifyGeneratable(
+                        FlatShape.latticeTorus(WorldLoopBounds.ofWidth(chunkWidth), 0)).result().isPresent(),
+                        preset.id());
+            }
+        }
+    }
+
+    @Test
+    void theFoldContractIsNotHeldToTheGenerationFloor() {
+        assertTrue(WorldFolds.verifyFoldable(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(8), 0))
+                .result().isPresent(),
+                "narrow worlds are the arithmetic fixtures of half this suite; a width floor here breaks them");
     }
 
     @Test

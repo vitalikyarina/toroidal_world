@@ -16,7 +16,9 @@ public interface ShapedChunkGenerator {
     String SETTINGS_KEY = "settings";
     String WRAPPING_KEY = "wrapping";
 
-    Codec<FlatShape> SHAPE_CODEC = FlatShape.CODEC.validate(WorldFolds::verifyFoldable);
+    Codec<FlatShape> SHAPE_CODEC = FlatShape.CODEC
+            .validate(WorldFolds::verifyFoldable)
+            .validate(WorldFolds::verifyGeneratable);
 
     FlatShape shape();
 
