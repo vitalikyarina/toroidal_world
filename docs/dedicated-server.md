@@ -117,7 +117,7 @@ The empty object is required: an axis left out of `wrapping` is an error, not an
 
 ### Size rules
 
-`min_chunk`/`max_chunk` are a half-open chunk range: `-16 … 16` means 32 chunks (512 blocks), block bounds −256 … 255. The create-world screen enforces these rules for you; a hand-written preset must respect them on its own:
+`min_chunk`/`max_chunk` are a half-open chunk range: `-16 … 16` means 32 chunks (512 blocks), block bounds −256 … 255. The create-world screen enforces these rules for you. A hand-written preset is checked at startup instead: a width under the floor stops the server before anything is generated, and the other two are named as `BROKEN` on the `World shape:` lines, logged at `WARN`:
 
 - **Overworld** — every looping axis at least 16 chunks (256 blocks), centered on zero as the example does (`min_chunk = -width/2`). A toroidal world loops both axes at the same width; a cylinder loops one axis and writes the other as `{}`.
 - **Nether** — the overworld width divided by the portal scale, and the scale must divide it exactly; the nether itself must stay at least 16 chunks (256 blocks) wide. Vanilla's 1:8 portal ratio therefore needs an overworld of at least 128 chunks (2048 blocks). An uneven ratio breaks portal linking near the seam — this rule is not optional. In a cylinder the rule applies to the looping axis; the endless axis stays `{}` in the nether too.
