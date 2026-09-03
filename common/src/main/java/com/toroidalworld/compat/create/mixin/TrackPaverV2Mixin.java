@@ -10,6 +10,7 @@ import com.simibubi.create.content.contraptions.actors.roller.TrackPaverV2;
 import com.simibubi.create.content.trains.graph.TrackEdge;
 import com.simibubi.create.content.trains.graph.TrackGraph;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
+import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.CreateTrackFold;
 
 import net.minecraft.world.phys.Vec3;
@@ -18,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 public abstract class TrackPaverV2Mixin {
     @WrapOperation(method = "pave",
             at = @At(value = "INVOKE",
-                    target = "Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;getLocation()Lnet/minecraft/world/phys/Vec3;",
+                    target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 1))
     private static Vec3 toroidal$foldSecondNode(TrackNodeLocation target, Operation<Vec3> original, PaveTask task,
             TrackGraph graph, TrackEdge edge, double from, double to) {

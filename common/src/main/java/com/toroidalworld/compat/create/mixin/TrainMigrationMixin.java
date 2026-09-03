@@ -8,6 +8,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.trains.entity.TrainMigration;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
+import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.CreateTrackFold;
 
 import net.createmod.catnip.data.Couple;
@@ -23,7 +24,7 @@ public abstract class TrainMigrationMixin {
 
     @WrapOperation(method = "tryMigratingTo",
             at = @At(value = "INVOKE",
-                    target = "Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;getLocation()Lnet/minecraft/world/phys/Vec3;",
+                    target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 0))
     private Vec3 toroidal$foldOldEdgeEnd(TrackNodeLocation end, Operation<Vec3> original) {
         Vec3 start = this.locations.getFirst().getLocation();
@@ -32,7 +33,7 @@ public abstract class TrainMigrationMixin {
 
     @WrapOperation(method = "tryMigratingTo",
             at = @At(value = "INVOKE",
-                    target = "Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;getLocation()Lnet/minecraft/world/phys/Vec3;",
+                    target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 2))
     private Vec3 toroidal$foldCandidateNode(TrackNodeLocation candidate, Operation<Vec3> original) {
         return CreateTrackFold.nearestCopy(candidate.getDimension(), this.fallback, original.call(candidate));

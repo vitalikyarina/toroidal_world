@@ -13,6 +13,7 @@ import com.simibubi.create.content.trains.graph.TrackNode;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.simibubi.create.content.trains.track.BezierConnection;
 import com.simibubi.create.content.trains.track.TrackMaterial;
+import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.BezierCurveFold;
 import com.toroidalworld.compat.create.CreateTrackFold;
 
@@ -33,7 +34,7 @@ public abstract class TrackEdgeMixin {
 
     @WrapOperation(method = "getLength",
             at = @At(value = "INVOKE",
-                    target = "Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;getLocation()Lnet/minecraft/world/phys/Vec3;",
+                    target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 1))
     private Vec3 toroidal$foldLengthTarget(TrackNodeLocation target, Operation<Vec3> original) {
         return toroidal$nearestToFirstNode(target, original.call(target));
@@ -41,7 +42,7 @@ public abstract class TrackEdgeMixin {
 
     @WrapOperation(method = "getPosition",
             at = @At(value = "INVOKE",
-                    target = "Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;getLocation()Lnet/minecraft/world/phys/Vec3;",
+                    target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 1))
     private Vec3 toroidal$foldPositionTarget(TrackNodeLocation target, Operation<Vec3> original) {
         return toroidal$nearestToFirstNode(target, original.call(target));
@@ -60,7 +61,7 @@ public abstract class TrackEdgeMixin {
 
     @WrapOperation(method = "getIntersection",
             at = @At(value = "INVOKE",
-                    target = "Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;getLocation()Lnet/minecraft/world/phys/Vec3;",
+                    target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 1))
     private Vec3 toroidal$foldIntersectionSecondEnd(TrackNodeLocation target, Operation<Vec3> original, TrackNode node1,
             TrackNode node2, TrackEdge other, TrackNode other1, TrackNode other2) {
@@ -69,7 +70,7 @@ public abstract class TrackEdgeMixin {
 
     @WrapOperation(method = "getIntersection",
             at = @At(value = "INVOKE",
-                    target = "Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;getLocation()Lnet/minecraft/world/phys/Vec3;",
+                    target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 2))
     private Vec3 toroidal$foldIntersectionOtherNearEnd(TrackNodeLocation target, Operation<Vec3> original,
             TrackNode node1, TrackNode node2, TrackEdge other, TrackNode other1, TrackNode other2) {
@@ -78,7 +79,7 @@ public abstract class TrackEdgeMixin {
 
     @WrapOperation(method = "getIntersection",
             at = @At(value = "INVOKE",
-                    target = "Lcom/simibubi/create/content/trains/graph/TrackNodeLocation;getLocation()Lnet/minecraft/world/phys/Vec3;",
+                    target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 3))
     private Vec3 toroidal$foldIntersectionOtherFarEnd(TrackNodeLocation target, Operation<Vec3> original,
             TrackNode node1, TrackNode node2, TrackEdge other, TrackNode other1, TrackNode other2) {

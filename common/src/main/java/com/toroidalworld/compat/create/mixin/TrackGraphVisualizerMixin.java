@@ -8,6 +8,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.trains.graph.TrackEdge;
 import com.simibubi.create.content.trains.graph.TrackGraph;
 import com.simibubi.create.content.trains.graph.TrackGraphVisualizer;
+import com.toroidalworld.VanillaInvokeTargets;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
 import net.minecraft.world.phys.AABB;
@@ -24,7 +25,7 @@ public class TrackGraphVisualizerMixin {
 
     @WrapOperation(method = {"visualiseSignalEdgeGroups", "debugViewGraph"},
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
+                    target = VanillaInvokeTargets.VEC3_DISTANCE_TO))
     private static double toroidal$foldNodeAgainstCamera(Vec3 node, Vec3 camera, Operation<Double> original) {
         return original.call(CreateClientFrame.nearestCopy(camera, node), camera);
     }
