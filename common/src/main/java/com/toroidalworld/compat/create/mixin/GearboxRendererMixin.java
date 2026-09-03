@@ -15,13 +15,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 
-// The same fold as GearboxVisualMixin, on the path Create takes where the backend supports no visualization. Both of
-// them exist because the two renderers spell the subtraction out separately — whichever one the player's backend
-// picks, the gearbox has to draw its half shafts the same way.
-//
-// Named by descriptor: the generic renderSafe leaves two bridge methods of the same name behind it. The whole
-// parameter list is captured because the block entity is the first of them, and it is the only thing here that knows
-// the level and the anchor.
 @Mixin(value = GearboxRenderer.class, remap = false)
 public class GearboxRendererMixin {
     @WrapOperation(
