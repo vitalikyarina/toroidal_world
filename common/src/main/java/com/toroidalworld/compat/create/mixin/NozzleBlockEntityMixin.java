@@ -21,6 +21,6 @@ public class NozzleBlockEntityMixin {
         Vec3 raw = original.call(entity);
         NozzleBlockEntity self = (NozzleBlockEntity) (Object) this;
         Vec3 center = Vec3.atCenterOf(self.getBlockPos());
-        return CreateSeamFold.foldPoint(self.getLevel(), center, raw);
+        return CreateSeamFold.nearestCopy(self.getLevel(), center, raw);
     }
 }

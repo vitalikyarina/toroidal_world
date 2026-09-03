@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.simibubi.create.content.trains.track.BezierConnection;
 import com.toroidalworld.compat.create.BezierCurveFold;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.core.WorldFold;
 
 import net.createmod.catnip.data.Couple;
@@ -39,7 +39,7 @@ public abstract class BezierConnectionMixin implements BezierCurveFold {
             this.toroidal$dimension = dimension;
         }
 
-        WorldFold transformer = CreateTrackFold.transformerOf(level, this.toroidal$dimension);
+        WorldFold transformer = CreateSeamFold.transformerOf(level, this.toroidal$dimension);
         if (transformer == null) {
             return;
         }

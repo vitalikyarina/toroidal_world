@@ -7,7 +7,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.AllDataComponents;
 import com.simibubi.create.content.trains.track.TrackTargetingBlockItem;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
@@ -27,6 +27,6 @@ public class TrackTargetingBlockItemMixin {
             return value;
         }
 
-        return CreateTrackFold.nearestCopy(context.getLevel(), context.getClickedPos(), selected);
+        return CreateSeamFold.nearestCopy(context.getLevel(), context.getClickedPos(), selected);
     }
 }

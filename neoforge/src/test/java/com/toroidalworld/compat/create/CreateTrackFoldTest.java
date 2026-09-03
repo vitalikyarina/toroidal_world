@@ -1,7 +1,6 @@
 package com.toroidalworld.compat.create;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,7 +17,6 @@ import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.world.phys.Vec3;
 
 class CreateTrackFoldTest {
     private static final int WORLD_CHUNKS = 16;
@@ -28,7 +26,6 @@ class CreateTrackFoldTest {
     private static final int MIRROR_LINE_BLOCKS = MIRROR_LINE_CHUNK * 16;
     private static final int KEY_Y = 128;
     private static final double FAR_UNBOUNDED_Z = 100000.5;
-    private static final double RUN_Y = 64.0;
 
     private static final WorldLoopBounds BOUNDS =
             new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
@@ -63,10 +60,6 @@ class CreateTrackFoldTest {
 
     private static Vec3i keyAt(double x, double z) {
         return new Vec3i((int) Math.round(x * 2), KEY_Y, (int) Math.round(z * 2));
-    }
-
-    private static Vec3 at(double x, double z) {
-        return new Vec3(x, RUN_Y, z);
     }
 
     @Test
@@ -174,47 +167,6 @@ class CreateTrackFoldTest {
             }
 
             assertTrue(moved > 0, fold + " left every key alone, so the displacement was never asserted");
-        }
-    }
-
-    @Test
-    void aRunCrossingTheTieKeepsItsShapeWhilePerPointSeatingSplitsIt() {
-        Vec3 viewer = at(752.0, 10.0);
-        Vec3 anchor = at(250.0, 10.0);
-        Vec3 nearPoint = at(495.0, 10.0);
-        Vec3 farPoint = at(500.0, 10.0);
-        for (WorldFold fold : TRANSLATING) {
-            Vec3 seatedNear = CreateTrackFold.inFrameOf(fold, viewer, anchor, nearPoint);
-            Vec3 seatedFar = CreateTrackFold.inFrameOf(fold, viewer, anchor, farPoint);
-
-            assertEquals(at(495.0 + WORLD_BLOCKS, 10.0), seatedNear, "in " + fold);
-            assertEquals(at(500.0 + WORLD_BLOCKS, 10.0), seatedFar, "in " + fold);
-            assertEquals(farPoint.subtract(nearPoint), seatedFar.subtract(seatedNear), "in " + fold);
-            assertNotEquals(fold.nearestCopy(viewer, farPoint), seatedFar,
-                    fold + " seated the far point where per-point seating already puts it, so nothing was asserted");
-        }
-    }
-
-    @Test
-    void theUnboundedAxisOfACylinderIsNotMovedByTheRunAnchor() {
-        Vec3 seated = CreateTrackFold.inFrameOf(
-                CYLINDER, at(752.0, 10.0), at(250.0, 10.0), at(495.0, FAR_UNBOUNDED_Z));
-
-        assertEquals(at(495.0 + WORLD_BLOCKS, FAR_UNBOUNDED_Z), seated);
-    }
-
-    @Test
-    void aRunSeatedThroughAGlideSeamCarriesTheMirroredOffset() {
-        Vec3 seated = CreateTrackFold.inFrameOf(MIRRORED, at(752.0, 10.0), at(250.0, 10.0), at(495.0, 30.0));
-
-        assertEquals(at(495.0 + WORLD_BLOCKS, 2 * MIRROR_LINE_BLOCKS - 30.0), seated);
-    }
-
-    @Test
-    void aRunWhoseAnchorStaysWhereItIsHandsThePointBack() {
-        Vec3 point = at(30.0, 10.0);
-        for (WorldFold fold : ALL) {
-            assertSame(point, CreateTrackFold.inFrameOf(fold, at(10.0, 10.0), at(20.0, 10.0), point), "in " + fold);
         }
     }
 

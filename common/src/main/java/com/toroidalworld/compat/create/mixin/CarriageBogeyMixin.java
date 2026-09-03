@@ -9,7 +9,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.trains.entity.CarriageBogey;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -43,6 +43,6 @@ public abstract class CarriageBogeyMixin {
     }
 
     private Vec3 toroidal$nearest(Vec3 leading, Vec3 trailing) {
-        return CreateTrackFold.nearestCopy(getDimension(), leading, trailing);
+        return CreateSeamFold.nearestCopy(getDimension(), leading, trailing);
     }
 }

@@ -6,12 +6,12 @@ import net.minecraft.world.phys.Vec3;
 
 public final class CreateContraptionFold {
     public static Vec3 inFrameOf(Entity entity, Vec3 canonical) {
-        return CreateTrackFold.nearestCopy(entity.level(), entity.position(), canonical);
+        return CreateSeamFold.nearestCopy(entity.level(), entity.position(), canonical);
     }
 
     public static double axisInFrameOf(Entity entity, Direction.Axis axis, double canonicalCoord) {
         Vec3 position = entity.position();
-        Vec3 folded = CreateTrackFold.nearestCopy(entity.level(), position, onAxis(position, axis, canonicalCoord));
+        Vec3 folded = CreateSeamFold.nearestCopy(entity.level(), position, onAxis(position, axis, canonicalCoord));
         return axis.choose(folded.x, folded.y, folded.z);
     }
 

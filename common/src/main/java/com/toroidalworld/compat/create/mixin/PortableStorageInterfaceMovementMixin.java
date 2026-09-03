@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.contraptions.behaviour.MovementContext;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.world.phys.Vec3;
 
@@ -17,7 +17,7 @@ public class PortableStorageInterfaceMovementMixin {
             at = @At(value = "INVOKE",
                     target = "Lnet/createmod/catnip/math/VecHelper;getCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$workingTargetInTheActorFrame(Vec3 target, @Local(argsOnly = true) MovementContext context) {
-        return CreateTrackFold.nearestCopy(context.world, context.position, target);
+        return CreateSeamFold.nearestCopy(context.world, context.position, target);
     }
 
     @ModifyExpressionValue(method = "findInterface",
@@ -25,6 +25,6 @@ public class PortableStorageInterfaceMovementMixin {
                     target = "Lnet/createmod/catnip/math/VecHelper;getCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$interfaceCenterInTheActorFrame(Vec3 center,
             @Local(argsOnly = true) MovementContext context) {
-        return CreateTrackFold.nearestCopy(context.world, context.position, center);
+        return CreateSeamFold.nearestCopy(context.world, context.position, center);
     }
 }

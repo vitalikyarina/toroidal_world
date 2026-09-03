@@ -21,6 +21,6 @@ public class BeltConnectorItemMixin {
             return stored;
         }
 
-        return CreateSeamFold.foldPosition(context.getLevel(), context.getClickedPos(), storedPulley);
+        return CreateSeamFold.nearestCopy(context.getLevel(), context.getClickedPos(), storedPulley);
     }
 }

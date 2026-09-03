@@ -8,7 +8,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.trains.station.StationBlockEntity;
 import com.toroidalworld.compat.create.CreateSeamFold;
-import com.toroidalworld.compat.create.CreateTrackFold;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -35,6 +34,6 @@ public class StationBlockEntityMixin {
                     target = "Lnet/minecraft/world/phys/Vec3;subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$trackEndInTheAssemblingFrame(Vec3 end, Vec3 center, Operation<Vec3> original) {
         Level level = ((StationBlockEntity) (Object) this).getLevel();
-        return original.call(end, CreateTrackFold.nearestCopy(level, end, center));
+        return original.call(end, CreateSeamFold.nearestCopy(level, end, center));
     }
 }

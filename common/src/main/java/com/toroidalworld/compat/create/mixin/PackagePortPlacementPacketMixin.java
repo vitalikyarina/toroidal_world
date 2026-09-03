@@ -12,7 +12,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.logistics.packagePort.PackagePortPlacementPacket;
 import com.toroidalworld.compat.create.CreateSeamFold;
-import com.toroidalworld.compat.create.CreateTrackFold;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
@@ -42,6 +41,6 @@ public class PackagePortPlacementPacketMixin {
             return original.call(target, port, range);
         }
 
-        return original.call(CreateTrackFold.nearestCopy(player.level(), anchor, target), port, range);
+        return original.call(CreateSeamFold.nearestCopy(player.level(), anchor, target), port, range);
     }
 }

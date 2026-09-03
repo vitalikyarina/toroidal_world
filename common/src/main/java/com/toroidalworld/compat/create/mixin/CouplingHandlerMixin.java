@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -18,6 +18,6 @@ public class CouplingHandlerMixin {
                     target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
     private static double toroidal$couplingSpanBetweenTheNearCopies(Vec3 position, Vec3 otherPosition,
             Operation<Double> original, @Local(argsOnly = true) Level world) {
-        return original.call(position, CreateTrackFold.nearestCopy(world, position, otherPosition));
+        return original.call(position, CreateSeamFold.nearestCopy(world, position, otherPosition));
     }
 }

@@ -72,6 +72,6 @@ public abstract class FactoryPanelBehaviourMixin {
             return original.call(stored, destination, range);
         }
 
-        return original.call(CreateSeamFold.foldPosition(level, anchor, stored), destination, range);
+        return original.call(CreateSeamFold.nearestCopy(level, anchor, stored), destination, range);
     }
 }

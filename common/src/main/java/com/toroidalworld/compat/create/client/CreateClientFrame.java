@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.core.FoldedCopies;
 import com.toroidalworld.core.WorldFold;
 
@@ -27,12 +27,12 @@ public final class CreateClientFrame {
         }
 
         BlockPos anchor = viewer();
-        return anchor == null ? canonical : CreateTrackFold.nearestCopy(level, anchor, canonical);
+        return anchor == null ? canonical : CreateSeamFold.nearestCopy(level, anchor, canonical);
     }
 
     public static @Nullable BlockPos heldCopy(@Nullable BlockGetter world, BlockPos canonical) {
         Level level = toroidalClientLevel(world);
-        if (level == null || CreateTrackFold.transformerOf(level, null) == null) {
+        if (level == null || CreateSeamFold.transformerOf(level, null) == null) {
             return canonical;
         }
 
@@ -41,7 +41,7 @@ public final class CreateClientFrame {
             return canonical;
         }
 
-        BlockPos nearest = CreateTrackFold.nearestCopy(level, anchor, canonical);
+        BlockPos nearest = CreateSeamFold.nearestCopy(level, anchor, canonical);
         return holds(level, nearest) ? nearest : null;
     }
 
@@ -56,7 +56,7 @@ public final class CreateClientFrame {
             return canonical;
         }
 
-        return FoldedCopies.of(canonical, position -> CreateTrackFold.nearestCopy(level, anchor, position));
+        return FoldedCopies.of(canonical, position -> CreateSeamFold.nearestCopy(level, anchor, position));
     }
 
     public static BlockPos nearestCopy(@Nullable BlockPos anchor, BlockPos target) {
@@ -65,7 +65,7 @@ public final class CreateClientFrame {
             return target;
         }
 
-        return CreateTrackFold.nearestCopy(level, anchor, target);
+        return CreateSeamFold.nearestCopy(level, anchor, target);
     }
 
     public static Vec3 nearestCopy(@Nullable Vec3 anchor, Vec3 target) {
@@ -74,7 +74,7 @@ public final class CreateClientFrame {
             return target;
         }
 
-        return CreateTrackFold.nearestCopy(level, anchor, target);
+        return CreateSeamFold.nearestCopy(level, anchor, target);
     }
 
     public static Vec3 inFrameOf(@Nullable Vec3 anchor, Vec3 point) {
@@ -84,7 +84,7 @@ public final class CreateClientFrame {
             return point;
         }
 
-        return CreateTrackFold.inFrameOf(level, viewer, anchor, point);
+        return CreateSeamFold.inFrameOf(level, viewer, anchor, point);
     }
 
     public static AABB foldBoxToward(@Nullable Vec3 anchor, AABB box) {
@@ -93,7 +93,7 @@ public final class CreateClientFrame {
             return box;
         }
 
-        WorldFold transformer = CreateTrackFold.transformerOf(level, null);
+        WorldFold transformer = CreateSeamFold.transformerOf(level, null);
         return transformer == null ? box : transformer.foldBox(anchor, box).value();
     }
 

@@ -19,6 +19,6 @@ public class LecternControllerBlockEntityMixin {
                     target = "Lnet/minecraft/world/phys/Vec3;distanceToSqr(Lnet/minecraft/world/phys/Vec3;)D"))
     private static double toroidal$foldLecternReach(Vec3 eye, Vec3 centre, Operation<Double> original,
             Player player, Level world) {
-        return original.call(eye, CreateSeamFold.foldPoint(world, eye, centre));
+        return original.call(eye, CreateSeamFold.nearestCopy(world, eye, centre));
     }
 }

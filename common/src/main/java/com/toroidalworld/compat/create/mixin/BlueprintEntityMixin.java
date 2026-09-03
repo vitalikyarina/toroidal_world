@@ -9,7 +9,6 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
 import com.simibubi.create.content.equipment.blueprint.BlueprintEntity;
 import com.toroidalworld.compat.create.CreateSeamFold;
-import com.toroidalworld.compat.create.CreateTrackFold;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -37,7 +36,7 @@ public class BlueprintEntityMixin {
         Entity blueprint = (Entity) (Object) this;
         BlockPos canonical = new BlockPos(spawnData.getInt(TILE_X_KEY), spawnData.getInt(TILE_Y_KEY),
                 spawnData.getInt(TILE_Z_KEY));
-        BlockPos folded = CreateTrackFold.nearestCopy(blueprint.level(), blueprint.blockPosition(), canonical);
+        BlockPos folded = CreateSeamFold.nearestCopy(blueprint.level(), blueprint.blockPosition(), canonical);
         if (folded.equals(canonical)) {
             return spawnData;
         }
@@ -51,6 +50,6 @@ public class BlueprintEntityMixin {
     @ModifyVariable(method = "skipAttackInteraction", at = @At("STORE"), ordinal = 0)
     private Vec3 toroidal$foldAttackRay(Vec3 eyePos, Entity source) {
         Entity blueprint = (Entity) (Object) this;
-        return CreateSeamFold.foldPoint(blueprint.level(), blueprint.position(), eyePos);
+        return CreateSeamFold.nearestCopy(blueprint.level(), blueprint.position(), eyePos);
     }
 }

@@ -41,7 +41,7 @@ public class AirCurrentMixin {
     @Unique
     private Vec3 toroidal$foldedPosition(Vec3 raw) {
         AirCurrent self = (AirCurrent) (Object) this;
-        return CreateSeamFold.foldPoint(self.source.getAirCurrentWorld(),
+        return CreateSeamFold.nearestCopy(self.source.getAirCurrentWorld(),
                 Vec3.atCenterOf(self.source.getAirCurrentPos()), raw);
     }
 }

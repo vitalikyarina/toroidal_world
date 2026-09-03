@@ -20,7 +20,7 @@ public final class ChassisWalkFrame {
             return worldPosition;
         }
 
-        return CreateSeamFold.foldPosition(scope.level, scope.anchor, worldPosition);
+        return CreateSeamFold.nearestCopy(scope.level, scope.anchor, worldPosition);
     }
 
     private record Scope(@Nullable Level level, BlockPos anchor) {

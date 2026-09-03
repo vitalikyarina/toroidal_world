@@ -16,7 +16,7 @@ public final class RopeAnchorFrame {
             return canonical;
         }
 
-        return CreateSeamFold.foldPosition(level, player.blockPosition(), canonical);
+        return CreateSeamFold.nearestCopy(level, player.blockPosition(), canonical);
     }
 
     private RopeAnchorFrame() {

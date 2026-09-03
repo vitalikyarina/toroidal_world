@@ -9,7 +9,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.trains.entity.Navigation;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.toroidalworld.compat.create.CreateInvokeTargets;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.world.phys.Vec3;
 
@@ -40,6 +40,6 @@ public abstract class NavigationMixin {
     }
 
     private Vec3 toroidal$nearestTo(Vec3 anchor, TrackNodeLocation destinationNode, Vec3 rawDestination) {
-        return CreateTrackFold.nearestCopy(destinationNode.getDimension(), anchor, rawDestination);
+        return CreateSeamFold.nearestCopy(destinationNode.getDimension(), anchor, rawDestination);
     }
 }

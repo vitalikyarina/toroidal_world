@@ -21,7 +21,7 @@ public class ToolboxHandlerMixin {
                             + "distance(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/core/BlockPos;)D"))
     private static double toroidal$foldToolboxRange(Vec3 location, BlockPos toolboxPos, Operation<Double> original,
             Player player, ToolboxBlockEntity box) {
-        BlockPos folded = CreateSeamFold.foldPosition(player.level(), BlockPos.containing(location), toolboxPos);
+        BlockPos folded = CreateSeamFold.nearestCopy(player.level(), BlockPos.containing(location), toolboxPos);
         return original.call(location, folded);
     }
 }

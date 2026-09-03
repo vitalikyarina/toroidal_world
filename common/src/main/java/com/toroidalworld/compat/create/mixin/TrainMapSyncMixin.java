@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.simibubi.create.compat.trainmap.TrainMapSync;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.compat.create.TrainMapSyncFold;
 
 @Mixin(value = TrainMapSync.class, remap = false)
@@ -20,6 +20,6 @@ public abstract class TrainMapSyncMixin {
         }
 
         TrainMapSyncFold.coherent(entry.positions, entry.dimensions,
-                dimension -> CreateTrackFold.transformerOf(null, dimension));
+                dimension -> CreateSeamFold.transformerOf(null, dimension));
     }
 }

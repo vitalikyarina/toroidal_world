@@ -22,7 +22,7 @@ public class SymmetryWandItemMixin {
                     target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
     private static double toroidal$foldApplyReach(Vec3 mirror, Vec3 placed, Operation<Double> original,
             Level world, ItemStack wand, Player player, BlockPos pos, BlockState block) {
-        return original.call(CreateSeamFold.foldPoint(world, placed, mirror), placed);
+        return original.call(CreateSeamFold.nearestCopy(world, placed, mirror), placed);
     }
 
     @WrapOperation(method = "remove",
@@ -30,6 +30,6 @@ public class SymmetryWandItemMixin {
                     target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
     private static double toroidal$foldRemoveReach(Vec3 mirror, Vec3 broken, Operation<Double> original,
             Level world, ItemStack wand, Player player, BlockPos pos) {
-        return original.call(CreateSeamFold.foldPoint(world, broken, mirror), broken);
+        return original.call(CreateSeamFold.nearestCopy(world, broken, mirror), broken);
     }
 }

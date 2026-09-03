@@ -31,7 +31,7 @@ public class RedstoneLinkNetworkHandlerMixin {
         BlockPos storedTo = to.getLocation();
         BlockPos seatedFrom = CreateSeamFold.worldSeat(level, storedFrom);
         BlockPos seatedTo = CreateSeamFold.worldSeat(level, storedTo);
-        BlockPos foldedTo = CreateSeamFold.foldPosition(level, seatedFrom, seatedTo);
+        BlockPos foldedTo = CreateSeamFold.nearestCopy(level, seatedFrom, seatedTo);
         if (seatedFrom.equals(storedFrom) && foldedTo.equals(storedTo)) {
             return original.call(from, to);
         }

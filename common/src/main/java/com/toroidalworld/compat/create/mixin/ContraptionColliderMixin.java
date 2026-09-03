@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -21,7 +21,7 @@ public class ContraptionColliderMixin {
             index = 0)
     private static Vec3 toroidal$entityInTheAnchorFrame(Vec3 position, @Local(argsOnly = true) Entity entity,
             @Local(argsOnly = true) Vec3 anchorVec) {
-        return CreateTrackFold.nearestCopy(entity.level(), anchorVec, position);
+        return CreateSeamFold.nearestCopy(entity.level(), anchorVec, position);
     }
 
     @ModifyExpressionValue(method = "collideBlocks",
@@ -29,7 +29,7 @@ public class ContraptionColliderMixin {
                     target = "Lcom/simibubi/create/content/contraptions/ControlledContraptionEntity;getBoundingBox()Lnet/minecraft/world/phys/AABB;"))
     private static AABB toroidal$otherContraptionBoxInThisFrame(AABB otherBounds, @Local(name = "world") Level level,
             @Local(name = "position") Vec3 position) {
-        return CreateTrackFold.foldBoxToward(level, position, otherBounds);
+        return CreateSeamFold.foldBoxToward(level, position, otherBounds);
     }
 
     @ModifyExpressionValue(method = "collideBlocks",
@@ -37,6 +37,6 @@ public class ContraptionColliderMixin {
                     target = "Lcom/simibubi/create/content/contraptions/ControlledContraptionEntity;position()Lnet/minecraft/world/phys/Vec3;"))
     private static Vec3 toroidal$otherContraptionPositionInThisFrame(Vec3 otherPosition,
             @Local(name = "world") Level level, @Local(name = "position") Vec3 position) {
-        return CreateTrackFold.nearestCopy(level, position, otherPosition);
+        return CreateSeamFold.nearestCopy(level, position, otherPosition);
     }
 }

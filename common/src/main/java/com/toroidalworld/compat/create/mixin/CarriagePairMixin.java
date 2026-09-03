@@ -11,7 +11,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.TravellingPoint;
 import com.toroidalworld.compat.create.CarriageEntityFrame;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -27,7 +27,7 @@ public abstract class CarriagePairMixin {
                     target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
     private double toroidal$foldAnchorSpan(Vec3 leading, Vec3 trailing, Operation<Double> original) {
         return original.call(leading,
-                CreateTrackFold.nearestCopy(getLeadingPoint().node1.getLocation().dimension, leading, trailing));
+                CreateSeamFold.nearestCopy(getLeadingPoint().node1.getLocation().dimension, leading, trailing));
     }
 
     @ModifyExpressionValue(method = "pivoted",
@@ -37,7 +37,7 @@ public abstract class CarriagePairMixin {
             @Local(argsOnly = true) Carriage.DimensionalCarriageEntity dce,
             @Local(argsOnly = true) ResourceKey<Level> dimension,
             @Local(ordinal = 0) Vec3 startVec) {
-        return CreateTrackFold.nearestCopy(((CarriageEntityFrame) dce).toroidal$carriageLevel(), dimension,
+        return CreateSeamFold.nearestCopy(((CarriageEntityFrame) dce).toroidal$carriageLevel(), dimension,
                 startVec, portalVec);
     }
 }

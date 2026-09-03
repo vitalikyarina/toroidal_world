@@ -15,7 +15,7 @@ import com.simibubi.create.content.trains.track.BezierConnection;
 import com.simibubi.create.content.trains.track.TrackMaterial;
 import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.BezierCurveFold;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.world.phys.Vec3;
 
@@ -54,8 +54,8 @@ public abstract class TrackEdgeMixin {
     private Vec3 toroidal$foldSmoothedEnds(float t, Vec3 fromNode1, Vec3 fromNode2, Operation<Vec3> original) {
         TrackNodeLocation location = this.node1.getLocation();
         Vec3 anchor = location.getLocation();
-        Vec3 nearEnd = CreateTrackFold.nearestCopy(location.getDimension(), anchor, fromNode1);
-        Vec3 farEnd = CreateTrackFold.nearestCopy(location.getDimension(), nearEnd, fromNode2);
+        Vec3 nearEnd = CreateSeamFold.nearestCopy(location.getDimension(), anchor, fromNode1);
+        Vec3 farEnd = CreateSeamFold.nearestCopy(location.getDimension(), nearEnd, fromNode2);
         return original.call(t, nearEnd, farEnd);
     }
 
@@ -96,6 +96,6 @@ public abstract class TrackEdgeMixin {
     }
 
     private Vec3 toroidal$folded(TrackNodeLocation target, Vec3 anchor, Vec3 rawTarget) {
-        return CreateTrackFold.nearestCopy(target.getDimension(), anchor, rawTarget);
+        return CreateSeamFold.nearestCopy(target.getDimension(), anchor, rawTarget);
     }
 }

@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.trains.entity.Train;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -30,25 +30,25 @@ public abstract class TrainCollisionMixin {
     @ModifyVariable(method = COLLIDING_METHOD, at = @At("HEAD"), argsOnly = true, ordinal = SPAN_END_ARGUMENT)
     private Vec3 toroidal$foldOwnSpan(Vec3 spanEnd, @Local(argsOnly = true) Level level,
             @Local(argsOnly = true, ordinal = SPAN_START_ARGUMENT) Vec3 spanStart) {
-        return CreateTrackFold.nearestCopy(level, spanStart, spanEnd);
+        return CreateSeamFold.nearestCopy(level, spanStart, spanEnd);
     }
 
     @ModifyExpressionValue(method = COLLIDING_METHOD,
             at = @At(value = "INVOKE", target = TRAVELLING_POINT_POSITION, ordinal = 0))
     private Vec3 toroidal$foldOtherStart(Vec3 otherStart, @Local(argsOnly = true) Level level,
             @Local(argsOnly = true, ordinal = SPAN_START_ARGUMENT) Vec3 spanStart) {
-        return CreateTrackFold.nearestCopy(level, spanStart, otherStart);
+        return CreateSeamFold.nearestCopy(level, spanStart, otherStart);
     }
 
     @ModifyExpressionValue(method = COLLIDING_METHOD,
             at = @At(value = "INVOKE", target = TRAVELLING_POINT_POSITION, ordinal = 1))
     private Vec3 toroidal$foldOtherEnd(Vec3 otherEnd, @Local(argsOnly = true) Level level,
             @Local(name = OTHER_START_LOCAL) Vec3 otherStart) {
-        return CreateTrackFold.nearestCopy(level, otherStart, otherEnd);
+        return CreateSeamFold.nearestCopy(level, otherStart, otherEnd);
     }
 
     @ModifyExpressionValue(method = COLLIDING_METHOD, at = @At(value = "INVOKE", target = VEC3_ADD))
     private Vec3 toroidal$wrapCollisionPoint(Vec3 point, @Local(argsOnly = true) Level level) {
-        return level instanceof ServerLevel serverLevel ? CreateTrackFold.wrap(serverLevel, point) : point;
+        return level instanceof ServerLevel serverLevel ? CreateSeamFold.canonical(serverLevel, point) : point;
     }
 }

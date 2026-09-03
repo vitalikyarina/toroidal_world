@@ -22,7 +22,7 @@ public class ConnectivityHandlerMixin {
                     ordinal = 1))
     private static BlockPos toroidal$foldControllerIntoScanFrame(BlockPos conPos,
             @Local(argsOnly = true) BlockEntity be) {
-        return CreateSeamFold.foldPosition(be.getLevel(), be.getBlockPos(), conPos);
+        return CreateSeamFold.nearestCopy(be.getLevel(), be.getBlockPos(), conPos);
     }
 
     @ModifyExpressionValue(
@@ -37,6 +37,6 @@ public class ConnectivityHandlerMixin {
             return next;
         }
 
-        return CreateSeamFold.foldPosition(blockLevel, new BlockPos(minX, next.getY(), minZ), next);
+        return CreateSeamFold.nearestCopy(blockLevel, new BlockPos(minX, next.getY(), minZ), next);
     }
 }

@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
 
 import com.simibubi.create.compat.trainmap.TrainMapRenderer;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.core.WorldFold;
 
 import net.minecraft.client.Minecraft;
@@ -48,7 +48,7 @@ public final class TrainMapFrame {
             return null;
         }
 
-        return CreateTrackFold.transformerOf(level, null);
+        return CreateSeamFold.transformerOf(level, null);
     }
 
     private static @Nullable WorldFold resolve(@Nullable ResourceKey<Level> drawnDimension) {

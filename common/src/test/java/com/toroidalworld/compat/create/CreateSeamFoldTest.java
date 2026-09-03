@@ -13,6 +13,7 @@ import com.toroidalworld.core.DeckGroupFold;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.core.BlockPos;
@@ -29,6 +30,9 @@ class CreateSeamFoldTest {
     private static final int WORLD_BLOCKS = WORLD_CHUNKS * 2 * 16;
     private static final int SKEW_CHUNKS = 4;
     private static final int MIRROR_LINE_CHUNK = 3;
+    private static final int MIRROR_LINE_BLOCKS = MIRROR_LINE_CHUNK * 16;
+    private static final double FAR_UNBOUNDED_Z = 100000.5;
+    private static final double RUN_Y = 64.0;
 
     private static final WorldLoopBounds BOUNDS =
             new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
@@ -39,9 +43,17 @@ class CreateSeamFoldTest {
     private static final WorldFold MIRRORED =
             new DeckGroupFold(FlatShape.mirrored(BOUNDS, Direction.Axis.Z, MIRROR_LINE_CHUNK));
 
+    private static final WorldLoopBounds X_ONLY =
+            new WorldLoopBounds(new AxisBounds.Looped(-WORLD_CHUNKS, WORLD_CHUNKS), AxisBounds.Unbounded.INSTANCE);
+
+    private static final WorldFold CYLINDER = WorldFolds.of(FlatShape.cylinder(X_ONLY));
+
     private static final List<WorldFold> UNSKEWED = List.of(PER_AXIS, DECK_TORUS);
     private static final List<WorldFold> TRANSLATING = List.of(PER_AXIS, DECK_TORUS, SKEWED);
     private static final List<WorldFold> ALL = List.of(PER_AXIS, DECK_TORUS, SKEWED, MIRRORED);
+
+    private static final List<WorldFold> RUN_TRANSLATING = List.of(PER_AXIS, DECK_TORUS, SKEWED, CYLINDER);
+    private static final List<WorldFold> RUN_ALL = List.of(PER_AXIS, DECK_TORUS, SKEWED, MIRRORED, CYLINDER);
 
     private static final BlockPos ANCHOR = new BlockPos(250, 64, 10);
     private static final BlockPos TARGET_ACROSS = new BlockPos(-254, 64, 10);
@@ -49,6 +61,10 @@ class CreateSeamFoldTest {
 
     private static BlockPos rawDelta(BlockPos anchor, BlockPos target) {
         return target.subtract(anchor);
+    }
+
+    private static Vec3 at(double x, double z) {
+        return new Vec3(x, RUN_Y, z);
     }
 
     @Test
@@ -242,9 +258,50 @@ class CreateSeamFoldTest {
     }
 
     @Test
-    void anUnwrappedWorldLeavesFoldPositionUntouched() {
+    void anUnwrappedWorldLeavesTheNearestCopyUntouched() {
         assertSame(TARGET_ACROSS, CreateSeamFold.nearest(WorldFolds.NOOP, ANCHOR, TARGET_ACROSS));
         assertSame(TARGET_ACROSS, CreateSeamFold.nearest(null, ANCHOR, TARGET_ACROSS));
-        assertSame(TARGET_ACROSS, CreateSeamFold.foldPosition((Level) null, ANCHOR, TARGET_ACROSS));
+        assertSame(TARGET_ACROSS, CreateSeamFold.nearestCopy((Level) null, ANCHOR, TARGET_ACROSS));
+    }
+
+    @Test
+    void aRunCrossingTheTieKeepsItsShapeWhilePerPointSeatingSplitsIt() {
+        Vec3 viewer = at(752.0, 10.0);
+        Vec3 anchor = at(250.0, 10.0);
+        Vec3 nearPoint = at(495.0, 10.0);
+        Vec3 farPoint = at(500.0, 10.0);
+        for (WorldFold fold : RUN_TRANSLATING) {
+            Vec3 seatedNear = CreateSeamFold.inFrameOf(fold, viewer, anchor, nearPoint);
+            Vec3 seatedFar = CreateSeamFold.inFrameOf(fold, viewer, anchor, farPoint);
+
+            assertEquals(at(495.0 + WORLD_BLOCKS, 10.0), seatedNear, "in " + fold);
+            assertEquals(at(500.0 + WORLD_BLOCKS, 10.0), seatedFar, "in " + fold);
+            assertEquals(farPoint.subtract(nearPoint), seatedFar.subtract(seatedNear), "in " + fold);
+            assertNotEquals(fold.nearestCopy(viewer, farPoint), seatedFar,
+                    fold + " seated the far point where per-point seating already puts it, so nothing was asserted");
+        }
+    }
+
+    @Test
+    void theUnboundedAxisOfACylinderIsNotMovedByTheRunAnchor() {
+        Vec3 seated = CreateSeamFold.inFrameOf(
+                CYLINDER, at(752.0, 10.0), at(250.0, 10.0), at(495.0, FAR_UNBOUNDED_Z));
+
+        assertEquals(at(495.0 + WORLD_BLOCKS, FAR_UNBOUNDED_Z), seated);
+    }
+
+    @Test
+    void aRunSeatedThroughAGlideSeamCarriesTheMirroredOffset() {
+        Vec3 seated = CreateSeamFold.inFrameOf(MIRRORED, at(752.0, 10.0), at(250.0, 10.0), at(495.0, 30.0));
+
+        assertEquals(at(495.0 + WORLD_BLOCKS, 2 * MIRROR_LINE_BLOCKS - 30.0), seated);
+    }
+
+    @Test
+    void aRunWhoseAnchorStaysWhereItIsHandsThePointBack() {
+        Vec3 point = at(30.0, 10.0);
+        for (WorldFold fold : RUN_ALL) {
+            assertSame(point, CreateSeamFold.inFrameOf(fold, at(10.0, 10.0), at(20.0, 10.0), point), "in " + fold);
+        }
     }
 }

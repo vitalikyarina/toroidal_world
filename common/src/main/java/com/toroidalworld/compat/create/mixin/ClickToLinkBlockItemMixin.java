@@ -24,7 +24,7 @@ public class ClickToLinkBlockItemMixin {
             return original.call(selected, placed, maxDistance);
         }
 
-        BlockPos folded = CreateSeamFold.foldPosition(context.getLevel(), anchor, selected);
+        BlockPos folded = CreateSeamFold.nearestCopy(context.getLevel(), anchor, selected);
         return original.call(folded, placed, maxDistance);
     }
 

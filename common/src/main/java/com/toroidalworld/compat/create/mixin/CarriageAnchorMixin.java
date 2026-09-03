@@ -13,7 +13,7 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.toroidalworld.compat.create.CarriageEntityFrame;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.SeamTransform;
 import com.toroidalworld.player.SeamSnap;
@@ -78,7 +78,7 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
             return coupled;
         }
 
-        return CreateTrackFold.nearestCopy(carriageEntity.level(), leading, trailing);
+        return CreateSeamFold.nearestCopy(carriageEntity.level(), leading, trailing);
     }
 
     @ModifyExpressionValue(method = "createEntity",
@@ -86,7 +86,7 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
                     target = "Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;positionAnchor:Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$anchorIntoWorldFrameOnCreate(Vec3 anchor, Level level, boolean loadPassengers) {
         return anchor != null && level instanceof ServerLevel serverLevel
-                ? CreateTrackFold.wrap(serverLevel, anchor)
+                ? CreateSeamFold.canonical(serverLevel, anchor)
                 : anchor;
     }
 
@@ -106,8 +106,8 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
 
         Level level = carriageEntity.level();
         Vec3 worldFrameAnchor =
-                level instanceof ServerLevel serverLevel ? CreateTrackFold.wrap(serverLevel, anchor) : anchor;
-        return CreateTrackFold.nearestCopy(level, worldFrameAnchor, position);
+                level instanceof ServerLevel serverLevel ? CreateSeamFold.canonical(serverLevel, anchor) : anchor;
+        return CreateSeamFold.nearestCopy(level, worldFrameAnchor, position);
     }
 
     @ModifyReturnValue(method = "leadingAnchor", at = @At("RETURN"))
@@ -144,13 +144,13 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
     }
 
     private Vec3 toroidal$inCutoffFrame(Vec3 anchor, Vec3 target) {
-        return CreateTrackFold.nearestCopy(toroidal$carriageLevel(),
+        return CreateSeamFold.nearestCopy(toroidal$carriageLevel(),
                 this.pivot == null ? null : this.pivot.getDimension(), anchor, target);
     }
 
     private void toroidal$carryAboard(Entity carriage, Vec3 written) {
         Vec3 standing = carriage.position();
-        Vec3 renamed = CreateTrackFold.nearestCopy(carriage.level(), written, standing);
+        Vec3 renamed = CreateSeamFold.nearestCopy(carriage.level(), written, standing);
         if (renamed.equals(standing)) {
             return;
         }
@@ -181,7 +181,7 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
 
         Level level = carriageEntity.level();
         return level instanceof ServerLevel serverLevel
-                ? CreateTrackFold.wrap(serverLevel, anchor)
+                ? CreateSeamFold.canonical(serverLevel, anchor)
                 : toroidal$anchorInClientFrame(anchor);
     }
 
@@ -191,7 +191,7 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
             return anchor;
         }
 
-        return CreateTrackFold.nearestCopy(carriageEntity.level(), carriageEntity.position(), anchor);
+        return CreateSeamFold.nearestCopy(carriageEntity.level(), carriageEntity.position(), anchor);
     }
 
     private @Nullable Entity toroidal$entity() {

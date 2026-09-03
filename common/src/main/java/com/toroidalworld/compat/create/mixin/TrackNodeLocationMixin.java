@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
+import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.compat.create.CreateTrackFold;
 import com.toroidalworld.compat.create.TrackNodeKeyFold;
 import com.toroidalworld.core.WorldFold;
@@ -27,7 +28,7 @@ public abstract class TrackNodeLocationMixin extends Vec3i implements TrackNodeK
 
     @Override
     public void toroidal$foldNodeKey(@Nullable Level level) {
-        WorldFold transformer = CreateTrackFold.transformerOf(level, this.dimension);
+        WorldFold transformer = CreateSeamFold.transformerOf(level, this.dimension);
         if (transformer == null) {
             return;
         }

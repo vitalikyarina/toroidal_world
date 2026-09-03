@@ -12,7 +12,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.contraptions.StructureTransform;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -29,12 +29,12 @@ public abstract class AbstractContraptionEntityMixin {
             at = @At("HEAD"), argsOnly = true, ordinal = 0)
     private Vec3 toroidal$globalVecInTheAnchorFrame(Vec3 globalVec, @Local(argsOnly = true) boolean prevAnchor) {
         Vec3 anchor = prevAnchor ? getPrevAnchorVec() : getAnchorVec();
-        return CreateTrackFold.nearestCopy(toroidal$self().level(), anchor, globalVec);
+        return CreateSeamFold.nearestCopy(toroidal$self().level(), anchor, globalVec);
     }
 
     @ModifyVariable(method = "getContactPointMotion", at = @At("HEAD"), argsOnly = true, ordinal = 0)
     private Vec3 toroidal$contactPointInTheAnchorFrame(Vec3 globalContactPoint) {
-        return CreateTrackFold.nearestCopy(toroidal$self().level(), getPrevAnchorVec(), globalContactPoint);
+        return CreateSeamFold.nearestCopy(toroidal$self().level(), getPrevAnchorVec(), globalContactPoint);
     }
 
     @ModifyExpressionValue(method = "shouldActorTrigger",
@@ -46,7 +46,7 @@ public abstract class AbstractContraptionEntityMixin {
             return null;
         }
 
-        return CreateTrackFold.nearestCopy(toroidal$self().level(), actorPosition, previousPosition);
+        return CreateSeamFold.nearestCopy(toroidal$self().level(), actorPosition, previousPosition);
     }
 
     @WrapOperation(method = "moveCollidedEntitiesOnDisassembly",
@@ -55,7 +55,7 @@ public abstract class AbstractContraptionEntityMixin {
                             + "apply(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$disassemblyLandingInTheAnchorFrame(StructureTransform transform, Vec3 localVec,
             Operation<Vec3> original) {
-        return CreateTrackFold.nearestCopy(toroidal$self().level(), getAnchorVec(),
+        return CreateSeamFold.nearestCopy(toroidal$self().level(), getAnchorVec(),
                 original.call(transform, localVec));
     }
 

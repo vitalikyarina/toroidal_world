@@ -60,7 +60,7 @@ public final class CreateSchematicFold {
     }
 
     public static BlockPos scannedControllerNear(@Nullable Level level, BlockPos lastKnown, BlockPos controller) {
-        return CreateSeamFold.foldPosition(level, lastKnown, controller);
+        return CreateSeamFold.nearestCopy(level, lastKnown, controller);
     }
 
     public static boolean regionExceedsWorld(@Nullable Level level, BlockPos first, BlockPos second) {

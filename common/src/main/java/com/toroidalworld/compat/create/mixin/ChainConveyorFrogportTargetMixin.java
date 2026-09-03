@@ -26,6 +26,6 @@ public class ChainConveyorFrogportTargetMixin {
             return original.call(conveyor, port);
         }
 
-        return original.call(CreateSeamFold.foldPosition(level, anchor, conveyor), port);
+        return original.call(CreateSeamFold.nearestCopy(level, anchor, conveyor), port);
     }
 }

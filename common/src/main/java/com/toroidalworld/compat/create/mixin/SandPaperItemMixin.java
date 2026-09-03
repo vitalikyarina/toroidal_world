@@ -20,6 +20,6 @@ public class SandPaperItemMixin {
                     target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
     private double toroidal$foldPickUpReach(Vec3 item, Vec3 player, Operation<Double> original,
             Level worldIn, Player playerIn, InteractionHand handIn) {
-        return original.call(CreateSeamFold.foldPoint(worldIn, player, item), player);
+        return original.call(CreateSeamFold.nearestCopy(worldIn, player, item), player);
     }
 }

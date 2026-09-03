@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -18,6 +18,6 @@ public class OrientedContraptionEntityMixin {
                     ordinal = 1))
     private Vec3 toroidal$coupledCartInTheLeadingFrame(Vec3 coupledVec, @Local(name = "positionVec") Vec3 positionVec) {
         Entity self = (Entity) (Object) this;
-        return CreateTrackFold.nearestCopy(self.level(), positionVec, coupledVec);
+        return CreateSeamFold.nearestCopy(self.level(), positionVec, coupledVec);
     }
 }

@@ -11,7 +11,7 @@ import com.simibubi.create.content.trains.graph.TrackEdge;
 import com.simibubi.create.content.trains.graph.TrackGraph;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.toroidalworld.compat.create.CreateInvokeTargets;
-import com.toroidalworld.compat.create.CreateTrackFold;
+import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.world.phys.Vec3;
 
@@ -23,7 +23,7 @@ public abstract class TrackPaverV2Mixin {
                     ordinal = 1))
     private static Vec3 toroidal$foldSecondNode(TrackNodeLocation target, Operation<Vec3> original, PaveTask task,
             TrackGraph graph, TrackEdge edge, double from, double to) {
-        return CreateTrackFold.nearestCopy(target.getDimension(), edge.node1.getLocation().getLocation(),
+        return CreateSeamFold.nearestCopy(target.getDimension(), edge.node1.getLocation().getLocation(),
                 original.call(target));
     }
 }

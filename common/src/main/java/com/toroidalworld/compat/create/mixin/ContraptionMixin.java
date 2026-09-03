@@ -88,7 +88,7 @@ public class ContraptionMixin {
                     target = "Lnet/createmod/catnip/nbt/NBTHelper;readBlockPos(Lnet/minecraft/nbt/CompoundTag;Ljava/lang/String;)Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$foldCapturedController(BlockPos stored, BlockPos localPos, StructureBlockInfo info,
             BlockEntity be) {
-        return CreateSeamFold.foldPosition(be.getLevel(), localPos.offset(anchor), stored);
+        return CreateSeamFold.nearestCopy(be.getLevel(), localPos.offset(anchor), stored);
     }
 
     @WrapMethod(method = "moveChassis")
