@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.logistics.redstoneRequester.AutoRequestData;
+import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.core.BlockPos;
@@ -18,7 +19,7 @@ import net.minecraft.world.level.Level;
 public class AutoRequestDataMixin {
     @WrapOperation(method = "readFromItem",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/core/BlockPos;subtract(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos;"))
+                    target = CreateInvokeTargets.BLOCK_POS_SUBTRACT))
     private static BlockPos toroidal$foldKeeperDelta(BlockPos target, Vec3i placed, Operation<BlockPos> original,
             Level level, Player player, BlockPos position, ItemStack itemStack) {
         BlockPos raw = original.call(target, placed);

@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.kinetics.gantry.GantryShaftBlockEntity;
+import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.core.BlockPos;
@@ -16,7 +17,7 @@ public class GantryShaftBlockEntityMixin {
     @WrapOperation(
             method = "isCustomConnection",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/core/BlockPos;subtract(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos;"))
+                    target = CreateInvokeTargets.BLOCK_POS_SUBTRACT))
     private BlockPos toroidal$foldCarriageDelta(BlockPos carriagePos, Vec3i shaftPos, Operation<BlockPos> original) {
         GantryShaftBlockEntity self = (GantryShaftBlockEntity) (Object) this;
         BlockPos rawDelta = original.call(carriagePos, shaftPos);

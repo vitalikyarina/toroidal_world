@@ -5,11 +5,9 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.kinetics.belt.item.BeltConnectorHandler;
-import com.toroidalworld.compat.create.CreateSeamFold;
+import com.toroidalworld.compat.create.client.CreateClientFrame;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 
 @Mixin(value = BeltConnectorHandler.class, remap = false)
@@ -23,13 +21,6 @@ public class BeltConnectorHandlerMixin {
             return stored;
         }
 
-        Minecraft minecraft = Minecraft.getInstance();
-        LocalPlayer player = minecraft.player;
-        ClientLevel level = minecraft.level;
-        if (player == null || level == null) {
-            return stored;
-        }
-
-        return CreateSeamFold.foldPosition(level, player.blockPosition(), storedPulley);
+        return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, storedPulley);
     }
 }

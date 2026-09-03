@@ -8,6 +8,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.content.kinetics.gearbox.GearboxBlockEntity;
 import com.simibubi.create.content.kinetics.gearbox.GearboxRenderer;
+import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -26,7 +27,7 @@ public class GearboxRendererMixin {
     @WrapOperation(
             method = "renderSafe(Lcom/simibubi/create/content/kinetics/gearbox/GearboxBlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;II)V",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/core/BlockPos;subtract(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos;"))
+                    target = CreateInvokeTargets.BLOCK_POS_SUBTRACT))
     private BlockPos toroidal$foldSourceDelta(BlockPos sourcePos, Vec3i anchorPos, Operation<BlockPos> original,
             GearboxBlockEntity be, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int light,
             int overlay) {

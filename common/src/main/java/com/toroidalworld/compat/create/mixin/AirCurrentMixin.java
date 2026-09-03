@@ -1,6 +1,7 @@
 package com.toroidalworld.compat.create.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -37,6 +38,7 @@ public class AirCurrentMixin {
         return toroidal$foldedPosition(original.call(entity));
     }
 
+    @Unique
     private Vec3 toroidal$foldedPosition(Vec3 raw) {
         AirCurrent self = (AirCurrent) (Object) this;
         return CreateSeamFold.foldPoint(self.source.getAirCurrentWorld(),

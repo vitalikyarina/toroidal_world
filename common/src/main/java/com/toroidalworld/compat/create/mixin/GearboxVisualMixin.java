@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.kinetics.gearbox.GearboxVisual;
+import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.core.BlockPos;
@@ -17,7 +18,7 @@ public abstract class GearboxVisualMixin {
     @WrapOperation(
             method = "updateSourceFacing",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/core/BlockPos;subtract(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos;"))
+                    target = CreateInvokeTargets.BLOCK_POS_SUBTRACT))
     private BlockPos toroidal$foldSourceDelta(BlockPos sourcePos, Vec3i anchorPos, Operation<BlockPos> original) {
         BlockEntity blockEntity = ((AbstractBlockEntityVisualAccessor) this).toroidal$blockEntity();
         return CreateSeamFold.foldDelta(blockEntity.getLevel(), blockEntity.getBlockPos(), sourcePos,
