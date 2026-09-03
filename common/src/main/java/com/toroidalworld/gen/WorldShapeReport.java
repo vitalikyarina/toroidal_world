@@ -7,12 +7,15 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.core.CoordinateConstants;
+import com.toroidalworld.gen.DatapackStemOverrides.Outcome;
+import com.toroidalworld.gen.DatapackStemOverrides.StemOverride;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.platform.Platforms;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.SharedConstants;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -21,6 +24,8 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 public final class WorldShapeReport {
     private static final String CODEC_SOURCE = "codec";
     private static final String STAMP_SOURCE = "stamp";
+    private static final String RESTORED_SOURCE = "restored";
+    private static final String STORED_SOURCE = "stored";
 
     public static List<String> lines(MinecraftServer server) {
         FlatShape overworldShape = wrappedShapeOf(server.overworld());
@@ -39,13 +44,15 @@ public final class WorldShapeReport {
 
     private static String wrappedLine(MinecraftServer server, ServerLevel level, FlatShape shape) {
         WorldLoopBounds bounds = shape.bounds();
+        StemOverride override = overrideOf(level);
         return "World shape: " + level.dimension().location()
                 + " generator=" + generatorId(level.getChunkSource().getGenerator())
-                + " shape=" + shapeSource(level)
+                + " shape=" + shapeSource(level, override)
                 + " identification=" + shape.identification()
                 + " x=" + axisSpan(bounds.x()) + " z=" + axisSpan(bounds.z()) + " chunks"
                 + ", " + widths(bounds)
                 + netherScale(server, level, bounds)
+                + datapackOverride(override)
                 + tail();
     }
 
@@ -63,8 +70,26 @@ public final class WorldShapeReport {
                 + tail();
     }
 
-    private static String shapeSource(ServerLevel level) {
+    private static String shapeSource(ServerLevel level, @Nullable StemOverride override) {
+        if (override != null) {
+            return override.outcome() == Outcome.RESHAPED ? RESTORED_SOURCE : STORED_SOURCE;
+        }
+
         return level.getChunkSource().getGenerator() instanceof ShapedChunkGenerator ? CODEC_SOURCE : STAMP_SOURCE;
+    }
+
+    private static @Nullable StemOverride overrideOf(ServerLevel level) {
+        return DatapackStemOverrides.of(Registries.levelToLevelStem(level.dimension()));
+    }
+
+    private static String datapackOverride(@Nullable StemOverride override) {
+        if (override == null) {
+            return "";
+        }
+
+        return override.outcome() == Outcome.RESHAPED
+                ? ", a datapack " + override.datapackGenerator() + " took the stored shape"
+                : ", a datapack " + override.datapackGenerator() + " was refused the stored shape";
     }
 
     private static String tail() {

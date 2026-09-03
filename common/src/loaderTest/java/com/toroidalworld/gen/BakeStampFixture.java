@@ -19,6 +19,8 @@ import com.toroidalworld.shape.FlatShape;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.Registry;
@@ -35,7 +37,9 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.biome.FixedBiomeSource;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
@@ -43,6 +47,8 @@ import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.WorldDimensions;
 import net.minecraft.world.level.levelgen.blending.Blender;
@@ -79,6 +85,22 @@ final class BakeStampFixture {
         return new ShapedForeignChunkGenerator(shape);
     }
 
+    static ChunkGenerator noiseGenerator(HolderLookup.Provider worldgen) {
+        return new NoiseBasedChunkGenerator(plainsBiomes(worldgen), overworldNoiseSettings(worldgen));
+    }
+
+    static ChunkGenerator noiseSubclassGenerator(HolderLookup.Provider worldgen) {
+        return new ForeignNoiseChunkGenerator(plainsBiomes(worldgen), overworldNoiseSettings(worldgen));
+    }
+
+    private static BiomeSource plainsBiomes(HolderLookup.Provider worldgen) {
+        return new FixedBiomeSource(worldgen.lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS));
+    }
+
+    private static Holder<NoiseGeneratorSettings> overworldNoiseSettings(HolderLookup.Provider worldgen) {
+        return worldgen.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(NoiseGeneratorSettings.OVERWORLD);
+    }
+
     static WorldDimensions selected(Map<ResourceKey<LevelStem>, LevelStem> stems) {
         return new WorldDimensions(stems);
     }
@@ -91,7 +113,11 @@ final class BakeStampFixture {
     }
 
     static @Nullable FlatShape shapeOf(Registry<LevelStem> baked, ResourceKey<LevelStem> key) {
-        return ShapedChunkGenerator.wrappedShapeOf(baked.getOptional(key).orElseThrow().generator());
+        return ShapedChunkGenerator.wrappedShapeOf(generatorOf(baked, key));
+    }
+
+    static ChunkGenerator generatorOf(Registry<LevelStem> baked, ResourceKey<LevelStem> key) {
+        return baked.getOptional(key).orElseThrow().generator();
     }
 
     static int chunkWidth(FlatShape shape, Direction.Axis axis) {
@@ -116,6 +142,12 @@ final class BakeStampFixture {
                 NO_AMBIENT_LIGHT,
                 new DimensionType.MonsterSettings(false, false, ConstantInt.of(NO_MONSTER_LIGHT),
                         NO_MONSTER_LIGHT));
+    }
+
+    private static final class ForeignNoiseChunkGenerator extends NoiseBasedChunkGenerator {
+        private ForeignNoiseChunkGenerator(BiomeSource biomeSource, Holder<NoiseGeneratorSettings> settings) {
+            super(biomeSource, settings);
+        }
     }
 
     private static class ForeignChunkGenerator extends ChunkGenerator {
