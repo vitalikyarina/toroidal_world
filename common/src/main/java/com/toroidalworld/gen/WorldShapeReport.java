@@ -10,11 +10,13 @@ import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.gen.DatapackStemOverrides.Outcome;
 import com.toroidalworld.gen.DatapackStemOverrides.StemOverride;
 import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.options.WorldLoopSizes;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.platform.Platforms;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.SharedConstants;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -22,38 +24,45 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 
 public final class WorldShapeReport {
+    private static final List<Direction.Axis> HORIZONTAL =
+            List.of(Direction.Axis.X, Direction.Axis.Z);
+
     private static final String CODEC_SOURCE = "codec";
     private static final String STAMP_SOURCE = "stamp";
     private static final String RESTORED_SOURCE = "restored";
     private static final String STORED_SOURCE = "stored";
 
-    public static List<String> lines(MinecraftServer server) {
+    public record Line(boolean broken, String text) {
+    }
+
+    public static List<Line> lines(MinecraftServer server) {
         FlatShape overworldShape = wrappedShapeOf(server.overworld());
-        List<String> lines = new ArrayList<>();
+        List<Line> lines = new ArrayList<>();
         for (ServerLevel level : server.getAllLevels()) {
             FlatShape shape = wrappedShapeOf(level);
             if (shape != null) {
                 lines.add(wrappedLine(server, level, shape));
             } else if (overworldShape != null) {
-                lines.add(unwrappedLine(server, level, overworldShape));
+                lines.add(new Line(false, unwrappedLine(server, level, overworldShape)));
             }
         }
 
         return lines;
     }
 
-    private static String wrappedLine(MinecraftServer server, ServerLevel level, FlatShape shape) {
+    private static Line wrappedLine(MinecraftServer server, ServerLevel level, FlatShape shape) {
         WorldLoopBounds bounds = shape.bounds();
         StemOverride override = overrideOf(level);
-        return "World shape: " + level.dimension().location()
+        String violations = netherScale(server, level, bounds) + endWidth(level, bounds);
+        return new Line(!violations.isEmpty(), "World shape: " + level.dimension().location()
                 + " generator=" + generatorId(level.getChunkSource().getGenerator())
                 + " shape=" + shapeSource(level, override)
                 + " identification=" + shape.identification()
                 + " x=" + axisSpan(bounds.x()) + " z=" + axisSpan(bounds.z()) + " chunks"
                 + ", " + widths(bounds)
-                + netherScale(server, level, bounds)
+                + violations
                 + datapackOverride(override)
-                + tail();
+                + tail());
     }
 
     private static String unwrappedLine(MinecraftServer server, ServerLevel level, FlatShape overworldShape) {
@@ -135,7 +144,7 @@ public final class WorldShapeReport {
     }
 
     private static String widthToken(int chunkWidth) {
-        return chunkWidth + " chunks (" + chunkWidth * CoordinateConstants.CHUNK_WIDTH + " blocks)";
+        return WorldLoopSizes.describe(chunkWidth);
     }
 
     private static String netherScale(MinecraftServer server, ServerLevel level, WorldLoopBounds bounds) {
@@ -144,17 +153,48 @@ public final class WorldShapeReport {
         }
 
         FlatShape overworldShape = wrappedShapeOf(server.overworld());
-        if (overworldShape == null || !overworldShape.bounds().isSquare() || !bounds.isSquare()) {
-            return "";
+        return overworldShape == null ? "" : netherScaleNote(overworldShape.bounds(), bounds);
+    }
+
+    static String netherScaleNote(WorldLoopBounds overworld, WorldLoopBounds nether) {
+        for (Direction.Axis axis : HORIZONTAL) {
+            if (sharedLoop(overworld, nether, axis)
+                    && overworld.chunkWidth(axis) % nether.chunkWidth(axis) != 0) {
+                return ", BROKEN portal scale on the " + axis.getName() + " axis: an overworld of "
+                        + WorldLoopSizes.describe(overworld.chunkWidth(axis)) + " does not divide by a nether of "
+                        + WorldLoopSizes.describe(nether.chunkWidth(axis))
+                        + ", so portals will not line up across the seam";
+            }
         }
 
-        int overworldWidth = overworldShape.bounds().chunkWidth();
-        int netherWidth = bounds.chunkWidth();
-        if (overworldWidth % netherWidth != 0) {
-            return "";
+        for (Direction.Axis axis : HORIZONTAL) {
+            if (sharedLoop(overworld, nether, axis)) {
+                return ", scale 1:" + overworld.chunkWidth(axis) / nether.chunkWidth(axis);
+            }
         }
 
-        return ", scale 1:" + overworldWidth / netherWidth;
+        return "";
+    }
+
+    private static String endWidth(ServerLevel level, WorldLoopBounds bounds) {
+        return level.dimension() != Level.END ? "" : endWidthNote(bounds);
+    }
+
+    static String endWidthNote(WorldLoopBounds end) {
+        for (Direction.Axis axis : HORIZONTAL) {
+            if (end.loops(axis) && end.chunkWidth(axis) < WorldLoopSizes.END_MIN_CHUNK_WIDTH) {
+                return ", BROKEN End width on the " + axis.getName() + " axis: "
+                        + WorldLoopSizes.describe(end.chunkWidth(axis)) + " is under the "
+                        + WorldLoopSizes.describe(WorldLoopSizes.END_MIN_CHUNK_WIDTH)
+                        + " the outer islands need, so no end cities and no elytra";
+            }
+        }
+
+        return "";
+    }
+
+    private static boolean sharedLoop(WorldLoopBounds overworld, WorldLoopBounds nether, Direction.Axis axis) {
+        return overworld.loops(axis) && nether.loops(axis);
     }
 
     private WorldShapeReport() {

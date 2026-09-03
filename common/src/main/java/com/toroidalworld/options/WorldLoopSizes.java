@@ -18,6 +18,10 @@ public final class WorldLoopSizes {
     public static final int END_MIN_CHUNK_WIDTH = 192;
     public static final int END_DEFAULT_CHUNK_WIDTH = 256;
 
+    public static String describe(int chunkWidth) {
+        return chunkWidth + " chunks (" + chunkWidth * CoordinateConstants.CHUNK_WIDTH + " blocks)";
+    }
+
     public static boolean isInRange(int chunkWidth) {
         return chunkWidth >= MIN_CHUNK_WIDTH && chunkWidth <= MAX_CHUNK_WIDTH;
     }

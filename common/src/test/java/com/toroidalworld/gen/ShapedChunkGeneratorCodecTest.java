@@ -17,6 +17,7 @@ import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.options.WorldLoopSizes;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.shape.FlatShape;
 import com.toroidalworld.shape.FlatShape.Identification;
@@ -42,6 +43,8 @@ class ShapedChunkGeneratorCodecTest {
 
     private static final String TORUS_WRAPPING =
             "{\"x\":{\"min_chunk\":-16,\"max_chunk\":16},\"z\":{\"min_chunk\":-16,\"max_chunk\":16}}";
+    private static final String TOO_NARROW_WRAPPING =
+            "{\"x\":{\"min_chunk\":-4,\"max_chunk\":4},\"z\":{\"min_chunk\":-4,\"max_chunk\":4}}";
     private static final String SKEWED_WRAPPING =
             "{\"x\":{\"min_chunk\":-16,\"max_chunk\":16},\"z\":{\"min_chunk\":-16,\"max_chunk\":16},"
                     + "\"skew_chunks\":5}";
@@ -110,6 +113,9 @@ class ShapedChunkGeneratorCodecTest {
     private static void assertGated(MapCodec<?> generatorCodec) {
         String coupled = generatorError(generatorCodec, SKEWED_WRAPPING);
         assertTrue(coupled.contains(Identification.LATTICE_TORUS.toString()), coupled);
+
+        String narrow = generatorError(generatorCodec, TOO_NARROW_WRAPPING);
+        assertTrue(narrow.contains(WorldLoopSizes.describe(WorldLoopSizes.MIN_CHUNK_WIDTH)), narrow);
 
         String torus = generatorError(generatorCodec, TORUS_WRAPPING);
         assertFalse(torus.contains(Identification.LATTICE_TORUS.toString()), torus);
