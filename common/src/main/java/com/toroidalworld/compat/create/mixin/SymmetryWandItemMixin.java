@@ -6,7 +6,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.equipment.symmetryWand.SymmetryWandItem;
-import com.toroidalworld.VanillaInvokeTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.core.BlockPos;
@@ -20,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 public class SymmetryWandItemMixin {
     @WrapOperation(method = "apply",
             at = @At(value = "INVOKE",
-                    target = VanillaInvokeTargets.VEC3_DISTANCE_TO))
+                    target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
     private static double toroidal$foldApplyReach(Vec3 mirror, Vec3 placed, Operation<Double> original,
             Level world, ItemStack wand, Player player, BlockPos pos, BlockState block) {
         return original.call(CreateSeamFold.foldPoint(world, placed, mirror), placed);
@@ -28,7 +27,7 @@ public class SymmetryWandItemMixin {
 
     @WrapOperation(method = "remove",
             at = @At(value = "INVOKE",
-                    target = VanillaInvokeTargets.VEC3_DISTANCE_TO))
+                    target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
     private static double toroidal$foldRemoveReach(Vec3 mirror, Vec3 broken, Operation<Double> original,
             Level world, ItemStack wand, Player player, BlockPos pos) {
         return original.call(CreateSeamFold.foldPoint(world, broken, mirror), broken);

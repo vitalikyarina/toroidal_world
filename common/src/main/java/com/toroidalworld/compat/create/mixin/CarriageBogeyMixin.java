@@ -9,7 +9,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.trains.entity.CarriageBogey;
-import com.toroidalworld.VanillaInvokeTargets;
 import com.toroidalworld.compat.create.CreateTrackFold;
 
 import net.minecraft.resources.ResourceKey;
@@ -38,7 +37,7 @@ public abstract class CarriageBogeyMixin {
 
     @WrapOperation(method = "getStress",
             at = @At(value = "INVOKE",
-                    target = VanillaInvokeTargets.VEC3_DISTANCE_TO))
+                    target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
     private double toroidal$foldStressSpan(Vec3 leading, Vec3 trailing, Operation<Double> original) {
         return original.call(leading, toroidal$nearest(leading, trailing));
     }

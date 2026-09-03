@@ -4,7 +4,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import com.toroidalworld.VanillaInvokeTargets;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -21,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 public class VibrationSystemListenerMixin {
     @WrapOperation(
             method = "scheduleVibration",
-            at = @At(value = "INVOKE", target = VanillaInvokeTargets.VEC3_DISTANCE_TO))
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
     private double toroidal$travelDistThroughSeam(Vec3 origin, Vec3 dest, Operation<Double> original,
             @Local(argsOnly = true) ServerLevel level) {
         return Math.sqrt(SeamRange.sqr(level, origin, dest));

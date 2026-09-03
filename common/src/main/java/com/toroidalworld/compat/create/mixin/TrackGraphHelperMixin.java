@@ -6,7 +6,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.trains.graph.TrackGraphHelper;
-import com.toroidalworld.VanillaInvokeTargets;
 import com.toroidalworld.compat.create.CreateTrackFold;
 
 import net.minecraft.core.BlockPos;
@@ -26,7 +25,7 @@ public abstract class TrackGraphHelperMixin {
 
     @WrapOperation(method = "getGraphLocationAt",
             at = @At(value = "INVOKE",
-                    target = VanillaInvokeTargets.VEC3_DISTANCE_TO))
+                    target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
     private static double toroidal$foldNodeDistance(Vec3 anchor, Vec3 target, Operation<Double> original, Level level,
             BlockPos pos, AxisDirection targetDirection, Vec3 targetAxis) {
         return original.call(anchor, CreateTrackFold.nearestCopy(level, anchor, target));
