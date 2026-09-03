@@ -32,7 +32,8 @@ public final class CreateClientFrame {
 
     public static @Nullable BlockPos heldCopy(@Nullable BlockGetter world, BlockPos canonical) {
         Level level = toroidalClientLevel(world);
-        if (level == null || CreateSeamFold.transformerOf(level, null) == null) {
+        WorldFold transformer = level == null ? null : CreateSeamFold.transformerOf(level, null);
+        if (transformer == null) {
             return canonical;
         }
 
@@ -41,7 +42,7 @@ public final class CreateClientFrame {
             return canonical;
         }
 
-        BlockPos nearest = CreateSeamFold.nearestCopy(level, anchor, canonical);
+        BlockPos nearest = CreateSeamFold.nearestCopy(transformer, anchor, canonical);
         return holds(level, nearest) ? nearest : null;
     }
 

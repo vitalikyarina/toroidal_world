@@ -8,6 +8,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Share;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.simibubi.create.content.trains.graph.TrackEdge;
 import com.simibubi.create.content.trains.graph.TrackNode;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
@@ -21,6 +23,9 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = TrackEdge.class, remap = false)
 public abstract class TrackEdgeMixin {
+    private static final String FIRST_NODE_ANCHOR = "toroidal$firstNodeAnchor";
+    private static final String OTHER_NEAR_END = "toroidal$otherNearEnd";
+
     @Shadow
     public TrackNode node1;
 
@@ -64,8 +69,9 @@ public abstract class TrackEdgeMixin {
                     target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 1))
     private Vec3 toroidal$foldIntersectionSecondEnd(TrackNodeLocation target, Operation<Vec3> original, TrackNode node1,
-            TrackNode node2, TrackEdge other, TrackNode other1, TrackNode other2) {
-        return toroidal$nearestTo(node1, target, original.call(target));
+            TrackNode node2, TrackEdge other, TrackNode other1, TrackNode other2,
+            @Share(FIRST_NODE_ANCHOR) LocalRef<Vec3> anchorRef) {
+        return toroidal$folded(target, toroidal$anchorOf(node1, anchorRef), original.call(target));
     }
 
     @WrapOperation(method = "getIntersection",
@@ -73,8 +79,12 @@ public abstract class TrackEdgeMixin {
                     target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 2))
     private Vec3 toroidal$foldIntersectionOtherNearEnd(TrackNodeLocation target, Operation<Vec3> original,
-            TrackNode node1, TrackNode node2, TrackEdge other, TrackNode other1, TrackNode other2) {
-        return toroidal$nearestTo(node1, target, original.call(target));
+            TrackNode node1, TrackNode node2, TrackEdge other, TrackNode other1, TrackNode other2,
+            @Share(FIRST_NODE_ANCHOR) LocalRef<Vec3> anchorRef,
+            @Share(OTHER_NEAR_END) LocalRef<Vec3> otherNearEndRef) {
+        Vec3 folded = toroidal$folded(target, toroidal$anchorOf(node1, anchorRef), original.call(target));
+        otherNearEndRef.set(folded);
+        return folded;
     }
 
     @WrapOperation(method = "getIntersection",
@@ -82,13 +92,26 @@ public abstract class TrackEdgeMixin {
                     target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 3))
     private Vec3 toroidal$foldIntersectionOtherFarEnd(TrackNodeLocation target, Operation<Vec3> original,
-            TrackNode node1, TrackNode node2, TrackEdge other, TrackNode other1, TrackNode other2) {
-        Vec3 otherNearEnd = toroidal$nearestTo(node1, other1.getLocation(), other1.getLocation().getLocation());
+            TrackNode node1, TrackNode node2, TrackEdge other, TrackNode other1, TrackNode other2,
+            @Share(FIRST_NODE_ANCHOR) LocalRef<Vec3> anchorRef,
+            @Share(OTHER_NEAR_END) LocalRef<Vec3> otherNearEndRef) {
+        Vec3 otherNearEnd = otherNearEndRef.get();
+        if (otherNearEnd == null) {
+            otherNearEnd = toroidal$folded(other1.getLocation(), toroidal$anchorOf(node1, anchorRef),
+                    other1.getLocation().getLocation());
+        }
+
         return toroidal$folded(target, otherNearEnd, original.call(target));
     }
 
-    private Vec3 toroidal$nearestTo(TrackNode anchorNode, TrackNodeLocation target, Vec3 rawTarget) {
-        return toroidal$folded(target, anchorNode.getLocation().getLocation(), rawTarget);
+    private Vec3 toroidal$anchorOf(TrackNode node, LocalRef<Vec3> anchorRef) {
+        Vec3 anchor = anchorRef.get();
+        if (anchor == null) {
+            anchor = node.getLocation().getLocation();
+            anchorRef.set(anchor);
+        }
+
+        return anchor;
     }
 
     private Vec3 toroidal$nearestToFirstNode(TrackNodeLocation target, Vec3 rawTarget) {

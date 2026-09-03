@@ -20,6 +20,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class CreateSeamFold {
+    private static final ServerFoldMemo SERVER_FOLDS = new ServerFoldMemo();
+
     public static @Nullable WorldFold transformerOf(@Nullable Level level,
             @Nullable ResourceKey<Level> dimension) {
         if (level != null) {
@@ -35,6 +37,10 @@ public final class CreateSeamFold {
             return clientTransformerOf(dimension);
         }
 
+        return SERVER_FOLDS.of(server, dimension, () -> serverTransformerOf(server, dimension));
+    }
+
+    private static @Nullable WorldFold serverTransformerOf(MinecraftServer server, ResourceKey<Level> dimension) {
         ServerLevel serverLevel = server.getLevel(dimension);
         return serverLevel == null ? null : WorldLoopAttachments.wrappedTransformerOf(serverLevel);
     }
@@ -92,6 +98,10 @@ public final class CreateSeamFold {
 
     private static Vec3 nearestCopy(@Nullable WorldFold transformer, Vec3 anchor, Vec3 target) {
         return transformer == null ? target : transformer.nearestCopy(anchor, target);
+    }
+
+    public static BlockPos nearestCopy(@Nullable WorldFold transformer, BlockPos anchor, BlockPos target) {
+        return nearest(transformer, anchor, target);
     }
 
     public static BlockPos foldPositionToBox(@Nullable Level level, BoundingBox box, BlockPos position) {
