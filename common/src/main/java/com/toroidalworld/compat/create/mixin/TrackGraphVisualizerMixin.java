@@ -34,6 +34,7 @@ public class TrackGraphVisualizerMixin {
                     target = "Lcom/simibubi/create/content/trains/graph/TrackEdge;getPosition(Lcom/simibubi/create/content/trains/graph/TrackGraph;D)Lnet/minecraft/world/phys/Vec3;"))
     private static Vec3 toroidal$drawInClientFrame(TrackEdge edge, TrackGraph graph, double t,
             Operation<Vec3> original) {
-        return CreateClientFrame.nearestCopy(CreateClientFrame.camera(), original.call(edge, graph, t));
+        Vec3 anchor = edge.node1.getLocation().getLocation();
+        return CreateClientFrame.inFrameOf(anchor, original.call(edge, graph, t));
     }
 }

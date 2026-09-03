@@ -77,6 +77,16 @@ public final class CreateClientFrame {
         return CreateTrackFold.nearestCopy(level, anchor, target);
     }
 
+    public static Vec3 inFrameOf(@Nullable Vec3 anchor, Vec3 point) {
+        Level level = Minecraft.getInstance().level;
+        Vec3 viewer = camera();
+        if (level == null || anchor == null || viewer == null) {
+            return point;
+        }
+
+        return CreateTrackFold.inFrameOf(level, viewer, anchor, point);
+    }
+
     public static AABB foldBoxToward(@Nullable Vec3 anchor, AABB box) {
         Level level = Minecraft.getInstance().level;
         if (level == null || anchor == null) {
