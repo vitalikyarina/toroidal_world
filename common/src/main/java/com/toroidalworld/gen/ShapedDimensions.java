@@ -6,12 +6,19 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.ShapeStamp;
+import com.toroidalworld.gen.DatapackStemOverrides.Outcome;
+import com.toroidalworld.gen.DatapackStemOverrides.StemOverride;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.options.WorldLoopSizes;
 import com.toroidalworld.shape.FlatShape;
 
+import net.minecraft.core.Holder;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.Registry;
+import net.minecraft.core.WritableRegistry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.dimension.LevelStem;
@@ -53,6 +60,43 @@ public final class ShapedDimensions {
         }
 
         return stripped == null ? dimensions : new WorldDimensions(stripped);
+    }
+
+    public static Registry<LevelStem> restoreStoredShapes(WorldDimensions stored, Registry<LevelStem> datapackDimensions) {
+        Map<ResourceKey<LevelStem>, LevelStem> restored = new HashMap<>();
+        Map<ResourceKey<LevelStem>, StemOverride> overrides = new HashMap<>();
+        for (Holder.Reference<LevelStem> entry : datapackDimensions.listElements().toList()) {
+            LevelStem datapackStem = entry.value();
+            LevelStem storedStem = stored.get(entry.key()).orElse(null);
+            if (storedStem == null || datapackStem.generator() instanceof ShapedChunkGenerator) {
+                continue;
+            }
+
+            FlatShape shape = ShapedChunkGenerator.wrappedShapeOf(storedStem.generator());
+            if (shape == null) {
+                continue;
+            }
+
+            ChunkGenerator shaped = shapedGeneratorFor(datapackStem.generator(), shape);
+            restored.put(entry.key(), shaped == null ? storedStem : new LevelStem(datapackStem.type(), shaped));
+            overrides.put(entry.key(), new StemOverride(
+                    shaped == null ? Outcome.REFUSED : Outcome.RESHAPED,
+                    datapackStem.generator().getClass().getSimpleName()));
+        }
+
+        DatapackStemOverrides.replaceAll(overrides);
+        return restored.isEmpty() ? datapackDimensions : withStems(datapackDimensions, restored);
+    }
+
+    private static Registry<LevelStem> withStems(Registry<LevelStem> dimensions,
+            Map<ResourceKey<LevelStem>, LevelStem> replacements) {
+        WritableRegistry<LevelStem> rebuilt = new MappedRegistry<>(Registries.LEVEL_STEM,
+                dimensions.registryLifecycle());
+        dimensions.listElements().forEach(entry -> rebuilt.register(
+                entry.key(),
+                replacements.getOrDefault(entry.key(), entry.value()),
+                dimensions.registrationInfo(entry.key()).orElse(RegistrationInfo.BUILT_IN)));
+        return rebuilt.freeze();
     }
 
     public static void stampDerived(Registry<LevelStem> dimensions) {
@@ -120,11 +164,11 @@ public final class ShapedDimensions {
     private static @Nullable ChunkGenerator shapedGeneratorFor(ChunkGenerator generator, FlatShape shape) {
         ChunkGenerator base = generator instanceof ShapedChunkGenerator shaped ? shaped.unshaped() : generator;
 
-        if (base instanceof NoiseBasedChunkGenerator noise) {
+        if (base instanceof NoiseBasedChunkGenerator noise && noise.getClass() == NoiseBasedChunkGenerator.class) {
             return new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), shape);
         }
 
-        if (base instanceof FlatLevelSource flat) {
+        if (base instanceof FlatLevelSource flat && flat.getClass() == FlatLevelSource.class) {
             return new LoopedFlatChunkGenerator(flat.settings(), shape);
         }
 
