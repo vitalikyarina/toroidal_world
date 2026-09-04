@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.ChunkResender;
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.accessors.LevelHolder;
@@ -142,7 +143,7 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
 
     @WrapOperation(
             method = "getChunkRangeFuture",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ChunkPos;pack(II)J"))
+            at = @At(value = "INVOKE", target = InjectionTargets.CHUNK_POS_PACK))
     private long toroidal$rangeOverPhysicalChunks(int chunkX, int chunkZ, Operation<Long> original) {
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
@@ -287,7 +288,7 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
 
     @WrapOperation(
             method = "playerIsCloseEnoughTo",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
+            at = @At(value = "INVOKE", target = InjectionTargets.VEC3_DISTANCE_TO))
     private double toroidal$wrappedPlayerDistance(Vec3 playerPos, Vec3 pos, Operation<Double> original) {
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {

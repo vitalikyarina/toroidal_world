@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.NavigationShifter;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.FoldedCopies;
@@ -80,7 +81,7 @@ public class PathNavigationMixin implements NavigationShifter {
     @WrapOperation(
             method = "shouldRecomputePath",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
+                    target = InjectionTargets.BLOCK_POS_CLOSER_TO_CENTER_THAN))
     private boolean toroidal$replanRangeThroughSeam(BlockPos changedPos, Position middlePos, double distance,
             Operation<Boolean> original) {
         return SeamRange.closerToCenterThan(this.mob, changedPos, middlePos, distance);

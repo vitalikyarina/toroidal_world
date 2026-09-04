@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -22,7 +23,7 @@ public class RaiderMoveThroughVillageGoalMixin {
     @WrapOperation(
             method = { "canContinueToUse", "stop" },
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
+                    target = InjectionTargets.BLOCK_POS_CLOSER_TO_CENTER_THAN))
     private boolean toroidal$houseReachThroughSeam(BlockPos housePos, Position bodyPosition, double distance,
             Operation<Boolean> original) {
         return SeamRange.closerToCenterThan(this.raider, housePos, bodyPosition, distance);

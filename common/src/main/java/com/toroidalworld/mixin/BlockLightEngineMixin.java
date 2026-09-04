@@ -3,6 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldFold;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -15,7 +16,7 @@ import net.minecraft.world.level.lighting.BlockLightEngine;
 public abstract class BlockLightEngineMixin {
     @WrapOperation(
             method = {"propagateIncrease", "propagateDecrease"},
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;offset(JLnet/minecraft/core/Direction;)J"),
+            at = @At(value = "INVOKE", target = InjectionTargets.BLOCK_POS_OFFSET_PACKED),
             expect = 2)
     private long toroidal$wrapToNode(long node, Direction direction, Operation<Long> original) {
         long toNode = original.call(node, direction);

@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
@@ -33,7 +34,7 @@ public class RaidsMixin implements LevelBindable {
 
     @WrapOperation(
             method = "getNearbyRaid",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;distSqr(Lnet/minecraft/core/Vec3i;)D"))
+            at = @At(value = "INVOKE", target = InjectionTargets.BLOCK_POS_DIST_SQR))
     private double toroidal$raidDistanceThroughSeam(BlockPos raidCenter, Vec3i pos, Operation<Double> original) {
         ServerLevel level = this.toroidal$level;
         return level == null ? original.call(raidCenter, pos) : SeamRange.sqr(level, raidCenter, pos);

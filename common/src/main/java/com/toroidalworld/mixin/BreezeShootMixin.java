@@ -3,6 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamAim;
 import com.toroidalworld.entity.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -27,7 +28,7 @@ public class BreezeShootMixin {
 
     @WrapOperation(
             method = "tick(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/monster/breeze/Breeze;J)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getX()D"))
+            at = @At(value = "INVOKE", target = InjectionTargets.LIVING_ENTITY_GET_X))
     private double toroidal$aimTargetX(LivingEntity target, Operation<Double> original,
             @Local(argsOnly = true) Breeze breeze) {
         return SeamAim.nearestTo(breeze, target.position().with(Direction.Axis.X, original.call(target))).x;
@@ -35,7 +36,7 @@ public class BreezeShootMixin {
 
     @WrapOperation(
             method = "tick(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/monster/breeze/Breeze;J)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getZ()D"))
+            at = @At(value = "INVOKE", target = InjectionTargets.LIVING_ENTITY_GET_Z))
     private double toroidal$aimTargetZ(LivingEntity target, Operation<Double> original,
             @Local(argsOnly = true) Breeze breeze) {
         return SeamAim.nearestTo(breeze, target.position().with(Direction.Axis.Z, original.call(target))).z;

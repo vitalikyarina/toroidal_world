@@ -3,6 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamAim;
@@ -50,7 +51,7 @@ public class TransportItemsBetweenContainersMixin {
 
     @ModifyExpressionValue(
             method = "canSeeAnyTargetSide",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;atCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"))
+            at = @At(value = "INVOKE", target = InjectionTargets.VEC3_AT_CENTER_OF))
     private Vec3 toroidal$sightCentreThroughSeam(Vec3 centre, @Local(argsOnly = true) PathfinderMob body) {
         return SeamAim.nearestTo(body, centre);
     }
