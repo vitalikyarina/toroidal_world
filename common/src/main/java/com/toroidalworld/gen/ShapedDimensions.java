@@ -82,15 +82,24 @@ public final class ShapedDimensions {
                 continue;
             }
 
-            ChunkGenerator shaped = shapedGeneratorFor(datapackStem.generator(), shape);
-            restored.put(entry.key(), shaped == null ? storedStem : new LevelStem(datapackStem.type(), shaped));
-            overrides.put(entry.key(), new StemOverride(
-                    shaped == null ? Outcome.REFUSED : Outcome.RESHAPED,
-                    datapackStem.generator().getClass().getSimpleName()));
+            ChunkGenerator rebuilt = shapedGeneratorFor(datapackStem.generator(), shape);
+            if (rebuilt != null) {
+                restored.put(entry.key(), new LevelStem(datapackStem.type(), rebuilt));
+                overrides.put(entry.key(), override(Outcome.RESHAPED, datapackStem));
+                continue;
+            }
+
+            ChunkGenerator stamped = stampedGeneratorFor(datapackStem.generator(), shape);
+            restored.put(entry.key(), stamped == null ? storedStem : new LevelStem(datapackStem.type(), stamped));
+            overrides.put(entry.key(), override(stamped == null ? Outcome.REFUSED : Outcome.STAMPED, datapackStem));
         }
 
         DatapackStemOverrides.replaceAll(overrides);
         return restored.isEmpty() ? datapackDimensions : withStems(datapackDimensions, restored);
+    }
+
+    private static StemOverride override(Outcome outcome, LevelStem datapackStem) {
+        return new StemOverride(outcome, datapackStem.generator().getClass().getSimpleName());
     }
 
     private static Registry<LevelStem> withStems(Registry<LevelStem> dimensions,
@@ -119,7 +128,7 @@ public final class ShapedDimensions {
         dimensions.holders().forEach(entry -> {
             LevelStem stem = entry.value();
             if (entry.key() == LevelStem.OVERWORLD
-                    || stem.generator() instanceof ShapedChunkGenerator
+                    || carriesShape(stem.generator())
                     || !(stem.generator() instanceof ShapeStamp stamp)) {
                 return;
             }
@@ -187,6 +196,11 @@ public final class ShapedDimensions {
 
         ((ShapeStamp) base).toroidal$stamp(shape);
         return base;
+    }
+
+    private static boolean carriesShape(ChunkGenerator generator) {
+        return generator instanceof ShapedChunkGenerator
+                || (generator instanceof ShapeStamp stamp && stamp.toroidal$stampedShape() != null);
     }
 
     private static ChunkGenerator baseOf(ChunkGenerator generator) {

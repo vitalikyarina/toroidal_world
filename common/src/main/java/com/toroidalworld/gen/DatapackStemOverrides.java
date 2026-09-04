@@ -11,6 +11,7 @@ final class DatapackStemOverrides {
 
     enum Outcome {
         RESHAPED,
+        STAMPED,
         REFUSED
     }
 
