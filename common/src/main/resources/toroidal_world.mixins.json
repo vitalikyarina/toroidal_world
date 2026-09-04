@@ -82,6 +82,7 @@
     "EuclideanGameEventListenerRegistryMixin",
     "EvokerFangsAimMixin",
     "ExecuteCommandMixin",
+    "ExperienceOrbAimMixin",
     "EyeOfEnderMixin",
     "FillBiomeCommandMixin",
     "FillCommandMixin",
