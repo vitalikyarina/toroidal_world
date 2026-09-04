@@ -15,6 +15,7 @@
   "gui.toroidal_world.world_shape.toroidal.hint": "水平な2つの軸がどちらもループします。どの方向でも十分に進めば出発地点に戻ってきます。",
   "gui.toroidal_world.world_shape.cylinder": "円筒形",
   "gui.toroidal_world.world_shape.cylinder.hint": "水平な軸の一方がループし、もう一方は通常のワールドと同じく無限に続きます。",
+  "gui.toroidal_world.world_shape.unavailable": "このワールドタイプは独自のワールドジェネレーターを使うため、ワールドの形状を適用できません。",
 
   "gui.toroidal_world.toroidal_settings.title": "トロイダルワールド設定",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "極小",

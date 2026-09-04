@@ -18,6 +18,7 @@ import com.toroidalworld.shape.FlatShape;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -36,18 +37,37 @@ public final class WorldShapeReport {
     }
 
     public static List<Line> lines(MinecraftServer server) {
-        FlatShape overworldShape = wrappedShapeOf(server.overworld());
+        ServerLevel overworld = server.overworld();
+        FlatShape overworldShape = wrappedShapeOf(overworld);
+        if (overworldShape == null) {
+            String note = overworld == null
+                    ? null
+                    : unshapedOverworldNote(overworld.dimension().location(),
+                            overworld.getChunkSource().getGenerator());
+            return note == null ? List.of() : List.of(new Line(false, note + tail()));
+        }
+
         List<Line> lines = new ArrayList<>();
         for (ServerLevel level : server.getAllLevels()) {
             FlatShape shape = wrappedShapeOf(level);
             if (shape != null) {
                 lines.add(wrappedLine(server, level, shape));
-            } else if (overworldShape != null) {
+            } else {
                 lines.add(new Line(false, unwrappedLine(server, level, overworldShape)));
             }
         }
 
         return lines;
+    }
+
+    static @Nullable String unshapedOverworldNote(ResourceLocation dimension, ChunkGenerator generator) {
+        if (ShapedDimensions.canTakeShape(generator)) {
+            return null;
+        }
+
+        return "World shape: " + dimension + " not wrapped"
+                + " generator=" + generatorId(generator)
+                + ", its world type brings a generator of its own that takes no world shape";
     }
 
     private static Line wrappedLine(MinecraftServer server, ServerLevel level, FlatShape shape) {

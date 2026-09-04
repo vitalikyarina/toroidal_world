@@ -15,6 +15,7 @@
   "gui.toroidal_world.world_shape.toroidal.hint": "Both horizontal axes loop — walk far enough in any direction and you return to where you started.",
   "gui.toroidal_world.world_shape.cylinder": "Cylinder",
   "gui.toroidal_world.world_shape.cylinder.hint": "One horizontal axis loops, the other goes on forever like vanilla.",
+  "gui.toroidal_world.world_shape.unavailable": "This world type brings a world generator of its own, which cannot take a World Shape.",
 
   "gui.toroidal_world.toroidal_settings.title": "Toroidal World Settings",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Tiny",

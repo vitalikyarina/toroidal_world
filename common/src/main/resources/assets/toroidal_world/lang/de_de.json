@@ -15,6 +15,7 @@
   "gui.toroidal_world.world_shape.toroidal.hint": "Beide horizontalen Achsen schließen sich — wer weit genug in eine Richtung geht, kommt am Ausgangspunkt wieder an.",
   "gui.toroidal_world.world_shape.cylinder": "Zylindrisch",
   "gui.toroidal_world.world_shape.cylinder.hint": "Eine horizontale Achse schließt sich, die andere geht wie in Vanilla endlos weiter.",
+  "gui.toroidal_world.world_shape.unavailable": "Dieser Welttyp bringt einen eigenen Weltgenerator mit, der keine Weltform annehmen kann.",
 
   "gui.toroidal_world.toroidal_settings.title": "Einstellungen der toroidalen Welt",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Winzig",

@@ -16,4 +16,7 @@ public interface ShapeStamp {
 
     default void toroidal$stamp(FlatShape shape) {
     }
+
+    default void toroidal$clearStamp() {
+    }
 }

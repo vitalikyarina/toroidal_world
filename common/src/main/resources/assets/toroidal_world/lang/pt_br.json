@@ -15,6 +15,7 @@
   "gui.toroidal_world.world_shape.toroidal.hint": "Os dois eixos horizontais se fecham — ande o bastante em qualquer direção e você volta ao ponto de partida.",
   "gui.toroidal_world.world_shape.cylinder": "Cilíndrico",
   "gui.toroidal_world.world_shape.cylinder.hint": "Um eixo horizontal se fecha; o outro segue sem fim, como no mundo normal.",
+  "gui.toroidal_world.world_shape.unavailable": "Este tipo de mundo traz seu próprio gerador de mundo, que não pode adotar um Formato do mundo.",
 
   "gui.toroidal_world.toroidal_settings.title": "Configurações do mundo toroidal",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Minúsculo",

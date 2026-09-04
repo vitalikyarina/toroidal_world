@@ -15,6 +15,7 @@
   "gui.toroidal_world.world_shape.toroidal.hint": "Les deux axes horizontaux se referment sur eux-mêmes : marchez assez loin dans n'importe quelle direction et vous revenez à votre point de départ.",
   "gui.toroidal_world.world_shape.cylinder": "Cylindrique",
   "gui.toroidal_world.world_shape.cylinder.hint": "Un axe horizontal se referme sur lui-même, l'autre continue à l'infini comme dans le monde classique.",
+  "gui.toroidal_world.world_shape.unavailable": "Ce type de monde apporte son propre générateur de monde, qui ne peut pas adopter une Forme du monde.",
 
   "gui.toroidal_world.toroidal_settings.title": "Réglages du monde toroïdal",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Minuscule",

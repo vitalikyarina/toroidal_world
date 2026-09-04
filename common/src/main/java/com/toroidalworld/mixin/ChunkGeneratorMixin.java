@@ -34,4 +34,10 @@ public class ChunkGeneratorMixin implements ShapeStamp {
         this.toroidal$stampedShape = shape;
         this.toroidal$stampedTransformer = WorldFolds.of(shape);
     }
+
+    @Override
+    public void toroidal$clearStamp() {
+        this.toroidal$stampedShape = null;
+        this.toroidal$stampedTransformer = null;
+    }
 }

@@ -15,6 +15,7 @@
   "gui.toroidal_world.world_shape.toroidal.hint": "两条水平轴都循环——朝任意方向走得足够远，就会回到出发的地方。",
   "gui.toroidal_world.world_shape.cylinder": "圆柱面",
   "gui.toroidal_world.world_shape.cylinder.hint": "一条水平轴循环，另一条像普通世界一样无限延伸。",
+  "gui.toroidal_world.world_shape.unavailable": "此世界类型使用自己的世界生成器，无法应用世界形状。",
 
   "gui.toroidal_world.toroidal_settings.title": "环面世界设置",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "微型",
