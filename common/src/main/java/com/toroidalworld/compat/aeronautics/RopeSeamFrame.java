@@ -14,7 +14,10 @@ import com.toroidalworld.storage.WorldLoopAttachments;
 
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.physics.PhysicsPipelineBody;
+import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
+import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem;
 import dev.simulated_team.simulated.content.blocks.rope.RopeStrandHolderBehavior;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.RopeAttachment;
@@ -77,21 +80,36 @@ public final class RopeSeamFrame {
 
         SubLevelPhysicsSystem system = SubLevelPhysicsSystem.get(level);
         for (ServerRopeStrand strand : List.copyOf(manager.getAllStrands())) {
-            UUID frame = frameBodyOf(strand);
-            if (frame != null && shifted.contains(frame)) {
-                reseat(system, strand, lap);
+            RopeAttachment attachment = shiftedAttachmentOf(strand, shifted);
+            if (attachment != null) {
+                reseat(level, system, strand, attachment);
             }
         }
     }
 
-    private static void reseat(@Nullable SubLevelPhysicsSystem system, ServerRopeStrand strand, Vector3dc lap) {
+    private static void reseat(ServerLevel level, @Nullable SubLevelPhysicsSystem system, ServerRopeStrand strand,
+            RopeAttachment attachment) {
+        WorldFold fold = foldOf(level);
         List<Vector3d> points = strand.getPoints();
-        if (points.isEmpty()) {
+        if (fold == null || points.isEmpty()) {
             return;
         }
 
+        Vec3 anchor = anchorOf(level, attachment);
+        if (anchor == null) {
+            return;
+        }
+
+        Vector3d ownEnd = attachment.point() == RopeAttachmentPoint.END ? points.getLast() : points.getFirst();
+        Vec3 raw = new Vec3(ownEnd.x, ownEnd.y, ownEnd.z);
+        Vec3 seated = fold.nearestCopy(anchor, raw);
+        if (seated.x == raw.x && seated.z == raw.z) {
+            return;
+        }
+
+        Vector3d delta = new Vector3d(seated.x - raw.x, 0.0, seated.z - raw.z);
         for (Vector3d point : points) {
-            point.add(lap);
+            point.add(delta);
         }
 
         if (strand.isActive() && system != null) {
@@ -100,14 +118,33 @@ public final class RopeSeamFrame {
         }
     }
 
-    private static @Nullable UUID frameBodyOf(ServerRopeStrand strand) {
-        UUID start = bodyOf(strand, RopeAttachmentPoint.START);
-        return start != null ? start : bodyOf(strand, RopeAttachmentPoint.END);
+    private static @Nullable Vec3 anchorOf(ServerLevel level, RopeAttachment attachment) {
+        Vec3 centre = attachment.blockAttachment().getCenter();
+        UUID body = attachment.subLevelID();
+        if (body == null) {
+            return centre;
+        }
+
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        SubLevel subLevel = container == null ? null : container.getSubLevel(body);
+        if (!(subLevel instanceof ServerSubLevel server)) {
+            return null;
+        }
+
+        Vector3d world = server.logicalPose()
+                .transformPosition(new Vector3d(centre.x, centre.y, centre.z), new Vector3d());
+        return new Vec3(world.x, world.y, world.z);
     }
 
-    private static @Nullable UUID bodyOf(ServerRopeStrand strand, RopeAttachmentPoint point) {
-        RopeAttachment attachment = strand.getAttachment(point);
-        return attachment == null ? null : attachment.subLevelID();
+    private static @Nullable RopeAttachment shiftedAttachmentOf(ServerRopeStrand strand, Set<UUID> shifted) {
+        for (RopeAttachment attachment : strand.getAttachments()) {
+            UUID body = attachment.subLevelID();
+            if (body != null && shifted.contains(body)) {
+                return attachment;
+            }
+        }
+
+        return null;
     }
 
     private static Vec3 seat(RopeStrandHolderBehavior owner, RopeStrandHolderBehavior target, Vec3 point) {
