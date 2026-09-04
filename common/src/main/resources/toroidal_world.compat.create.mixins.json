@@ -82,6 +82,7 @@
     "TrackBlockEntityMixin",
     "TrackBlockMixin",
     "TrackEdgeMixin",
+    "TrackGraphDistanceMixin",
     "TrackGraphHelperMixin",
     "TrackNodeLocationMixin",
     "TrackPaverV2Mixin",
@@ -89,6 +90,7 @@
     "TrackTargetingBlockItemMixin",
     "TrackTargetingMapMarkerMixin",
     "TrainCollisionMixin",
+    "TrainDistanceMixin",
     "TrainMapSyncMixin",
     "TrainMigrationMixin",
     "TreeCutterMixin"
