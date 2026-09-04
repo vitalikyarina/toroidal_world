@@ -18,6 +18,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.selector.EntitySelector;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.phys.AABB;
@@ -49,11 +50,11 @@ public class EntitySelectorMixin {
         }
 
         if (pos.x != senderPos.x) {
-            SeamCommandErrors.requireInsideWorld(transformer.bounds().x(), pos.x);
+            SeamCommandErrors.requireInsideWorld(transformer, Direction.Axis.X, pos.x);
         }
 
         if (pos.z != senderPos.z) {
-            SeamCommandErrors.requireInsideWorld(transformer.bounds().z(), pos.z);
+            SeamCommandErrors.requireInsideWorld(transformer, Direction.Axis.Z, pos.z);
         }
 
         return resolved;
