@@ -14,12 +14,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 @Mixin(value = SpringBlockEntity.class, remap = false)
 public class SpringBlockEntityMixin {
-    private static final int OWN_POSITION_SLOT = 15;
-    private static final int PARTNER_POSITION_SLOT = 16;
-
-    @ModifyVariable(method = "sable$physicsTick", at = @At("STORE"), index = PARTNER_POSITION_SLOT)
+    @ModifyVariable(method = "sable$physicsTick", at = @At("STORE"), name = "positionB")
     private Vector3d toroidal$seatPartnerInOwnFrame(Vector3d partnerPosition,
-            @Local(index = OWN_POSITION_SLOT) Vector3d ownPosition) {
+            @Local(name = "positionA") Vector3d ownPosition) {
         return SpringSeamFrame.seat(((BlockEntity) (Object) this).getLevel(), ownPosition, partnerPosition);
     }
 }
