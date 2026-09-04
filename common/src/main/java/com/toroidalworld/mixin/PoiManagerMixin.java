@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.FoldedOrder;
 import com.toroidalworld.core.WorldFold;
@@ -80,7 +81,7 @@ public class PoiManagerMixin {
                     "findClosest(Ljava/util/function/Predicate;Lnet/minecraft/core/BlockPos;ILnet/minecraft/world/entity/ai/village/poi/PoiManager$Occupancy;)Ljava/util/Optional;",
                     "findClosest(Ljava/util/function/Predicate;Ljava/util/function/Predicate;Lnet/minecraft/core/BlockPos;ILnet/minecraft/world/entity/ai/village/poi/PoiManager$Occupancy;)Ljava/util/Optional;"
             },
-            at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;min(Ljava/util/Comparator;)Ljava/util/Optional;"),
+            at = @At(value = "INVOKE", target = InjectionTargets.STREAM_MIN),
             index = 0)
     private Comparator<BlockPos> toroidal$closestBlockThroughSeam(
             Comparator<BlockPos> original, @Local(argsOnly = true) BlockPos center) {
@@ -94,7 +95,7 @@ public class PoiManagerMixin {
 
     @ModifyArg(
             method = "findClosestWithType",
-            at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;min(Ljava/util/Comparator;)Ljava/util/Optional;"),
+            at = @At(value = "INVOKE", target = InjectionTargets.STREAM_MIN),
             index = 0)
     private Comparator<PoiRecord> toroidal$closestRecordThroughSeam(
             Comparator<PoiRecord> original, @Local(argsOnly = true) BlockPos center) {
@@ -108,7 +109,7 @@ public class PoiManagerMixin {
 
     @ModifyArg(
             method = "findAllClosestFirstWithType",
-            at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;sorted(Ljava/util/Comparator;)Ljava/util/stream/Stream;"),
+            at = @At(value = "INVOKE", target = InjectionTargets.STREAM_SORTED),
             index = 0)
     private Comparator<Pair<Holder<PoiType>, BlockPos>> toroidal$sortThroughSeam(
             Comparator<Pair<Holder<PoiType>, BlockPos>> original, @Local(argsOnly = true) BlockPos center) {

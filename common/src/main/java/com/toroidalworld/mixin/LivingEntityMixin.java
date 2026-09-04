@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamAim;
@@ -55,14 +56,14 @@ public class LivingEntityMixin {
 
     @ModifyExpressionValue(
             method = "checkFallDamage(DZLnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getX()D"))
+            at = @At(value = "INVOKE", target = InjectionTargets.LIVING_ENTITY_GET_X))
     private double toroidal$landingXNearBlock(double x, @Local(argsOnly = true) BlockPos pos) {
         return toroidal$nearestLandingCoordinate(Direction.Axis.X, x, pos);
     }
 
     @ModifyExpressionValue(
             method = "checkFallDamage(DZLnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getZ()D"))
+            at = @At(value = "INVOKE", target = InjectionTargets.LIVING_ENTITY_GET_Z))
     private double toroidal$landingZNearBlock(double z, @Local(argsOnly = true) BlockPos pos) {
         return toroidal$nearestLandingCoordinate(Direction.Axis.Z, z, pos);
     }

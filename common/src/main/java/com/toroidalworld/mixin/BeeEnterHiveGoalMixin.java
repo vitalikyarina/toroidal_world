@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -31,7 +32,7 @@ public class BeeEnterHiveGoalMixin {
     @WrapOperation(
             method = "canBeeUse",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
+                    target = InjectionTargets.BLOCK_POS_CLOSER_TO_CENTER_THAN))
     private boolean toroidal$hiveEntranceThroughSeam(BlockPos hivePos, Position bodyPosition, double distance,
             Operation<Boolean> original) {
         return SeamRange.closerToCenterThan(this.toroidal$bee, hivePos, bodyPosition, distance);

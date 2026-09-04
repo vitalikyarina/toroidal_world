@@ -3,6 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -23,7 +24,7 @@ public class OreVeinSeamMixin {
             method = {"lambda$create$0", "method_40547"},
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/levelgen/PositionalRandomFactory;at(III)Lnet/minecraft/util/RandomSource;"))
+                    target = InjectionTargets.POSITIONAL_RANDOM_FACTORY_AT))
     private static RandomSource toroidal$seedVeinFromCanonical(
             PositionalRandomFactory factory, int blockX, int blockY, int blockZ, Operation<RandomSource> original) {
         WorldFold transformer = GenerationTransformerContext.context().wrappedTransformer();

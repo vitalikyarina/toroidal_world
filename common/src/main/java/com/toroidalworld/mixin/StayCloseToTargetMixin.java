@@ -3,6 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -18,7 +19,7 @@ public class StayCloseToTargetMixin {
     @WrapOperation(
             method = "*",
             require = 1,
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;closerThan(Lnet/minecraft/core/Position;D)Z"))
+            at = @At(value = "INVOKE", target = InjectionTargets.VEC3_CLOSER_THAN))
     private static boolean toroidal$followReachThroughSeam(Vec3 bodyPosition, Position targetPosition, double distance,
             Operation<Boolean> original, @Local(argsOnly = true) LivingEntity body) {
         return SeamRange.closerThan(body, bodyPosition, targetPosition, distance);

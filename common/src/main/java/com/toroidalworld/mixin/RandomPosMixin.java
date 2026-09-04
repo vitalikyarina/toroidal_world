@@ -3,6 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -19,7 +20,7 @@ public class RandomPosMixin {
     @ModifyExpressionValue(
             method = "generateRandomPosTowardDirection",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/PathfinderMob;getRestrictCenter()Lnet/minecraft/core/BlockPos;"))
+                    target = InjectionTargets.PATHFINDER_MOB_GET_RESTRICT_CENTER))
     private static BlockPos toroidal$homeBiasThroughSeam(BlockPos center, @Local(argsOnly = true) PathfinderMob mob) {
         return SeamSteering.nearestCopy(mob, center);
     }

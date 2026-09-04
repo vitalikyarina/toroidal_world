@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.compat.c2me.C2meSeamFold;
 import com.toroidalworld.core.WorldFold;
@@ -30,7 +31,7 @@ public class VanillaWorldGenerationDelegateMixin {
             method = "upgradeToThis",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/util/StaticCache2D;create(IIILnet/minecraft/util/StaticCache2D$Initializer;)Lnet/minecraft/util/StaticCache2D;"))
+                    target = InjectionTargets.STATIC_CACHE_2D_CREATE))
     private StaticCache2D<GenerationChunkHolder> toroidal$foldSeamSlots(
             int centerX,
             int centerZ,

@@ -3,6 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamAim;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -20,7 +21,7 @@ public class MaceSmashKnockbackMixin {
             method = {"lambda$knockback$0", "method_58409"},
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"))
+                    target = InjectionTargets.VEC3_SUBTRACT))
     private static Vec3 toroidal$smashPushThroughSeam(Vec3 direction, @Local(argsOnly = true) LivingEntity nearby) {
         return SeamAim.foldDelta(nearby, direction);
     }

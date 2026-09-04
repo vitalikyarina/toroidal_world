@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -26,7 +27,7 @@ public class TrackedEntityMixin {
             method = "updatePlayer",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"))
+                    target = InjectionTargets.VEC3_SUBTRACT))
     private Vec3 toroidal$deltaThroughSeam(Vec3 playerPosition, Vec3 entityPosition, Operation<Vec3> original) {
         WorldFold transformer = ((TransformerSource) this.entity).toroidal$wrappedTransformer();
         if (transformer == null) {

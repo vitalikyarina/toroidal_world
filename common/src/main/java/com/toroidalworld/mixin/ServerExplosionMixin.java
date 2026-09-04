@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamAim;
 
 import net.minecraft.world.entity.Entity;
@@ -34,7 +35,7 @@ public class ServerExplosionMixin {
 
     @ModifyExpressionValue(
             method = "explode",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getX()D"))
+            at = @At(value = "INVOKE", target = InjectionTargets.ENTITY_GET_X))
     private double toroidal$knockbackOriginX(double entityX, @Local Entity entity) {
         double folded = this.x + SeamAim.foldX(entity, entityX - this.x);
         return folded;
@@ -42,7 +43,7 @@ public class ServerExplosionMixin {
 
     @ModifyExpressionValue(
             method = "explode",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getZ()D"))
+            at = @At(value = "INVOKE", target = InjectionTargets.ENTITY_GET_Z))
     private double toroidal$knockbackOriginZ(double entityZ, @Local Entity entity) {
         double folded = this.z + SeamAim.foldZ(entity, entityZ - this.z);
         return folded;

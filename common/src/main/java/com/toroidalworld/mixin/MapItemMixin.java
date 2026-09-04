@@ -4,6 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -20,7 +21,7 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(MapItem.class)
 public class MapItemMixin {
-    @WrapOperation(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getX()D"))
+    @WrapOperation(method = "update", at = @At(value = "INVOKE", target = InjectionTargets.ENTITY_GET_X))
     private double toroidal$holderNearestCenterX(Entity holder, Operation<Double> original,
             @Local(argsOnly = true) MapItemSavedData data) {
         double x = original.call(holder);
@@ -28,7 +29,7 @@ public class MapItemMixin {
         return transformer == null ? x : toroidal$nearestHolder(transformer, data, holder).x;
     }
 
-    @WrapOperation(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getZ()D"))
+    @WrapOperation(method = "update", at = @At(value = "INVOKE", target = InjectionTargets.ENTITY_GET_Z))
     private double toroidal$holderNearestCenterZ(Entity holder, Operation<Double> original,
             @Local(argsOnly = true) MapItemSavedData data) {
         double z = original.call(holder);

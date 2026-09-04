@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.core.FoldedOrder;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamRange;
@@ -42,7 +43,7 @@ public class RaidMixin {
             method = "playSound",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;atCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"))
+                    target = InjectionTargets.VEC3_AT_CENTER_OF))
     private Vec3 toroidal$raidHornThroughSeam(Vec3 raidLoc, @Local ServerPlayer listener) {
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
@@ -54,7 +55,7 @@ public class RaidMixin {
 
     @WrapOperation(
             method = "updateRaiders",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;distSqr(Lnet/minecraft/core/Vec3i;)D"))
+            at = @At(value = "INVOKE", target = InjectionTargets.BLOCK_POS_DIST_SQR))
     private double toroidal$raiderDistanceThroughSeam(BlockPos raidCenter, Vec3i raiderPos,
             Operation<Double> original) {
         return SeamRange.sqr(this.level, raidCenter, raiderPos);
@@ -78,7 +79,7 @@ public class RaidMixin {
 
     @ModifyArg(
             method = "moveRaidCenterToNearbyVillageSection",
-            at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;min(Ljava/util/Comparator;)Ljava/util/Optional;"),
+            at = @At(value = "INVOKE", target = InjectionTargets.STREAM_MIN),
             index = 0)
     private Comparator<BlockPos> toroidal$nearestVillageSectionThroughSeam(Comparator<BlockPos> original) {
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);

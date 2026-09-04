@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.core.WorldFold;
@@ -37,7 +38,7 @@ public class ChunkTrackerMixin implements LevelBindable, TransformerCache {
 
     @WrapOperation(
             method = {"checkNeighborsAfterUpdate", "getComputedLevel"},
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ChunkPos;asLong(II)J"),
+            at = @At(value = "INVOKE", target = InjectionTargets.CHUNK_POS_AS_LONG),
             expect = 2)
     private long toroidal$physicalNeighborKey(int chunkX, int chunkZ, Operation<Long> original) {
         WorldFold transformer = this.toroidal$transformer();

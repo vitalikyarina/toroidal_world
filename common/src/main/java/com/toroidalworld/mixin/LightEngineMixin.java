@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
@@ -42,7 +43,7 @@ public abstract class LightEngineMixin implements TransformerHolder {
             method = "getChunk",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/chunk/LightChunkGetter;getChunkForLighting(II)Lnet/minecraft/world/level/chunk/LightChunk;"))
+                    target = InjectionTargets.LIGHT_CHUNK_GETTER_GET_CHUNK_FOR_LIGHTING))
     private @Nullable LightChunk toroidal$wrapChunkForLighting(LightChunkGetter source, int chunkX, int chunkZ,
             Operation<@Nullable LightChunk> original) {
         WorldFold transformer = toroidal$transformer();

@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.ChunkResender;
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.accessors.LevelHolder;
@@ -141,7 +142,7 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
 
     @WrapOperation(
             method = "getChunkRangeFuture",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ChunkPos;asLong(II)J"))
+            at = @At(value = "INVOKE", target = InjectionTargets.CHUNK_POS_AS_LONG))
     private long toroidal$rangeOverPhysicalChunks(int chunkX, int chunkZ, Operation<Long> original) {
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
         if (transformer == null) {
