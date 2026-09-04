@@ -13,7 +13,6 @@ import com.toroidalworld.compat.create.client.CreateClientFrame;
 import com.toroidalworld.core.FoldedCopies;
 
 import net.createmod.catnip.data.IntAttached;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 
 @Mixin(value = TableClothOverlayRenderer.class, remap = false)
@@ -31,7 +30,7 @@ public abstract class TableClothOverlayRendererMixin {
         List<IntAttached<BlockPos>> purchases = canonical.purchases();
         List<IntAttached<BlockPos>> folded = FoldedCopies.of(purchases, purchase -> {
             BlockPos stored = purchase.getValue();
-            BlockPos nearest = CreateClientFrame.nearestCopy(Minecraft.getInstance().level, stored);
+            BlockPos nearest = CreateClientFrame.inViewerFrame(stored);
             return nearest == stored ? purchase : IntAttached.with(purchase.getFirst(), nearest);
         });
 

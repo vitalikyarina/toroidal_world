@@ -9,7 +9,6 @@ import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelConnection
 import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 
@@ -23,6 +22,6 @@ public class FactoryPanelConnectionMixin {
             return original.call(target, source);
         }
 
-        return original.call(target, CreateClientFrame.nearestCopy(Minecraft.getInstance().level, stored));
+        return original.call(target, CreateClientFrame.inViewerFrame(stored));
     }
 }

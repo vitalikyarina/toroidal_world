@@ -9,7 +9,6 @@ import com.simibubi.create.AllDataComponents;
 import com.simibubi.create.content.trains.track.TrackTargetingClient;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.world.item.ItemStack;
@@ -27,6 +26,6 @@ public class TrackTargetingClientMixin {
             return value;
         }
 
-        return CreateClientFrame.heldCopy(Minecraft.getInstance().level, selected);
+        return CreateClientFrame.heldInViewerFrame(selected);
     }
 }

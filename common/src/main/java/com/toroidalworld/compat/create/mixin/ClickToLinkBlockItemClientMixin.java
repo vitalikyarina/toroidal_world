@@ -10,7 +10,6 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.redstone.displayLink.ClickToLinkBlockItem;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 
 @Mixin(value = ClickToLinkBlockItem.class, remap = false)
@@ -20,13 +19,13 @@ public class ClickToLinkBlockItemClientMixin {
                     target = "Lcom/simibubi/create/content/redstone/displayLink/ClickToLinkBlockItem$ClickToLinkData;"
                             + "selectedPos()Lnet/minecraft/core/BlockPos;"))
     private static BlockPos toroidal$foldOutlineToClientFrame(BlockPos selected) {
-        return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, selected);
+        return CreateClientFrame.inViewerFrame(selected);
     }
 
     @Inject(method = "clientTick", cancellable = true,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;equals(Ljava/lang/Object;)Z"))
     private static void toroidal$skipOutlineWhileCopyUnheld(CallbackInfo callback, @Local BlockPos selected) {
-        if (CreateClientFrame.heldCopy(Minecraft.getInstance().level, selected) == null) {
+        if (CreateClientFrame.heldInViewerFrame(selected) == null) {
             callback.cancel();
         }
     }

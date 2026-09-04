@@ -8,7 +8,6 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.equipment.bell.SoulPulseEffectPacket;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 
 @Mixin(value = SoulPulseEffectPacket.class, remap = false)
@@ -17,6 +16,6 @@ public abstract class SoulPulseEffectPacketMixin {
             at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
                     target = "Lcom/simibubi/create/content/equipment/bell/SoulPulseEffectPacket;pos:Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$pulseCentreInTheViewerFrame(BlockPos canonical) {
-        return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, canonical);
+        return CreateClientFrame.inViewerFrame(canonical);
     }
 }

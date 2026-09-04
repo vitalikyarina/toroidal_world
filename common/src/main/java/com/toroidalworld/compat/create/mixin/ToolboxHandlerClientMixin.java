@@ -8,7 +8,6 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.equipment.toolbox.ToolboxHandlerClient;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 
 @Mixin(value = ToolboxHandlerClient.class, remap = false)
@@ -19,11 +18,11 @@ public class ToolboxHandlerClientMixin {
 
     @ModifyExpressionValue(method = "onKeyInput", at = @At(value = "INVOKE", target = STORED_POSITION))
     private static BlockPos toroidal$foldMenuToolbox(BlockPos canonical) {
-        return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, canonical);
+        return CreateClientFrame.inViewerFrame(canonical);
     }
 
     @ModifyExpressionValue(method = "renderOverlay", at = @At(value = "INVOKE", target = STORED_POSITION))
     private static BlockPos toroidal$foldHudToolbox(BlockPos canonical) {
-        return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, canonical);
+        return CreateClientFrame.inViewerFrame(canonical);
     }
 }

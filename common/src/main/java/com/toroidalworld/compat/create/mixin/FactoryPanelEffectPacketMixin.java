@@ -10,7 +10,6 @@ import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelEffectPack
 import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelPosition;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 
 @Mixin(value = FactoryPanelEffectPacket.class, remap = false)
@@ -20,7 +19,7 @@ public abstract class FactoryPanelEffectPacketMixin {
                     target = "Lnet/minecraft/client/multiplayer/ClientLevel;getBlockState"
                             + "(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
     private BlockPos toroidal$sourceBlockInTheViewerFrame(BlockPos canonical) {
-        return inViewerFrame(canonical);
+        return CreateClientFrame.inViewerFrame(canonical);
     }
 
     @ModifyExpressionValue(method = "handle",
@@ -28,11 +27,7 @@ public abstract class FactoryPanelEffectPacketMixin {
                     target = "Lcom/simibubi/create/content/logistics/factoryBoard/FactoryPanelEffectPacket;"
                             + "toPos:Lcom/simibubi/create/content/logistics/factoryBoard/FactoryPanelPosition;"))
     private FactoryPanelPosition toroidal$targetPanelInTheViewerFrame(FactoryPanelPosition canonical) {
-        BlockPos folded = inViewerFrame(canonical.pos());
+        BlockPos folded = CreateClientFrame.inViewerFrame(canonical.pos());
         return folded == canonical.pos() ? canonical : new FactoryPanelPosition(folded, canonical.slot());
-    }
-
-    private static BlockPos inViewerFrame(BlockPos canonical) {
-        return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, canonical);
     }
 }

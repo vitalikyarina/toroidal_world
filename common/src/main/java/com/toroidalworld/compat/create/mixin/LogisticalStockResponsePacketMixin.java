@@ -8,7 +8,6 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.logistics.stockTicker.LogisticalStockResponsePacket;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 
 @Mixin(value = LogisticalStockResponsePacket.class, remap = false)
@@ -17,7 +16,7 @@ public class LogisticalStockResponsePacketMixin {
             method = "handle",
             at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
                     target = "Lcom/simibubi/create/content/logistics/stockTicker/LogisticalStockResponsePacket;pos:Lnet/minecraft/core/BlockPos;"))
-    private BlockPos toroidal$foldTickerIntoTheClientFrame(BlockPos canonical, LocalPlayer player) {
-        return CreateClientFrame.nearestCopy(player.clientLevel, canonical);
+    private BlockPos toroidal$foldTickerIntoTheClientFrame(BlockPos canonical) {
+        return CreateClientFrame.inViewerFrame(canonical);
     }
 }

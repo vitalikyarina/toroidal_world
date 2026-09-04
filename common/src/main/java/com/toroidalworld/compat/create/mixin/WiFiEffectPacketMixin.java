@@ -8,7 +8,6 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.logistics.packagerLink.WiFiEffectPacket;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 
 @Mixin(value = WiFiEffectPacket.class, remap = false)
@@ -17,6 +16,6 @@ public abstract class WiFiEffectPacketMixin {
             at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
                     target = "Lcom/simibubi/create/content/logistics/packagerLink/WiFiEffectPacket;pos:Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$linkKeyInTheViewerFrame(BlockPos canonical) {
-        return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, canonical);
+        return CreateClientFrame.inViewerFrame(canonical);
     }
 }

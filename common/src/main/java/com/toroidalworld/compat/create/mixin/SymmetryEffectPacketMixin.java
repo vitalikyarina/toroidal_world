@@ -10,7 +10,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.equipment.symmetryWand.SymmetryEffectPacket;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 
 @Mixin(value = SymmetryEffectPacket.class, remap = false)
@@ -20,7 +19,7 @@ public abstract class SymmetryEffectPacketMixin {
                     target = "Lcom/simibubi/create/content/equipment/symmetryWand/SymmetryEffectPacket;"
                             + "mirror:Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$mirrorInTheViewerFrame(BlockPos canonical) {
-        return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, canonical);
+        return CreateClientFrame.inViewerFrame(canonical);
     }
 
     @WrapOperation(method = "handle",

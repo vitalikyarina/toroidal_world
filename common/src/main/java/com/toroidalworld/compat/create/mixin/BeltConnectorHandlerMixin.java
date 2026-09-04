@@ -7,7 +7,6 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.kinetics.belt.item.BeltConnectorHandler;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 
 @Mixin(value = BeltConnectorHandler.class, remap = false)
@@ -21,6 +20,6 @@ public class BeltConnectorHandlerMixin {
             return stored;
         }
 
-        return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, storedPulley);
+        return CreateClientFrame.inViewerFrame(storedPulley);
     }
 }

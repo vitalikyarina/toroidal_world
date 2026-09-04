@@ -30,7 +30,7 @@ public final class CreateClientFrame {
         return anchor == null ? canonical : CreateSeamFold.nearestCopy(level, anchor, canonical);
     }
 
-    public static @Nullable BlockPos heldCopy(@Nullable BlockGetter world, BlockPos canonical) {
+    private static @Nullable BlockPos heldCopy(@Nullable BlockGetter world, BlockPos canonical) {
         Level level = toroidalClientLevel(world);
         WorldFold transformer = level == null ? null : CreateSeamFold.transformerOf(level, null);
         if (transformer == null) {
@@ -58,6 +58,14 @@ public final class CreateClientFrame {
         }
 
         return FoldedCopies.of(canonical, position -> CreateSeamFold.nearestCopy(level, anchor, position));
+    }
+
+    public static BlockPos inViewerFrame(BlockPos canonical) {
+        return nearestCopy(Minecraft.getInstance().level, canonical);
+    }
+
+    public static @Nullable BlockPos heldInViewerFrame(BlockPos canonical) {
+        return heldCopy(Minecraft.getInstance().level, canonical);
     }
 
     public static BlockPos nearestCopy(@Nullable BlockPos anchor, BlockPos target) {

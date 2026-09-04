@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.simibubi.create.content.schematics.client.SchematicTransformation;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
@@ -27,12 +26,12 @@ public class SchematicTransformationMixin {
 
     @ModifyVariable(method = "init", argsOnly = true, at = @At("HEAD"))
     private BlockPos toroidal$anchorInViewerFrame(BlockPos anchor) {
-        return CreateClientFrame.nearestCopy(Minecraft.getInstance().level, anchor);
+        return CreateClientFrame.inViewerFrame(anchor);
     }
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void toroidal$reanchorOnViewer(CallbackInfo ci) {
-        BlockPos nearest = CreateClientFrame.nearestCopy(Minecraft.getInstance().level, target);
+        BlockPos nearest = CreateClientFrame.inViewerFrame(target);
         if (nearest.equals(target)) {
             return;
         }
