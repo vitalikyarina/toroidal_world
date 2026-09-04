@@ -40,8 +40,7 @@ public final class XaeroWorldMapFold {
             return spawn;
         }
 
-        BlockPos folded = shape.fold(spawn);
-        return folded.getX() == spawn.getX() && folded.getZ() == spawn.getZ() ? spawn : folded;
+        return shape.fold(spawn);
     }
 
     public static int foldTileChunk(Direction.Axis axis, int tileChunk) {

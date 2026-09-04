@@ -15,6 +15,12 @@ import net.minecraft.world.phys.Vec3;
  * it, {@code width == max - min}. {@link Direction.Axis#Y} never loops. A shape is an immutable view — cheap to
  * hold, valid as long as its level.</p>
  *
+ * <p>Every fold here hands back the argument instance itself when it moved nothing — {@code fold(pos) == pos},
+ * {@code nearestCopy(ref, target) == target}, and likewise for the {@code value()} of an {@link Oriented} result. A
+ * caller may read that {@code ==} as "nothing moved" and skip the copy, the allocation or the write it would
+ * otherwise make. {@link #shortestDelta(Vec3, Vec3)} is the one exception: its result is not one of its arguments,
+ * so it can only answer by value.</p>
+ *
  * <p>A coordinate inside a <em>foreign frame</em> — a region a mod keeps outside the world for its own coordinate
  * space, such as the plots Sable assembles its sub-levels in — is not a lap of this world: every fold and
  * nearest-copy member hands such a coordinate back untouched, and a coordinate outside every frame folds as
@@ -94,19 +100,28 @@ public interface ToroidalShape {
      */
     int foldChunk(Direction.Axis axis, int chunk);
 
-    /** The position folded into the world on both horizontal axes; Y and in-bounds positions pass through as-is. */
+    /**
+     * The position folded into the world on both horizontal axes; Y passes through untouched, and an in-bounds
+     * position comes back as the argument instance itself.
+     */
     BlockPos fold(BlockPos pos);
 
-    /** The position folded into the world on both horizontal axes; Y and in-bounds positions pass through as-is. */
+    /**
+     * The position folded into the world on both horizontal axes; Y passes through untouched, and an in-bounds
+     * position comes back as the argument instance itself.
+     */
     Vec3 fold(Vec3 pos);
 
-    /** The chunk position folded into the world; an in-bounds position passes through as-is. */
+    /**
+     * The chunk position folded into the world; an in-bounds position comes back as the argument instance itself.
+     */
     ChunkPos fold(ChunkPos pos);
 
     /**
      * The copy of {@code target} nearest {@code ref}, each looping axis folded on its own — the coordinates a
      * renderer or a distance check should use so that something just across the seam reads as beside the reference,
-     * not a world away. {@code target} may lie any number of laps out; Y passes through untouched.
+     * not a world away. {@code target} may lie any number of laps out; Y passes through untouched. A {@code target}
+     * already nearest {@code ref} comes back as the argument instance itself.
      */
     Vec3 nearestCopy(Vec3 ref, Vec3 target);
 
@@ -125,7 +140,8 @@ public interface ToroidalShape {
     /**
      * The shortest vector from {@code from} to {@code to}, measured through the seam where that is shorter — what a
      * waypoint arrow, a distance readout or a direction indicator needs. Equal to
-     * {@code nearestCopy(from, to).subtract(from)}.
+     * {@code nearestCopy(from, to).subtract(from)}. Always a fresh vector: unlike the folds, it never hands an
+     * argument back.
      */
     Vec3 shortestDelta(Vec3 from, Vec3 to);
 
@@ -174,7 +190,10 @@ public interface ToroidalShape {
         }
     }
 
-    /** A folded value together with the {@link Orientation} the fold applied to reach it. */
+    /**
+     * A folded value together with the {@link Orientation} the fold applied to reach it. The record is always newly
+     * built; the {@code value} inside it is the argument instance itself where the fold moved nothing.
+     */
     record Oriented<T>(T value, Orientation orientation) {
         public boolean isIdentity() {
             return this.orientation.isIdentity();

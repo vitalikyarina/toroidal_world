@@ -29,8 +29,7 @@ public final class XaeroFold {
             return spawn;
         }
 
-        BlockPos folded = shape.fold(spawn);
-        return folded.getX() == spawn.getX() && folded.getZ() == spawn.getZ() ? spawn : folded;
+        return shape.fold(spawn);
     }
 
     private static double cameraCoord(Direction.Axis axis) {
@@ -90,8 +89,7 @@ public final class XaeroFold {
             return playerPos;
         }
 
-        BlockPos folded = shape.fold(playerPos);
-        return folded.getX() == playerPos.getX() && folded.getZ() == playerPos.getZ() ? playerPos : folded;
+        return shape.fold(playerPos);
     }
 
     private static Object[] coordReadoutDisplays() {
