@@ -10,13 +10,19 @@ import org.jspecify.annotations.Nullable;
 import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelBehaviour;
 import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelConnection;
 import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelPosition;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
 public final class CreateFactoryPanelFold {
     public static FactoryPanelPosition canonical(@Nullable ServerLevel level, FactoryPanelPosition position) {
-        BlockPos canonical = CreateSeamFold.canonical(level, position.pos());
+        return level == null ? position : canonical(WorldLoopAttachments.wrappedTransformerOf(level), position);
+    }
+
+    static FactoryPanelPosition canonical(@Nullable WorldFold transformer, FactoryPanelPosition position) {
+        BlockPos canonical = CreateSeamFold.canonical(transformer, position.pos());
         return canonical.equals(position.pos()) ? position : new FactoryPanelPosition(canonical, position.slot());
     }
 

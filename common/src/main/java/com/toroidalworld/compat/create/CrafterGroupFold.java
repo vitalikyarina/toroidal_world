@@ -8,6 +8,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlockEntity;
 import com.toroidalworld.compat.create.mixin.ConnectedInputAccessor;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -15,7 +17,11 @@ import net.minecraft.world.level.Level;
 
 public final class CrafterGroupFold {
     public static BlockPos foldStoredDelta(Level level, BlockPos owner, BlockPos rawDelta) {
-        return CreateSeamFold.foldDelta(level, owner, owner.offset(rawDelta), rawDelta);
+        return foldStoredDelta(WorldLoopAttachments.wrappedTransformerOfReader(level), owner, rawDelta);
+    }
+
+    static BlockPos foldStoredDelta(@Nullable WorldFold transformer, BlockPos owner, BlockPos rawDelta) {
+        return CreateSeamFold.delta(transformer, owner, owner.offset(rawDelta), rawDelta);
     }
 
     public static void normalizeGroup(ServerLevel level, MechanicalCrafterBlockEntity controller) {
