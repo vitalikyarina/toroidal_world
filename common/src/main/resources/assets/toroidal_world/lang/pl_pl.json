@@ -5,6 +5,7 @@
   "argument.toroidal_world.pos.outside_world": "%s znajduje się poza tym światem — musi być pomiędzy %s a %s",
   "commands.toroidal_world.region.across_seam": "Ten obszar przecina szew świata i może oznaczać każdą z jego stron — wykonaj komendę osobno dla każdej strony",
   "message.toroidal_world.schematic.selection_wider_than_world": "Ten zaznaczony obszar jest szerszy niż świat i objąłby część bloków dwa razy — postaw drugi róg bliżej pierwszego",
+  "message.toroidal_world.schematic.selection_cannot_grow_past_world": "Powiększenie tego obszaru sprawiłoby, że byłby szerszy niż świat i objąłby część bloków dwa razy — przewiń w drugą stronę",
   "message.toroidal_world.create.structure_circles_the_world": "Ta budowla okrąża cały świat, więc nie może poruszać się jako jedna maszyna — zostaw w niej przerwę",
 
   "gui.toroidal_world.world_shape": "Kształt świata",

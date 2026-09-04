@@ -5,6 +5,7 @@
   "argument.toroidal_world.pos.outside_world": "%s поза межами цього світу — має бути між %s і %s",
   "commands.toroidal_world.region.across_seam": "Ця область перетинає шов світу й може означати будь-який його бік — виконай команду окремо для кожного",
   "message.toroidal_world.schematic.selection_wider_than_world": "Це виділення ширше за світ і накрило б частину блоків двічі — постав другий кут ближче до першого",
+  "message.toroidal_world.schematic.selection_cannot_grow_past_world": "Розширення цього виділення зробило б його ширшим за світ і накрило б частину блоків двічі — прокрути в інший бік",
   "message.toroidal_world.create.structure_circles_the_world": "Ця споруда обходить світ по колу, тож не може рухатися як одне Пристосування — лиши в ній проміжок",
 
   "gui.toroidal_world.world_shape": "Форма світу",

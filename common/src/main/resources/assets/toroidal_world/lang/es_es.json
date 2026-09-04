@@ -5,6 +5,7 @@
   "argument.toroidal_world.pos.outside_world": "%s está fuera de este mundo — debe estar entre %s y %s",
   "commands.toroidal_world.region.across_seam": "Esa zona cruza la costura del mundo y puede significar cualquiera de los dos lados — ejecuta el comando una vez por lado",
   "message.toroidal_world.schematic.selection_wider_than_world": "Esa selección es más ancha que el mundo y abarcaría algunos bloques dos veces — coloca la segunda esquina más cerca de la primera",
+  "message.toroidal_world.schematic.selection_cannot_grow_past_world": "Agrandar esa selección la haría más ancha que el mundo y abarcaría algunos bloques dos veces — desplaza la rueda en el otro sentido",
   "message.toroidal_world.create.structure_circles_the_world": "Esa estructura da la vuelta completa al mundo, así que no puede moverse como un solo artefacto animado — deja un hueco en ella",
 
   "gui.toroidal_world.world_shape": "Forma del mundo",

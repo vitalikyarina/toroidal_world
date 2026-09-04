@@ -5,6 +5,7 @@
   "argument.toroidal_world.pos.outside_world": "%s はこのワールドの外にあります — %s と %s の間でなければなりません",
   "commands.toroidal_world.region.across_seam": "この範囲はワールドの継ぎ目をまたいでおり、どちら側とも解釈できます — 片側ずつコマンドを実行してください",
   "message.toroidal_world.schematic.selection_wider_than_world": "この選択範囲はワールドより広く、一部のブロックを二重に含めてしまいます — 2つ目の角を最初の角の近くに置いてください",
+  "message.toroidal_world.schematic.selection_cannot_grow_past_world": "この選択範囲をこれ以上広げるとワールドより広くなり、一部のブロックを二重に含めてしまいます — 逆方向にスクロールしてください",
   "message.toroidal_world.create.structure_circles_the_world": "この建造物はワールドを一周しているため、1つのからくりとして動かせません — どこかに隙間を空けてください",
 
   "gui.toroidal_world.world_shape": "ワールドの形状",

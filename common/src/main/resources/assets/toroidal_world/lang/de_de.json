@@ -5,6 +5,7 @@
   "argument.toroidal_world.pos.outside_world": "%s liegt außerhalb dieser Welt — muss zwischen %s und %s liegen",
   "commands.toroidal_world.region.across_seam": "Dieser Bereich kreuzt die Weltnaht und kann beide Seiten meinen — führe den Befehl je Seite einmal aus",
   "message.toroidal_world.schematic.selection_wider_than_world": "Diese Auswahl ist breiter als die Welt und würde manche Blöcke doppelt erfassen — setze die zweite Ecke näher an die erste",
+  "message.toroidal_world.schematic.selection_cannot_grow_past_world": "Diese Auswahl weiter zu vergrößern würde sie breiter als die Welt machen und manche Blöcke doppelt erfassen — scrolle in die andere Richtung",
   "message.toroidal_world.create.structure_circles_the_world": "Dieses Bauwerk umrundet die ganze Welt und kann sich daher nicht als eine Vorrichtung bewegen — lasse eine Lücke darin",
 
   "gui.toroidal_world.world_shape": "Weltform",

@@ -5,6 +5,7 @@
   "argument.toroidal_world.pos.outside_world": "%s은(는) 이 세계 밖에 있습니다 — %s와(과) %s 사이여야 합니다",
   "commands.toroidal_world.region.across_seam": "이 영역은 세계의 이음새를 가로질러 어느 쪽이든 의미할 수 있습니다 — 양쪽에서 명령을 한 번씩 실행하세요",
   "message.toroidal_world.schematic.selection_wider_than_world": "이 선택 영역은 세계보다 넓어 일부 블록을 두 번 포함하게 됩니다 — 두 번째 모서리를 첫 번째에 더 가깝게 놓으세요",
+  "message.toroidal_world.schematic.selection_cannot_grow_past_world": "이 선택 영역을 더 넓히면 세계보다 넓어져 일부 블록을 두 번 포함하게 됩니다 — 반대 방향으로 스크롤하세요",
   "message.toroidal_world.create.structure_circles_the_world": "이 건축물은 세계를 한 바퀴 돌기 때문에 하나의 구조물로 움직일 수 없습니다 — 중간에 턈을 남기세요",
 
   "gui.toroidal_world.world_shape": "세계 형태",
