@@ -8,7 +8,6 @@ import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 
@@ -23,8 +22,7 @@ public final class MapSeamFold {
             return null;
         }
 
-        ServerLevel serverLevel = server.getLevel(dimension);
-        return serverLevel == null ? null : WorldLoopAttachments.wrappedTransformerOf(serverLevel);
+        return WorldLoopAttachments.wrappedTransformerOf(server.getLevel(dimension));
     }
 
     private MapSeamFold() {

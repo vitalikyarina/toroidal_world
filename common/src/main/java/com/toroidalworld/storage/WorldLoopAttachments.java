@@ -22,7 +22,11 @@ public final class WorldLoopAttachments {
         return ((TransformerCache) level).toroidal$transformer();
     }
 
-    public static @Nullable WorldFold wrappedTransformerOf(Level level) {
+    public static @Nullable WorldFold wrappedTransformerOf(@Nullable Level level) {
+        if (level == null) {
+            return null;
+        }
+
         WorldFold transformer = transformerOf(level);
         return transformer.isWrapped() ? transformer : null;
     }
@@ -31,7 +35,11 @@ public final class WorldLoopAttachments {
         return level instanceof ClientBoundsHolder holder ? holder.toroidal$clientBounds() : WorldFolds.NOOP;
     }
 
-    public static @Nullable WorldFold wrappedClientBoundsTransformerOf(Level level) {
+    public static @Nullable WorldFold wrappedClientBoundsTransformerOf(@Nullable Level level) {
+        if (level == null) {
+            return null;
+        }
+
         WorldFold transformer = clientBoundsTransformerOf(level);
         return transformer.isWrapped() ? transformer : null;
     }
