@@ -1,24 +1,15 @@
 package com.toroidalworld.compat.c2me;
 
-import org.slf4j.Logger;
-
 import com.mojang.logging.LogUtils;
+import com.toroidalworld.compat.ModPresence;
 
 public final class C2meNoTickVd {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
-    private static final String LOADER_CLASS = "com/ishland/c2me/notickvd/common/PlayerNoTickLoader.class";
-
-    private static final boolean PRESENT = probe();
+    private static final ModPresence GATE = ModPresence.of(LogUtils.getLogger(),
+            "com/ishland/c2me/notickvd/common/PlayerNoTickLoader.class",
+            "[c2me-compat] gate notickvd_present");
 
     public static boolean present() {
-        return PRESENT;
-    }
-
-    private static boolean probe() {
-        boolean present = C2meNoTickVd.class.getClassLoader().getResource(LOADER_CLASS) != null;
-        LOGGER.info("[c2me-compat] gate notickvd_present={}", present);
-        return present;
+        return GATE.present();
     }
 
     private C2meNoTickVd() {
