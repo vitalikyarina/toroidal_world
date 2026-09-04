@@ -29,10 +29,11 @@ Runs on **NeoForge** and **Fabric**.
 - [C2ME](https://modrinth.com/mod/c2me-fabric).
 - [JourneyMap](https://modrinth.com/mod/journeymap), [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) and [Xaero's World Map](https://modrinth.com/mod/xaeros-world-map).
 - [Create](https://modrinth.com/mod/create) (1.21.1 only).
+- [Distant Horizons](https://modrinth.com/mod/distanthorizons) — the far side of the world shows across the seam, out to half the world width.
 
 **Partially supported**
 
-- LOD mods (**Distant Horizons**, **Voxy**) — distant terrain is not wrapped across the seam yet.
+- [Voxy](https://modrinth.com/mod/voxy) — distant terrain is not wrapped across the seam yet.
 
 ## Before you download
 
