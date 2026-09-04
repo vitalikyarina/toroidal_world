@@ -4,14 +4,13 @@ import org.slf4j.Logger;
 
 import com.toroidalworld.api.ToroidalShape;
 import com.toroidalworld.api.ToroidalWorldClientApi;
+import com.toroidalworld.client.ClientFrame;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.Vec3;
 
 public final class XaeroFold {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -32,42 +31,12 @@ public final class XaeroFold {
         return shape.fold(spawn);
     }
 
-    private static double cameraCoord(Direction.Axis axis) {
-        Entity camera = Minecraft.getInstance().getCameraEntity();
-        if (camera == null) {
-            return Double.NaN;
-        }
-
-        Vec3 position = camera.position();
-        return axis == Direction.Axis.X ? position.x : position.z;
-    }
-
     public static double nearestElementCoord(Direction.Axis axis, double coord) {
-        ToroidalShape shape = shape();
-        if (shape == null) {
-            return coord;
-        }
-
-        double ref = cameraCoord(axis);
-        if (Double.isNaN(ref)) {
-            return coord;
-        }
-
-        return shape.nearestCoord(axis, ref, coord);
+        return ClientFrame.nearestToCamera(axis, coord);
     }
 
     public static int nearestWaypointBlock(Direction.Axis axis, int coord) {
-        ToroidalShape shape = shape();
-        if (shape == null) {
-            return coord;
-        }
-
-        double ref = cameraCoord(axis);
-        if (Double.isNaN(ref)) {
-            return coord;
-        }
-
-        return (int) Math.round(shape.nearestCoord(axis, ref, coord));
+        return (int) Math.round(ClientFrame.nearestToCamera(axis, coord));
     }
 
     public static BlockPos foldInfoDisplayPos(Object infoDisplay, BlockPos playerPos) {
