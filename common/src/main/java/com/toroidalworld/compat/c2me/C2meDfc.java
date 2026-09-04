@@ -1,24 +1,15 @@
 package com.toroidalworld.compat.c2me;
 
-import org.slf4j.Logger;
-
 import com.mojang.logging.LogUtils;
+import com.toroidalworld.compat.ModPresence;
 
 public final class C2meDfc {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
-    private static final String ROUTER_MIXIN_CLASS = "com/ishland/c2me/opts/dfc/mixin/MixinNoiseConfig.class";
-
-    private static final boolean PRESENT = probe();
+    private static final ModPresence GATE = ModPresence.of(LogUtils.getLogger(),
+            "com/ishland/c2me/opts/dfc/mixin/MixinNoiseConfig.class",
+            "[c2me-compat] gate dfc_present");
 
     public static boolean present() {
-        return PRESENT;
-    }
-
-    private static boolean probe() {
-        boolean present = C2meDfc.class.getClassLoader().getResource(ROUTER_MIXIN_CLASS) != null;
-        LOGGER.info("[c2me-compat] gate dfc_present={}", present);
-        return present;
+        return GATE.present();
     }
 
     private C2meDfc() {
