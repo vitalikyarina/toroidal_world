@@ -4,12 +4,12 @@ import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 import com.toroidalworld.MixinGatePlugin;
+import com.toroidalworld.compat.ModPresence;
 
 public class JourneyMapMixinPlugin extends MixinGatePlugin {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private static final boolean JOURNEYMAP_PRESENT = JourneyMapMixinPlugin.class.getClassLoader()
-            .getResource("journeymap/client/JourneymapClient.class") != null;
+    private static final boolean JOURNEYMAP_PRESENT = ModPresence.probe("journeymap/client/JourneymapClient.class");
 
     @Override
     public void onLoad(String mixinPackage) {
