@@ -7,7 +7,6 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.core.CoordinateConstants;
-import com.toroidalworld.gen.DatapackStemOverrides.Outcome;
 import com.toroidalworld.gen.DatapackStemOverrides.StemOverride;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopSizes;
@@ -101,7 +100,11 @@ public final class WorldShapeReport {
 
     private static String shapeSource(ServerLevel level, @Nullable StemOverride override) {
         if (override != null) {
-            return override.outcome() == Outcome.RESHAPED ? RESTORED_SOURCE : STORED_SOURCE;
+            return switch (override.outcome()) {
+                case RESHAPED -> RESTORED_SOURCE;
+                case STAMPED -> STAMP_SOURCE;
+                case REFUSED -> STORED_SOURCE;
+            };
         }
 
         return level.getChunkSource().getGenerator() instanceof ShapedChunkGenerator ? CODEC_SOURCE : STAMP_SOURCE;
@@ -116,9 +119,11 @@ public final class WorldShapeReport {
             return "";
         }
 
-        return override.outcome() == Outcome.RESHAPED
-                ? ", a datapack " + override.datapackGenerator() + " took the stored shape"
-                : ", a datapack " + override.datapackGenerator() + " was refused the stored shape";
+        return ", a datapack " + override.datapackGenerator() + " " + switch (override.outcome()) {
+            case RESHAPED -> "took the stored shape";
+            case STAMPED -> "was stamped with the stored shape";
+            case REFUSED -> "was refused the stored shape";
+        };
     }
 
     private static String tail() {

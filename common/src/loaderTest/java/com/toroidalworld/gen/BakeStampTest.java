@@ -171,6 +171,17 @@ class BakeStampTest {
     }
 
     @Test
+    void aStampedDatapackNetherKeepsTheStoredWidthRatherThanTheCoordinateScaleDerivation() {
+        Registry<LevelStem> baked = bake(storedToroidalWorld(),
+                Map.of(LevelStem.NETHER, stem(NETHER_COORDINATE_SCALE, noiseSubclassGenerator(worldgen))));
+
+        FlatShape shape = shapeOf(baked, LevelStem.NETHER);
+        assertNotNull(shape, "the nether carries no fold");
+        assertEquals(STORED_NETHER_CHUNK_WIDTH, chunkWidth(shape, Direction.Axis.X));
+        assertEquals(STORED_NETHER_CHUNK_WIDTH, chunkWidth(shape, Direction.Axis.Z));
+    }
+
+    @Test
     void aDatapackEndKeepsTheStoredWidthRatherThanTheOverworlds() {
         Registry<LevelStem> baked = bake(storedToroidalWorld(),
                 Map.of(LevelStem.END, stem(SAME_SCALE, noiseGenerator(worldgen))));
@@ -195,15 +206,15 @@ class BakeStampTest {
     }
 
     @Test
-    void aForeignNoiseSubclassIsKeptOutOfTheRebuildAndLeavesTheStoredStemInPlace() {
-        Map<ResourceKey<LevelStem>, LevelStem> stored = storedToroidalWorld();
-        Registry<LevelStem> baked = bake(stored,
-                Map.of(LevelStem.OVERWORLD, stem(SAME_SCALE, noiseSubclassGenerator(worldgen))));
+    void aForeignNoiseSubclassKeepsItsClassAndTakesTheStoredShape() {
+        ChunkGenerator datapackOverworld = noiseSubclassGenerator(worldgen);
+        Registry<LevelStem> baked = bake(storedToroidalWorld(),
+                Map.of(LevelStem.OVERWORLD, stem(SAME_SCALE, datapackOverworld)));
 
-        assertSame(stored.get(LevelStem.OVERWORLD).generator(), generatorOf(baked, LevelStem.OVERWORLD));
+        assertSame(datapackOverworld, generatorOf(baked, LevelStem.OVERWORLD));
 
         FlatShape shape = shapeOf(baked, LevelStem.OVERWORLD);
-        assertNotNull(shape, "the overworld carries no fold");
+        assertNotNull(shape, "the datapack overworld carries no fold");
         assertEquals(STORED_OVERWORLD_CHUNK_WIDTH, chunkWidth(shape, Direction.Axis.X));
     }
 
@@ -245,6 +256,16 @@ class BakeStampTest {
         DatapackStemOverrides.StemOverride override = DatapackStemOverrides.of(LevelStem.OVERWORLD);
         assertNotNull(override, "the override went unrecorded");
         assertEquals(DatapackStemOverrides.Outcome.REFUSED, override.outcome());
+    }
+
+    @Test
+    void aStampedStemIsRecordedForTheReportUnderTheStampedOutcome() {
+        bake(storedToroidalWorld(),
+                Map.of(LevelStem.OVERWORLD, stem(SAME_SCALE, noiseSubclassGenerator(worldgen))));
+
+        DatapackStemOverrides.StemOverride override = DatapackStemOverrides.of(LevelStem.OVERWORLD);
+        assertNotNull(override, "the override went unrecorded");
+        assertEquals(DatapackStemOverrides.Outcome.STAMPED, override.outcome());
     }
 
     @Test
