@@ -2,6 +2,7 @@ package com.toroidalworld.compat.sable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.joml.Vector3d;
@@ -51,6 +52,26 @@ class SeamFrameTest {
         SeamFrame.with(FOLD, () -> ENTITY_ON_FAR_HALF, () -> {
             Vector3dc inner = SeamFrame.with(FOLD, () -> ENTITY_ON_NEAR_HALF, () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));
             assertTrue(SeamFrame.isNoShift(inner));
+            assertEquals(-WIDTH_BLOCKS, SeamFrame.shiftOf(POSE_NEAR_SEAM).x(), 0.0);
+            return null;
+        });
+        assertFalse(SeamFrame.isBound());
+    }
+
+    @Test
+    void aBodyThatThrowsLeavesNoBindingBehind() {
+        assertThrows(IllegalStateException.class, () -> SeamFrame.with(FOLD, () -> ENTITY_ON_FAR_HALF, () -> {
+            throw new IllegalStateException("the body");
+        }));
+        assertFalse(SeamFrame.isBound());
+    }
+
+    @Test
+    void aThrowFromTheInnerBodyHandsTheOuterBindingBack() {
+        SeamFrame.with(FOLD, () -> ENTITY_ON_FAR_HALF, () -> {
+            assertThrows(IllegalStateException.class, () -> SeamFrame.with(FOLD, () -> ENTITY_ON_NEAR_HALF, () -> {
+                throw new IllegalStateException("the inner body");
+            }));
             assertEquals(-WIDTH_BLOCKS, SeamFrame.shiftOf(POSE_NEAR_SEAM).x(), 0.0);
             return null;
         });

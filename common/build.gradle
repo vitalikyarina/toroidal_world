@@ -164,6 +164,14 @@ dependencies {
     testRuntimeOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     testRuntimeOnly "maven.modrinth:create:${create_version}"
     testRuntimeOnly files(createBundledJars).asFileTree.matching { include '*.jar' }
+    // The Sable fold tests read Sable's plot constants off the outer jar and build companion bounding boxes, and the
+    // seam-distance helpers name MixinExtras' Operation in the fold-taking overloads the tests call.
+    testCompileOnly "maven.modrinth:sable:${sable_version}"
+    testCompileOnly files(sableCompanionJars).asFileTree.matching { include '*.jar' }
+    testCompileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
+    testRuntimeOnly "maven.modrinth:sable:${sable_version}"
+    testRuntimeOnly files(sableCompanionJars).asFileTree.matching { include '*.jar' }
+    testRuntimeOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.junit.platform:junit-platform-launcher'

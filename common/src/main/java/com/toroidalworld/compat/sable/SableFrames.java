@@ -35,7 +35,7 @@ final class SableFrames implements ForeignFrameSource {
         return Sable.HELPER.projectOutOfSubLevel(level, stored);
     }
 
-    private static ForeignSpan plotChunks(int originPlot, int plotsPerSide, int logPlotSize) {
+    static ForeignSpan plotChunks(int originPlot, int plotsPerSide, int logPlotSize) {
         return new ForeignSpan(originPlot << logPlotSize, (originPlot + plotsPerSide) << logPlotSize);
     }
 }

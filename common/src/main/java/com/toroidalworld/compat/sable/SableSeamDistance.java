@@ -1,6 +1,7 @@
 package com.toroidalworld.compat.sable;
 
 import org.joml.Vector3dc;
+import org.jspecify.annotations.Nullable;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.toroidalworld.core.WorldFold;
@@ -11,7 +12,10 @@ import net.minecraft.world.phys.Vec3;
 
 public final class SableSeamDistance {
     public static double sqr(Level level, Vector3dc from, Vector3dc to, Operation<Double> original) {
-        WorldFold fold = WorldLoopAttachments.wrappedTransformerOfReader(level);
+        return sqr(WorldLoopAttachments.wrappedTransformerOfReader(level), from, to, original);
+    }
+
+    public static double sqr(@Nullable WorldFold fold, Vector3dc from, Vector3dc to, Operation<Double> original) {
         if (fold == null) {
             return original.call(from, to);
         }
@@ -20,7 +24,10 @@ public final class SableSeamDistance {
     }
 
     public static double rectilinear(Level level, Vector3dc from, Vector3dc to, Operation<Double> original) {
-        WorldFold fold = WorldLoopAttachments.wrappedTransformerOfReader(level);
+        return rectilinear(WorldLoopAttachments.wrappedTransformerOfReader(level), from, to, original);
+    }
+
+    public static double rectilinear(@Nullable WorldFold fold, Vector3dc from, Vector3dc to, Operation<Double> original) {
         if (fold == null) {
             return original.call(from, to);
         }
