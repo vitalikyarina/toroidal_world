@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
@@ -21,7 +22,7 @@ public class PhantomMoveControlMixin {
     @ModifyExpressionValue(
             method = "tick",
             at = @At(value = "FIELD",
-                    target = "Lnet/minecraft/world/entity/monster/Phantom;moveTargetPoint:Lnet/minecraft/world/phys/Vec3;",
+                    target = InjectionTargets.PHANTOM_MOVE_TARGET_POINT,
                     opcode = Opcodes.GETFIELD))
     private Vec3 toroidal$moveTargetThroughSeam(Vec3 moveTargetPoint) {
         return SeamSteering.nearestCopy(this.phantom, moveTargetPoint);

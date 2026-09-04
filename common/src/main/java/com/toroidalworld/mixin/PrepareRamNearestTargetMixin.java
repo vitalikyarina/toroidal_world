@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.FoldedOrder;
 import com.toroidalworld.core.WorldFold;
@@ -23,7 +24,7 @@ import net.minecraft.world.phys.Vec3;
 public class PrepareRamNearestTargetMixin {
     @ModifyArg(
             method = "calculateRammingStartPosition",
-            at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;sorted(Ljava/util/Comparator;)Ljava/util/stream/Stream;"),
+            at = @At(value = "INVOKE", target = InjectionTargets.STREAM_SORTED),
             index = 0)
     private Comparator<BlockPos> toroidal$ramStartOrderThroughSeam(Comparator<BlockPos> original,
             @Local(argsOnly = true) PathfinderMob body) {

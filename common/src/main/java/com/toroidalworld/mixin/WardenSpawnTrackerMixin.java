@@ -3,6 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -18,7 +19,7 @@ public class WardenSpawnTrackerMixin {
     @WrapOperation(
             method = "lambda$getNearbyPlayers$0",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;closerThan(Lnet/minecraft/core/Position;D)Z"))
+                    target = InjectionTargets.VEC3_CLOSER_THAN))
     private static boolean toroidal$warningRangeThroughSeam(Vec3 playerPosition, Position shriekerOrigin,
             double distance, Operation<Boolean> original, @Local(argsOnly = true) ServerPlayer player) {
         return SeamRange.closerThan(player, playerPosition, shriekerOrigin, distance);

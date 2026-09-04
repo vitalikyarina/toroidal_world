@@ -3,6 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.predicate.SeamDistanceBounds;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -21,7 +22,7 @@ public class DistanceBoundsMixin {
     @WrapOperation(
             method = "matches",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/advancements/criterion/DistancePredicate;matches(DDDDDD)Z"))
+                    target = InjectionTargets.DISTANCE_PREDICATE_MATCHES))
     private boolean toroidal$boundThroughSeam(DistancePredicate bounds,
             double referenceX, double referenceY, double referenceZ,
             double measuredX, double measuredY, double measuredZ,

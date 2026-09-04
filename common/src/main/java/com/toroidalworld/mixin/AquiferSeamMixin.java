@@ -3,6 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -18,7 +19,7 @@ public class AquiferSeamMixin {
             method = "computeSubstance",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/levelgen/PositionalRandomFactory;at(III)Lnet/minecraft/util/RandomSource;"))
+                    target = InjectionTargets.POSITIONAL_RANDOM_FACTORY_AT))
     private RandomSource toroidal$seedAquiferCellFromCanonical(
             PositionalRandomFactory factory, int gridX, int gridY, int gridZ, Operation<RandomSource> original) {
         WorldFold transformer = GenerationTransformerContext.context().wrappedTransformer();
