@@ -34,13 +34,14 @@ public final class ShapedDimensions {
             return dimensions;
         }
 
-        ChunkGenerator shaped = shapedGeneratorFor(stem.generator(), shape);
-        if (shaped == null) {
+        ChunkGenerator rebuilt = shapedGeneratorFor(stem.generator(), shape);
+        ChunkGenerator marked = rebuilt != null ? rebuilt : stampedGeneratorFor(stem.generator(), shape);
+        if (marked == null) {
             return dimensions;
         }
 
         Map<ResourceKey<LevelStem>, LevelStem> stems = new HashMap<>(dimensions.dimensions());
-        stems.put(key, new LevelStem(stem.type(), shaped));
+        stems.put(key, new LevelStem(stem.type(), marked));
         return new WorldDimensions(stems);
     }
 
@@ -48,6 +49,10 @@ public final class ShapedDimensions {
         Map<ResourceKey<LevelStem>, LevelStem> stripped = null;
         for (Map.Entry<ResourceKey<LevelStem>, LevelStem> entry : dimensions.dimensions().entrySet()) {
             LevelStem stem = entry.getValue();
+            if (stem.generator() instanceof ShapeStamp stamp) {
+                stamp.toroidal$clearStamp();
+            }
+
             if (!(stem.generator() instanceof ShapedChunkGenerator shaped)) {
                 continue;
             }
@@ -105,7 +110,7 @@ public final class ShapedDimensions {
             return;
         }
 
-        FlatShape worldShape = codecCarriedShapeOf(overworld.generator());
+        FlatShape worldShape = ShapedChunkGenerator.wrappedShapeOf(overworld.generator());
         if (worldShape == null || worldShape.skewChunks() != FlatShape.NO_SKEW || worldShape.mirror() != null) {
             return;
         }
@@ -128,15 +133,17 @@ public final class ShapedDimensions {
 
     public static @Nullable FlatShape shapeOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {
         LevelStem stem = dimensions.get(key).orElse(null);
-        return stem != null && stem.generator() instanceof ShapedChunkGenerator shaped ? shaped.shape() : null;
+        return stem == null ? null : ShapedChunkGenerator.wrappedShapeOf(stem.generator());
     }
 
-    private static @Nullable FlatShape codecCarriedShapeOf(ChunkGenerator generator) {
-        if (!(generator instanceof ShapedChunkGenerator shaped)) {
-            return null;
-        }
+    public static boolean canTakeShape(WorldDimensions dimensions) {
+        LevelStem overworld = dimensions.get(LevelStem.OVERWORLD).orElse(null);
+        return overworld != null && canTakeShape(overworld.generator());
+    }
 
-        return shaped.transformer().isWrapped() ? shaped.shape() : null;
+    public static boolean canTakeShape(ChunkGenerator generator) {
+        ChunkGenerator base = baseOf(generator);
+        return isRebuildable(base) || isStampable(base);
     }
 
     public static @Nullable FlatShape derivedShape(FlatShape worldShape, double overworldScale, double scale) {
@@ -162,17 +169,36 @@ public final class ShapedDimensions {
     }
 
     private static @Nullable ChunkGenerator shapedGeneratorFor(ChunkGenerator generator, FlatShape shape) {
-        ChunkGenerator base = generator instanceof ShapedChunkGenerator shaped ? shaped.unshaped() : generator;
-
-        if (base instanceof NoiseBasedChunkGenerator noise && noise.getClass() == NoiseBasedChunkGenerator.class) {
-            return new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), shape);
+        ChunkGenerator base = baseOf(generator);
+        if (!isRebuildable(base)) {
+            return null;
         }
 
-        if (base instanceof FlatLevelSource flat && flat.getClass() == FlatLevelSource.class) {
-            return new LoopedFlatChunkGenerator(flat.settings(), shape);
+        return base instanceof NoiseBasedChunkGenerator noise
+                ? new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), shape)
+                : new LoopedFlatChunkGenerator(((FlatLevelSource) base).settings(), shape);
+    }
+
+    private static @Nullable ChunkGenerator stampedGeneratorFor(ChunkGenerator generator, FlatShape shape) {
+        ChunkGenerator base = baseOf(generator);
+        if (!isStampable(base)) {
+            return null;
         }
 
-        return null;
+        ((ShapeStamp) base).toroidal$stamp(shape);
+        return base;
+    }
+
+    private static ChunkGenerator baseOf(ChunkGenerator generator) {
+        return generator instanceof ShapedChunkGenerator shaped ? shaped.unshaped() : generator;
+    }
+
+    private static boolean isRebuildable(ChunkGenerator base) {
+        return base.getClass() == NoiseBasedChunkGenerator.class || base.getClass() == FlatLevelSource.class;
+    }
+
+    private static boolean isStampable(ChunkGenerator base) {
+        return base instanceof NoiseBasedChunkGenerator && base instanceof ShapeStamp;
     }
 
     private ShapedDimensions() {

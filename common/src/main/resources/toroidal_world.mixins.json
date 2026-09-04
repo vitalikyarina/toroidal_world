@@ -36,6 +36,7 @@
     "ChargeAttackMixin",
     "ChunkGenerationTaskMixin",
     "ChunkGeneratorAccessor",
+    "ChunkGeneratorCodecMixin",
     "ChunkGeneratorMixin",
     "ChunkGeneratorNearestRingMixin",
     "ChunkGeneratorRandomSpreadSearchMixin",
