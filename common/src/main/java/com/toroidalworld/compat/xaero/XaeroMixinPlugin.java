@@ -1,16 +1,11 @@
 package com.toroidalworld.compat.xaero;
 
-import java.util.List;
-import java.util.Set;
-
-import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
-import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 import com.mojang.logging.LogUtils;
+import com.toroidalworld.MixinGatePlugin;
 
-public class XaeroMixinPlugin implements IMixinConfigPlugin {
+public class XaeroMixinPlugin extends MixinGatePlugin {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     private static final boolean XAERO_MINIMAP_PRESENT = XaeroMixinPlugin.class.getClassLoader()
@@ -33,27 +28,5 @@ public class XaeroMixinPlugin implements IMixinConfigPlugin {
         }
 
         return mixinClassName.contains(WORLDMAP_MIXIN_PACKAGE) ? XAERO_WORLDMAP_PRESENT : XAERO_MINIMAP_PRESENT;
-    }
-
-    @Override
-    public String getRefMapperConfig() {
-        return null;
-    }
-
-    @Override
-    public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
-    }
-
-    @Override
-    public List<String> getMixins() {
-        return null;
-    }
-
-    @Override
-    public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-    }
-
-    @Override
-    public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
     }
 }
