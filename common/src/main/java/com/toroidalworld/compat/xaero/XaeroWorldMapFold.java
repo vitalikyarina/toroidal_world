@@ -9,19 +9,30 @@ import com.toroidalworld.compat.AxisCopies;
 import com.toroidalworld.compat.FullscreenZoomFloor;
 import com.toroidalworld.map.MapSurfaceCopies.Copies;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+
+import xaero.map.MapProcessor;
+import xaero.map.WorldMapSession;
+import xaero.map.world.MapDimension;
+import xaero.map.world.MapWorld;
 
 public final class XaeroWorldMapFold {
     // Xaero's own units: a tile chunk is 4 chunks (64 blocks), a region 8 tile chunks (512 blocks).
     private static final int TILE_CHUNK_CHUNKS = 4;
     private static final int REGION_TILE_CHUNKS = 8;
 
-    private static ToroidalShape shape() {
-        ClientLevel level = Minecraft.getInstance().level;
+    private static ToroidalShape browsedShape() {
+        WorldMapSession session = WorldMapSession.getCurrentSession();
+        MapProcessor processor = session == null ? null : session.getMapProcessor();
+        MapWorld mapWorld = processor == null ? null : processor.getMapWorld();
+        MapDimension dimension = mapWorld == null ? null : mapWorld.getCurrentDimension();
+        return dimension == null ? null : ToroidalWorldClientApi.shapeOf(dimension.getDimId()).orElse(null);
+    }
+
+    private static ToroidalShape shapeOf(ClientLevel level) {
         return level == null ? null : ToroidalWorldClientApi.shapeOf(level).orElse(null);
     }
 
@@ -31,11 +42,11 @@ public final class XaeroWorldMapFold {
     }
 
     public static boolean active() {
-        return shape() != null;
+        return browsedShape() != null;
     }
 
-    public static BlockPos foldIdSpawn(BlockPos spawn) {
-        ToroidalShape shape = shape();
+    public static BlockPos foldIdSpawn(ClientLevel level, BlockPos spawn) {
+        ToroidalShape shape = shapeOf(level);
         if (shape == null || spawn == null) {
             return spawn;
         }
@@ -44,7 +55,7 @@ public final class XaeroWorldMapFold {
     }
 
     public static int foldTileChunk(Direction.Axis axis, int tileChunk) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = browsedShape();
         if (shape == null) {
             return tileChunk;
         }
@@ -53,7 +64,7 @@ public final class XaeroWorldMapFold {
     }
 
     public static int foldChunk(Direction.Axis axis, int chunk) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = browsedShape();
         return shape == null ? chunk : shape.foldChunk(axis, chunk);
     }
 
@@ -75,12 +86,12 @@ public final class XaeroWorldMapFold {
     }
 
     public static int foldBlock(Direction.Axis axis, int coord) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = browsedShape();
         return shape == null ? coord : shape.foldBlock(axis, coord);
     }
 
     public static boolean glueableAt(int slotSizeBlocks) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = browsedShape();
         if (shape == null) {
             return false;
         }
@@ -97,12 +108,12 @@ public final class XaeroWorldMapFold {
     }
 
     public static AxisCopies copies(Direction.Axis axis) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = browsedShape();
         return shape == null ? AxisCopies.UNBOUNDED : AxisCopies.of(shape, axis);
     }
 
     public static double zoomFloorScale(double scaleMultiplier) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = browsedShape();
         if (shape == null) {
             return 0.0;
         }
@@ -123,7 +134,7 @@ public final class XaeroWorldMapFold {
     }
 
     public static double foldCameraCoord(Direction.Axis axis, double coord) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = browsedShape();
         if (shape == null) {
             return coord;
         }
@@ -132,7 +143,7 @@ public final class XaeroWorldMapFold {
     }
 
     public static double foldElementCoord(Direction.Axis axis, double coord) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = browsedShape();
         if (shape == null) {
             return coord;
         }
@@ -140,8 +151,8 @@ public final class XaeroWorldMapFold {
         return shape.foldCoord(axis, coord);
     }
 
-    public static double foldFootprintCoord(Direction.Axis axis, double coord) {
-        ToroidalShape shape = shape();
+    public static double foldFootprintCoord(ClientLevel level, Direction.Axis axis, double coord) {
+        ToroidalShape shape = shapeOf(level);
         if (shape == null) {
             return coord;
         }
@@ -150,7 +161,7 @@ public final class XaeroWorldMapFold {
     }
 
     public static int foldWaypointBlock(Direction.Axis axis, int coord) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = browsedShape();
         if (shape == null) {
             return coord;
         }

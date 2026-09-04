@@ -8,7 +8,9 @@ import com.toroidalworld.shape.FlatShape;
 import io.netty.buffer.Unpooled;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -43,9 +45,9 @@ public final class NeoForgePlatform implements Platform {
     }
 
     @Override
-    public void sendWorldShape(ServerPlayer player, FlatShape shape) {
+    public void sendWorldShape(ServerPlayer player, ResourceKey<Level> dimension, FlatShape shape) {
         if (player.connection.hasChannel(WrappingSettingsPayload.TYPE)) {
-            PacketDistributor.sendToPlayer(player, new WrappingSettingsPayload(shape));
+            PacketDistributor.sendToPlayer(player, new WrappingSettingsPayload(dimension, shape));
         }
     }
 

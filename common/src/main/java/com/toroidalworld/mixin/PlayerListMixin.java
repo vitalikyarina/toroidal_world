@@ -66,7 +66,7 @@ public class PlayerListMixin {
     @Inject(method = "placeNewPlayer", at = @At("TAIL"))
     private void toroidal$sendBoundsOnLogin(Connection connection, ServerPlayer player, CommonListenerCookie cookie,
             CallbackInfo ci) {
-        WorldShapeSync.sendTo(player);
+        WorldShapeSync.sendAllTo(player);
     }
 
     @Inject(method = "respawn",
