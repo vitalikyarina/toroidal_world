@@ -59,10 +59,6 @@ public class EntitySectionManagerMixin implements LevelBindable {
             index = 0,
             expect = 4)
     private long toroidal$askThePhysicalChunk(long chunkKey) {
-        if (this.toroidal$level == null) {
-            return chunkKey;
-        }
-
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
         return transformer == null ? chunkKey : transformer.foldChunkKey(chunkKey);
     }

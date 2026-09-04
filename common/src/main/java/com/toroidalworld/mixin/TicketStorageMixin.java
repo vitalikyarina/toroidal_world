@@ -50,15 +50,7 @@ public class TicketStorageMixin implements LevelBindable, LevelBindRegistry {
 
     @Unique
     private long toroidal$foldKey(long key) {
-        if (this.toroidal$level == null) {
-            return key;
-        }
-
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
-        if (transformer == null) {
-            return key;
-        }
-
-        return transformer.foldChunkKey(key);
+        return transformer == null ? key : transformer.foldChunkKey(key);
     }
 }

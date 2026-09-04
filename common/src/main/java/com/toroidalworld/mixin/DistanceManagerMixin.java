@@ -60,6 +60,6 @@ public class DistanceManagerMixin implements LevelBindable {
 
     @Unique
     private @Nullable WorldFold toroidal$wrappedTransformer() {
-        return this.toroidal$level == null ? null : WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
+        return WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
     }
 }
