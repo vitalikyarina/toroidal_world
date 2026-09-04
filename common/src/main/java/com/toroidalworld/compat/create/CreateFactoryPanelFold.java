@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
+import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelBehaviour;
 import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelConnection;
 import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelPosition;
 
@@ -19,7 +20,13 @@ public final class CreateFactoryPanelFold {
         return canonical.equals(position.pos()) ? position : new FactoryPanelPosition(canonical, position.slot());
     }
 
-    public static void canonicalisePanels(@Nullable ServerLevel level,
+    public static void canonicalise(@Nullable ServerLevel level, FactoryPanelBehaviour panel) {
+        canonicalisePanels(level, panel.targetedBy);
+        canonicaliseLinks(level, panel.targetedByLinks);
+        canonicaliseTargets(level, panel.targeting);
+    }
+
+    private static void canonicalisePanels(@Nullable ServerLevel level,
             Map<FactoryPanelPosition, FactoryPanelConnection> connections) {
         if (connections.isEmpty()) {
             return;
@@ -40,7 +47,8 @@ public final class CreateFactoryPanelFold {
         }
     }
 
-    public static void canonicaliseLinks(@Nullable ServerLevel level, Map<BlockPos, FactoryPanelConnection> connections) {
+    private static void canonicaliseLinks(@Nullable ServerLevel level,
+            Map<BlockPos, FactoryPanelConnection> connections) {
         if (connections.isEmpty()) {
             return;
         }
@@ -60,7 +68,7 @@ public final class CreateFactoryPanelFold {
         }
     }
 
-    public static void canonicaliseTargets(@Nullable ServerLevel level, Set<FactoryPanelPosition> targets) {
+    private static void canonicaliseTargets(@Nullable ServerLevel level, Set<FactoryPanelPosition> targets) {
         if (targets.isEmpty()) {
             return;
         }
