@@ -1,16 +1,11 @@
 package com.toroidalworld.compat.c2me;
 
-import java.util.List;
-import java.util.Set;
-
-import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.Mixins;
-import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 import com.bawnorton.mixinsquared.MixinSquaredBootstrap;
+import com.toroidalworld.MixinGatePlugin;
 
-public class C2meMixinPlugin implements IMixinConfigPlugin {
+public class C2meMixinPlugin extends MixinGatePlugin {
     private static final String AQUIFER_MIXIN = "AquiferSeamMixin";
 
     private static final String END_ISLAND_MIXIN = "EndIslandSeamMixin";
@@ -61,27 +56,5 @@ public class C2meMixinPlugin implements IMixinConfigPlugin {
         }
 
         return C2meChunkSystem.present();
-    }
-
-    @Override
-    public String getRefMapperConfig() {
-        return null;
-    }
-
-    @Override
-    public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
-    }
-
-    @Override
-    public List<String> getMixins() {
-        return null;
-    }
-
-    @Override
-    public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-    }
-
-    @Override
-    public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
     }
 }
