@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.junit.jupiter.api.Test;
@@ -14,6 +17,7 @@ import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.shape.FlatShape;
 import com.toroidalworld.options.WorldLoopBounds;
 
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 class SeamFrameTest {
@@ -35,7 +39,8 @@ class SeamFrameTest {
 
     @Test
     void entityOnTheFarHalfPullsThePoseOneLapBack() {
-        Vector3dc shift = SeamFrame.with(FOLD, () -> ENTITY_ON_FAR_HALF, () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));
+        Vector3dc shift = SeamFrame.with(FOLD, (Level) null, () -> ENTITY_ON_FAR_HALF,
+                () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));
         assertEquals(-WIDTH_BLOCKS, shift.x(), 0.0);
         assertEquals(0.0, shift.y(), 0.0);
         assertEquals(0.0, shift.z(), 0.0);
@@ -43,14 +48,16 @@ class SeamFrameTest {
 
     @Test
     void entityOnTheNearHalfLeavesThePoseAlone() {
-        Vector3dc shift = SeamFrame.with(FOLD, () -> ENTITY_ON_NEAR_HALF, () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));
+        Vector3dc shift = SeamFrame.with(FOLD, (Level) null, () -> ENTITY_ON_NEAR_HALF,
+                () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));
         assertTrue(SeamFrame.isNoShift(shift));
     }
 
     @Test
     void theBindingIsScopedAndRestoresTheOuterOne() {
-        SeamFrame.with(FOLD, () -> ENTITY_ON_FAR_HALF, () -> {
-            Vector3dc inner = SeamFrame.with(FOLD, () -> ENTITY_ON_NEAR_HALF, () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));
+        SeamFrame.with(FOLD, (Level) null, () -> ENTITY_ON_FAR_HALF, () -> {
+            Vector3dc inner = SeamFrame.with(FOLD, (Level) null, () -> ENTITY_ON_NEAR_HALF,
+                    () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));
             assertTrue(SeamFrame.isNoShift(inner));
             assertEquals(-WIDTH_BLOCKS, SeamFrame.shiftOf(POSE_NEAR_SEAM).x(), 0.0);
             return null;
@@ -60,18 +67,20 @@ class SeamFrameTest {
 
     @Test
     void aBodyThatThrowsLeavesNoBindingBehind() {
-        assertThrows(IllegalStateException.class, () -> SeamFrame.with(FOLD, () -> ENTITY_ON_FAR_HALF, () -> {
-            throw new IllegalStateException("the body");
-        }));
+        assertThrows(IllegalStateException.class,
+                () -> SeamFrame.with(FOLD, (Level) null, () -> ENTITY_ON_FAR_HALF, () -> {
+                    throw new IllegalStateException("the body");
+                }));
         assertFalse(SeamFrame.isBound());
     }
 
     @Test
     void aThrowFromTheInnerBodyHandsTheOuterBindingBack() {
-        SeamFrame.with(FOLD, () -> ENTITY_ON_FAR_HALF, () -> {
-            assertThrows(IllegalStateException.class, () -> SeamFrame.with(FOLD, () -> ENTITY_ON_NEAR_HALF, () -> {
-                throw new IllegalStateException("the inner body");
-            }));
+        SeamFrame.with(FOLD, (Level) null, () -> ENTITY_ON_FAR_HALF, () -> {
+            assertThrows(IllegalStateException.class,
+                    () -> SeamFrame.with(FOLD, (Level) null, () -> ENTITY_ON_NEAR_HALF, () -> {
+                        throw new IllegalStateException("the inner body");
+                    }));
             assertEquals(-WIDTH_BLOCKS, SeamFrame.shiftOf(POSE_NEAR_SEAM).x(), 0.0);
             return null;
         });
@@ -80,7 +89,52 @@ class SeamFrameTest {
 
     @Test
     void anUnwrappedLevelBindsNothing() {
-        Vector3dc shift = SeamFrame.with((WorldFold) null, () -> ENTITY_ON_FAR_HALF, () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));
+        Vector3dc shift = SeamFrame.with((WorldFold) null, (Level) null, () -> ENTITY_ON_FAR_HALF,
+                () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));
         assertTrue(SeamFrame.isNoShift(shift));
+    }
+
+    @Test
+    void theAnchorIsResolvedOncePerBindingHoweverManyShiftsAreRead() {
+        AtomicInteger asked = new AtomicInteger();
+        SeamFrame.with(FOLD, (Level) null, counting(asked, ENTITY_ON_FAR_HALF), () -> {
+            SeamFrame.shiftOf(POSE_NEAR_SEAM);
+            SeamFrame.shiftOf(POSE_NEAR_SEAM);
+            SeamFrame.shiftOf(POSE_NEAR_SEAM);
+            return null;
+        });
+        assertEquals(1, asked.get());
+    }
+
+    @Test
+    void aBindingNoPoseAsksAboutNeverResolvesItsAnchor() {
+        AtomicInteger asked = new AtomicInteger();
+        SeamFrame.with(FOLD, (Level) null, counting(asked, ENTITY_ON_FAR_HALF), () -> null);
+        assertEquals(0, asked.get());
+    }
+
+    @Test
+    void eachNestedBindingResolvesItsOwnAnchorOnce() {
+        AtomicInteger outer = new AtomicInteger();
+        AtomicInteger inner = new AtomicInteger();
+        SeamFrame.with(FOLD, (Level) null, counting(outer, ENTITY_ON_FAR_HALF), () -> {
+            SeamFrame.shiftOf(POSE_NEAR_SEAM);
+            SeamFrame.with(FOLD, (Level) null, counting(inner, ENTITY_ON_NEAR_HALF), () -> {
+                SeamFrame.shiftOf(POSE_NEAR_SEAM);
+                SeamFrame.shiftOf(POSE_NEAR_SEAM);
+                return null;
+            });
+            SeamFrame.shiftOf(POSE_NEAR_SEAM);
+            return null;
+        });
+        assertEquals(1, outer.get());
+        assertEquals(1, inner.get());
+    }
+
+    private static Supplier<Vec3> counting(AtomicInteger asked, Vec3 anchor) {
+        return () -> {
+            asked.incrementAndGet();
+            return anchor;
+        };
     }
 }
