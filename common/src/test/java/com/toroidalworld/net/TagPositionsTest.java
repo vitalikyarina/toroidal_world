@@ -31,6 +31,8 @@ class TagPositionsTest {
     private static final String TILE_Z_KEY = "TileZ";
     private static final String UNRELATED_KEY = "DesiredLength";
     private static final double UNRELATED_VALUE = 4.0;
+    private static final String COMPOUND_KEY = "Printer";
+    private static final String LIST_KEY = "FlyingBlocks";
 
     private static final List<TagPositions.TagPosition> EVERY_SHAPE = List.of(
             new TagPositions.TagPosition(List.of(PACKED_KEY), TagPositions.PositionShape.PACKED_LONG),
@@ -38,6 +40,11 @@ class TagPositionsTest {
             new TagPositions.TagPosition(List.of(VEC3_KEY), TagPositions.PositionShape.VEC3_LIST),
             new TagPositions.TagPosition(List.of(TILE_X_KEY, TILE_Y_KEY, TILE_Z_KEY),
                     TagPositions.PositionShape.BLOCK_INT_TRIPLE));
+
+    private static final List<TagPositions.TagPosition> EVERY_SHAPE_IN_COMPOUND =
+            addressed(TagPositions.Nesting.COMPOUND, COMPOUND_KEY);
+    private static final List<TagPositions.TagPosition> EVERY_SHAPE_IN_EACH_OF_LIST =
+            addressed(TagPositions.Nesting.EACH_OF_LIST, LIST_KEY);
 
     private interface Anchored {
     }
@@ -100,20 +107,125 @@ class TagPositionsTest {
         return new BlockPos(tag.getInt(TILE_X_KEY), tag.getInt(TILE_Y_KEY), tag.getInt(TILE_Z_KEY));
     }
 
-    @Test
-    void everyShapeComesBackOnTheSeatedCopy() {
+    private static List<TagPositions.TagPosition> addressed(TagPositions.Nesting nesting, String container) {
+        return EVERY_SHAPE.stream()
+                .map(position -> new TagPositions.TagPosition(nesting, container, position.keys(), position.shape()))
+                .toList();
+    }
+
+    private static CompoundTag everyShapeALapOut() {
         CompoundTag tag = new CompoundTag();
         tag.putLong(PACKED_KEY, new BlockPos(3 + LAP_BLOCKS, 102, 0).asLong());
         tag.put(BLOCK_POS_KEY, NbtUtils.writeBlockPos(new BlockPos(7 + LAP_BLOCKS, 102, 0)));
         tag.put(VEC3_KEY, doubleList(0.5 + LAP_BLOCKS, 0.5, 0.5));
         putTriple(tag, new BlockPos(11 + LAP_BLOCKS, 102, 0));
+        return tag;
+    }
 
-        CompoundTag seated = TagPositions.seatedIn(new HomeLap(), EVERY_SHAPE, tag);
+    private static void assertEveryShapeHome(CompoundTag tag, String where) {
+        assertEquals(new BlockPos(3, 102, 0), BlockPos.of(tag.getLong(PACKED_KEY)), where);
+        assertEquals(new BlockPos(7, 102, 0), NbtUtils.readBlockPos(tag, BLOCK_POS_KEY).orElseThrow(), where);
+        assertEquals(new Vec3(0.5, 0.5, 0.5), vec3In(tag, VEC3_KEY), where);
+        assertEquals(new BlockPos(11, 102, 0), tripleIn(tag), where);
+    }
 
-        assertEquals(new BlockPos(3, 102, 0), BlockPos.of(seated.getLong(PACKED_KEY)));
-        assertEquals(new BlockPos(7, 102, 0), NbtUtils.readBlockPos(seated, BLOCK_POS_KEY).orElseThrow());
-        assertEquals(new Vec3(0.5, 0.5, 0.5), vec3In(seated, VEC3_KEY));
-        assertEquals(new BlockPos(11, 102, 0), tripleIn(seated));
+    private static CompoundTag blockPosAt(BlockPos position) {
+        CompoundTag tag = new CompoundTag();
+        tag.put(BLOCK_POS_KEY, NbtUtils.writeBlockPos(position));
+        return tag;
+    }
+
+    @Test
+    void everyShapeComesBackOnTheSeatedCopy() {
+        CompoundTag tag = everyShapeALapOut();
+
+        assertEveryShapeHome(TagPositions.seatedIn(new HomeLap(), EVERY_SHAPE, tag), "top level");
+    }
+
+    @Test
+    void everyShapeInsideANestedCompoundComesBackOnTheSeatedCopy() {
+        CompoundTag printer = everyShapeALapOut();
+        printer.putDouble(UNRELATED_KEY, UNRELATED_VALUE);
+        CompoundTag tag = new CompoundTag();
+        tag.put(COMPOUND_KEY, printer);
+        tag.putDouble(UNRELATED_KEY, UNRELATED_VALUE);
+
+        CompoundTag seated = TagPositions.seatedIn(new HomeLap(), EVERY_SHAPE_IN_COMPOUND, tag);
+
+        assertEveryShapeHome(seated.getCompound(COMPOUND_KEY), COMPOUND_KEY);
+        assertEquals(UNRELATED_VALUE, seated.getCompound(COMPOUND_KEY).getDouble(UNRELATED_KEY));
+        assertEquals(UNRELATED_VALUE, seated.getDouble(UNRELATED_KEY));
+    }
+
+    @Test
+    void everyShapeInEachCompoundOfAListComesBackOnTheSeatedCopy() {
+        CompoundTag second = everyShapeALapOut();
+        second.putDouble(UNRELATED_KEY, UNRELATED_VALUE);
+        ListTag launched = new ListTag();
+        launched.add(everyShapeALapOut());
+        launched.add(second);
+        CompoundTag tag = new CompoundTag();
+        tag.put(LIST_KEY, launched);
+
+        CompoundTag seated = TagPositions.seatedIn(new HomeLap(), EVERY_SHAPE_IN_EACH_OF_LIST, tag);
+
+        ListTag seatedList = seated.getList(LIST_KEY, Tag.TAG_COMPOUND);
+        assertEveryShapeHome(seatedList.getCompound(0), LIST_KEY + "[0]");
+        assertEveryShapeHome(seatedList.getCompound(1), LIST_KEY + "[1]");
+        assertEquals(UNRELATED_VALUE, seatedList.getCompound(1).getDouble(UNRELATED_KEY));
+    }
+
+    @Test
+    void theElementsBesideAFoldedOneSurviveTheList() {
+        ListTag launched = new ListTag();
+        launched.add(blockPosAt(new BlockPos(7, 102, 0)));
+        launched.add(blockPosAt(new BlockPos(9 + LAP_BLOCKS, 102, 0)));
+        CompoundTag tag = new CompoundTag();
+        tag.put(LIST_KEY, launched);
+
+        CompoundTag seated = TagPositions.seatedIn(new HomeLap(), EVERY_SHAPE_IN_EACH_OF_LIST, tag);
+
+        ListTag seatedList = seated.getList(LIST_KEY, Tag.TAG_COMPOUND);
+        assertEquals(new BlockPos(7, 102, 0),
+                NbtUtils.readBlockPos(seatedList.getCompound(0), BLOCK_POS_KEY).orElseThrow());
+        assertEquals(new BlockPos(9, 102, 0),
+                NbtUtils.readBlockPos(seatedList.getCompound(1), BLOCK_POS_KEY).orElseThrow());
+    }
+
+    @Test
+    void aNestedPositionAlreadyHomeIsTheArgumentBack() {
+        CompoundTag tag = new CompoundTag();
+        tag.put(COMPOUND_KEY, blockPosAt(new BlockPos(7, 102, 0)));
+
+        assertSame(tag, TagPositions.seatedIn(new HomeLap(), EVERY_SHAPE_IN_COMPOUND, tag));
+    }
+
+    @Test
+    void aListedPositionAlreadyHomeIsTheArgumentBack() {
+        ListTag launched = new ListTag();
+        launched.add(blockPosAt(new BlockPos(7, 102, 0)));
+        CompoundTag tag = new CompoundTag();
+        tag.put(LIST_KEY, launched);
+
+        assertSame(tag, TagPositions.seatedIn(new HomeLap(), EVERY_SHAPE_IN_EACH_OF_LIST, tag));
+    }
+
+    @Test
+    void aTagWithoutTheNamedContainerIsTheArgumentBack() {
+        CompoundTag tag = new CompoundTag();
+        tag.putDouble(UNRELATED_KEY, UNRELATED_VALUE);
+
+        assertSame(tag, TagPositions.seatedIn(new HomeLap(), EVERY_SHAPE_IN_COMPOUND, tag));
+        assertSame(tag, TagPositions.seatedIn(new HomeLap(), EVERY_SHAPE_IN_EACH_OF_LIST, tag));
+    }
+
+    @Test
+    void anAddressWithoutItsContainerIsRefused() {
+        assertThrows(IllegalArgumentException.class, () -> new TagPositions.TagPosition(
+                TagPositions.Nesting.COMPOUND, null, List.of(BLOCK_POS_KEY), TagPositions.PositionShape.BLOCK_POS));
+        assertThrows(IllegalArgumentException.class, () -> new TagPositions.TagPosition(
+                TagPositions.Nesting.TOP, COMPOUND_KEY, List.of(BLOCK_POS_KEY),
+                TagPositions.PositionShape.BLOCK_POS));
     }
 
     @Test
@@ -318,6 +430,27 @@ class TagPositionsTest {
                     PackedSubject.class, TagPositions.PositionShape.BLOCK_INT_TRIPLE, TILE_X_KEY, TILE_Y_KEY));
             assertThrows(IllegalArgumentException.class, () -> table.register(
                     PackedSubject.class, TagPositions.PositionShape.PACKED_LONG));
+        }
+
+        @Test
+        void anAddressedRegistrationSeatsInsideTheContainerItNames() {
+            TagPositions.Table table = new TagPositions.Table();
+            table.registerIn(PackedSubject.class, COMPOUND_KEY, TagPositions.PositionShape.BLOCK_POS, BLOCK_POS_KEY);
+            table.registerInEach(PackedSubject.class, LIST_KEY, TagPositions.PositionShape.BLOCK_POS, BLOCK_POS_KEY);
+
+            ListTag launched = new ListTag();
+            launched.add(blockPosAt(new BlockPos(9 + LAP_BLOCKS, 102, 0)));
+            CompoundTag tag = new CompoundTag();
+            tag.put(COMPOUND_KEY, blockPosAt(new BlockPos(7 + LAP_BLOCKS, 102, 0)));
+            tag.put(LIST_KEY, launched);
+
+            CompoundTag seated = table.seatedIn(new HomeLap(), PackedSubject.class, tag);
+
+            assertEquals(new BlockPos(7, 102, 0),
+                    NbtUtils.readBlockPos(seated.getCompound(COMPOUND_KEY), BLOCK_POS_KEY).orElseThrow());
+            assertEquals(new BlockPos(9, 102, 0), NbtUtils
+                    .readBlockPos(seated.getList(LIST_KEY, Tag.TAG_COMPOUND).getCompound(0), BLOCK_POS_KEY)
+                    .orElseThrow());
         }
 
         @Test

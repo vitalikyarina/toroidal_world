@@ -109,12 +109,64 @@ public final class TagPositions {
         abstract @Nullable CompoundTag seated(Seat seat, CompoundTag tag, List<String> keys);
     }
 
-    public record TagPosition(List<String> keys, PositionShape shape) {
+    public enum Nesting {
+        TOP {
+            @Override
+            @Nullable CompoundTag seated(Seat seat, CompoundTag tag, TagPosition position) {
+                return position.shape().seated(seat, tag, position.keys());
+            }
+        },
+        COMPOUND {
+            @Override
+            @Nullable CompoundTag seated(Seat seat, CompoundTag tag, TagPosition position) {
+                String container = position.container();
+                CompoundTag stored = tag.getCompound(container);
+                CompoundTag moved = position.shape().seated(seat, stored, position.keys());
+                return moved == null ? null : fragment(container, merged(stored, moved));
+            }
+        },
+        EACH_OF_LIST {
+            @Override
+            @Nullable CompoundTag seated(Seat seat, CompoundTag tag, TagPosition position) {
+                String container = position.container();
+                ListTag stored = tag.getList(container, Tag.TAG_COMPOUND);
+                ListTag seated = null;
+                for (int index = 0; index < stored.size(); index++) {
+                    CompoundTag element = stored.getCompound(index);
+                    CompoundTag moved = position.shape().seated(seat, element, position.keys());
+                    if (moved == null) {
+                        continue;
+                    }
+
+                    if (seated == null) {
+                        seated = new ListTag();
+                        seated.addAll(stored);
+                    }
+
+                    seated.set(index, merged(element, moved));
+                }
+
+                return seated == null ? null : fragment(container, seated);
+            }
+        };
+
+        abstract @Nullable CompoundTag seated(Seat seat, CompoundTag tag, TagPosition position);
+    }
+
+    public record TagPosition(Nesting nesting, @Nullable String container, List<String> keys, PositionShape shape) {
+        public TagPosition(List<String> keys, PositionShape shape) {
+            this(Nesting.TOP, null, keys, shape);
+        }
+
         public TagPosition {
             keys = List.copyOf(keys);
             if (keys.size() != shape.keyCount()) {
                 throw new IllegalArgumentException(shape + " spreads a position over " + shape.keyCount()
                         + " keys, and " + keys.size() + " were given");
+            }
+
+            if ((container == null) != (nesting == Nesting.TOP)) {
+                throw new IllegalArgumentException(nesting + " names a container, and " + container + " was given");
             }
         }
     }
@@ -124,6 +176,19 @@ public final class TagPositions {
         private volatile Map<Class<?>, List<TagPosition>> resolved = new ConcurrentHashMap<>();
 
         public void register(Class<?> subjectType, PositionShape shape, String... keys) {
+            register(subjectType, Nesting.TOP, null, shape, keys);
+        }
+
+        public void registerIn(Class<?> subjectType, String container, PositionShape shape, String... keys) {
+            register(subjectType, Nesting.COMPOUND, container, shape, keys);
+        }
+
+        public void registerInEach(Class<?> subjectType, String container, PositionShape shape, String... keys) {
+            register(subjectType, Nesting.EACH_OF_LIST, container, shape, keys);
+        }
+
+        private void register(Class<?> subjectType, Nesting nesting, @Nullable String container,
+                PositionShape shape, String... keys) {
             int keyCount = shape.keyCount();
             if (keys.length == 0 || keys.length % keyCount != 0) {
                 throw new IllegalArgumentException(shape + " spreads a position over " + keyCount + " keys, and "
@@ -132,7 +197,8 @@ public final class TagPositions {
 
             List<TagPosition> added = new ArrayList<>();
             for (int index = 0; index < keys.length; index += keyCount) {
-                added.add(new TagPosition(Arrays.asList(keys).subList(index, index + keyCount), shape));
+                added.add(new TagPosition(nesting, container, Arrays.asList(keys).subList(index, index + keyCount),
+                        shape));
             }
 
             registered.merge(subjectType, List.copyOf(added), Table::joined);
@@ -171,24 +237,27 @@ public final class TagPositions {
     public static CompoundTag seatedIn(Seat seat, List<TagPosition> positions, CompoundTag tag) {
         CompoundTag folded = null;
         for (TagPosition position : positions) {
-            CompoundTag moved = position.shape().seated(seat, tag, position.keys());
-            if (moved == null) {
-                continue;
-            }
-
-            if (folded == null) {
-                folded = new CompoundTag();
-                for (String key : tag.getAllKeys()) {
-                    folded.put(key, tag.get(key));
-                }
-            }
-
-            for (String key : moved.getAllKeys()) {
-                folded.put(key, moved.get(key));
+            CompoundTag current = folded == null ? tag : folded;
+            CompoundTag moved = position.nesting().seated(seat, current, position);
+            if (moved != null) {
+                folded = merged(current, moved);
             }
         }
 
         return folded == null ? tag : folded;
+    }
+
+    private static CompoundTag merged(CompoundTag stored, CompoundTag moved) {
+        CompoundTag copy = new CompoundTag();
+        for (String key : stored.getAllKeys()) {
+            copy.put(key, stored.get(key));
+        }
+
+        for (String key : moved.getAllKeys()) {
+            copy.put(key, moved.get(key));
+        }
+
+        return copy;
     }
 
     private static CompoundTag fragment(String key, Tag value) {

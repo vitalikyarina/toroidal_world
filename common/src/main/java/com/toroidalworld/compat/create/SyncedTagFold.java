@@ -18,6 +18,16 @@ public final class SyncedTagFold {
         TABLE.register(blockEntityType, shape, keys);
     }
 
+    public static void registerIn(Class<?> blockEntityType, String container, TagPositions.PositionShape shape,
+            String... keys) {
+        TABLE.registerIn(blockEntityType, container, shape, keys);
+    }
+
+    public static void registerInEach(Class<?> blockEntityType, String container, TagPositions.PositionShape shape,
+            String... keys) {
+        TABLE.registerInEach(blockEntityType, container, shape, keys);
+    }
+
     public static CompoundTag inFrameOf(BlockEntity blockEntity, CompoundTag tag) {
         Level level = blockEntity.getLevel();
         if (level == null || !level.isClientSide) {

@@ -32,6 +32,14 @@ class SyncedTagFoldTest {
     private static final String UNRELATED_KEY = "DesiredLength";
     private static final double UNRELATED_VALUE = 4.0;
 
+    private static final String PRINTER_KEY = "Printer";
+    private static final String ANCHOR_KEY = "Anchor";
+    private static final String CURRENT_POS_KEY = "CurrentPos";
+    private static final String FLYING_BLOCKS_KEY = "FlyingBlocks";
+    private static final String TARGET_KEY = "Target";
+
+    private static final BlockPos SCHEMATIC_CURSOR = new BlockPos(WORLD_BLOCKS - 4, 2, 3);
+
     private static final WorldLoopBounds BOUNDS =
             new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
 
@@ -56,10 +64,39 @@ class SyncedTagFoldTest {
     private static final class UnregisteredSubject {
     }
 
+    private static final class CannonSubject {
+    }
+
     static {
         TABLE.register(PackedSubject.class, TagPositions.PositionShape.PACKED_LONG, PACKED_KEY);
         TABLE.register(Partnered.class, TagPositions.PositionShape.BLOCK_POS, BLOCK_POS_KEY);
         TABLE.register(Vec3Subject.class, TagPositions.PositionShape.VEC3_LIST, VEC3_KEY);
+        TABLE.registerIn(CannonSubject.class, PRINTER_KEY, TagPositions.PositionShape.BLOCK_POS, ANCHOR_KEY);
+        TABLE.registerInEach(CannonSubject.class, FLYING_BLOCKS_KEY, TagPositions.PositionShape.BLOCK_POS,
+                TARGET_KEY);
+    }
+
+    private static CompoundTag cannonTag(BlockPos anchor, BlockPos... targets) {
+        CompoundTag printer = new CompoundTag();
+        printer.put(ANCHOR_KEY, NbtUtils.writeBlockPos(anchor));
+        printer.put(CURRENT_POS_KEY, NbtUtils.writeBlockPos(SCHEMATIC_CURSOR));
+
+        ListTag flying = new ListTag();
+        for (BlockPos target : targets) {
+            CompoundTag launched = new CompoundTag();
+            launched.put(TARGET_KEY, NbtUtils.writeBlockPos(target));
+            flying.add(launched);
+        }
+
+        CompoundTag tag = new CompoundTag();
+        tag.put(PRINTER_KEY, printer);
+        tag.put(FLYING_BLOCKS_KEY, flying);
+        return tag;
+    }
+
+    private static BlockPos targetIn(CompoundTag tag, int index) {
+        return NbtUtils.readBlockPos(tag.getList(FLYING_BLOCKS_KEY, Tag.TAG_COMPOUND).getCompound(index), TARGET_KEY)
+                .orElseThrow();
     }
 
     private static ListTag doubleList(double x, double y, double z) {
@@ -73,6 +110,36 @@ class SyncedTagFoldTest {
     private static Vec3 vec3In(CompoundTag tag, String key) {
         ListTag list = tag.getList(key, Tag.TAG_DOUBLE);
         return new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
+    }
+
+    @Test
+    void aCannonAnchorAndItsFlyingBlocksAWorldAwayComeBackBesideTheCannon() {
+        BlockPos worldPosition = new BlockPos(14, 102, 0);
+        CompoundTag tag = cannonTag(new BlockPos(15 + WORLD_BLOCKS, 102, 0), new BlockPos(16 + WORLD_BLOCKS, 102, 0),
+                new BlockPos(17 + WORLD_BLOCKS, 102, 0));
+
+        for (WorldFold fold : FOLDS) {
+            CompoundTag seated = SyncedTagFold.seatedIn(TABLE, fold, worldPosition, CannonSubject.class, tag);
+
+            assertEquals(new BlockPos(15, 102, 0),
+                    NbtUtils.readBlockPos(seated.getCompound(PRINTER_KEY), ANCHOR_KEY).orElseThrow(), "in " + fold);
+            assertEquals(new BlockPos(16, 102, 0), targetIn(seated, 0), "in " + fold);
+            assertEquals(new BlockPos(17, 102, 0), targetIn(seated, 1), "in " + fold);
+        }
+    }
+
+    @Test
+    void theCannonsSchematicCursorIsNotAWorldPositionAndStaysWhereItWas() {
+        BlockPos worldPosition = new BlockPos(14, 102, 0);
+        CompoundTag tag = cannonTag(new BlockPos(15 + WORLD_BLOCKS, 102, 0), new BlockPos(16 + WORLD_BLOCKS, 102, 0));
+
+        for (WorldFold fold : FOLDS) {
+            CompoundTag seated = SyncedTagFold.seatedIn(TABLE, fold, worldPosition, CannonSubject.class, tag);
+
+            assertEquals(SCHEMATIC_CURSOR,
+                    NbtUtils.readBlockPos(seated.getCompound(PRINTER_KEY), CURRENT_POS_KEY).orElseThrow(),
+                    "in " + fold);
+        }
     }
 
     @Test
