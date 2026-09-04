@@ -13,7 +13,9 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 
 public final class FabricPlatform implements Platform {
     private static final String LOADER_MOD_ID = "fabricloader";
@@ -44,9 +46,9 @@ public final class FabricPlatform implements Platform {
     }
 
     @Override
-    public void sendWorldShape(ServerPlayer player, FlatShape shape) {
+    public void sendWorldShape(ServerPlayer player, ResourceKey<Level> dimension, FlatShape shape) {
         if (ServerPlayNetworking.canSend(player, WrappingSettingsPayload.TYPE)) {
-            ServerPlayNetworking.send(player, new WrappingSettingsPayload(shape));
+            ServerPlayNetworking.send(player, new WrappingSettingsPayload(dimension, shape));
         }
     }
 
