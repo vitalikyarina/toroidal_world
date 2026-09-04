@@ -35,6 +35,10 @@ public final class WorldShapeReport {
     public record Line(boolean broken, String text) {
     }
 
+    record Note(boolean broken, String text) {
+        static final Note NONE = new Note(false, "");
+    }
+
     public static List<Line> lines(MinecraftServer server) {
         ServerLevel overworld = server.overworld();
         FlatShape overworldShape = wrappedShapeOf(overworld);
@@ -72,14 +76,16 @@ public final class WorldShapeReport {
     private static Line wrappedLine(MinecraftServer server, ServerLevel level, FlatShape shape) {
         WorldLoopBounds bounds = shape.bounds();
         StemOverride override = overrideOf(level);
-        String violations = netherScale(server, level, bounds) + endWidth(level, bounds);
-        return new Line(!violations.isEmpty(), "World shape: " + level.dimension().location()
+        Note netherScale = netherScale(server, level, bounds);
+        Note endWidth = endWidth(level, bounds);
+        return new Line(netherScale.broken() || endWidth.broken(), "World shape: " + level.dimension().location()
                 + " generator=" + generatorId(level.getChunkSource().getGenerator())
                 + " shape=" + shapeSource(level, override)
                 + " identification=" + shape.identification()
                 + " x=" + axisSpan(bounds.x()) + " z=" + axisSpan(bounds.z()) + " chunks"
                 + ", " + widths(bounds)
-                + violations
+                + netherScale.text()
+                + endWidth.text()
                 + datapackOverride(override)
                 + tail());
     }
@@ -172,50 +178,50 @@ public final class WorldShapeReport {
         return WorldLoopSizes.describe(chunkWidth);
     }
 
-    private static String netherScale(MinecraftServer server, ServerLevel level, WorldLoopBounds bounds) {
+    private static Note netherScale(MinecraftServer server, ServerLevel level, WorldLoopBounds bounds) {
         if (level.dimension() != Level.NETHER) {
-            return "";
+            return Note.NONE;
         }
 
         FlatShape overworldShape = wrappedShapeOf(server.overworld());
-        return overworldShape == null ? "" : netherScaleNote(overworldShape.bounds(), bounds);
+        return overworldShape == null ? Note.NONE : netherScaleNote(overworldShape.bounds(), bounds);
     }
 
-    static String netherScaleNote(WorldLoopBounds overworld, WorldLoopBounds nether) {
+    static Note netherScaleNote(WorldLoopBounds overworld, WorldLoopBounds nether) {
         for (Direction.Axis axis : HORIZONTAL) {
             if (sharedLoop(overworld, nether, axis)
                     && overworld.chunkWidth(axis) % nether.chunkWidth(axis) != 0) {
-                return ", BROKEN portal scale on the " + axis.getName() + " axis: an overworld of "
+                return new Note(true, ", BROKEN portal scale on the " + axis.getName() + " axis: an overworld of "
                         + WorldLoopSizes.describe(overworld.chunkWidth(axis)) + " does not divide by a nether of "
                         + WorldLoopSizes.describe(nether.chunkWidth(axis))
-                        + ", so portals will not line up across the seam";
+                        + ", so portals will not line up across the seam");
             }
         }
 
         for (Direction.Axis axis : HORIZONTAL) {
             if (sharedLoop(overworld, nether, axis)) {
-                return ", scale 1:" + overworld.chunkWidth(axis) / nether.chunkWidth(axis);
+                return new Note(false, ", scale 1:" + overworld.chunkWidth(axis) / nether.chunkWidth(axis));
             }
         }
 
-        return "";
+        return Note.NONE;
     }
 
-    private static String endWidth(ServerLevel level, WorldLoopBounds bounds) {
-        return level.dimension() != Level.END ? "" : endWidthNote(bounds);
+    private static Note endWidth(ServerLevel level, WorldLoopBounds bounds) {
+        return level.dimension() != Level.END ? Note.NONE : endWidthNote(bounds);
     }
 
-    static String endWidthNote(WorldLoopBounds end) {
+    static Note endWidthNote(WorldLoopBounds end) {
         for (Direction.Axis axis : HORIZONTAL) {
             if (end.loops(axis) && end.chunkWidth(axis) < WorldLoopSizes.END_MIN_CHUNK_WIDTH) {
-                return ", BROKEN End width on the " + axis.getName() + " axis: "
+                return new Note(true, ", BROKEN End width on the " + axis.getName() + " axis: "
                         + WorldLoopSizes.describe(end.chunkWidth(axis)) + " is under the "
                         + WorldLoopSizes.describe(WorldLoopSizes.END_MIN_CHUNK_WIDTH)
-                        + " the outer islands need, so no end cities and no elytra";
+                        + " the outer islands need, so no end cities and no elytra");
             }
         }
 
-        return "";
+        return Note.NONE;
     }
 
     private static boolean sharedLoop(WorldLoopBounds overworld, WorldLoopBounds nether, Direction.Axis axis) {
