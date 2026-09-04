@@ -18,6 +18,7 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.toroidalworld.compat.AxisCopies;
+import com.toroidalworld.compat.xaero.XaeroInjectionTargets;
 import com.toroidalworld.compat.xaero.XaeroWorldMapFold;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -175,7 +176,7 @@ public abstract class GuiMapMixin {
             method = "extractRenderState",
             at = @At(
                     value = "INVOKE",
-                    target = "Lxaero/map/MapProcessor;getLeafMapRegion(IIIZ)Lxaero/map/region/MapRegion;"))
+                    target = XaeroInjectionTargets.MAP_PROCESSOR_GET_LEAF_MAP_REGION))
     private xaero.map.region.MapRegion toroidal$fetchLeafRegion(MapProcessor processor, int caveLayer, int regX, int regZ, boolean create) {
         xaero.map.region.MapRegion original = processor.getLeafMapRegion(caveLayer, regX, regZ, create);
         if (original != null || !XaeroWorldMapFold.active()) {

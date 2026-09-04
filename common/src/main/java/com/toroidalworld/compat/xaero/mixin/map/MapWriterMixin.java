@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
+import com.toroidalworld.compat.xaero.XaeroInjectionTargets;
 import com.toroidalworld.compat.xaero.XaeroWorldMapFold;
 
 import net.minecraft.core.Direction;
@@ -57,7 +58,7 @@ public abstract class MapWriterMixin {
             method = "onRender",
             at = @At(
                     value = "INVOKE",
-                    target = "Lxaero/map/MapProcessor;getLeafMapRegion(IIIZ)Lxaero/map/region/MapRegion;"))
+                    target = XaeroInjectionTargets.MAP_PROCESSOR_GET_LEAF_MAP_REGION))
     private MapRegion toroidal$visitCanonicalRegion(MapProcessor processor, int caveLayer, int regionX, int regionZ, boolean create) {
         if (!XaeroWorldMapFold.active()) {
             return processor.getLeafMapRegion(caveLayer, regionX, regionZ, create);
