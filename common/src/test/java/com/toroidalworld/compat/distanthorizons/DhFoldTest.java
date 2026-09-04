@@ -20,7 +20,6 @@ class DhFoldTest {
     private static final byte LEAF = 6;
     private static final byte CHUNK_16 = 8;
     private static final byte WORLD = 10;
-    private static final byte OVER_WORLD = 11;
 
     private static final int WIDTH_CHUNKS = 64;
     private static final int WIDTH_BLOCKS = WIDTH_CHUNKS * 16;
@@ -82,26 +81,156 @@ class DhFoldTest {
     class ExactnessIsDivisibility {
         @Test
         void aPowerOfTwoWorldFoldsEveryLevelUpToItsOwnWidth() {
-            ToroidalShape shape = torus(0, WIDTH_CHUNKS);
-            assertTrue(DhFold.foldsExactly(shape, Direction.Axis.X, LEAF));
-            assertTrue(DhFold.foldsExactly(shape, Direction.Axis.X, WORLD));
-            assertFalse(DhFold.foldsExactly(shape, Direction.Axis.X, OVER_WORLD));
-            assertEquals(WORLD, DhFold.maxExactDetailLevel(shape));
+            assertEquals(WORLD, DhFold.maxExactDetailLevel(torus(0, WIDTH_CHUNKS)));
         }
 
         @Test
         void anOddWidthStopsAtTheLargestPowerOfTwoDividingIt() {
-            ToroidalShape shape = torus(0, 100);
-            assertTrue(DhFold.foldsExactly(shape, Direction.Axis.X, LEAF));
-            assertFalse(DhFold.foldsExactly(shape, Direction.Axis.X, (byte) 7));
-            assertEquals(6, DhFold.maxExactDetailLevel(shape));
+            assertEquals(LEAF, DhFold.maxExactDetailLevel(torus(0, 100)));
         }
 
         @Test
         void theUnboundedAxisNeverLimits() {
-            ToroidalShape cylinder = cylinder(0, WIDTH_CHUNKS);
-            assertTrue(DhFold.foldsExactly(cylinder, Direction.Axis.Z, OVER_WORLD));
-            assertEquals(WORLD, DhFold.maxExactDetailLevel(cylinder));
+            assertEquals(WORLD, DhFold.maxExactDetailLevel(cylinder(0, WIDTH_CHUNKS)));
+        }
+
+        @Test
+        void aShapeLoopingOnNoAxisNeverLimits() {
+            assertEquals(Byte.MAX_VALUE, DhFold.maxExactDetailLevel(TestShapes.of(WorldFolds.NOOP)));
+        }
+    }
+
+    @Nested
+    class TheWidestSectionThatMayRender {
+        @Test
+        void aWorldOf1024BlocksRendersSectionsOf1024Blocks() {
+            assertEquals(WORLD, DhFold.maxRenderableDetailLevel(torus(0, WIDTH_CHUNKS), LEAF));
+        }
+
+        @Test
+        void aWorldOf1664BlocksRendersSectionsOf128Blocks() {
+            assertEquals(7, DhFold.maxRenderableDetailLevel(torus(0, 104), LEAF));
+        }
+
+        @Test
+        void aWorldOf1600BlocksRendersOnlyTheLeaf() {
+            assertEquals(LEAF, DhFold.maxRenderableDetailLevel(torus(0, 100), LEAF));
+        }
+
+        @Test
+        void aWorldOf1616BlocksNoSectionDividesStillRendersTheLeaf() {
+            assertEquals(LEAF, DhFold.maxRenderableDetailLevel(torus(0, 101), LEAF));
+        }
+
+        @Test
+        void aWorldOf800BlocksNoSectionDividesStillRendersTheLeaf() {
+            assertEquals(LEAF, DhFold.maxRenderableDetailLevel(torus(0, 50), LEAF));
+        }
+    }
+
+    @Nested
+    class AlignmentCountsAsMuchAsWidth {
+        @Test
+        void aWorldWhoseOriginIsOffTheGridStopsAtTheLevelItsOriginAllows() {
+            assertEquals(LEAF, DhFold.maxExactDetailLevel(torus(-52, 52)));
+        }
+
+        @Test
+        void theSameWidthStartingOnTheGridReachesTheLevelItsWidthAllows() {
+            assertEquals(7, DhFold.maxExactDetailLevel(torus(0, 104)));
+        }
+
+        @Test
+        void aWorldStartingAtZeroIsLimitedByItsWidthAlone() {
+            assertEquals(WORLD, DhFold.maxExactDetailLevel(torus(0, WIDTH_CHUNKS)));
+        }
+    }
+
+    @Nested
+    class KeysFoldOnlyWhereTheLeafDividesTheWorld {
+        @Test
+        void aWidthTheLeafDividesFoldsWithoutCollision() {
+            assertTrue(DhFold.keysFoldWithoutCollision(torus(0, 104), LEAF));
+            assertTrue(DhFold.keysFoldWithoutCollision(torus(0, WIDTH_CHUNKS), LEAF));
+        }
+
+        @Test
+        void aWidthTheLeafDoesNotDivideCollides() {
+            assertFalse(DhFold.keysFoldWithoutCollision(torus(0, 101), LEAF));
+            assertFalse(DhFold.keysFoldWithoutCollision(torus(0, 50), LEAF));
+        }
+
+        @Test
+        void theUnboundedAxisOfACylinderNeverBlocksTheFold() {
+            assertTrue(DhFold.keysFoldWithoutCollision(cylinder(0, 104), LEAF));
+        }
+    }
+
+    @Nested
+    class ASectionIsAddressableOrItIsNotDrawn {
+        private static final byte SECTION_256 = 8;
+
+        @Test
+        void aSectionInsideTheWorldIsAddressableAtEveryLevel() {
+            ToroidalShape shape = torus(0, 101);
+            assertTrue(DhFold.isAddressableSection(shape, LEAF, 5, 5));
+            assertTrue(DhFold.isAddressableSection(shape, SECTION_256, 1, 1));
+        }
+
+        @Test
+        void aSectionPastTheSeamIsAddressableWhenItsWidthDividesTheWorld() {
+            assertTrue(DhFold.isAddressableSection(torus(0, 104), LEAF, 26, 26));
+        }
+
+        @Test
+        void aSectionPastTheSeamIsNotAddressableWhenItsWidthDoesNot() {
+            ToroidalShape shape = torus(0, 101);
+            assertFalse(DhFold.foldKeepsTheGrid(shape, Direction.Axis.X, LEAF, 26));
+            assertFalse(DhFold.isAddressableSection(shape, LEAF, 26, 26));
+        }
+
+        @Test
+        void aSectionHangingOverTheWorldEdgeIsNotAddressable() {
+            ToroidalShape shape = torus(0, 101);
+            assertTrue(DhFold.foldKeepsTheGrid(shape, Direction.Axis.X, LEAF, 25));
+            assertFalse(DhFold.foldKeepsTheSpan(shape, Direction.Axis.X, LEAF, 25));
+            assertFalse(DhFold.isAddressableSection(shape, LEAF, 25, 25));
+        }
+
+        @Test
+        void aCoarseSectionInsideAWorldItDoesNotDivideIsStillAddressable() {
+            ToroidalShape shape = torus(0, 104);
+            assertTrue(DhFold.isAddressableSection(shape, SECTION_256, 5, 5));
+            assertFalse(DhFold.foldKeepsTheSpan(shape, Direction.Axis.X, SECTION_256, 6));
+        }
+
+        @Test
+        void theUnboundedAxisOfACylinderIsAlwaysAddressable() {
+            assertTrue(DhFold.foldKeepsTheGrid(cylinder(0, 101), Direction.Axis.Z, LEAF, 9999));
+            assertTrue(DhFold.foldKeepsTheSpan(cylinder(0, 101), Direction.Axis.Z, LEAF, 9999));
+        }
+    }
+
+    @Nested
+    class TheCapReachesDhInItsOwnUnit {
+        @Test
+        void aWorldOf1024BlocksAllowsSectionsOf1024Blocks() {
+            assertEquals(4, DhFold.maxExpectedDetailLevel(torus(0, WIDTH_CHUNKS), LEAF));
+        }
+
+        @Test
+        void aWorldOf1664BlocksAllowsSectionsOf128Blocks() {
+            assertEquals(1, DhFold.maxExpectedDetailLevel(torus(0, 104), LEAF));
+        }
+
+        @Test
+        void aWorldOf1600BlocksAllowsOnlyTheLeaf() {
+            assertEquals(0, DhFold.maxExpectedDetailLevel(torus(0, 100), LEAF));
+        }
+
+        @Test
+        void aWorldNoSectionDividesStopsAtTheLeafRatherThanBelowIt() {
+            assertEquals(0, DhFold.maxExpectedDetailLevel(torus(0, 101), LEAF));
         }
     }
 
