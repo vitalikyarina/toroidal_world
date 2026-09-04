@@ -15,6 +15,14 @@ public final class ModPresence {
         return new ModPresence(logger, ModPresence.class.getClassLoader(), resource, gateLabel);
     }
 
+    public static boolean probe(String resource) {
+        return probe(ModPresence.class.getClassLoader(), resource);
+    }
+
+    static boolean probe(ClassLoader classLoader, String resource) {
+        return classLoader.getResource(resource) != null;
+    }
+
     ModPresence(Logger logger, ClassLoader classLoader, String resource, String gateLabel) {
         this.logger = logger;
         this.classLoader = classLoader;
@@ -24,7 +32,7 @@ public final class ModPresence {
 
     public synchronized boolean present() {
         if (!this.probed) {
-            this.present = this.classLoader.getResource(this.resource) != null;
+            this.present = probe(this.classLoader, this.resource);
             this.probed = true;
             this.logger.info("{}={}", this.gateLabel, this.present);
         }
