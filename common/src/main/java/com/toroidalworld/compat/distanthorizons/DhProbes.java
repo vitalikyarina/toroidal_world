@@ -1,15 +1,22 @@
 package com.toroidalworld.compat.distanthorizons;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
+import com.toroidalworld.api.ToroidalShape;
 import com.seibel.distanthorizons.core.level.IDhLevel;
+
+import net.minecraft.core.Direction;
 
 public final class DhProbes {
     private static final Logger LOGGER = LogUtils.getLogger();
 
+    private static final Set<String> SEEN_KEY_FOLDS = ConcurrentHashMap.newKeySet();
+
     private static volatile long lastRadiusCap = Long.MIN_VALUE;
-    private static volatile long lastDetailCap = Long.MIN_VALUE;
 
     public static void radiusCapped(int configChunks, int capChunks) {
         long pair = ((long) configChunks << 32) | (capChunks & 0xFFFFFFFFL);
@@ -19,12 +26,14 @@ public final class DhProbes {
         }
     }
 
-    public static void detailCapped(byte expected, byte cap) {
-        long pair = ((long) expected << 32) | (cap & 0xFFFFFFFFL);
-        if (pair != lastDetailCap) {
-            lastDetailCap = pair;
-            LOGGER.info("[dh-compat] detail_capped expected={} cap={}", expected, cap);
+    public static void keyFold(ToroidalShape shape, boolean folded) {
+        int widthX = shape.widthBlocks(Direction.Axis.X);
+        int widthZ = shape.widthBlocks(Direction.Axis.Z);
+        if (!SEEN_KEY_FOLDS.add(folded + ":" + widthX + ":" + widthZ)) {
+            return;
         }
+
+        LOGGER.info("[dh-compat] key_fold folded={} width_x_blocks={} width_z_blocks={}", folded, widthX, widthZ);
     }
 
     public static void repoShape(Object repo, IDhLevel level, boolean present) {

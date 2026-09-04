@@ -34,7 +34,7 @@ public class AbstractDhRepoMixin implements DhRepoLevel {
 
     @Override
     public ToroidalShape toroidal$shape() {
-        ToroidalShape shape = DhShapes.of(this.toroidal$level);
+        ToroidalShape shape = DhShapes.ofFoldedKeys(this.toroidal$level);
         boolean present = shape != null;
         if (this.toroidal$shapeSeen == null || this.toroidal$shapeSeen != present) {
             this.toroidal$shapeSeen = present;

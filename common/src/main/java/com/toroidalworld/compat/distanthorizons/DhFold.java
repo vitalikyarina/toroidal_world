@@ -11,19 +11,54 @@ public final class DhFold {
         return 1 << detailLevel;
     }
 
-    public static boolean foldsExactly(ToroidalShape shape, Direction.Axis axis, byte detailLevel) {
-        return !shape.loops(axis) || shape.widthBlocks(axis) % sectionWidthBlocks(detailLevel) == 0;
-    }
-
     public static byte maxExactDetailLevel(ToroidalShape shape) {
-        int cap = Integer.MAX_VALUE;
+        int cap = Byte.MAX_VALUE;
         for (Direction.Axis axis : HORIZONTAL) {
             if (shape.loops(axis)) {
                 cap = Math.min(cap, Integer.numberOfTrailingZeros(shape.widthBlocks(axis)));
+                cap = Math.min(cap, Integer.numberOfTrailingZeros(shape.minBlock(axis)));
             }
         }
 
         return (byte) cap;
+    }
+
+    public static byte maxRenderableDetailLevel(ToroidalShape shape, byte leafDetailLevel) {
+        return (byte) Math.max(maxExactDetailLevel(shape), leafDetailLevel);
+    }
+
+    public static byte maxExpectedDetailLevel(ToroidalShape shape, byte leafDetailLevel) {
+        return (byte) (maxRenderableDetailLevel(shape, leafDetailLevel) - leafDetailLevel);
+    }
+
+    public static boolean keysFoldWithoutCollision(ToroidalShape shape, byte leafDetailLevel) {
+        return maxExactDetailLevel(shape) >= leafDetailLevel;
+    }
+
+    public static boolean foldKeepsTheGrid(ToroidalShape shape, Direction.Axis axis, byte detailLevel, int section) {
+        if (!shape.loops(axis)) {
+            return true;
+        }
+
+        int width = sectionWidthBlocks(detailLevel);
+        return Math.floorMod(shape.foldBlock(axis, section * width), width) == 0;
+    }
+
+    public static boolean foldKeepsTheSpan(ToroidalShape shape, Direction.Axis axis, byte detailLevel, int section) {
+        if (!shape.loops(axis)) {
+            return true;
+        }
+
+        int width = sectionWidthBlocks(detailLevel);
+        int last = shape.foldBlock(axis, section * width) + width - 1;
+        return shape.foldBlock(axis, last) == last;
+    }
+
+    public static boolean isAddressableSection(ToroidalShape shape, byte detailLevel, int sectionX, int sectionZ) {
+        return foldKeepsTheGrid(shape, Direction.Axis.X, detailLevel, sectionX)
+                && foldKeepsTheSpan(shape, Direction.Axis.X, detailLevel, sectionX)
+                && foldKeepsTheGrid(shape, Direction.Axis.Z, detailLevel, sectionZ)
+                && foldKeepsTheSpan(shape, Direction.Axis.Z, detailLevel, sectionZ);
     }
 
     public static int foldSection(ToroidalShape shape, Direction.Axis axis, byte detailLevel, int section) {
