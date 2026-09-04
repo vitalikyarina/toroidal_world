@@ -12,6 +12,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.coordinates.WorldCoordinates;
+import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
 
 @Mixin(WorldCoordinates.class)
@@ -25,7 +26,7 @@ public class CommandCoordinatesMixin {
         }
 
         WorldCoordinates self = (WorldCoordinates) (Object) this;
-        SeamCommandErrors.requireInsideWorld(transformer.bounds().x(), self.x());
-        SeamCommandErrors.requireInsideWorld(transformer.bounds().z(), self.z());
+        SeamCommandErrors.requireInsideWorld(transformer, Direction.Axis.X, self.x());
+        SeamCommandErrors.requireInsideWorld(transformer, Direction.Axis.Z, self.z());
     }
 }
