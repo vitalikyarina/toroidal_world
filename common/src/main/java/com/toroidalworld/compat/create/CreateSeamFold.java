@@ -166,6 +166,10 @@ public final class CreateSeamFold {
                 : new BlockHitResult(location, hit.getDirection(), wrapped, hit.isInside());
     }
 
+    public static BlockPos canonical(@Nullable ResourceKey<Level> dimension, BlockPos position) {
+        return canonical(transformerOf(null, dimension), position);
+    }
+
     public static BlockPos canonical(@Nullable ServerLevel level, BlockPos position) {
         if (level == null) {
             return position;

@@ -1,10 +1,13 @@
 package com.toroidalworld.compat.create.mixin;
 
+import java.util.Optional;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -13,6 +16,7 @@ import com.simibubi.create.content.trains.entity.TravellingPoint;
 import com.toroidalworld.compat.create.CarriageEntityFrame;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -28,6 +32,12 @@ public abstract class CarriagePairMixin {
     private double toroidal$foldAnchorSpan(Vec3 leading, Vec3 trailing, Operation<Double> original) {
         return original.call(leading,
                 CreateSeamFold.nearestCopy(getLeadingPoint().node1.getLocation().dimension, leading, trailing));
+    }
+
+    @ModifyReturnValue(method = "getPositionInDimension", at = @At("RETURN"))
+    private Optional<BlockPos> toroidal$publishCanonicalPosition(Optional<BlockPos> position,
+            @Local(argsOnly = true) ResourceKey<Level> dimension) {
+        return position.map(pos -> CreateSeamFold.canonical(dimension, pos));
     }
 
     @ModifyExpressionValue(method = "pivoted",
