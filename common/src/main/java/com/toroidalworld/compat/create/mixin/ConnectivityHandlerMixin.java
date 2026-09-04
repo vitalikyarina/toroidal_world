@@ -1,11 +1,15 @@
 package com.toroidalworld.compat.create.mixin;
 
+import java.util.Set;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
+import com.toroidalworld.compat.create.CanonicalPositionKeys;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.core.BlockPos;
@@ -15,6 +19,10 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 @Mixin(value = ConnectivityHandler.class, remap = false)
 public class ConnectivityHandlerMixin {
+    private static final String FORM_MULTI = "formMulti(Lnet/minecraft/world/level/block/entity/BlockEntityType;"
+            + "Lnet/minecraft/world/level/BlockGetter;Lcom/simibubi/create/api/connectivity/"
+            + "ConnectivityHandler$SearchCache;Ljava/util/List;)V";
+
     @ModifyExpressionValue(
             method = "tryToFormNewMultiOfWidth",
             at = @At(value = "INVOKE",
@@ -25,8 +33,14 @@ public class ConnectivityHandlerMixin {
         return CreateSeamFold.nearestCopy(be.getLevel(), be.getBlockPos(), conPos);
     }
 
+    @ModifyVariable(method = FORM_MULTI, at = @At("STORE"), ordinal = 0)
+    private static Set<BlockPos> toroidal$canonicalWalkVisited(Set<BlockPos> visited,
+            @Local(argsOnly = true) BlockGetter level) {
+        return CanonicalPositionKeys.set(level);
+    }
+
     @ModifyExpressionValue(
-            method = "formMulti(Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/world/level/BlockGetter;Lcom/simibubi/create/api/connectivity/ConnectivityHandler$SearchCache;Ljava/util/List;)V",
+            method = FORM_MULTI,
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;relative(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;"))
     private static BlockPos toroidal$foldFrontierStepIntoBoundFrame(BlockPos next,
