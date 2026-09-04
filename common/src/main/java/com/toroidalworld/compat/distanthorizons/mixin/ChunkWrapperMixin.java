@@ -18,7 +18,8 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 
 // On 26.x DH ships one ChunkWrapper; on this game line the game is obfuscated, so it ships one per loader, each
 // naming the chunk type in that loader's own mapping. Each is unloadable on the other loader, so both are named here
-// and only the running loader's copy is ever transformed.
+// and only the running loader's copy is ever transformed. The constructor is named in both mappings for the same
+// reason GuiMapMixin names its render override twice: with two targets the remapper resolves neither descriptor.
 @Mixin(targets = {
         "com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper_neoforge",
         "com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper_fabric"})
@@ -33,6 +34,8 @@ public class ChunkWrapperMixin {
     @WrapOperation(
             method = {
                 "<init>(Lnet/minecraft/world/level/chunk/ChunkAccess;"
+                        + "Lcom/seibel/distanthorizons/core/wrapperInterfaces/world/ILevelWrapper;)V",
+                "<init>(Lnet/minecraft/class_2791;"
                         + "Lcom/seibel/distanthorizons/core/wrapperInterfaces/world/ILevelWrapper;)V",
                 "getMinBlockX", "getMinBlockZ", "getMaxBlockX", "getMaxBlockZ"},
             at = @At(
