@@ -16,8 +16,11 @@ import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.seibel.distanthorizons.core.level.IDhClientLevel;
+import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos2D;
 import com.seibel.distanthorizons.core.render.QuadTree.LodQuadTree;
+import com.seibel.distanthorizons.core.render.QuadTree.LodRenderSection;
+import com.seibel.distanthorizons.core.render.QuadTree.QuadTreeTickNodeHolder;
 import com.seibel.distanthorizons.core.util.objects.quadTree.QuadTree;
 
 @Mixin(LodQuadTree.class)
@@ -54,6 +57,27 @@ public class LodQuadTreeMixin {
 
         DhProbes.detailCapped(expected, cap);
         return cap;
+    }
+
+    @WrapOperation(
+            method = "recursivelyUpdateRenderSectionNode",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lcom/seibel/distanthorizons/core/render/QuadTree/QuadTreeTickNodeHolder;"
+                            + "addLoadSection(Lcom/seibel/distanthorizons/core/render/QuadTree/LodRenderSection;)V"))
+    private void toroidal$loadOnlyTheNearestCopy(QuadTreeTickNodeHolder holder, LodRenderSection section,
+            Operation<Void> original) {
+        ToroidalShape shape = DhShapes.of(this.level);
+        if (shape == null) {
+            original.call(holder, section);
+            return;
+        }
+
+        DhBlockPos2D center = ((QuadTree<?>) (Object) this).getCenterBlockPos();
+        if (DhFold.isNearestCopy(shape, center.x, center.z,
+                DhSectionPos.getCenterBlockPosX(section.pos), DhSectionPos.getCenterBlockPosZ(section.pos))) {
+            original.call(holder, section);
+        }
     }
 
     @WrapOperation(
