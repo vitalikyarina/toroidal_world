@@ -1,7 +1,10 @@
 package com.toroidalworld.gen;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -18,35 +21,43 @@ class WorldShapeReportTest {
     private static final int NARROW_END_CHUNK_WIDTH = 128;
 
     @Test
-    void aNetherWidthTheOverworldDividesByKeepsNamingItsScale() {
-        assertEquals(", scale 1:8", WorldShapeReport.netherScaleNote(
-                square(OVERWORLD_CHUNK_WIDTH), square(DIVIDING_NETHER_CHUNK_WIDTH)));
+    void aNetherWidthTheOverworldDividesByNamesItsScaleAndIsNotBroken() {
+        WorldShapeReport.Note note = WorldShapeReport.netherScaleNote(
+                square(OVERWORLD_CHUNK_WIDTH), square(DIVIDING_NETHER_CHUNK_WIDTH));
+
+        assertEquals(", scale 1:8", note.text());
+        assertFalse(note.broken(), note.text());
     }
 
     @Test
     void aNetherWidthTheOverworldDoesNotDivideByIsNamedAsBroken() {
-        String note = WorldShapeReport.netherScaleNote(
+        WorldShapeReport.Note note = WorldShapeReport.netherScaleNote(
                 square(OVERWORLD_CHUNK_WIDTH), square(UNEVEN_NETHER_CHUNK_WIDTH));
 
-        assertTrue(note.contains(WorldLoopSizes.describe(OVERWORLD_CHUNK_WIDTH)), note);
-        assertTrue(note.contains(WorldLoopSizes.describe(UNEVEN_NETHER_CHUNK_WIDTH)), note);
+        assertTrue(note.broken(), note.text());
+        assertTrue(note.text().contains(WorldLoopSizes.describe(OVERWORLD_CHUNK_WIDTH)), note.text());
+        assertTrue(note.text().contains(WorldLoopSizes.describe(UNEVEN_NETHER_CHUNK_WIDTH)), note.text());
     }
 
     @Test
     void aCylinderIsHeldToTheRuleOnItsLoopingAxis() {
-        assertEquals(", scale 1:8", WorldShapeReport.netherScaleNote(
-                loopedZ(OVERWORLD_CHUNK_WIDTH), loopedZ(DIVIDING_NETHER_CHUNK_WIDTH)));
+        WorldShapeReport.Note healthy = WorldShapeReport.netherScaleNote(
+                loopedZ(OVERWORLD_CHUNK_WIDTH), loopedZ(DIVIDING_NETHER_CHUNK_WIDTH));
 
-        String note = WorldShapeReport.netherScaleNote(
+        assertEquals(", scale 1:8", healthy.text());
+        assertFalse(healthy.broken(), healthy.text());
+
+        WorldShapeReport.Note note = WorldShapeReport.netherScaleNote(
                 loopedZ(OVERWORLD_CHUNK_WIDTH), loopedZ(UNEVEN_NETHER_CHUNK_WIDTH));
 
-        assertTrue(note.contains(Direction.Axis.Z.getName()), note);
-        assertTrue(note.contains(WorldLoopSizes.describe(UNEVEN_NETHER_CHUNK_WIDTH)), note);
+        assertTrue(note.broken(), note.text());
+        assertTrue(note.text().contains(Direction.Axis.Z.getName()), note.text());
+        assertTrue(note.text().contains(WorldLoopSizes.describe(UNEVEN_NETHER_CHUNK_WIDTH)), note.text());
     }
 
     @Test
     void aNetherThatLoopsOnNeitherOfTheOverworldsAxesSaysNothing() {
-        assertEquals("", WorldShapeReport.netherScaleNote(loopedZ(OVERWORLD_CHUNK_WIDTH),
+        assertEquals(WorldShapeReport.Note.NONE, WorldShapeReport.netherScaleNote(loopedZ(OVERWORLD_CHUNK_WIDTH),
                 WorldLoopBounds.ofWidth(Direction.Axis.X, DIVIDING_NETHER_CHUNK_WIDTH)));
     }
 
@@ -55,41 +66,47 @@ class WorldShapeReportTest {
         for (WorldLoopPresets preset : WorldLoopPresets.values()) {
             int netherChunkWidth = preset.chunkWidth() / preset.netherScale();
 
-            assertEquals(", scale 1:" + preset.netherScale(),
+            for (WorldShapeReport.Note note : List.of(
                     WorldShapeReport.netherScaleNote(square(preset.chunkWidth()), square(netherChunkWidth)),
-                    preset.id());
-            assertEquals(", scale 1:" + preset.netherScale(),
-                    WorldShapeReport.netherScaleNote(loopedZ(preset.chunkWidth()), loopedZ(netherChunkWidth)),
-                    preset.id());
+                    WorldShapeReport.netherScaleNote(loopedZ(preset.chunkWidth()), loopedZ(netherChunkWidth)))) {
+                assertEquals(", scale 1:" + preset.netherScale(), note.text(), preset.id());
+                assertFalse(note.broken(), preset.id());
+            }
         }
     }
 
     @Test
     void anEndAtTheOuterIslandThresholdSaysNothing() {
-        assertEquals("", WorldShapeReport.endWidthNote(square(WorldLoopSizes.END_MIN_CHUNK_WIDTH)));
+        assertEquals(WorldShapeReport.Note.NONE,
+                WorldShapeReport.endWidthNote(square(WorldLoopSizes.END_MIN_CHUNK_WIDTH)));
     }
 
     @Test
     void anEndBelowTheOuterIslandThresholdIsNamedAsBroken() {
-        String note = WorldShapeReport.endWidthNote(square(NARROW_END_CHUNK_WIDTH));
+        WorldShapeReport.Note note = WorldShapeReport.endWidthNote(square(NARROW_END_CHUNK_WIDTH));
 
-        assertTrue(note.contains(WorldLoopSizes.describe(NARROW_END_CHUNK_WIDTH)), note);
-        assertTrue(note.contains(WorldLoopSizes.describe(WorldLoopSizes.END_MIN_CHUNK_WIDTH)), note);
+        assertTrue(note.broken(), note.text());
+        assertTrue(note.text().contains(WorldLoopSizes.describe(NARROW_END_CHUNK_WIDTH)), note.text());
+        assertTrue(note.text().contains(WorldLoopSizes.describe(WorldLoopSizes.END_MIN_CHUNK_WIDTH)), note.text());
     }
 
     @Test
     void aCylinderEndIsHeldToTheThresholdOnItsLoopingAxis() {
-        String note = WorldShapeReport.endWidthNote(loopedZ(NARROW_END_CHUNK_WIDTH));
+        WorldShapeReport.Note note = WorldShapeReport.endWidthNote(loopedZ(NARROW_END_CHUNK_WIDTH));
 
-        assertTrue(note.contains(Direction.Axis.Z.getName()), note);
-        assertEquals("", WorldShapeReport.endWidthNote(loopedZ(WorldLoopSizes.END_MIN_CHUNK_WIDTH)));
+        assertTrue(note.broken(), note.text());
+        assertTrue(note.text().contains(Direction.Axis.Z.getName()), note.text());
+        assertEquals(WorldShapeReport.Note.NONE,
+                WorldShapeReport.endWidthNote(loopedZ(WorldLoopSizes.END_MIN_CHUNK_WIDTH)));
     }
 
     @Test
     void everyShippedPresetsEndClearsTheThreshold() {
         for (WorldLoopPresets preset : WorldLoopPresets.values()) {
-            assertEquals("", WorldShapeReport.endWidthNote(square(preset.endChunkWidth())), preset.id());
-            assertEquals("", WorldShapeReport.endWidthNote(loopedZ(preset.endChunkWidth())), preset.id());
+            assertEquals(WorldShapeReport.Note.NONE,
+                    WorldShapeReport.endWidthNote(square(preset.endChunkWidth())), preset.id());
+            assertEquals(WorldShapeReport.Note.NONE,
+                    WorldShapeReport.endWidthNote(loopedZ(preset.endChunkWidth())), preset.id());
         }
     }
 
