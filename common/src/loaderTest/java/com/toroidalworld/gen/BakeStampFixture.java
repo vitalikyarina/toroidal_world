@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.MapCodec;
+import com.toroidalworld.accessors.ShapeStamp;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.WorldLoopBounds;
@@ -78,6 +79,11 @@ final class BakeStampFixture {
 
     static ChunkGenerator foreignGenerator() {
         return new ForeignChunkGenerator();
+    }
+
+    static ChunkGenerator stamped(ChunkGenerator generator, FlatShape shape) {
+        ((ShapeStamp) generator).toroidal$stamp(shape);
+        return generator;
     }
 
     static ChunkGenerator shapedGenerator(FlatShape shape) {

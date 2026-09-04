@@ -11,6 +11,7 @@ import static com.toroidalworld.gen.BakeStampFixture.selected;
 import static com.toroidalworld.gen.BakeStampFixture.shapeOf;
 import static com.toroidalworld.gen.BakeStampFixture.shapedGenerator;
 import static com.toroidalworld.gen.BakeStampFixture.squareTorus;
+import static com.toroidalworld.gen.BakeStampFixture.stamped;
 import static com.toroidalworld.gen.BakeStampFixture.stem;
 import static com.toroidalworld.gen.BakeStampFixture.stemKey;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -255,6 +256,37 @@ class BakeStampTest {
         bake(storedToroidalWorld(), Map.of(FOREIGN, stem(SAME_SCALE, foreignGenerator())));
 
         assertNull(DatapackStemOverrides.of(LevelStem.OVERWORLD));
+    }
+
+    @Test
+    void aStampedOverworldKeepsItsShapeThroughBakeAndReachesItsSiblings() {
+        ChunkGenerator overworld = stamped(noiseSubclassGenerator(worldgen), squareTorus(OVERWORLD_CHUNK_WIDTH));
+        Registry<LevelStem> baked = bake(
+                Map.of(LevelStem.OVERWORLD, stem(SAME_SCALE, overworld)),
+                Map.of(FOREIGN, stem(SAME_SCALE, foreignGenerator())));
+
+        FlatShape kept = shapeOf(baked, LevelStem.OVERWORLD);
+        assertNotNull(kept, "the stamped overworld lost its shape at bake");
+        assertEquals(OVERWORLD_CHUNK_WIDTH, chunkWidth(kept, Direction.Axis.X));
+
+        FlatShape sibling = shapeOf(baked, FOREIGN);
+        assertNotNull(sibling, "a stamped overworld derived nothing for its siblings");
+        assertEquals(SAME_SCALE_CHUNK_WIDTH, chunkWidth(sibling, Direction.Axis.X));
+    }
+
+    @Test
+    void aDatapackOverworldTakesTheShapeAStampedStoredOverworldCarries() {
+        ChunkGenerator stored = stamped(noiseSubclassGenerator(worldgen),
+                squareTorus(STORED_OVERWORLD_CHUNK_WIDTH));
+        Registry<LevelStem> baked = bake(
+                Map.of(LevelStem.OVERWORLD, stem(SAME_SCALE, stored)),
+                Map.of(LevelStem.OVERWORLD, stem(SAME_SCALE, noiseGenerator(worldgen))));
+
+        assertInstanceOf(LoopedChunkGenerator.class, generatorOf(baked, LevelStem.OVERWORLD));
+
+        FlatShape shape = shapeOf(baked, LevelStem.OVERWORLD);
+        assertNotNull(shape, "the datapack overworld carries no fold");
+        assertEquals(STORED_OVERWORLD_CHUNK_WIDTH, chunkWidth(shape, Direction.Axis.X));
     }
 
     private static Map<ResourceKey<LevelStem>, LevelStem> storedToroidalWorld() {

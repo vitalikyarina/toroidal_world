@@ -12,6 +12,7 @@
   "gui.toroidal_world.world_shape.toroidal.hint": "Obie osie poziome się zapętlają — idź dostatecznie daleko w dowolną stronę, a wrócisz do punktu wyjścia.",
   "gui.toroidal_world.world_shape.cylinder": "Cylindryczny",
   "gui.toroidal_world.world_shape.cylinder.hint": "Jedna oś pozioma się zapętla, druga ciągnie się bez końca jak w zwykłym świecie.",
+  "gui.toroidal_world.world_shape.unavailable": "Ten typ świata ma własny generator świata, który nie może przyjąć Kształtu świata.",
 
   "gui.toroidal_world.toroidal_settings.title": "Ustawienia świata toroidalnego",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Malutki",
