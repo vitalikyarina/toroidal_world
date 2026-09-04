@@ -27,6 +27,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.attribute.EnvironmentAttributeMap;
 import net.minecraft.world.level.CardinalLighting;
@@ -107,7 +108,7 @@ final class BakeStampFixture {
                 MIN_Y,
                 HEIGHT,
                 HEIGHT,
-                HolderSet.empty(),
+                BlockTags.INFINIBURN_OVERWORLD,
                 NO_AMBIENT_LIGHT,
                 new DimensionType.MonsterSettings(ConstantInt.of(NO_MONSTER_LIGHT), NO_MONSTER_LIGHT),
                 DimensionType.Skybox.OVERWORLD,
