@@ -4,14 +4,13 @@ import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 import com.toroidalworld.MixinGatePlugin;
+import com.toroidalworld.compat.ModPresence;
 
 public class XaeroMixinPlugin extends MixinGatePlugin {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private static final boolean XAERO_MINIMAP_PRESENT = XaeroMixinPlugin.class.getClassLoader()
-            .getResource("xaero/common/HudMod.class") != null;
-    private static final boolean XAERO_WORLDMAP_PRESENT = XaeroMixinPlugin.class.getClassLoader()
-            .getResource("xaero/map/WorldMap.class") != null;
+    private static final boolean XAERO_MINIMAP_PRESENT = ModPresence.probe("xaero/common/HudMod.class");
+    private static final boolean XAERO_WORLDMAP_PRESENT = ModPresence.probe("xaero/map/WorldMap.class");
 
     private static final String WORLDMAP_MIXIN_PACKAGE = ".mixin.map.";
 

@@ -30,6 +30,12 @@ class ModPresenceTest {
     }
 
     @Test
+    void theBareProbeAnswersTheSameAsAGate() {
+        assertTrue(ModPresence.probe(SHIPPED_CLASS), "the bare probe resolves the shipped class through the same loader");
+        assertFalse(ModPresence.probe(ABSENT_CLASS), "the bare probe reads an absent class as absent");
+    }
+
+    @Test
     void theProbeAsksTheClassLoaderOnce() {
         CountingLoader loader = new CountingLoader(SHIPPED_CLASS);
         ModPresence gate = new ModPresence(LOGGER, loader, SHIPPED_CLASS, "[test-compat] gate once_present");
