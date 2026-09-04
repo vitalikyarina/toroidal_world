@@ -9,6 +9,6 @@ public class ToroidalWorldFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ClientPlayNetworking.registerGlobalReceiver(WrappingSettingsPayload.TYPE,
-                (payload, context) -> context.client().execute(() -> WorldLoopClientNetwork.apply(payload.shape())));
+                (payload, context) -> context.client().execute(() -> WorldLoopClientNetwork.apply(payload.dimension(), payload.shape())));
     }
 }

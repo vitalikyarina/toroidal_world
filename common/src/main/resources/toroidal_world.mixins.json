@@ -241,6 +241,7 @@
   "client": [
     "BiomePrecipitationMixin",
     "ClientLevelMixin",
+    "ClientPacketListenerMixin",
     "CompassAngleStateMixin",
     "DebugEntryPositionMixin",
     "WeatherEffectRendererMixin"
