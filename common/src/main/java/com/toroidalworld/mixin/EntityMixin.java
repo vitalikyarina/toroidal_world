@@ -1,6 +1,7 @@
 package com.toroidalworld.mixin;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.TransformerSource;
+import com.toroidalworld.advancement.CircumnavigationTracker;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.entity.SeamAim;
 import com.toroidalworld.player.VehicleDismountResync;
@@ -27,6 +29,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.BlockUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.PositionMoveRotation;
+import net.minecraft.world.entity.Relative;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -164,6 +168,24 @@ public class EntityMixin implements TransformerSource {
     private void toroidal$rebaseMirrorOnPlacement(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
         if ((Object) this instanceof ServerPlayer player) {
             WorldLoopAttachments.rebaseClientPositionOf(player);
+        }
+    }
+
+    @Inject(method = "snapTo(DDDFF)V", at = @At("TAIL"))
+    private void toroidal$sampleTravelOnPlacement(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
+        if ((Object) this instanceof ServerPlayer player) {
+            CircumnavigationTracker.sample(player);
+        }
+    }
+
+    @Inject(
+            method = "teleportSetPosition(Lnet/minecraft/world/entity/PositionMoveRotation;"
+                    + "Lnet/minecraft/world/entity/PositionMoveRotation;Ljava/util/Set;)V",
+            at = @At("TAIL"))
+    private void toroidal$sampleTravelOnTeleport(PositionMoveRotation currentValues, PositionMoveRotation destination,
+            Set<Relative> relatives, CallbackInfo ci) {
+        if ((Object) this instanceof ServerPlayer player) {
+            CircumnavigationTracker.sample(player);
         }
     }
 

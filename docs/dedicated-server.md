@@ -117,7 +117,7 @@ The empty object is required: an axis left out of `wrapping` is an error, not an
 
 ### Size rules
 
-`min_chunk`/`max_chunk` are a half-open chunk range: `-16 … 16` means 32 chunks (512 blocks), block bounds −256 … 255. The create-world screen enforces these rules for you; a hand-written preset must respect them on its own:
+`min_chunk`/`max_chunk` are a half-open chunk range: `-16 … 16` means 32 chunks (512 blocks), block bounds −256 … 255. The create-world screen enforces these rules for you. A hand-written preset is checked at startup instead: a width under the floor stops the server before anything is generated, and the other two are named as `BROKEN` on the `World shape:` lines, logged at `WARN`:
 
 - **Overworld** — every looping axis at least 16 chunks (256 blocks), centered on zero as the example does (`min_chunk = -width/2`). A toroidal world loops both axes at the same width; a cylinder loops one axis and writes the other as `{}`.
 - **Nether** — the overworld width divided by the portal scale, and the scale must divide it exactly; the nether itself must stay at least 16 chunks (256 blocks) wide. Vanilla's 1:8 portal ratio therefore needs an overworld of at least 128 chunks (2048 blocks). An uneven ratio breaks portal linking near the seam — this rule is not optional. In a cylinder the rule applies to the looping axis; the endless axis stays `{}` in the nether too.
@@ -129,3 +129,4 @@ For a Superflat world use `"type": "toroidal_world:toroidal_flat"` with a `"sett
 
 - `level-type` matters only at world creation. On an existing world it changes nothing; to get a toroidal or cylinder world, start from a fresh `world` folder.
 - The world's bounds are stored inside the world itself (in its chunk generators), so after the first start the `level-type` line no longer decides anything.
+- A datapack that declares `minecraft:overworld`, `minecraft:the_nether` or `minecraft:the_end` cannot take the shape away. Such a stem normally replaces the world's own generator for that dimension; here it is rebuilt on the shape the world was created with, so the pack's terrain choice applies and the world keeps looping. The `World shape:` line logged at startup reports `shape=restored` and names the pack's generator — `shape=stamp`, where that generator kept its own class and the shape was stamped onto it, or `shape=stored`, where it could take no shape at all and the world's own was kept.

@@ -7,8 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -44,6 +46,11 @@ class DeckGroupFoldMatrixTest {
     private static final int ORBIT_REACH = 8;
     private static final int SAMPLES = 300;
     private static final long SEED = 0x70201DL;
+
+    private static final double[] HALF_BLOCK_OFFSETS = {0.0, 0.5};
+
+    private static final double[] SEAM_COORDINATES =
+            {LOWER - 0.5, LOWER, LOWER + 0.5, UPPER - 0.5, UPPER, UPPER + 0.5};
 
     private static final AxisBounds.Looped LOOPED = new AxisBounds.Looped(MIN_CHUNK, MAX_CHUNK);
     private static final AxisBounds UNBOUNDED = AxisBounds.Unbounded.INSTANCE;
@@ -234,6 +241,44 @@ class DeckGroupFoldMatrixTest {
             assertTrue(z >= LOWER && z < UPPER,
                     testCase.name() + ": " + what + " z " + z + " outside [" + LOWER + ", " + UPPER + ")");
         }
+    }
+
+    private record Subject(String name, WorldFold fold) {
+    }
+
+    private static List<Subject> subjects() {
+        List<Subject> built = new ArrayList<>();
+        for (Case testCase : cases()) {
+            built.add(new Subject(testCase.name(), testCase.fold()));
+        }
+
+        for (Case testCase : decomposableCases()) {
+            built.add(new Subject(testCase.name() + ", per-axis",
+                    new WorldLoopTransformer(testCase.shape().bounds())));
+        }
+
+        return built;
+    }
+
+    private static double coordinateShift(double folded, double original, boolean mirrored) {
+        return mirrored ? folded + original : folded - original;
+    }
+
+    private static int alignedCellShift(int folded, int original, boolean mirrored) {
+        return mirrored ? folded + original + 1 : folded - original;
+    }
+
+    private static void assertChunkAlignedShift(double shift, String what) {
+        assertEquals(shift, Math.rint(shift), what + ": the shift " + shift + " is not a whole number of blocks");
+        assertEquals(0L, Math.round(shift) % UNIT,
+                what + ": the shift " + shift + " is not a whole number of chunks");
+    }
+
+    private static void assertWholeBlockMove(Vec3 moved, Vec3 original, String what) {
+        double shiftX = moved.x - original.x;
+        double shiftZ = moved.z - original.z;
+        assertEquals(shiftX, Math.rint(shiftX), what + ": x moved by " + shiftX + ", not a whole number of blocks");
+        assertEquals(shiftZ, Math.rint(shiftZ), what + ": z moved by " + shiftZ + ", not a whole number of blocks");
     }
 
     @Nested
@@ -641,6 +686,39 @@ class DeckGroupFoldMatrixTest {
             }
 
             return !testCase.group().zLoops() || (position.z >= LOWER && position.z < UPPER);
+        }
+
+        @Test
+        void theFoldTransformationCarriesTheOrientationAndSeatsThePosition() {
+            for (Case testCase : cases()) {
+                DeckGroupFold fold = testCase.fold();
+                Random random = new Random(SEED + 9);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    Vec3 pos = new Vec3(sample(random) + 0.5, 64.0, sample(random) + 0.5);
+                    DeckTransformation lap = fold.foldTransformation(pos);
+                    Folded<Vec3> folded = fold.foldOriented(pos);
+
+                    assertEquals(folded.orientation(), lap.orientation(),
+                            testCase.name() + ": the transformation dropped the orientation of " + pos);
+                    assertEquals(folded.value(), lap.apply(pos),
+                            testCase.name() + ": applying the transformation did not seat " + pos);
+                }
+            }
+        }
+
+        @Test
+        void aMirroredShapeReportsTheMirrorOnTheTransformationToo() {
+            for (Case testCase : mirroredCases()) {
+                DeckGroupFold fold = testCase.fold();
+                boolean sawMirror = false;
+                Random random = new Random(SEED + 9);
+                for (int sample = 0; sample < SAMPLES && !sawMirror; sample++) {
+                    Vec3 pos = new Vec3(sample(random) + 0.5, 64.0, sample(random) + 0.5);
+                    sawMirror = fold.foldTransformation(pos).orientation() == testCase.group().mirrorOrientation();
+                }
+
+                assertTrue(sawMirror, testCase.name() + ": no sample ever folded through the mirror");
+            }
         }
 
         @Test
@@ -1078,6 +1156,339 @@ class DeckGroupFoldMatrixTest {
                 assertEquals(!testCase.shape().isMirrored(), testCase.fold().preservesLocalIndices(),
                         testCase.name() + ": preservesLocalIndices disagrees with the mirror");
             }
+        }
+    }
+
+    @Nested
+    class Copies {
+        private static final int COPY_REACH = 3;
+        private static final int WIDE_REACH = 3 * WIDTH / 2;
+        private static final int SEAM_STRADDLE = 8;
+        private static final int PINNED_WIDTH = 5;
+        private static final int MIRROR_STRADDLE = 2;
+        private static final int DISTANT_LAPS = 5;
+        private static final int DISTANT_LAP_LANDING = DISTANT_LAPS * SKEW - WIDTH;
+
+        @Test
+        void copiesTouchingAgreesWithTheOrbit() {
+            for (Case testCase : cases()) {
+                DeckGroupFold fold = testCase.fold();
+                Random random = new Random(SEED + 22);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    BoundingBox region = wideRegion(random);
+                    int reach = random.nextInt(COPY_REACH + 1);
+                    List<DeckTransformation> copies = fold.copiesTouching(region, reach);
+                    Set<List<Integer>> listed = new HashSet<>();
+                    for (DeckTransformation copy : copies) {
+                        assertTrue(listed.add(signature(copy, region)), testCase.name() + ": a copy listed twice");
+                    }
+
+                    assertEquals(expectedCopies(testCase.group(), region, reach), listed, testCase.name()
+                            + ": copiesTouching(" + region + ", " + reach + ") disagrees with the orbit");
+                    assertIdentityFirst(testCase, copies);
+                }
+            }
+        }
+
+        @Test
+        void aRegionInsideTheWorldListsTheIdentityAloneAndNeverFoldsOntoItself() {
+            for (Case testCase : cases()) {
+                DeckGroupFold fold = testCase.fold();
+                Random random = new Random(SEED + 23);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    BoundingBox region = insideRegion(random);
+                    List<DeckTransformation> copies = fold.copiesTouching(region, random.nextInt(COPY_REACH + 1));
+                    assertEquals(1, copies.size(), testCase.name() + ": " + region + " lists " + copies);
+                    assertSame(DeckTransformation.IDENTITY, copies.getFirst(), testCase.name());
+                    assertFalse(fold.foldsOntoItself(region), testCase.name() + ": " + region + " folds onto itself");
+                }
+            }
+        }
+
+        @Test
+        void aMirroredCopyComesBackFlippedAboutTheMirrorLine() {
+            BoundingBox region =
+                    new BoundingBox(UPPER - SEAM_STRADDLE, 60, 0, UPPER + SEAM_STRADDLE, 68, PINNED_WIDTH - 1);
+            for (Case testCase : List.of(MOBIUS, KLEIN_CENTRED, KLEIN_OFFSET)) {
+                int mirrorLine = testCase.group().mirrorLine();
+                List<DeckTransformation> copies = testCase.fold().copiesTouching(region, 1);
+                DeckTransformation flipped = new DeckTransformation(SeamTransform.glideX(WIDTH, 2 * mirrorLine));
+                assertEquals(List.of(DeckTransformation.IDENTITY, flipped), copies, testCase.name());
+                assertEquals(testCase.group().mirrorOrientation(), flipped.orientation(), testCase.name());
+                assertEquals(
+                        new BoundingBox(UPPER - SEAM_STRADDLE + WIDTH, 60, 2 * mirrorLine - PINNED_WIDTH,
+                                UPPER + SEAM_STRADDLE + WIDTH, 68, 2 * mirrorLine - 1),
+                        flipped.apply(region), testCase.name() + ": the flipped copy of " + region);
+            }
+        }
+
+        @Test
+        void aSkewedCopyOneRowUpSitsTheSkewOver() {
+            BoundingBox region =
+                    new BoundingBox(0, 60, UPPER - SEAM_STRADDLE, PINNED_WIDTH - 1, 68, UPPER + SEAM_STRADDLE);
+            List<DeckTransformation> copies = LATTICE_TORUS.fold().copiesTouching(region, 1);
+            DeckTransformation rowUp = new DeckTransformation(SeamTransform.translation(SKEW, WIDTH));
+            assertEquals(List.of(DeckTransformation.IDENTITY, rowUp), copies);
+            assertEquals(new BoundingBox(SKEW, 60, UPPER - SEAM_STRADDLE + WIDTH, SKEW + PINNED_WIDTH - 1, 68,
+                    UPPER + SEAM_STRADDLE + WIDTH), rowUp.apply(region));
+        }
+
+        @Test
+        void foldsOntoItselfAgreesWithTheOrbit() {
+            for (Case testCase : cases()) {
+                DeckGroupFold fold = testCase.fold();
+                Random random = new Random(SEED + 24);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    BoundingBox region = wideRegion(random);
+                    assertEquals(anyOtherCopyMeets(testCase.group(), region), fold.foldsOntoItself(region),
+                            testCase.name() + ": foldsOntoItself(" + region + ") disagrees with the orbit");
+                }
+            }
+        }
+
+        @Test
+        void aRegionExactlyOneWorldWideHoldsEveryBlockOnce() {
+            for (Case testCase : cases()) {
+                DeckGroupFold fold = testCase.fold();
+                Random random = new Random(SEED + 25);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    int minX = sample(random);
+                    int minZ = sample(random);
+                    BoundingBox region = new BoundingBox(minX, 60, minZ, minX + WIDTH - 1, 68, minZ + WIDTH - 1);
+                    assertFalse(fold.foldsOntoItself(region), testCase.name() + ": " + region + " folds onto itself");
+                }
+            }
+        }
+
+        @Test
+        void oneBlockPastAWorldAlongATranslationFoldsOntoItself() {
+            BoundingBox alongX = new BoundingBox(0, 60, 0, WIDTH, 68, PINNED_WIDTH - 1);
+            for (Case testCase : List.of(CYLINDER, TORUS, LATTICE_TORUS, KLEIN_X_CENTRED, KLEIN_X_OFFSET)) {
+                assertTrue(testCase.fold().foldsOntoItself(alongX), testCase.name() + ": " + alongX);
+            }
+
+            BoundingBox alongZ = new BoundingBox(0, 60, 0, PINNED_WIDTH - 1, 68, WIDTH);
+            for (Case testCase : List.of(TORUS, KLEIN_CENTRED, KLEIN_OFFSET)) {
+                assertTrue(testCase.fold().foldsOntoItself(alongZ), testCase.name() + ": " + alongZ);
+            }
+        }
+
+        @Test
+        void oneBlockPastAWorldAlongAGlideFoldsOntoItselfOnlyAcrossTheMirrorLine() {
+            for (Case testCase : List.of(MOBIUS, KLEIN_CENTRED, KLEIN_OFFSET)) {
+                int mirrorLine = testCase.group().mirrorLine();
+                BoundingBox besideTheLine = new BoundingBox(0, 60, mirrorLine + MIRROR_STRADDLE, WIDTH, 68,
+                        mirrorLine + MIRROR_STRADDLE + PINNED_WIDTH - 1);
+                BoundingBox acrossTheLine = new BoundingBox(0, 60, mirrorLine - MIRROR_STRADDLE, WIDTH, 68,
+                        mirrorLine + MIRROR_STRADDLE);
+                assertFalse(testCase.fold().foldsOntoItself(besideTheLine), testCase.name() + ": " + besideTheLine);
+                assertTrue(testCase.fold().foldsOntoItself(acrossTheLine), testCase.name() + ": " + acrossTheLine);
+            }
+
+            for (Case testCase : List.of(MOBIUS_X, KLEIN_X_CENTRED, KLEIN_X_OFFSET)) {
+                int mirrorLine = testCase.group().mirrorLine();
+                BoundingBox besideTheLine = new BoundingBox(mirrorLine + MIRROR_STRADDLE, 60, 0,
+                        mirrorLine + MIRROR_STRADDLE + PINNED_WIDTH - 1, 68, WIDTH);
+                BoundingBox acrossTheLine = new BoundingBox(mirrorLine - MIRROR_STRADDLE, 60, 0,
+                        mirrorLine + MIRROR_STRADDLE, 68, WIDTH);
+                assertFalse(testCase.fold().foldsOntoItself(besideTheLine), testCase.name() + ": " + besideTheLine);
+                assertTrue(testCase.fold().foldsOntoItself(acrossTheLine), testCase.name() + ": " + acrossTheLine);
+            }
+        }
+
+        @Test
+        void oneBlockPastAWorldAlongTheSkewFoldsOntoItselfOnlyWhenWideEnoughForTheShift() {
+            DeckGroupFold fold = LATTICE_TORUS.fold();
+            assertFalse(fold.foldsOntoItself(new BoundingBox(0, 60, 0, SKEW - 1, 68, WIDTH)));
+            assertTrue(fold.foldsOntoItself(new BoundingBox(0, 60, 0, SKEW, 68, WIDTH)));
+        }
+
+        @Test
+        void aDistantSkewedLapLandsCloserThanTheFirst() {
+            DeckGroupFold fold = LATTICE_TORUS.fold();
+            int landing = Math.abs(DISTANT_LAP_LANDING);
+            assertTrue(landing < SKEW, "the pin needs a lap landing closer than the skew, got " + landing);
+            assertFalse(fold.foldsOntoItself(new BoundingBox(0, 60, 0, landing - 1, 68, DISTANT_LAPS * WIDTH)));
+            assertTrue(fold.foldsOntoItself(new BoundingBox(0, 60, 0, landing, 68, DISTANT_LAPS * WIDTH)));
+        }
+
+        private static Set<List<Integer>> expectedCopies(Group group, BoundingBox region, int reach) {
+            Set<List<Integer>> expected = new HashSet<>();
+            int firstReach = group.xLoops() ? reach : 0;
+            int secondReach = group.zLoops() ? reach : 0;
+            for (int first = -firstReach; first <= firstReach; first++) {
+                for (int second = -secondReach; second <= secondReach; second++) {
+                    int[] low = group.cell(LOWER, LOWER, first, second);
+                    int[] high = group.cell(UPPER - 1, UPPER - 1, first, second);
+                    boolean meetsX = !group.xLoops() || meets(
+                            Math.min(low[0], high[0]), Math.max(low[0], high[0]), region.minX(), region.maxX());
+                    boolean meetsZ = !group.zLoops() || meets(
+                            Math.min(low[1], high[1]), Math.max(low[1], high[1]), region.minZ(), region.maxZ());
+                    if (meetsX && meetsZ) {
+                        int[] origin = group.cell(region.minX(), region.minZ(), first, second);
+                        int[] probe = group.cell(region.minX() + 1, region.minZ() + 2, first, second);
+                        expected.add(List.of(origin[0], origin[1], probe[0], probe[1]));
+                    }
+                }
+            }
+
+            return expected;
+        }
+
+        private static List<Integer> signature(DeckTransformation copy, BoundingBox region) {
+            BlockPos origin = copy.apply(new BlockPos(region.minX(), 64, region.minZ()));
+            BlockPos probe = copy.apply(new BlockPos(region.minX() + 1, 64, region.minZ() + 2));
+            return List.of(origin.getX(), origin.getZ(), probe.getX(), probe.getZ());
+        }
+
+        private static void assertIdentityFirst(Case testCase, List<DeckTransformation> copies) {
+            for (int index = 0; index < copies.size(); index++) {
+                if (copies.get(index).isIdentity()) {
+                    assertEquals(0, index, testCase.name() + ": the identity is not first in " + copies);
+                    assertSame(DeckTransformation.IDENTITY, copies.get(index), testCase.name());
+                }
+            }
+        }
+
+        private static boolean anyOtherCopyMeets(Group group, BoundingBox region) {
+            for (int first = -ORBIT_REACH; first <= ORBIT_REACH; first++) {
+                for (int second = -ORBIT_REACH; second <= ORBIT_REACH; second++) {
+                    if ((first == 0 || !group.xLoops()) && (second == 0 || !group.zLoops())) {
+                        continue;
+                    }
+
+                    int[] low = group.cell(region.minX(), region.minZ(), first, second);
+                    int[] high = group.cell(region.maxX(), region.maxZ(), first, second);
+                    if (meets(Math.min(low[0], high[0]), Math.max(low[0], high[0]), region.minX(), region.maxX())
+                            && meets(Math.min(low[1], high[1]), Math.max(low[1], high[1]),
+                                    region.minZ(), region.maxZ())) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static boolean meets(int firstMin, int firstMax, int secondMin, int secondMax) {
+            return firstMin <= secondMax && secondMin <= firstMax;
+        }
+
+        private static BoundingBox wideRegion(Random random) {
+            int minX = sample(random);
+            int minZ = sample(random);
+            return new BoundingBox(minX, 60, minZ,
+                    minX + random.nextInt(WIDE_REACH + 1), 68, minZ + random.nextInt(WIDE_REACH + 1));
+        }
+
+        private static BoundingBox insideRegion(Random random) {
+            int minX = LOWER + random.nextInt(WIDTH);
+            int minZ = LOWER + random.nextInt(WIDTH);
+            return new BoundingBox(minX, 60, minZ,
+                    minX + random.nextInt(UPPER - minX), 68, minZ + random.nextInt(UPPER - minZ));
+        }
+    }
+
+    @Nested
+    class Displacement {
+        @Test
+        void everyCoordinateShiftIsAWholeNumberOfChunks() {
+            for (Subject subject : subjects()) {
+                Random random = new Random(SEED + 31);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    Vec3 ref = new Vec3(sample(random) + 0.5, 64.0, sample(random) + 0.5);
+                    Vec3 target = new Vec3(sample(random) + 0.5, 70.0, sample(random) + 0.5);
+
+                    Folded<Vec3> folded = subject.fold().foldOriented(target);
+                    assertChunkAlignedShift(
+                            coordinateShift(folded.value().x, target.x, folded.orientation().flipsX()),
+                            subject.name() + ": fold x");
+                    assertChunkAlignedShift(
+                            coordinateShift(folded.value().z, target.z, folded.orientation().flipsZ()),
+                            subject.name() + ": fold z");
+
+                    Folded<Vec3> nearest = subject.fold().nearestCopyOriented(ref, target);
+                    assertChunkAlignedShift(
+                            coordinateShift(nearest.value().x, target.x, nearest.orientation().flipsX()),
+                            subject.name() + ": nearestCopy x");
+                    assertChunkAlignedShift(
+                            coordinateShift(nearest.value().z, target.z, nearest.orientation().flipsZ()),
+                            subject.name() + ": nearestCopy z");
+                }
+            }
+        }
+
+        @Test
+        void theCellShiftIsChunkAlignedLessOneExactlyWhereTheFoldMirrors() {
+            for (Subject subject : subjects()) {
+                Random random = new Random(SEED + 32);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    BlockPos block = new BlockPos(sample(random), 64, sample(random));
+                    BlockPos ref = new BlockPos(sample(random), 64, sample(random));
+
+                    assertCellShiftIsChunkAligned(subject.fold().foldOriented(block), block,
+                            subject.name() + ": block fold");
+                    assertCellShiftIsChunkAligned(subject.fold().nearestCopyOriented(ref, block), block,
+                            subject.name() + ": block nearestCopy");
+                }
+            }
+        }
+
+        @Test
+        void theBlockLatticeShiftIsChunkWidthTimesTheChunkLatticeShift() {
+            for (Subject subject : subjects()) {
+                Random random = new Random(SEED + 33);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    int x = sample(random);
+                    int z = sample(random);
+                    ChunkPos chunk = chunkOf(x, z);
+
+                    Folded<BlockPos> foldedBlock = subject.fold().foldOriented(new BlockPos(x, 64, z));
+                    Folded<ChunkPos> foldedChunk = subject.fold().foldOriented(chunk);
+                    assertEquals(foldedBlock.orientation(), foldedChunk.orientation(),
+                            subject.name() + ": the block and chunk forms disagree on the orientation");
+
+                    boolean flipsX = foldedChunk.orientation().flipsX();
+                    boolean flipsZ = foldedChunk.orientation().flipsZ();
+                    assertEquals(UNIT * alignedCellShift(foldedChunk.value().x(), chunk.x(), flipsX),
+                            alignedCellShift(foldedBlock.value().getX(), x, flipsX),
+                            subject.name() + ": the block and chunk lattices disagree on the x shift");
+                    assertEquals(UNIT * alignedCellShift(foldedChunk.value().z(), chunk.z(), flipsZ),
+                            alignedCellShift(foldedBlock.value().getZ(), z, flipsZ),
+                            subject.name() + ": the block and chunk lattices disagree on the z shift");
+                }
+            }
+        }
+
+        @Test
+        void aHalfBlockCoordinateIsDisplacedByAWholeNumberOfBlocks() {
+            for (Subject subject : subjects()) {
+                Random random = new Random(SEED + 34);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    for (double offset : HALF_BLOCK_OFFSETS) {
+                        Vec3 ref = new Vec3(sample(random) + offset, 64.0, sample(random) + offset);
+                        Vec3 target = new Vec3(sample(random) + offset, 70.0, sample(random) + offset);
+
+                        assertWholeBlockMove(subject.fold().fold(target), target, subject.name() + ": fold");
+                        assertWholeBlockMove(subject.fold().nearestCopy(ref, target), target,
+                                subject.name() + ": nearestCopy");
+                    }
+                }
+
+                for (double coord : SEAM_COORDINATES) {
+                    Vec3 target = new Vec3(coord, 64.0, coord);
+                    assertWholeBlockMove(subject.fold().fold(target), target, subject.name() + ": seam fold");
+                }
+            }
+        }
+
+        private void assertCellShiftIsChunkAligned(Folded<BlockPos> moved, BlockPos original, String what) {
+            int shiftX = alignedCellShift(moved.value().getX(), original.getX(), moved.orientation().flipsX());
+            int shiftZ = alignedCellShift(moved.value().getZ(), original.getZ(), moved.orientation().flipsZ());
+            assertEquals(0, shiftX % UNIT, what + " x: the cell shift, read as " + shiftX
+                    + " once the off-by-one is undone, is not a multiple of " + UNIT);
+            assertEquals(0, shiftZ % UNIT, what + " z: the cell shift, read as " + shiftZ
+                    + " once the off-by-one is undone, is not a multiple of " + UNIT);
         }
     }
 }

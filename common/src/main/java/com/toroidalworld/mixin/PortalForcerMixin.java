@@ -9,13 +9,14 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
+import com.toroidalworld.core.FoldedOrder;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Vec3i;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.portal.PortalForcer;
@@ -28,7 +29,7 @@ public class PortalForcerMixin {
 
     @WrapOperation(
             method = "findClosestPortalPosition",
-            at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;min(Ljava/util/Comparator;)Ljava/util/Optional;"))
+            at = @At(value = "INVOKE", target = InjectionTargets.STREAM_MIN))
     private Optional<BlockPos> toroidal$nearestThroughSeam(
             Stream<BlockPos> candidates,
             Comparator<BlockPos> byDistance,
@@ -41,12 +42,6 @@ public class PortalForcerMixin {
             return original.call(candidates, byDistance);
         }
 
-        Comparator<BlockPos> throughSeam = Comparator
-                .<BlockPos>comparingDouble(candidate -> transformer.sqrDistance(
-                        candidate.getX(), candidate.getY(), candidate.getZ(),
-                        approximateExitPos.getX(), approximateExitPos.getY(), approximateExitPos.getZ()))
-                .thenComparingInt(Vec3i::getY);
-
-        return original.call(candidates, throughSeam);
+        return original.call(candidates, FoldedOrder.around(byDistance, transformer, approximateExitPos));
     }
 }

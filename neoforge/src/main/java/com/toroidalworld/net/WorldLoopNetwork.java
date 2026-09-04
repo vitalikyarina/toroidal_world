@@ -16,7 +16,7 @@ public final class WorldLoopNetwork {
         event.registrar(PROTOCOL_VERSION).optional().playToClient(
                 WrappingSettingsPayload.TYPE,
                 WrappingSettingsPayload.STREAM_CODEC,
-                (payload, context) -> context.enqueueWork(() -> WorldLoopClientNetwork.apply(payload.shape())));
+                (payload, context) -> context.enqueueWork(() -> WorldLoopClientNetwork.apply(payload.dimension(), payload.shape())));
     }
 
     private WorldLoopNetwork() {

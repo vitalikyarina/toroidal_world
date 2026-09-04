@@ -4,12 +4,13 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.SeamSpans;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
+import com.toroidalworld.core.WrapDomain;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.Dynamic3CommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 
 import net.minecraft.commands.arguments.coordinates.WorldCoordinate;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
@@ -22,21 +23,23 @@ public final class SeamCommandErrors {
     private static final SimpleCommandExceptionType REGION_ACROSS_SEAM = new SimpleCommandExceptionType(
             Component.translatable("commands.toroidal_world.region.across_seam"));
 
-    public static void requireInsideWorld(AxisBounds axis, WorldCoordinate coordinate)
+    public static void requireInsideWorld(WorldFold fold, Direction.Axis axis, WorldCoordinate coordinate)
             throws CommandSyntaxException {
         if (coordinate.isRelative()) {
             return;
         }
 
-        requireInsideWorld(axis, coordinate.value());
+        requireInsideWorld(fold, axis, coordinate.value());
     }
 
-    public static void requireInsideWorld(AxisBounds axis, double coord) throws CommandSyntaxException {
-        if (!(axis instanceof AxisBounds.Looped looped) || !looped.isOver(coord)) {
+    public static void requireInsideWorld(WorldFold fold, Direction.Axis axis, double coord)
+            throws CommandSyntaxException {
+        WrapDomain domain = fold.blockDomain(axis);
+        if (!domain.isOver(coord)) {
             return;
         }
 
-        throw COORDINATE_OUTSIDE_WORLD.create(blockOf(coord), looped.minBlock(), looped.maxBlock() - 1);
+        throw COORDINATE_OUTSIDE_WORLD.create(blockOf(coord), domain.lowerBound, domain.upperBound - 1);
     }
 
     private static long blockOf(double coord) {

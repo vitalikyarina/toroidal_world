@@ -8,6 +8,7 @@ import java.util.function.IntPredicate;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
+import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.LogRateGate;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
@@ -48,6 +49,9 @@ public record TranslationContext(
 
     // Vanilla's own floor for a client's requested view distance, below which ChunkMap will not go.
     private static final int MIN_VIEW_DISTANCE = 2;
+
+    private static final double REACH_MARGIN_BLOCKS =
+            (double) CoordinateConstants.VIEW_DISTANCE_MARGIN * CoordinateConstants.CHUNK_WIDTH;
 
     private static final LogRateGate WARN_GATE = new LogRateGate();
 
@@ -92,7 +96,8 @@ public record TranslationContext(
         ChunkPos anchor = chunkAnchor();
         ChunkPos clientPos = transformer.nearestCopy(anchor, chunkPos);
         int viewReach = viewReach();
-        if (Math.abs(clientPos.x() - anchor.x()) > viewReach || Math.abs(clientPos.z() - anchor.z()) > viewReach) {
+        if (chunkOutOfView(Direction.Axis.X, clientPos.x() - anchor.x(), viewReach)
+                || chunkOutOfView(Direction.Axis.Z, clientPos.z() - anchor.z(), viewReach)) {
             warnChunkFarFromAnchor(chunkPos, clientPos, anchor, viewReach);
         }
         return clientPos;
@@ -152,14 +157,14 @@ public record TranslationContext(
     public double toClientX(double x, PacketReach reach) {
         double anchor = clientPosition.x();
         double clientX = transformer.blockDomain(Direction.Axis.X).unwrapAround(anchor, x);
-        guardReach(reach, "x", x, clientX, anchor);
+        guardReach(reach, Direction.Axis.X, x, clientX, anchor);
         return clientX;
     }
 
     public double toClientZ(double z, PacketReach reach) {
         double anchor = clientPosition.z();
         double clientZ = transformer.blockDomain(Direction.Axis.Z).unwrapAround(anchor, z);
-        guardReach(reach, "z", z, clientZ, anchor);
+        guardReach(reach, Direction.Axis.Z, z, clientZ, anchor);
         return clientZ;
     }
 
@@ -167,14 +172,27 @@ public record TranslationContext(
         return PacketReach.tracked(trackedViewDistance);
     }
 
-    private void guardReach(PacketReach reach, String axis, double serverValue, double clientValue, double anchor) {
-        if (!withinReach(clientValue, anchor, reach)) {
+    private void guardReach(PacketReach reach, Direction.Axis axis, double serverValue, double clientValue,
+            double anchor) {
+        if (!withinReach(clientValue, anchor, reach) && carriesReach(transformer.blockDomain(axis), reach)) {
             warnCoordFarFromAnchor(reach, axis, serverValue, clientValue, anchor);
         }
     }
 
+    private boolean chunkOutOfView(Direction.Axis axis, int delta, int viewReach) {
+        return Math.abs(delta) > viewReach && carriesView(transformer.chunkDomain(axis), viewReach);
+    }
+
     static boolean withinReach(double clientValue, double anchor, PacketReach reach) {
         return Math.abs(clientValue - anchor) <= reach.blocks() + reach.slackBlocks();
+    }
+
+    static boolean carriesReach(WrapDomain blockDomain, PacketReach reach) {
+        return blockDomain.fitsInHalf(reach.blocks() + reach.slackBlocks() + REACH_MARGIN_BLOCKS);
+    }
+
+    static boolean carriesView(WrapDomain chunkDomain, int viewReach) {
+        return chunkDomain.fitsInHalf(viewReach + CoordinateConstants.VIEW_DISTANCE_MARGIN);
     }
 
     public double nearestCopyX(double x) {
@@ -195,7 +213,7 @@ public record TranslationContext(
                 dimension.identifier(), serverPos, clientPos, anchor, viewReach);
     }
 
-    private void warnCoordFarFromAnchor(PacketReach reach, String axis,
+    private void warnCoordFarFromAnchor(PacketReach reach, Direction.Axis axis,
             double serverValue, double clientValue, double anchor) {
         if (!WARN_GATE.tryPass()) {
             return;
@@ -203,14 +221,14 @@ public record TranslationContext(
 
         LOGGER.warn("A {} packet's {} lands farther from the client anchor than it can reach in {}:"
                         + " server {} translated to client {} around anchor {}, reach {} blocks, slack {} blocks",
-                reach.kind(), axis, dimension.identifier(), serverValue, clientValue, anchor,
+                reach.kind(), axis.getName(), dimension.identifier(), serverValue, clientValue, anchor,
                 reach.blocks(), reach.slackBlocks());
     }
 
     public Vec3 toClient(Vec3 position, PacketReach reach) {
         Vec3 clientPos = nearestCopy(position);
-        guardReach(reach, "x", position.x, clientPos.x, clientPosition.x());
-        guardReach(reach, "z", position.z, clientPos.z, clientPosition.z());
+        guardReach(reach, Direction.Axis.X, position.x, clientPos.x, clientPosition.x());
+        guardReach(reach, Direction.Axis.Z, position.z, clientPos.z, clientPosition.z());
         return clientPos;
     }
 
@@ -220,6 +238,10 @@ public record TranslationContext(
 
     public BlockPos toServer(BlockPos pos) {
         return transformer.fold(pos);
+    }
+
+    public WorldFold.Folded<BlockPos> toServerOriented(BlockPos pos) {
+        return transformer.foldOriented(pos);
     }
 
     public Vec3 toServer(Vec3 position) {

@@ -49,11 +49,22 @@ public class DistanceManagerMixin implements LevelBindable {
 
     @ModifyVariable(method = "inEntityTickingRange", at = @At("HEAD"), argsOnly = true)
     private long toroidal$entityTickingOnPhysicalChunk(long chunkKey) {
-        if (this.toroidal$level == null) {
-            return chunkKey;
-        }
+        return this.toroidal$foldKey(chunkKey);
+    }
 
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
-        return transformer == null ? chunkKey : transformer.foldChunkKey(chunkKey);
+    @ModifyVariable(method = "inBlockTickingRange", at = @At("HEAD"), argsOnly = true)
+    private long toroidal$blockTickingOnPhysicalChunk(long chunkKey) {
+        return this.toroidal$foldKey(chunkKey);
+    }
+
+    @Unique
+    private long toroidal$foldKey(long key) {
+        WorldFold transformer = this.toroidal$wrappedTransformer();
+        return transformer == null ? key : transformer.foldChunkKey(key);
+    }
+
+    @Unique
+    private @Nullable WorldFold toroidal$wrappedTransformer() {
+        return WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
     }
 }

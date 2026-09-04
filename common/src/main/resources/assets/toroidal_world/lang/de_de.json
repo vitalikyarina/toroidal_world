@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "Zurück am Anfang",
+  "advancements.toroidal_world.circumnavigate.description": "Umrunde die Welt einmal vollständig",
+
   "argument.toroidal_world.pos.outside_world": "%s liegt außerhalb dieser Welt — muss zwischen %s und %s liegen",
   "commands.toroidal_world.region.across_seam": "Dieser Bereich kreuzt die Weltnaht und kann beide Seiten meinen — führe den Befehl je Seite einmal aus",
 
@@ -9,6 +12,7 @@
   "gui.toroidal_world.world_shape.toroidal.hint": "Beide horizontalen Achsen schließen sich — wer weit genug in eine Richtung geht, kommt am Ausgangspunkt wieder an.",
   "gui.toroidal_world.world_shape.cylinder": "Zylindrisch",
   "gui.toroidal_world.world_shape.cylinder.hint": "Eine horizontale Achse schließt sich, die andere geht wie in Vanilla endlos weiter.",
+  "gui.toroidal_world.world_shape.unavailable": "Dieser Welttyp bringt einen eigenen Weltgenerator mit, der keine Weltform annehmen kann.",
 
   "gui.toroidal_world.toroidal_settings.title": "Einstellungen der toroidalen Welt",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Winzig",

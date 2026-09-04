@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "Z powrotem na starcie",
+  "advancements.toroidal_world.circumnavigate.description": "Okrąż świat dookoła",
+
   "argument.toroidal_world.pos.outside_world": "%s znajduje się poza tym światem — musi być pomiędzy %s a %s",
   "commands.toroidal_world.region.across_seam": "Ten obszar przecina szew świata i może oznaczać każdą z jego stron — wykonaj komendę osobno dla każdej strony",
 
@@ -9,6 +12,7 @@
   "gui.toroidal_world.world_shape.toroidal.hint": "Obie osie poziome się zapętlają — idź dostatecznie daleko w dowolną stronę, a wrócisz do punktu wyjścia.",
   "gui.toroidal_world.world_shape.cylinder": "Cylindryczny",
   "gui.toroidal_world.world_shape.cylinder.hint": "Jedna oś pozioma się zapętla, druga ciągnie się bez końca jak w zwykłym świecie.",
+  "gui.toroidal_world.world_shape.unavailable": "Ten typ świata ma własny generator świata, który nie może przyjąć Kształtu świata.",
 
   "gui.toroidal_world.toroidal_settings.title": "Ustawienia świata toroidalnego",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Malutki",

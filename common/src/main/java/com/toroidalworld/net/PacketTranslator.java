@@ -1,7 +1,6 @@
 package com.toroidalworld.net;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,6 +14,7 @@ import java.util.function.UnaryOperator;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.SeamDelta;
+import com.toroidalworld.core.SeamHit;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.mixin.BlockEntityDataPacketAccessor;
 import com.toroidalworld.mixin.ChunkWaypointAccessor;
@@ -27,6 +27,8 @@ import com.toroidalworld.mixin.SetBorderCenterPacketAccessor;
 import com.toroidalworld.mixin.Vec3iWaypointAccessor;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.ClientPosition.BorderCenter;
+import com.toroidalworld.player.MirrorWriter;
+import com.toroidalworld.registry.StartupRegistry;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -41,6 +43,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -95,7 +98,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.gameevent.BlockPositionSource;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class PacketTranslator {
@@ -135,31 +137,44 @@ public final class PacketTranslator {
             Map.entry(ClientboundPlayerLookAtPacket.class, rewriter(PacketTranslator::playerLookAt)),
             Map.entry(ClientboundDamageEventPacket.class, rewriter(PacketTranslator::damageEvent)),
             Map.entry(ClientboundMoveMinecartPacket.class, rewriter(PacketTranslator::moveMinecart)),
-            Map.entry(ClientboundCustomPayloadPacket.class, rewriter(PacketTranslator::customPayload)));
+            Map.entry(ClientboundCustomPayloadPacket.class, rewriter(PacketTranslator::clientboundCustomPayload)));
 
-    private static final Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>> PAYLOAD_REWRITERS =
-            new HashMap<>();
+    private static final StartupRegistry<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
+            CLIENTBOUND_PAYLOAD_REWRITERS = new StartupRegistry<>("Clientbound payload rewriters");
 
-    public static <P extends CustomPacketPayload> void registerPayloadRewriter(Class<P> payloadType,
+    private static final StartupRegistry<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>>
+            SERVERBOUND_PAYLOAD_REWRITERS = new StartupRegistry<>("Serverbound payload rewriters");
+
+    public static <P extends CustomPacketPayload> void registerClientboundPayloadRewriter(Class<P> payloadType,
             BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
-        PAYLOAD_REWRITERS.put(payloadType,
-                (payload, context) -> payloadRewriter.apply(payloadType.cast(payload), context));
+        CLIENTBOUND_PAYLOAD_REWRITERS.register(payloadType, castingRewriter(payloadType, payloadRewriter));
+    }
+
+    public static <P extends CustomPacketPayload> void registerServerboundPayloadRewriter(Class<P> payloadType,
+            BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
+        SERVERBOUND_PAYLOAD_REWRITERS.register(payloadType, castingRewriter(payloadType, payloadRewriter));
+    }
+
+    private static <P extends CustomPacketPayload> BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>
+            castingRewriter(Class<P> payloadType, BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
+        return (payload, context) -> payloadRewriter.apply(payloadType.cast(payload), context);
     }
 
     public interface ParticleRewriter<P extends ParticleOptions> {
         ParticleOptions rewrite(P particle, TranslationContext context, Vec3 clientOrigin);
     }
 
-    private static final Map<Class<?>, ParticleRewriter<ParticleOptions>> PARTICLE_REWRITERS = new HashMap<>();
+    private static final StartupRegistry<Class<?>, ParticleRewriter<ParticleOptions>> PARTICLE_REWRITERS =
+            new StartupRegistry<>("Particle rewriters");
 
     public static <P extends ParticleOptions> void registerParticleRewriter(Class<P> particleType,
             ParticleRewriter<P> particleRewriter) {
-        PARTICLE_REWRITERS.put(particleType,
+        PARTICLE_REWRITERS.register(particleType,
                 (particle, context, clientOrigin) -> particleRewriter.rewrite(particleType.cast(particle), context, clientOrigin));
     }
 
     private static @Nullable ParticleRewriter<ParticleOptions> particleRewriterFor(ParticleOptions particle) {
-        return PARTICLE_REWRITERS.get(particle.getClass());
+        return PARTICLE_REWRITERS.entries().get(particle.getClass());
     }
 
     private static final Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> TO_SERVER = Map.ofEntries(
@@ -174,7 +189,8 @@ public final class PacketTranslator {
             Map.entry(ServerboundSetJigsawBlockPacket.class, rewriter(PacketTranslator::setJigsawBlock)),
             Map.entry(ServerboundSetStructureBlockPacket.class, rewriter(PacketTranslator::setStructureBlock)),
             Map.entry(ServerboundSetTestBlockPacket.class, rewriter(PacketTranslator::setTestBlock)),
-            Map.entry(ServerboundTestInstanceBlockActionPacket.class, rewriter(PacketTranslator::testInstanceBlockAction)));
+            Map.entry(ServerboundTestInstanceBlockActionPacket.class, rewriter(PacketTranslator::testInstanceBlockAction)),
+            Map.entry(ServerboundCustomPayloadPacket.class, rewriter(PacketTranslator::serverboundCustomPayload)));
 
     public static <T extends net.minecraft.network.PacketListener> Packet<T> toClient(Packet<T> packet, ServerPlayer player) {
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
@@ -290,15 +306,22 @@ public final class PacketTranslator {
         return new ClientboundSetChunkCacheCenterPacket(clientPos.x(), clientPos.z());
     }
 
-    private static Packet<?> customPayload(ClientboundCustomPayloadPacket packet, TranslationContext context) {
-        BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload> payloadRewriter =
-                PAYLOAD_REWRITERS.get(packet.payload().getClass());
-        if (payloadRewriter == null) {
-            return packet;
-        }
-
-        CustomPacketPayload rewritten = payloadRewriter.apply(packet.payload(), context);
+    private static Packet<?> clientboundCustomPayload(ClientboundCustomPayloadPacket packet, TranslationContext context) {
+        CustomPacketPayload rewritten = rewritePayload(CLIENTBOUND_PAYLOAD_REWRITERS.entries(), packet.payload(), context);
         return rewritten == packet.payload() ? packet : new ClientboundCustomPayloadPacket(rewritten);
+    }
+
+    private static Packet<?> serverboundCustomPayload(ServerboundCustomPayloadPacket packet, TranslationContext context) {
+        CustomPacketPayload rewritten = rewritePayload(SERVERBOUND_PAYLOAD_REWRITERS.entries(), packet.payload(), context);
+        return rewritten == packet.payload() ? packet : new ServerboundCustomPayloadPacket(rewritten);
+    }
+
+    private static CustomPacketPayload rewritePayload(
+            Map<Class<?>, BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>> rewriters,
+            CustomPacketPayload payload, TranslationContext context) {
+        BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload> payloadRewriter =
+                rewriters.get(payload.getClass());
+        return payloadRewriter == null ? payload : payloadRewriter.apply(payload, context);
     }
 
     private static ClientboundPlayerPositionPacket playerPosition(ClientboundPlayerPositionPacket packet, TranslationContext context) {
@@ -318,7 +341,7 @@ public final class PacketTranslator {
         double foldedZ = relativeZ ? SeamDelta.foldZ(context.transformer(), position.z) : 0.0;
         double clientX = relativeX ? clientPosition.x() + foldedX : context.nearestCopyX(position.x);
         double clientZ = relativeZ ? clientPosition.z() + foldedZ : context.nearestCopyZ(position.z);
-        clientPosition.set(clientX, clientZ);
+        clientPosition.set(clientX, clientZ, MirrorWriter.POSITION_PACKET);
 
         Vec3 sentPosition = new Vec3(relativeX ? foldedX : clientX, position.y, relativeZ ? foldedZ : clientZ);
         return new ClientboundPlayerPositionPacket(
@@ -684,19 +707,16 @@ public final class PacketTranslator {
 
     private static ServerboundUseItemOnPacket useItemOn(ServerboundUseItemOnPacket packet, TranslationContext context) {
         BlockHitResult hit = packet.getHitResult();
-        BlockPos pos = context.toServer(hit.getBlockPos());
-        Vec3 offsetInBlock = hit.getLocation().subtract(Vec3.atLowerCornerOf(hit.getBlockPos()));
-        Vec3 location = Vec3.atLowerCornerOf(pos).add(offsetInBlock);
-
-        BlockHitResult wrapped = hit.getType() == HitResult.Type.MISS
-                ? BlockHitResult.miss(location, hit.getDirection(), pos)
-                : new BlockHitResult(location, hit.getDirection(), pos, hit.isInside(), hit.isWorldBorderHit());
-        return new ServerboundUseItemOnPacket(packet.getHand(), wrapped, packet.getSequence());
+        BlockHitResult wrapped = SeamHit.reseat(hit, context.toServerOriented(hit.getBlockPos()));
+        return wrapped == hit
+                ? packet
+                : new ServerboundUseItemOnPacket(packet.getHand(), wrapped, packet.getSequence());
     }
 
     private static ServerboundPlayerActionPacket playerAction(ServerboundPlayerActionPacket packet, TranslationContext context) {
-        return new ServerboundPlayerActionPacket(packet.getAction(), context.toServer(packet.getPos()),
-                packet.getDirection(), packet.getSequence());
+        WorldFold.Folded<BlockPos> folded = context.toServerOriented(packet.getPos());
+        return new ServerboundPlayerActionPacket(packet.getAction(), folded.value(),
+                folded.orientation().applyToFace(packet.getDirection()), packet.getSequence());
     }
 
     private static ServerboundPickItemFromBlockPacket pickItemFromBlock(ServerboundPickItemFromBlockPacket packet, TranslationContext context) {

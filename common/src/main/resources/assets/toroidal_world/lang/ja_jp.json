@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "振り出しに戻る",
+  "advancements.toroidal_world.circumnavigate.description": "世界を一周する",
+
   "argument.toroidal_world.pos.outside_world": "%s はこのワールドの外にあります — %s と %s の間でなければなりません",
   "commands.toroidal_world.region.across_seam": "この範囲はワールドの継ぎ目をまたいでおり、どちら側とも解釈できます — 片側ずつコマンドを実行してください",
 
@@ -9,6 +12,7 @@
   "gui.toroidal_world.world_shape.toroidal.hint": "水平な2つの軸がどちらもループします。どの方向でも十分に進めば出発地点に戻ってきます。",
   "gui.toroidal_world.world_shape.cylinder": "円筒形",
   "gui.toroidal_world.world_shape.cylinder.hint": "水平な軸の一方がループし、もう一方は通常のワールドと同じく無限に続きます。",
+  "gui.toroidal_world.world_shape.unavailable": "このワールドタイプは独自のワールドジェネレーターを使うため、ワールドの形状を適用できません。",
 
   "gui.toroidal_world.toroidal_settings.title": "トロイダルワールド設定",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "極小",

@@ -6,9 +6,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
+import com.toroidalworld.core.FoldedOrder;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.entity.SeamRange;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -23,12 +24,16 @@ import net.minecraft.world.phys.Vec3;
 public class PrepareRamNearestTargetMixin {
     @ModifyArg(
             method = "calculateRammingStartPosition",
-            at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;sorted(Ljava/util/Comparator;)Ljava/util/stream/Stream;"),
+            at = @At(value = "INVOKE", target = InjectionTargets.STREAM_SORTED),
             index = 0)
     private Comparator<BlockPos> toroidal$ramStartOrderThroughSeam(Comparator<BlockPos> original,
             @Local(argsOnly = true) PathfinderMob body) {
-        BlockPos bodyPos = body.blockPosition();
-        return Comparator.comparingDouble(candidate -> SeamRange.sqr(body, bodyPos, candidate));
+        WorldFold transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
+        if (transformer == null) {
+            return original;
+        }
+
+        return FoldedOrder.around(original, transformer, body.blockPosition());
     }
 
     @ModifyExpressionValue(

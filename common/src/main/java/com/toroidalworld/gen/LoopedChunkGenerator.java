@@ -72,6 +72,11 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
     }
 
     @Override
+    public ChunkGenerator unshaped() {
+        return new NoiseBasedChunkGenerator(getBiomeSource(), generatorSettings());
+    }
+
+    @Override
     public ChunkGeneratorStructureState createState(HolderLookup<StructureSet> structureSets, RandomState randomState,
             long legacyLevelSeed) {
         return stampTransformer(super.createState(structureSets, randomState, legacyLevelSeed));

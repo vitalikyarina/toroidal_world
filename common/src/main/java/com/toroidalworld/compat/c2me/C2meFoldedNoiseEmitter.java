@@ -30,6 +30,7 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
             Type.DOUBLE_TYPE,
             Type.DOUBLE_TYPE,
             Type.DOUBLE_TYPE,
+            Type.DOUBLE_TYPE,
             Type.DOUBLE_TYPE);
 
     private static final String LOOP_CLASS = Type.getInternalName(C2meFoldedNoiseLoop.class);
@@ -46,6 +47,7 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
             Type.getType(double[].class),
             Type.DOUBLE_TYPE,
             Type.getType(double[].class),
+            Type.DOUBLE_TYPE,
             Type.DOUBLE_TYPE,
             Type.DOUBLE_TYPE);
 
@@ -77,6 +79,7 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
         context.callDelegateSingle(m, foldedYMethod);
         context.callDelegateSingle(m, foldedZMethod);
         m.dconst(node.horizontalScale);
+        m.dconst(node.verticalShare);
         m.invokestatic(SAMPLE_CLASS, SAMPLE_METHOD, SAMPLE_DESC, false);
         m.areturn(Type.DOUBLE_TYPE);
     }
@@ -142,6 +145,7 @@ public final class C2meFoldedNoiseEmitter implements BytecodeEmitter<C2meFoldedN
         loadAxis(m, arrays, readArrays, foldedZMethod, constantZ);
 
         m.dconst(node.horizontalScale);
+        m.dconst(node.verticalShare);
         m.invokestatic(LOOP_CLASS, FILL_METHOD, FILL_DESC, false);
 
         for (int arrayIdx = 1; arrayIdx < arrays.length; arrayIdx++) {

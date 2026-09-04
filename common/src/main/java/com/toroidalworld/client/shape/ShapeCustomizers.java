@@ -1,10 +1,8 @@
 package com.toroidalworld.client.shape;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.registry.StartupRegistry;
 import com.toroidalworld.shape.WorldShape;
 
 import net.minecraft.client.gui.screens.Screen;
@@ -16,14 +14,15 @@ public final class ShapeCustomizers {
         Screen createScreen(Screen parent);
     }
 
-    private static final Map<Identifier, Customizer> CUSTOMIZERS = new HashMap<>();
+    private static final StartupRegistry<Identifier, Customizer> CUSTOMIZERS =
+            new StartupRegistry<>("Shape customizers");
 
     public static void register(Identifier shapeId, Customizer customizer) {
-        CUSTOMIZERS.put(shapeId, customizer);
+        CUSTOMIZERS.register(shapeId, customizer);
     }
 
     public static @Nullable Customizer of(WorldShape shape) {
-        return CUSTOMIZERS.get(shape.id());
+        return CUSTOMIZERS.entries().get(shape.id());
     }
 
     private ShapeCustomizers() {

@@ -12,9 +12,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.toroidalworld.accessors.ChunkResender;
 import com.toroidalworld.accessors.ClientPositionHolder;
 import com.toroidalworld.accessors.TrackedEntityRefresher;
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.SeamDelta;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.player.ClientPosition;
+import com.toroidalworld.player.MirrorWriter;
 import com.toroidalworld.player.SeamSnap;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -215,7 +217,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         }
 
         ClientPosition mirror = this.toroidal$clientPosition;
-        mirror.setX(clamped);
+        mirror.setX(clamped, MirrorWriter.PLAYER_MOVE);
         double unwrapped = transformer.blockDomain(Direction.Axis.X).unwrapAround(this.player.getX(), clamped);
 
         this.firstGoodX = transformer.blockDomain(Direction.Axis.X).unwrapAround(unwrapped, this.firstGoodX);
@@ -238,7 +240,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         }
 
         ClientPosition mirror = this.toroidal$clientPosition;
-        mirror.setZ(clamped);
+        mirror.setZ(clamped, MirrorWriter.PLAYER_MOVE);
         double unwrapped = transformer.blockDomain(Direction.Axis.Z).unwrapAround(this.player.getZ(), clamped);
 
         this.firstGoodZ = transformer.blockDomain(Direction.Axis.Z).unwrapAround(unwrapped, this.firstGoodZ);
@@ -249,12 +251,17 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
     @Inject(method = "handleMovePlayer", at = @At("RETURN"))
     private void toroidal$wrapIntoBounds(ServerboundMovePlayerPacket packet, CallbackInfo ci) {
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.player.level());
-        if (transformer == null || !transformer.isOver(this.player.position())) {
+        if (transformer == null) {
             return;
         }
 
-        Vec3 wrapped = transformer.fold(this.player.position());
-        SeamSnap.withPassengers(this.player, wrapped.subtract(this.player.position()));
+        DeckTransformation lap = transformer.foldTransformation(this.player.position());
+        if (lap.isIdentity()) {
+            return;
+        }
+
+        Vec3 wrapped = lap.apply(this.player.position());
+        SeamSnap.withPassengers(this.player, lap);
         this.firstGoodX = wrapped.x;
         this.firstGoodZ = wrapped.z;
         this.lastGoodX = wrapped.x;
@@ -274,7 +281,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             return clamped;
         }
 
-        WorldLoopAttachments.clientPositionOf(this.player).setX(clamped);
+        WorldLoopAttachments.clientPositionOf(this.player).setX(clamped, MirrorWriter.VEHICLE_MOVE);
         return transformer.blockDomain(Direction.Axis.X).unwrapAround(this.player.getRootVehicle().getX(), clamped);
     }
 
@@ -291,7 +298,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             return clamped;
         }
 
-        WorldLoopAttachments.clientPositionOf(this.player).setZ(clamped);
+        WorldLoopAttachments.clientPositionOf(this.player).setZ(clamped, MirrorWriter.VEHICLE_MOVE);
         return transformer.blockDomain(Direction.Axis.Z).unwrapAround(this.player.getRootVehicle().getZ(), clamped);
     }
 
@@ -303,12 +310,16 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
         }
 
         Entity vehicle = this.player.getRootVehicle();
-        if (vehicle == this.player || !transformer.isOver(vehicle.position())) {
+        if (vehicle == this.player) {
             return;
         }
 
-        Vec3 wrapped = transformer.fold(vehicle.position());
-        SeamSnap.withPassengers(vehicle, wrapped.subtract(vehicle.position()));
+        DeckTransformation lap = transformer.foldTransformation(vehicle.position());
+        if (lap.isIdentity()) {
+            return;
+        }
+
+        SeamSnap.withPassengers(vehicle, lap);
 
         this.vehicleFirstGoodX = vehicle.getX();
         this.vehicleFirstGoodZ = vehicle.getZ();

@@ -11,6 +11,7 @@ import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.gen.WorldShapeReport;
 import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.registry.RegistrationBoundary;
 import com.toroidalworld.storage.CurrentServer;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.toroidalworld.storage.SeamRespawnData;
@@ -38,10 +39,19 @@ public class MinecraftServerMixin {
         CurrentServer.clear();
     }
 
+    @Inject(method = "runServer", at = @At("HEAD"))
+    private void toroidal$closeRegistrationBoundary(CallbackInfo ci) {
+        RegistrationBoundary.STARTUP.close();
+    }
+
     @Inject(method = "createLevels", at = @At("TAIL"))
     private void toroidal$logWorldShape(CallbackInfo ci) {
-        for (String line : WorldShapeReport.lines((MinecraftServer) (Object) this)) {
-            ToroidalWorld.LOGGER.info(line);
+        for (WorldShapeReport.Line line : WorldShapeReport.lines((MinecraftServer) (Object) this)) {
+            if (line.broken()) {
+                ToroidalWorld.LOGGER.warn(line.text());
+            } else {
+                ToroidalWorld.LOGGER.info(line.text());
+            }
         }
     }
 

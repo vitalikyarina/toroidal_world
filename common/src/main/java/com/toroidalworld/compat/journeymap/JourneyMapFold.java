@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 
 import com.toroidalworld.api.ToroidalShape;
 import com.toroidalworld.api.ToroidalWorldClientApi;
+import com.toroidalworld.client.ClientFrame;
 import com.toroidalworld.compat.AxisCopies;
 import com.toroidalworld.compat.FullscreenZoomFloor;
 import com.mojang.logging.LogUtils;
@@ -44,13 +45,7 @@ public final class JourneyMapFold {
     }
 
     public static Vec3 nearestToPlayer(Vec3 position) {
-        ToroidalShape shape = shape();
-        if (shape == null || position == null) {
-            return position;
-        }
-
-        var player = Minecraft.getInstance().player;
-        return player == null ? position : shape.nearestCopy(player.position(), position);
+        return ClientFrame.nearestToPlayer(position);
     }
 
     public static boolean active() {

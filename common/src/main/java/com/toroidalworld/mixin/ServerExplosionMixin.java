@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamAim;
 
 import net.minecraft.world.entity.Entity;
@@ -24,7 +25,7 @@ public class ServerExplosionMixin {
     @ModifyExpressionValue(
             method = { "hurtEntities()V", "hurtEntities(Ljava/util/List;)V" },
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"),
+                    target = InjectionTargets.VEC3_SUBTRACT),
             require = 1)
     private Vec3 toroidal$knockbackDirectionThroughSeam(Vec3 delta, @Local Entity entity) {
         return SeamAim.foldDelta(entity, delta);

@@ -1,11 +1,16 @@
 package com.toroidalworld.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -38,6 +43,8 @@ class IdentityFastPathTest {
     private static final int MIRROR_LINE_CHUNK = 5;
     private static final double NETHER_SCALE = 0.125;
     private static final double SHIFT_TOLERANCE = 1.0e-9;
+    private static final int COPY_REACH = 3;
+    private static final int WIDE_REGION_LAPS = 3;
 
     private static final WorldLoopBounds SQUARE = new WorldLoopBounds(-32, 32, -32, 32);
     private static final WorldLoopBounds X_ONLY_BOUNDS =
@@ -57,6 +64,8 @@ class IdentityFastPathTest {
             new DeckGroupFold(FlatShape.mirrored(SQUARE, Direction.Axis.Z, MIRROR_LINE_CHUNK)));
 
     private static final List<WorldFold> FOLDS = Stream.concat(PER_AXIS.stream(), DECK_GROUP.stream()).toList();
+
+    private static final List<WorldFold> DECOMPOSABLE = FOLDS.stream().filter(WorldFold::decomposesPerAxis).toList();
 
     @Test
     void blockFoldKeepsItsValueAndReturnsAnInBoundsArgumentUntouched() {
@@ -135,6 +144,24 @@ class IdentityFastPathTest {
             }
 
             assertUntouched(pos, folded, !fold.isOver(pos.chunk()), fold);
+        });
+    }
+
+    @Test
+    void theFoldTransformationSeatsThePositionAndStandsDownInsideTheBounds() {
+        forEach(FOLDS, (fold, random) -> {
+            Vec3 vec = sampleVec(random, fold);
+            DeckTransformation lap = fold.foldTransformation(vec);
+
+            assertEquals(fold.fold(vec), lap.apply(vec),
+                    () -> "foldTransformation(" + vec + ").apply is not fold(" + vec + ") " + in(fold));
+
+            if (!fold.isOver(vec)) {
+                assertSame(DeckTransformation.IDENTITY, lap,
+                        () -> "foldTransformation(" + vec + ") allocated an identity " + in(fold));
+                assertSame(vec, lap.apply(vec),
+                        () -> "foldTransformation(" + vec + ").apply rebuilt its argument " + in(fold));
+            }
         });
     }
 
@@ -326,6 +353,64 @@ class IdentityFastPathTest {
     }
 
     @Test
+    void copiesTouchingIsTheLapProductWhereTheShapeDecomposes() {
+        forEach(DECOMPOSABLE, (fold, random) -> {
+            BoundingBox region = wideRegion(random, fold);
+            int reach = random.nextInt(COPY_REACH + 1);
+            List<DeckTransformation> copies = fold.copiesTouching(region, reach);
+
+            Set<DeckTransformation> expected = new HashSet<>();
+            for (int lapX : laps(blockX(fold), region.minX(), region.maxX(), reach)) {
+                for (int lapZ : laps(blockZ(fold), region.minZ(), region.maxZ(), reach)) {
+                    expected.add(new DeckTransformation(SeamTransform.translation(
+                            lapX * blockX(fold).domainLength, lapZ * blockZ(fold).domainLength)));
+                }
+            }
+
+            assertEquals(expected, new HashSet<>(copies),
+                    () -> "copiesTouching(" + region + ", " + reach + ") " + in(fold));
+            assertEquals(expected.size(), copies.size(), () -> "a copy listed twice " + in(fold));
+            for (int index = 0; index < copies.size(); index++) {
+                if (copies.get(index).isIdentity()) {
+                    assertEquals(0, index, () -> "the identity is not first in " + copies + " " + in(fold));
+                    assertSame(DeckTransformation.IDENTITY, copies.get(index), () -> in(fold));
+                }
+            }
+        });
+    }
+
+    @Test
+    void foldsOntoItselfIsWiderThanTheWorldOnEitherAxisWhereTheShapeDecomposes() {
+        forEach(DECOMPOSABLE, (fold, random) -> {
+            BoundingBox region = wideRegion(random, fold);
+            boolean expected = widerThanTheWorld(blockX(fold), region.getXSpan())
+                    || widerThanTheWorld(blockZ(fold), region.getZSpan());
+
+            assertEquals(expected, fold.foldsOntoItself(region), () -> "foldsOntoItself(" + region + ") " + in(fold));
+        });
+    }
+
+    @Test
+    void aRegionInsideTheBoundsListsTheIdentityInstanceAloneAndNeverFoldsOntoItself() {
+        forEach(FOLDS, (fold, random) -> {
+            BoundingBox region = insideRegion(random, fold);
+            List<DeckTransformation> copies = fold.copiesTouching(region, random.nextInt(COPY_REACH + 1));
+
+            assertEquals(1, copies.size(), () -> "copiesTouching(" + region + ") " + in(fold));
+            assertSame(DeckTransformation.IDENTITY, copies.getFirst(), () -> in(fold));
+            assertFalse(fold.foldsOntoItself(region), () -> "foldsOntoItself(" + region + ") " + in(fold));
+        });
+    }
+
+    @Test
+    void aNegativeReachIsRefused() {
+        forEach(FOLDS, (fold, random) -> {
+            BoundingBox region = sampleRegion(random, fold);
+            assertThrows(IllegalArgumentException.class, () -> fold.copiesTouching(region, -1), () -> in(fold));
+        });
+    }
+
+    @Test
     void aBoxWhoseFarEdgeRestsOnTheUpperBoundCrossesNothing() {
         AABB box = new AABB(500.0, 60.0, 500.0, 512.0, 62.0, 512.0);
 
@@ -497,6 +582,55 @@ class IdentityFastPathTest {
         return new BoundingBox(minX, minY, minZ,
                 minX + regionSpan(random, fold.bounds().x()), minY + random.nextInt(CHUNK_BLOCKS),
                 minZ + regionSpan(random, fold.bounds().z()));
+    }
+
+    private static List<Integer> laps(WrapDomain domain, int min, int max, int reach) {
+        if (domain instanceof WrapDomain.Noop) {
+            return List.of(0);
+        }
+
+        int first = Math.max(Math.floorDiv(min - domain.lowerBound, domain.domainLength), -reach);
+        int last = Math.min(Math.floorDiv(max - domain.lowerBound, domain.domainLength), reach);
+        List<Integer> laps = new ArrayList<>();
+        for (int lap = first; lap <= last; lap++) {
+            laps.add(lap);
+        }
+
+        return laps;
+    }
+
+    private static boolean widerThanTheWorld(WrapDomain domain, int span) {
+        return !(domain instanceof WrapDomain.Noop) && span > domain.domainLength;
+    }
+
+    private static int wideSpan(Random random, AxisBounds axis) {
+        return random.nextInt((axis instanceof AxisBounds.Looped looped
+                ? WIDE_REGION_LAPS * looped.blockWidth()
+                : UNBOUNDED_REGION_REACH) + 1);
+    }
+
+    private static BoundingBox wideRegion(Random random, WorldFold fold) {
+        int minX = sampleBlockCoord(random, fold.bounds().x());
+        int minZ = sampleBlockCoord(random, fold.bounds().z());
+        int minY = sampleY(random);
+        return new BoundingBox(minX, minY, minZ,
+                minX + wideSpan(random, fold.bounds().x()), minY + random.nextInt(CHUNK_BLOCKS),
+                minZ + wideSpan(random, fold.bounds().z()));
+    }
+
+    private static int insideSpan(Random random, AxisBounds axis, int min) {
+        return axis instanceof AxisBounds.Looped looped
+                ? random.nextInt(looped.maxBlock() - min)
+                : regionSpan(random, axis);
+    }
+
+    private static BoundingBox insideRegion(Random random, WorldFold fold) {
+        int minX = insideBlockCoord(random, fold.bounds().x());
+        int minZ = insideBlockCoord(random, fold.bounds().z());
+        int minY = sampleY(random);
+        return new BoundingBox(minX, minY, minZ,
+                minX + insideSpan(random, fold.bounds().x(), minX), minY + random.nextInt(CHUNK_BLOCKS),
+                minZ + insideSpan(random, fold.bounds().z(), minZ));
     }
 
     private static WrapDomain blockX(WorldFold fold) {

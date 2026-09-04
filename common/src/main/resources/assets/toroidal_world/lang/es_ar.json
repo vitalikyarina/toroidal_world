@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "De vuelta al principio",
+  "advancements.toroidal_world.circumnavigate.description": "Recorré una vuelta completa al mundo",
+
   "argument.toroidal_world.pos.outside_world": "%s está fuera de este mundo — debe estar entre %s y %s",
   "commands.toroidal_world.region.across_seam": "Esa zona cruza la costura del mundo y puede significar cualquiera de los dos lados — ejecuta el comando una vez por lado",
 
@@ -9,6 +12,7 @@
   "gui.toroidal_world.world_shape.toroidal.hint": "Ambos ejes horizontales se cierran sobre sí mismos: camina lo suficiente en cualquier dirección y volverás al punto de partida.",
   "gui.toroidal_world.world_shape.cylinder": "Cilíndrica",
   "gui.toroidal_world.world_shape.cylinder.hint": "Un eje horizontal se cierra sobre sí mismo; el otro sigue sin fin, como en el mundo normal.",
+  "gui.toroidal_world.world_shape.unavailable": "Este tipo de mundo trae su propio generador de mundo, que no puede adoptar una Forma del mundo.",
 
   "gui.toroidal_world.toroidal_settings.title": "Ajustes del mundo toroidal",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Minúsculo",

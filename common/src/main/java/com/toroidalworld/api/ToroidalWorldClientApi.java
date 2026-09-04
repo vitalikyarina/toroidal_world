@@ -2,10 +2,13 @@ package com.toroidalworld.api;
 
 import java.util.Optional;
 
+import com.toroidalworld.client.PublishedShapes;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 
 /**
  * Entry point for reading toroidal geometry on the client. A client level's own engine believes the world is
@@ -25,6 +28,16 @@ public final class ToroidalWorldClientApi {
     public static Optional<ToroidalShape> shapeOf(ClientLevel level) {
         WorldFold transformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
         return transformer == null ? Optional.empty() : Optional.of(new WorldFoldToroidalShape(transformer));
+    }
+
+    /**
+     * The toroidal shape the server declared for {@code dimension}, whether or not the player is standing in it —
+     * what a fullscreen map browsing another dimension folds by. Empty when that dimension does not loop, or when
+     * the server never published it: every looping level arrives on login, before the first chunk.
+     */
+    public static Optional<ToroidalShape> shapeOf(ResourceKey<Level> dimension) {
+        WorldFold fold = PublishedShapes.foldOf(dimension);
+        return fold == null ? Optional.empty() : Optional.of(new WorldFoldToroidalShape(fold));
     }
 
     private ToroidalWorldClientApi() {

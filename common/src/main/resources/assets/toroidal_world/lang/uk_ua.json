@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "Там, де почав",
+  "advancements.toroidal_world.circumnavigate.description": "Пройди повне коло навколо світу",
+
   "argument.toroidal_world.pos.outside_world": "%s поза межами цього світу — має бути між %s і %s",
   "commands.toroidal_world.region.across_seam": "Ця область перетинає шов світу й може означати будь-який його бік — виконай команду окремо для кожного",
 
@@ -9,6 +12,7 @@
   "gui.toroidal_world.world_shape.toroidal.hint": "Обидві горизонтальні осі зациклені — пройди достатньо в будь-який бік і повернешся туди, звідки вийшов.",
   "gui.toroidal_world.world_shape.cylinder": "Циліндрична",
   "gui.toroidal_world.world_shape.cylinder.hint": "Одна горизонтальна вісь зациклена, інша триває нескінченно, як у звичайному світі.",
+  "gui.toroidal_world.world_shape.unavailable": "Цей тип світу має власний генератор світу, який не приймає Форму світу.",
 
   "gui.toroidal_world.toroidal_settings.title": "Налаштування тороїдального світу",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "Крихітний",

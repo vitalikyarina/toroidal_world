@@ -80,6 +80,8 @@ public interface WorldFold {
 
     Folded<BlockPos> nearestCopyOriented(BlockPos ref, BlockPos target);
 
+    DeckTransformation foldTransformation(Vec3 pos);
+
     DeckTransformation deckTransformation(ChunkPos chunk, ChunkPos copy);
 
     BlockPos reseat(BlockPos pos, ChunkPos copy);
@@ -103,6 +105,10 @@ public interface WorldFold {
     List<Folded<BoundingBox>> split(BoundingBox region);
 
     boolean regionsOverlap(BoundingBox first, BoundingBox second);
+
+    List<DeckTransformation> copiesTouching(BoundingBox region, int reach);
+
+    boolean foldsOntoItself(BoundingBox region);
 
     Folded<AABB> foldBox(Vec3 ref, AABB box);
 }

@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
@@ -20,7 +21,7 @@ public class BeeWanderGoalMixin {
     @ModifyExpressionValue(
             method = "findPos",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;atCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"))
+                    target = InjectionTargets.VEC3_AT_CENTER_OF))
     private Vec3 toroidal$hiveBiasThroughSeam(Vec3 hiveCenter) {
         return SeamSteering.nearestCopy(this.bee, hiveCenter);
     }

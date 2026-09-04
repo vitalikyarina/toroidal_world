@@ -8,12 +8,12 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.accessors.TransformerHolder;
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.net.PacketReach;
 import com.toroidalworld.noise.GenerationTransformerContext;
@@ -84,9 +84,9 @@ public class ServerLevelMixin {
             return;
         }
 
-        if (transformer.isOver(entity.position())) {
-            Vec3 wrapped = transformer.fold(entity.position());
-            SeamSnap.withPassengers(entity, wrapped.subtract(entity.position()));
+        DeckTransformation lap = transformer.foldTransformation(entity.position());
+        if (!lap.isIdentity()) {
+            SeamSnap.withPassengers(entity, lap);
         }
     }
 
@@ -105,16 +105,6 @@ public class ServerLevelMixin {
         }
 
         return square.map(chunkPos -> transformer.fold(chunkPos)).distinct();
-    }
-
-    @ModifyVariable(method = "shouldTickBlocksAt(J)Z", at = @At("HEAD"), argsOnly = true)
-    private long toroidal$tickingChunkThroughSeam(long chunkPos) {
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf((ServerLevel) (Object) this);
-        if (transformer == null) {
-            return chunkPos;
-        }
-
-        return transformer.foldChunkKey(chunkPos);
     }
 
     @WrapMethod(method = "sendParticles(Lnet/minecraft/server/level/ServerPlayer;ZDDDLnet/minecraft/network/protocol/Packet;)Z")

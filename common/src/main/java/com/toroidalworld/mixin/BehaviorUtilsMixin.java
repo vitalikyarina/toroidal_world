@@ -3,6 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamAim;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -16,7 +17,7 @@ import net.minecraft.world.phys.Vec3;
 public class BehaviorUtilsMixin {
     @WrapOperation(
             method = "throwItem(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;F)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"))
+            at = @At(value = "INVOKE", target = InjectionTargets.VEC3_SUBTRACT))
     private static Vec3 toroidal$throwDirectionThroughSeam(Vec3 targetPos, Vec3 throwerPos, Operation<Vec3> original,
             @Local(argsOnly = true) LivingEntity thrower) {
         return original.call(SeamAim.nearestTo(thrower, targetPos), throwerPos);

@@ -7,7 +7,9 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.LevelHolder;
+import com.toroidalworld.core.FoldedOrder;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -32,14 +34,14 @@ public class PlayerChunkSenderMixin {
             return original;
         }
 
-        return Comparator.comparingInt(pending -> transformer.sqrChunkDistance(playerPos, ChunkPos.unpack(pending)));
+        return FoldedOrder.of(original, pending -> transformer.nearestCopy(playerPos, ChunkPos.unpack(pending)).pack());
     }
 
     @ModifyArg(
             method = "collectChunksToSend",
             at = @At(
                     value = "INVOKE",
-                    target = "Ljava/util/stream/Stream;sorted(Ljava/util/Comparator;)Ljava/util/stream/Stream;"),
+                    target = InjectionTargets.STREAM_SORTED),
             index = 0)
     private Comparator<LevelChunk> toroidal$nearestLoadedThroughSeam(Comparator<LevelChunk> original,
             @Local(argsOnly = true) ChunkMap chunkMap, @Local(argsOnly = true) ChunkPos playerPos) {

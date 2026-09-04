@@ -4,10 +4,12 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.ClientBoundsHolder;
 import com.toroidalworld.accessors.ClientPositionHolder;
+import com.toroidalworld.accessors.SeamTravelHolder;
 import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.player.ClientPosition;
+import com.toroidalworld.player.SeamTravel;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -20,7 +22,11 @@ public final class WorldLoopAttachments {
         return ((TransformerCache) level).toroidal$transformer();
     }
 
-    public static @Nullable WorldFold wrappedTransformerOf(Level level) {
+    public static @Nullable WorldFold wrappedTransformerOf(@Nullable Level level) {
+        if (level == null) {
+            return null;
+        }
+
         WorldFold transformer = transformerOf(level);
         return transformer.isWrapped() ? transformer : null;
     }
@@ -29,7 +35,11 @@ public final class WorldLoopAttachments {
         return level instanceof ClientBoundsHolder holder ? holder.toroidal$clientBounds() : WorldFolds.NOOP;
     }
 
-    public static @Nullable WorldFold wrappedClientBoundsTransformerOf(Level level) {
+    public static @Nullable WorldFold wrappedClientBoundsTransformerOf(@Nullable Level level) {
+        if (level == null) {
+            return null;
+        }
+
         WorldFold transformer = clientBoundsTransformerOf(level);
         return transformer.isWrapped() ? transformer : null;
     }
@@ -49,6 +59,10 @@ public final class WorldLoopAttachments {
         }
 
         return null;
+    }
+
+    public static SeamTravel travelOf(ServerPlayer player) {
+        return ((SeamTravelHolder) player).toroidal$travel();
     }
 
     public static ClientPosition clientPositionOf(ServerPlayer player) {

@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamAim;
 import com.toroidalworld.entity.SeamRange;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -32,7 +33,7 @@ public class EnderDragonMixin {
 
     @WrapOperation(
             method = "getHeadLookVector",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;distToCenterSqr(Lnet/minecraft/core/Position;)D"))
+            at = @At(value = "INVOKE", target = InjectionTargets.BLOCK_POS_DIST_TO_CENTER_SQR))
     private double toroidal$eggDistanceThroughSeam(BlockPos eggPos, Position dragonPosition,
             Operation<Double> original) {
         return SeamRange.sqr((EnderDragon) (Object) this, Vec3.atCenterOf(eggPos), dragonPosition);
@@ -40,7 +41,7 @@ public class EnderDragonMixin {
 
     @WrapOperation(
             method = "knockBack",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getX()D"))
+            at = @At(value = "INVOKE", target = InjectionTargets.ENTITY_GET_X))
     private double toroidal$shovedEntityX(Entity target, Operation<Double> original) {
         return SeamAim.nearestTo((EnderDragon) (Object) this,
                 target.position().with(Direction.Axis.X, original.call(target))).x;
@@ -48,7 +49,7 @@ public class EnderDragonMixin {
 
     @WrapOperation(
             method = "knockBack",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getZ()D"))
+            at = @At(value = "INVOKE", target = InjectionTargets.ENTITY_GET_Z))
     private double toroidal$shovedEntityZ(Entity target, Operation<Double> original) {
         return SeamAim.nearestTo((EnderDragon) (Object) this,
                 target.position().with(Direction.Axis.Z, original.call(target))).z;

@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.player.WaypointLapGate;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -29,7 +30,7 @@ public class WaypointBlockConnectionMixin {
     @WrapOperation(
             method = "update",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/core/BlockPos;distManhattan(Lnet/minecraft/core/Vec3i;)I"))
+                    target = InjectionTargets.BLOCK_POS_DIST_MANHATTAN))
     private int toroidal$resendWhenTheReceiverLaps(BlockPos currentPosition, Vec3i lastPosition, Operation<Integer> original) {
         if (this.toroidal$lapGate == null) {
             this.toroidal$lapGate = new WaypointLapGate();

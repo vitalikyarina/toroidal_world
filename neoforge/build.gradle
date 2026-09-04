@@ -139,7 +139,7 @@ test {
     dependsOn(':common:test')
 }
 
-// C2ME's module jars are jar-in-jar payloads FML cannot load: fold-test compile only, the outer artifact runs as a mod.
+// FML extracts the outer artifact's jar-in-jar modules on the test runtime itself; the unpacked jars serve compile only.
 configurations {
     c2meModules
 }

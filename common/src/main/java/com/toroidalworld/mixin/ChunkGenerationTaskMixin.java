@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import org.slf4j.Logger;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.LevelHolder;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -28,7 +29,7 @@ public class ChunkGenerationTaskMixin {
             method = "create",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/util/StaticCache2D;create(IIILnet/minecraft/util/StaticCache2D$Initializer;)Lnet/minecraft/util/StaticCache2D;"))
+                    target = InjectionTargets.STATIC_CACHE_2D_CREATE))
     private static StaticCache2D<GenerationChunkHolder> toroidal$foldSeamSlots(
             int centerX,
             int centerZ,

@@ -228,6 +228,48 @@ final class WorldLoopTransformer implements WorldFold {
     }
 
     @Override
+    public List<DeckTransformation> copiesTouching(BoundingBox region, int reach) {
+        if (reach < 0) {
+            throw new IllegalArgumentException("A copy reach is never negative, got " + reach);
+        }
+
+        int[] lapsX = coords.x.laps(region.minX(), region.maxX());
+        int[] lapsZ = coords.z.laps(region.minZ(), region.maxZ());
+        int firstX = Math.max(lapsX[0], -reach);
+        int lastX = Math.min(lapsX[1], reach);
+        int firstZ = Math.max(lapsZ[0], -reach);
+        int lastZ = Math.min(lapsZ[1], reach);
+        if (firstX > lastX || firstZ > lastZ) {
+            return List.of();
+        }
+
+        List<DeckTransformation> copies = new ArrayList<>((lastX - firstX + 1) * (lastZ - firstZ + 1));
+        boolean identityTouches = firstX <= 0 && 0 <= lastX && firstZ <= 0 && 0 <= lastZ;
+        if (identityTouches) {
+            copies.add(DeckTransformation.IDENTITY);
+        }
+
+        for (int lapX = firstX; lapX <= lastX; lapX++) {
+            for (int lapZ = firstZ; lapZ <= lastZ; lapZ++) {
+                if (lapX == 0 && lapZ == 0) {
+                    continue;
+                }
+
+                copies.add(new DeckTransformation(SeamTransform.translation(
+                        Math.multiplyExact(lapX, coords.x.domainLength),
+                        Math.multiplyExact(lapZ, coords.z.domainLength))));
+            }
+        }
+
+        return copies;
+    }
+
+    @Override
+    public boolean foldsOntoItself(BoundingBox region) {
+        return coords.x.foldsOntoItself(region.getXSpan()) || coords.z.foldsOntoItself(region.getZSpan());
+    }
+
+    @Override
     public int maxViewDistance() {
         return maxViewDistance;
     }
@@ -381,6 +423,19 @@ final class WorldLoopTransformer implements WorldFold {
     @Override
     public Folded<BlockPos> nearestCopyOriented(BlockPos ref, BlockPos target) {
         return Folded.of(blocks.nearestCopy(ref, target));
+    }
+
+    @Override
+    public DeckTransformation foldTransformation(Vec3 pos) {
+        int lapsX = coords.x.lapsOver(pos.x);
+        int lapsZ = coords.z.lapsOver(pos.z);
+        if (lapsX == 0 && lapsZ == 0) {
+            return DeckTransformation.IDENTITY;
+        }
+
+        return new DeckTransformation(SeamTransform.translation(
+                -Math.multiplyExact(lapsX, coords.x.domainLength),
+                -Math.multiplyExact(lapsZ, coords.z.domainLength)));
     }
 
     @Override

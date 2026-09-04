@@ -16,9 +16,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.IntFunction;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.mixin.ChunkWaypointAccessor;
@@ -48,6 +50,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -80,6 +84,7 @@ import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.resources.Identifier;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.random.WeightedList;
@@ -956,6 +961,45 @@ class PacketTranslatorTest {
         }
 
         @Test
+        void useItemOnMirrorsTheHitOffsetAndFaceAcrossAGlide() {
+            Vec3 location = Vec3.atLowerCornerOf(CLIENT_BLOCK).add(0.3, 0.5, 0.75);
+            BlockHitResult hit = new BlockHitResult(location, Direction.NORTH, CLIENT_BLOCK, false);
+
+            ServerboundUseItemOnPacket translated = (ServerboundUseItemOnPacket) PacketTranslator.toServer(
+                    new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, hit, 4), mirroredContext());
+
+            BlockHitResult translatedHit = translated.getHitResult();
+            assertEquals(MIRRORED_SERVER_BLOCK, translatedHit.getBlockPos());
+            Vec3 expected = Vec3.atLowerCornerOf(MIRRORED_SERVER_BLOCK).add(0.3, 0.5, 0.25);
+            assertEquals(expected.x, translatedHit.getLocation().x, 1.0e-9);
+            assertEquals(expected.y, translatedHit.getLocation().y, 1.0e-9);
+            assertEquals(expected.z, translatedHit.getLocation().z, 1.0e-9);
+            assertEquals(Direction.SOUTH, translatedHit.getDirection());
+        }
+
+        @Test
+        void playerActionMirrorsItsFaceAcrossAGlide() {
+            ServerboundPlayerActionPacket translated = (ServerboundPlayerActionPacket) PacketTranslator.toServer(
+                    new ServerboundPlayerActionPacket(
+                            ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, CLIENT_BLOCK, Direction.NORTH, 3),
+                    mirroredContext());
+
+            assertEquals(MIRRORED_SERVER_BLOCK, translated.getPos());
+            assertEquals(Direction.SOUTH, translated.getDirection());
+            assertEquals(3, translated.getSequence());
+        }
+
+        @Test
+        void playerActionKeepsAFaceTheGlideDoesNotTurn() {
+            ServerboundPlayerActionPacket translated = (ServerboundPlayerActionPacket) PacketTranslator.toServer(
+                    new ServerboundPlayerActionPacket(
+                            ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, CLIENT_BLOCK, Direction.UP, 3),
+                    mirroredContext());
+
+            assertEquals(Direction.UP, translated.getDirection());
+        }
+
+        @Test
         void pickItemFromBlockReturnsToTheServerFrame() {
             ServerboundPickItemFromBlockPacket translated = (ServerboundPickItemFromBlockPacket) PacketTranslator.toServer(
                     new ServerboundPickItemFromBlockPacket(CLIENT_BLOCK, true), context());
@@ -999,6 +1043,61 @@ class PacketTranslatorTest {
                     context());
 
             assertEquals(new Vec3(-508.0, 64.5, 0.25), translated.location());
+        }
+    }
+
+    record SeamProbePayload(BlockPos pos) implements CustomPacketPayload {
+        static final Type<SeamProbePayload> TYPE =
+                new Type<>(Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, "seam_probe"));
+
+        @Override
+        public Type<SeamProbePayload> type() {
+            return TYPE;
+        }
+    }
+
+    record UnregisteredProbePayload(BlockPos pos) implements CustomPacketPayload {
+        static final Type<UnregisteredProbePayload> TYPE =
+                new Type<>(Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, "unregistered_probe"));
+
+        @Override
+        public Type<UnregisteredProbePayload> type() {
+            return TYPE;
+        }
+    }
+
+    @Nested
+    class ServerboundPayloads {
+        @BeforeAll
+        static void registerTheProbeThroughThePublicSeamAlone() {
+            PacketTranslator.registerServerboundPayloadRewriter(SeamProbePayload.class, (payload, context) -> {
+                BlockPos canonical = context.toServer(payload.pos());
+                return canonical.equals(payload.pos()) ? payload : new SeamProbePayload(canonical);
+            });
+        }
+
+        @Test
+        void registeredPayloadReturnsToTheServerFrame() {
+            ServerboundCustomPayloadPacket translated = (ServerboundCustomPayloadPacket) PacketTranslator.toServer(
+                    new ServerboundCustomPayloadPacket(new SeamProbePayload(CLIENT_BLOCK)), context());
+
+            assertEquals(SERVER_BLOCK, ((SeamProbePayload) translated.payload()).pos());
+        }
+
+        @Test
+        void unregisteredPayloadPassesThrough() {
+            ServerboundCustomPayloadPacket packet =
+                    new ServerboundCustomPayloadPacket(new UnregisteredProbePayload(CLIENT_BLOCK));
+
+            assertSame(packet, PacketTranslator.toServer(packet, context()));
+        }
+
+        @Test
+        void payloadAlreadyInTheServerFrameKeepsThePacket() {
+            ServerboundCustomPayloadPacket packet =
+                    new ServerboundCustomPayloadPacket(new SeamProbePayload(SERVER_BLOCK));
+
+            assertSame(packet, PacketTranslator.toServer(packet, context()));
         }
     }
 }

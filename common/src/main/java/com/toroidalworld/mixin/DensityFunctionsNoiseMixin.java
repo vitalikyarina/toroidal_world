@@ -34,6 +34,7 @@ public class DensityFunctionsNoiseMixin {
         }
 
         return ContextScaledNoise.sample(generation, this.noise,
-                context.blockX(), context.blockY() * this.yScale, context.blockZ(), this.xzScale);
+                context.blockX(), context.blockY() * this.yScale, context.blockZ(), this.xzScale,
+                GenerationTransformerContext.verticalShare(this.xzScale, this.yScale));
     }
 }

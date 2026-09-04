@@ -32,7 +32,7 @@ public record TilingCellGrid(WorldFold transformer, int xCellWidth, int zCellWid
     }
 
     static int tilingWidth(WrapDomain domain, int vanillaCellWidth) {
-        if (domain instanceof WrapDomain.Noop) {
+        if (!domain.loops()) {
             return vanillaCellWidth;
         }
 

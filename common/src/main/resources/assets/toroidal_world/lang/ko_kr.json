@@ -1,4 +1,7 @@
 {
+  "advancements.toroidal_world.circumnavigate.title": "출발점으로",
+  "advancements.toroidal_world.circumnavigate.description": "세계를 한 바퀴 돌기",
+
   "argument.toroidal_world.pos.outside_world": "%s은(는) 이 세계 밖에 있습니다 — %s와(과) %s 사이여야 합니다",
   "commands.toroidal_world.region.across_seam": "이 영역은 세계의 이음새를 가로질러 어느 쪽이든 의미할 수 있습니다 — 양쪽에서 명령을 한 번씩 실행하세요",
 
@@ -9,6 +12,7 @@
   "gui.toroidal_world.world_shape.toroidal.hint": "두 수평 축이 모두 순환합니다. 어느 방향으로든 충분히 가면 출발한 곳으로 돌아옵니다.",
   "gui.toroidal_world.world_shape.cylinder": "원통형",
   "gui.toroidal_world.world_shape.cylinder.hint": "수평 축 하나는 순환하고, 다른 하나는 일반 세계처럼 끝없이 이어집니다.",
+  "gui.toroidal_world.world_shape.unavailable": "이 세계 유형은 자체 세계 생성기를 사용하므로 세계 형태를 적용할 수 없습니다.",
 
   "gui.toroidal_world.toroidal_settings.title": "토로이드형 세계 설정",
   "gui.toroidal_world.toroidal_settings.preset.tiny": "아주 작음",

@@ -3,6 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.entity.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -19,7 +20,7 @@ public class UseBonemealMixin {
             method = "tick(Lnet/minecraft/server/level/ServerLevel;"
                     + "Lnet/minecraft/world/entity/npc/villager/Villager;J)V",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/core/BlockPos;closerToCenterThan(Lnet/minecraft/core/Position;D)Z"))
+                    target = InjectionTargets.BLOCK_POS_CLOSER_TO_CENTER_THAN))
     private boolean toroidal$cropReachThroughSeam(BlockPos cropPos, Position bodyPosition, double distance,
             Operation<Boolean> original, @Local(argsOnly = true) Villager body) {
         return SeamRange.closerToCenterThan(body, cropPos, bodyPosition, distance);

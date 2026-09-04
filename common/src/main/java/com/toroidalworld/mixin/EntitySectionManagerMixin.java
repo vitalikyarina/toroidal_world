@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.LevelBindable;
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.player.SeamSnap;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -17,7 +18,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.entity.EntityAccess;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
-import net.minecraft.world.phys.Vec3;
 
 @Mixin(PersistentEntitySectionManager.class)
 public class EntitySectionManagerMixin implements LevelBindable {
@@ -45,13 +45,12 @@ public class EntitySectionManagerMixin implements LevelBindable {
             return;
         }
 
-        Vec3 position = actualEntity.position();
-        if (!transformer.isOver(position)) {
+        DeckTransformation lap = transformer.foldTransformation(actualEntity.position());
+        if (lap.isIdentity()) {
             return;
         }
 
-        Vec3 wrapped = transformer.fold(position);
-        SeamSnap.withPassengers(actualEntity, wrapped.subtract(position));
+        SeamSnap.withPassengers(actualEntity, lap);
     }
 
     @ModifyArg(
@@ -60,10 +59,6 @@ public class EntitySectionManagerMixin implements LevelBindable {
             index = 0,
             expect = 4)
     private long toroidal$askThePhysicalChunk(long chunkKey) {
-        if (this.toroidal$level == null) {
-            return chunkKey;
-        }
-
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.toroidal$level);
         return transformer == null ? chunkKey : transformer.foldChunkKey(chunkKey);
     }

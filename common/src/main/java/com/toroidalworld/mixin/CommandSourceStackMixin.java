@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.core.DimensionMapping;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -35,7 +36,7 @@ public class CommandSourceStackMixin {
 
     @WrapOperation(
             method = "withLevel",
-            at = @At(value = "NEW", target = "(DDD)Lnet/minecraft/world/phys/Vec3;"))
+            at = @At(value = "NEW", target = InjectionTargets.VEC3_NEW))
     private Vec3 toroidal$mapByWidthRatio(double x, double y, double z, Operation<Vec3> original,
             @Local(argsOnly = true) ServerLevel newLevel) {
         WorldFold destination = WorldLoopAttachments.wrappedTransformerOf(newLevel);

@@ -23,7 +23,8 @@
     "toroidal_world.shape.mixins.json",
     "toroidal_world.compat.journeymap.mixins.json",
     "toroidal_world.compat.xaero.mixins.json",
-    "toroidal_world.compat.c2me.mixins.json"
+    "toroidal_world.compat.c2me.mixins.json",
+    "toroidal_world.compat.distanthorizons.mixins.json"
   ],
   "accessWidener": "toroidal_world.accesswidener",
   "custom": {

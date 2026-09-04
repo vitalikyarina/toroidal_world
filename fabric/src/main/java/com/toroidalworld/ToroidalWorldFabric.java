@@ -1,5 +1,6 @@
 package com.toroidalworld;
 
+import com.toroidalworld.advancement.WorldLoopCriteria;
 import com.toroidalworld.gen.LoopedChunkGenerator;
 import com.toroidalworld.gen.LoopedFlatChunkGenerator;
 import com.toroidalworld.gen.WorldLoopGenerators;
@@ -31,6 +32,9 @@ public class ToroidalWorldFabric implements ModInitializer {
         Registry.register(BuiltInRegistries.TICKET_TYPE,
                 Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopTicketTypes.SEAM_GENERATION_ID),
                 WorldLoopTicketTypes.SEAM_GENERATION);
+        Registry.register(BuiltInRegistries.TRIGGER_TYPES,
+                Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopCriteria.CIRCUMNAVIGATE_ID),
+                WorldLoopCriteria.CIRCUMNAVIGATE);
 
         PayloadTypeRegistry.clientboundPlay().register(WrappingSettingsPayload.TYPE, WrappingSettingsPayload.STREAM_CODEC);
     }

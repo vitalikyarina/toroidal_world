@@ -83,7 +83,8 @@ class PeriodicNoiseSamplerTest {
                 double x, double y, double z, double yScale, double yFudge) {
             GenerationTransformerContext.Context context = GenerationTransformerContext.context();
 
-            try (GenerationTransformerContext.Context.BindingScope _ = context.bind(transformer, axes, scale)) {
+            try (GenerationTransformerContext.Context.BindingScope _ = context.bind(transformer, axes, scale,
+                    GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE)) {
                 return PeriodicNoiseSampler.sample(permutations, xo, yo, zo, transformer, context,
                         x, y, z, yScale, yFudge);
             }
@@ -123,7 +124,8 @@ class PeriodicNoiseSamplerTest {
             assertEquals(1024, PeriodicNoiseSampler.period(evenX, 1.0));
             assertEquals(102400, PeriodicNoiseSampler.period(evenX, 100.0));
             assertEquals(94, PeriodicNoiseSampler.period(ODD.blockDomain(Direction.Axis.X), 1.17));
-            assertEquals(1, PeriodicNoiseSampler.period(evenX, 1.0 / 2048.0));
+            assertEquals(2, PeriodicNoiseSampler.period(evenX, 2.0 / 1024.0));
+            assertEquals(4, PeriodicNoiseSampler.period(evenX, 1.0 / 2048.0));
             assertEquals(0, PeriodicNoiseSampler.period(X_ONLY.blockDomain(Direction.Axis.Z), 1.0));
         }
     }

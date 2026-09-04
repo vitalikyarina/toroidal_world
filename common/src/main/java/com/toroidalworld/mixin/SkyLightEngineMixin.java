@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldFold;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -19,7 +20,7 @@ import net.minecraft.world.level.lighting.SkyLightEngine;
 public abstract class SkyLightEngineMixin {
     @WrapOperation(
             method = {"propagateIncrease", "propagateDecrease"},
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;offset(JLnet/minecraft/core/Direction;)J"))
+            at = @At(value = "INVOKE", target = InjectionTargets.BLOCK_POS_OFFSET_PACKED))
     private long toroidal$wrapToNode(long node, Direction direction, Operation<Long> original) {
         long toNode = original.call(node, direction);
         WorldFold transformer = ((TransformerHolder) (Object) this).toroidal$transformer();
@@ -30,7 +31,7 @@ public abstract class SkyLightEngineMixin {
             method = "getChunkSources",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/chunk/LightChunkGetter;getChunkForLighting(II)Lnet/minecraft/world/level/chunk/LightChunk;"))
+                    target = InjectionTargets.LIGHT_CHUNK_GETTER_GET_CHUNK_FOR_LIGHTING))
     private @Nullable LightChunk toroidal$wrapChunkSources(LightChunkGetter source, int chunkX, int chunkZ,
             Operation<@Nullable LightChunk> original) {
         WorldFold transformer = ((TransformerHolder) (Object) this).toroidal$transformer();

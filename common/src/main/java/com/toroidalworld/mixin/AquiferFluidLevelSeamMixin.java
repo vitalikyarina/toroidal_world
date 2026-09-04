@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.noise.CanonicalCellSampler;
 import com.toroidalworld.noise.NoiseConstants;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -22,7 +23,7 @@ public class AquiferFluidLevelSeamMixin {
             method = "computeRandomizedFluidSurfaceLevel",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/levelgen/DensityFunction;compute(Lnet/minecraft/world/level/levelgen/DensityFunction$FunctionContext;)D"))
+                    target = InjectionTargets.DENSITY_FUNCTION_COMPUTE))
     private double toroidal$fluidLevelFromCanonicalCell(
             DensityFunction noise, DensityFunction.FunctionContext cell, Operation<Double> original,
             @Local(argsOnly = true, ordinal = 0) int blockX,

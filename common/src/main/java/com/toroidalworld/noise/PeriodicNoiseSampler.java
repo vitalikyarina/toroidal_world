@@ -30,6 +30,8 @@ public final class PeriodicNoiseSampler {
 
     private static final long UNBOUNDED_PERIOD = 0L;
 
+    private static final long FLOORED_PERIOD = 4L;
+
     public static double sample(byte[] permutations, double xOffset, double yOffset, double zOffset,
             WorldFold transformer, Context context,
             double x, double y, double z, double yScale, double yFudge) {
@@ -42,6 +44,8 @@ public final class PeriodicNoiseSampler {
         double xs;
         double ys;
         double zs;
+        double correction = 1.0;
+        double anchor = 0.0;
         if (axes == SlotAxes.DEFAULT && context.xDivisor() == 1.0 && context.zDivisor() == 1.0) {
             WrapDomain xDomain = transformer.blockDomain(Direction.Axis.X);
             WrapDomain zDomain = transformer.blockDomain(Direction.Axis.Z);
@@ -51,6 +55,15 @@ public final class PeriodicNoiseSampler {
             xs = foldAndScale(xDomain, xPeriod, scale, x) + xOffset;
             ys = y + yOffset;
             zs = foldAndScale(zDomain, zPeriod, scale, z) + zOffset;
+
+            double verticalShare = context.verticalShare();
+            correction = OctaveVarianceCorrection.factor(xDomain, zDomain, scale, verticalShare);
+
+            double anchorGain = OctaveVarianceCorrection.anchorGain(xDomain, zDomain, scale, verticalShare);
+            if (anchorGain > 0.0) {
+                anchor = anchorGain * anchorSample(permutations, xDomain, zDomain, xPeriod, zPeriod, scale,
+                        xOffset, yOffset, zOffset);
+            }
         } else {
             WrapDomain xDomain = axes.x().domainOf(transformer);
             WrapDomain yDomain = axes.y().domainOf(transformer);
@@ -81,8 +94,20 @@ public final class PeriodicNoiseSampler {
             yFracFudge = 0.0;
         }
 
-        return sampleAndLerp(permutations, xCell, yCell, zCell, xFrac, yFrac - yFracFudge, zFrac, yFrac,
-                xPeriod, yPeriod, zPeriod);
+        return correction * sampleAndLerp(permutations, xCell, yCell, zCell, xFrac, yFrac - yFracFudge, zFrac,
+                yFrac, xPeriod, yPeriod, zPeriod) + anchor;
+    }
+
+    private static double anchorSample(byte[] permutations, WrapDomain xDomain, WrapDomain zDomain,
+            long xPeriod, long zPeriod, double scale, double xOffset, double yOffset, double zOffset) {
+        double xs = foldAndScale(xDomain, xPeriod, scale, 0.0) + xOffset;
+        double zs = foldAndScale(zDomain, zPeriod, scale, 0.0) + zOffset;
+        int xCell = Mth.floor(xs);
+        int zCell = Mth.floor(zs);
+        int yCell = Mth.floor(yOffset);
+        double yFrac = yOffset - yCell;
+        return sampleAndLerp(permutations, xCell, yCell, zCell, xs - xCell, yFrac, zs - zCell, yFrac,
+                xPeriod, UNBOUNDED_PERIOD, zPeriod);
     }
 
     // A slot carrying no world axis arrives already scaled by its caller, so scaling it again would move the lattice.
@@ -95,11 +120,12 @@ public final class PeriodicNoiseSampler {
     }
 
     static long period(WrapDomain domain, double scale) {
-        if (domain instanceof WrapDomain.Noop) {
+        if (!domain.loops()) {
             return UNBOUNDED_PERIOD;
         }
 
-        return Math.max(1L, Math.round(domain.domainLength * scale));
+        long rounded = Math.round(domain.domainLength * scale);
+        return rounded < 2L ? FLOORED_PERIOD : rounded;
     }
 
     static double foldAndScale(WrapDomain domain, long period, double scale, double coord) {
