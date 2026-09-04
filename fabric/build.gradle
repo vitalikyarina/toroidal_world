@@ -201,6 +201,7 @@ tasks.named('remapJar', AbstractArchiveTask) {
 sourceSets.test.java.srcDir '../common/src/loaderTest/java'
 
 dependencies {
+    testCompileOnly "org.jspecify:jspecify:${jspecify_version}"
     testImplementation "net.fabricmc:fabric-loader-junit:${fabric_loader_version}"
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
