@@ -94,15 +94,14 @@ public final class DhFold {
         return shape.nearestCoord(axis, ref, coord) == coord && 2L * (coord - ref) != -shape.widthBlocks(axis);
     }
 
-    public static int radiusCapChunks(ToroidalShape shape) {
-        int cap = Integer.MAX_VALUE;
-        for (Direction.Axis axis : HORIZONTAL) {
-            if (shape.loops(axis)) {
-                cap = Math.min(cap, shape.widthChunks(axis) / 2);
-            }
+    public static boolean overlapsNearestLap(ToroidalShape shape, Direction.Axis axis, int refBlock, int minBlock,
+            int widthBlocks) {
+        if (!shape.loops(axis)) {
+            return true;
         }
 
-        return cap;
+        long half = shape.widthBlocks(axis) / 2L;
+        return minBlock < refBlock + half && minBlock + (long) widthBlocks > refBlock - half;
     }
 
     private DhFold() {

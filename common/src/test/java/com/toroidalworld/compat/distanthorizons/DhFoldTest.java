@@ -300,14 +300,49 @@ class DhFoldTest {
         }
     }
 
-    @Test
-    void theRadiusCapIsHalfTheNarrowestLoopingAxis() {
-        assertEquals(WIDTH_CHUNKS / 2, DhFold.radiusCapChunks(torus(0, WIDTH_CHUNKS)));
-        assertEquals(WIDTH_CHUNKS / 2, DhFold.radiusCapChunks(cylinder(0, WIDTH_CHUNKS)));
-        AxisBounds.Looped narrow = new AxisBounds.Looped(0, 32);
-        AxisBounds.Looped wide = new AxisBounds.Looped(0, 128);
-        ToroidalShape uneven = TestShapes.of(
-                WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(narrow, wide), FlatShape.NO_SKEW)));
-        assertEquals(16, DhFold.radiusCapChunks(uneven));
+    @Nested
+    class TheTreeHoldsOneLapAroundItsCentre {
+        private static final int LEAF_WIDTH = DhFold.sectionWidthBlocks(LEAF);
+        private static final int REF = 100;
+        private static final int HALF = WIDTH_BLOCKS / 2;
+
+        private final ToroidalShape shape = torus(0, WIDTH_CHUNKS);
+
+        @Test
+        void aSectionInsideTheLapIsHeld() {
+            assertTrue(DhFold.overlapsNearestLap(shape, Direction.Axis.X, REF, 512, 4 * LEAF_WIDTH));
+        }
+
+        @Test
+        void aSectionPastHalfAWorldIsRefusedAndItsNearCopyIsHeld() {
+            assertFalse(DhFold.overlapsNearestLap(shape, Direction.Axis.X, REF, 640, LEAF_WIDTH));
+            assertTrue(DhFold.overlapsNearestLap(shape, Direction.Axis.X, REF, 640 - WIDTH_BLOCKS, LEAF_WIDTH));
+        }
+
+        @Test
+        void aSectionTouchingTheLapEdgeFromOutsideIsRefused() {
+            assertFalse(DhFold.overlapsNearestLap(shape, Direction.Axis.X, REF, REF + HALF, LEAF_WIDTH));
+            assertFalse(DhFold.overlapsNearestLap(shape, Direction.Axis.X, REF, REF - HALF - LEAF_WIDTH, LEAF_WIDTH));
+            assertTrue(DhFold.overlapsNearestLap(shape, Direction.Axis.X, REF, REF + HALF - 1, LEAF_WIDTH));
+        }
+
+        @Test
+        void aSectionWiderThanTheWorldIsHeldOnlyWhereItCoversTheLap() {
+            assertTrue(DhFold.overlapsNearestLap(shape, Direction.Axis.X, REF, 0, 4 * WIDTH_BLOCKS));
+            assertFalse(DhFold.overlapsNearestLap(shape, Direction.Axis.X, REF, 4 * WIDTH_BLOCKS, 4 * WIDTH_BLOCKS));
+        }
+
+        @Test
+        void theLoopingAxisOfACylinderRefusesPastHalfAWorld() {
+            ToroidalShape cylinder = cylinder(0, WIDTH_CHUNKS);
+            assertFalse(DhFold.overlapsNearestLap(cylinder, Direction.Axis.X, REF, REF + HALF, LEAF_WIDTH));
+        }
+
+        @Test
+        void theUnboundedAxisOfACylinderHoldsAnySection() {
+            ToroidalShape cylinder = cylinder(0, WIDTH_CHUNKS);
+            assertTrue(DhFold.overlapsNearestLap(cylinder, Direction.Axis.Z, REF, 9999 * LEAF_WIDTH, LEAF_WIDTH));
+            assertTrue(DhFold.overlapsNearestLap(cylinder, Direction.Axis.Z, REF, -9999 * LEAF_WIDTH, LEAF_WIDTH));
+        }
     }
 }
