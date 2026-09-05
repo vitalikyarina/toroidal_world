@@ -221,6 +221,7 @@ class FieldDistributionProbeTest {
     }
 
     private final List<double[]> octaveGateRows = new ArrayList<>();
+    private final List<double[]> cylinderGateRows = new ArrayList<>();
     private final List<Double> livenessGateRatios = new ArrayList<>();
     private final List<Double> meanSpreadGateRatios = new ArrayList<>();
     private double pooledVanillaVariance;
@@ -245,6 +246,7 @@ class FieldDistributionProbeTest {
         appendDegenerateCalibration(report);
         appendMeanSpreadCalibration(report);
         appendRectangularCalibration(report);
+        appendCylinderCalibration(report);
         appendVerticalCalibration(report);
         appendBlendedFoldCalibration(report);
         appendExtremeStatistics(report);
@@ -292,6 +294,13 @@ class FieldDistributionProbeTest {
         assertTrue(Math.abs(this.ridgePeakShareCorrected - this.ridgePeakShareVanilla) <= 3.0,
                 "ridge pv>0.7 share drifted off vanilla: " + this.ridgePeakShareCorrected
                         + "% vs " + this.ridgePeakShareVanilla + "%");
+        for (double[] cylinderRow : this.cylinderGateRows) {
+            double stripRatio = cylinderRow[2] / cylinderRow[1];
+            assertTrue(Math.abs(stripRatio - 1.0) <= 0.06,
+                    "cylinder strip rms drifted off vanilla at f=" + cylinderRow[0] + ": " + stripRatio);
+            assertTrue(cylinderRow[3] == 0.0,
+                    "a starved octave still varies around the ring at f=" + cylinderRow[0] + ": " + cylinderRow[3]);
+        }
         for (double livenessRatio : this.livenessGateRatios) {
             assertTrue(Math.abs(livenessRatio - 1.0) <= 0.08,
                     "liveness-corrected octave rms drifted off the vanilla window: " + livenessRatio);
@@ -313,7 +322,8 @@ class FieldDistributionProbeTest {
             }
             double octaveScale = XZ_SCALE * Math.pow(2.0, params.firstOctave() + i);
             double trueCells = WORLD_BLOCKS * octaveScale;
-            long period = PeriodicNoiseSampler.period(WORLD.blockDomain(Direction.Axis.X), octaveScale);
+            long period = PeriodicNoiseSampler.period(WORLD.blockDomain(Direction.Axis.X), octaveScale,
+                    LapFloor.of(WORLD));
             report.append(String.format("  oct %d amp %.1f: true %.2f cells/lap -> period %d%s%n",
                     params.firstOctave() + i, params.amplitudes()[i], trueCells, period,
                     period != Math.round(trueCells * 1e9) / 1e9 && trueCells < 1.0 ? "  (degenerate)" : ""));
@@ -431,6 +441,84 @@ class FieldDistributionProbeTest {
             }
         }
         report.append('\n');
+    }
+
+    @SuppressWarnings("deprecation")
+    private void appendCylinderCalibration(StringBuilder report) {
+        double[] fractions = {0.125, 0.25, 0.375, 0.5, 0.75, 1.0, 1.25, 1.4375};
+        int seeds = 1024;
+        int gridX = 16;
+        int gridZ = 256;
+        double zSpan = 8192.0;
+        WorldFold cylinder = WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, 32)));
+        LapFloor[] floors = {LapFloor.FOUR_CELLS, LapFloor.of(cylinder)};
+        java.util.Random windows = new java.util.Random(0x0153E);
+        report.append("cylinder calibration (X lap 512 blocks, Z unbounded, window ").append((int) zSpan)
+                .append(" blocks of Z, ").append(seeds).append(" seeds x ").append(gridX).append("x").append(gridZ)
+                .append(" grid; rms of strip / line / X-step; the last column is the fold's own rule):\n");
+        for (double fraction : fractions) {
+            double scale = fraction / WORLD_BLOCKS;
+            double[][] sums = new double[floors.length + 1][3];
+            for (int s = 0; s < seeds; s++) {
+                Octave octave = Octave.of(mix(0xCA11B7A7EL + s * 7919L));
+                double windowX = windows.nextDouble() * 1.0E6;
+                double windowZ = windows.nextDouble() * 1.0E6;
+                double[][][] grids = new double[floors.length + 1][gridX][gridZ];
+                for (int i = 0; i < gridX; i++) {
+                    double x = i * (WORLD_BLOCKS / (double) gridX);
+                    for (int j = 0; j < gridZ; j++) {
+                        double z = j * (zSpan / gridZ);
+                        grids[0][i][j] = octave.vanilla().noise(PerlinNoise.wrap((windowX + x) * scale), 0.0,
+                                PerlinNoise.wrap((windowZ + z) * scale), 0.0, 0.0);
+                        for (int f = 0; f < floors.length; f++) {
+                            grids[f + 1][i][j] = sample(octave.permutations(), octave.xo(), octave.yo(),
+                                    octave.zo(), cylinder, scale, x - 256.0, 0.0, windowZ + z, 0.0, 0.0, -1.0,
+                                    floors[f]);
+                        }
+                    }
+                }
+                for (int v = 0; v < grids.length; v++) {
+                    accumulateStrip(grids[v], sums[v]);
+                }
+            }
+            double[] fold = sums[floors.length];
+            this.cylinderGateRows.add(new double[] {
+                    fraction, Math.sqrt(sums[0][0] / seeds), Math.sqrt(fold[0] / seeds), Math.sqrt(fold[2] / seeds)});
+            StringBuilder line = new StringBuilder(String.format("  f=%.4f cells/lap:", fraction));
+            appendStripReadings(line, "vanilla", sums[0], seeds);
+            for (int f = 0; f < floors.length; f++) {
+                appendStripReadings(line, floors[f].name().toLowerCase(java.util.Locale.ROOT), sums[f + 1], seeds);
+            }
+            report.append(line).append('\n');
+        }
+        report.append('\n');
+    }
+
+    private void accumulateStrip(double[][] grid, double[] sums) {
+        int gridX = grid.length;
+        int gridZ = grid[0].length;
+        double[] flat = new double[gridX * gridZ];
+        double lineVariance = 0.0;
+        double stepSum = 0.0;
+        int k = 0;
+        for (int i = 0; i < gridX; i++) {
+            lineVariance += variance(grid[i]);
+            for (int j = 0; j < gridZ; j++) {
+                flat[k++] = grid[i][j];
+                if (i + 1 < gridX) {
+                    double step = grid[i + 1][j] - grid[i][j];
+                    stepSum += step * step;
+                }
+            }
+        }
+        sums[0] += variance(flat);
+        sums[1] += lineVariance / gridX;
+        sums[2] += stepSum / ((gridX - 1) * gridZ);
+    }
+
+    private void appendStripReadings(StringBuilder line, String label, double[] sums, int seeds) {
+        line.append(String.format("  %s %.4f/%.4f/%.5f", label,
+                Math.sqrt(sums[0] / seeds), Math.sqrt(sums[1] / seeds), Math.sqrt(sums[2] / seeds)));
     }
 
     // 3D noises (cave/spaghetti family) sample Y as a live axis while the horizontal axes fold. Measures how the

@@ -46,6 +46,7 @@ import net.minecraft.world.level.levelgen.synth.NormalNoise;
 class ClimateScanTest {
     private static final int GRID = 64;
     private static final int SEEDS = 3;
+    private static final int AXIS_SEEDS = 16;
     private static final long SEED_BASE = 0x5EED5EED5L;
     private static final long SEED_STEP = 0x9E3779B97F4A7C15L;
 
@@ -58,6 +59,8 @@ class ClimateScanTest {
     private static final int CONTROL_LINE_SPREAD_BLOCKS = 65536;
 
     private static final double MAX_ZONE_DRIFT = 0.20;
+
+    private static final double MAX_SPREAD_DRIFT = 0.10;
 
     private static final Path REPORT = Path.of("build", "reports", "climate-scan.txt");
 
@@ -84,12 +87,12 @@ class ClimateScanTest {
             new WorldType("nether", NoiseGeneratorSettings.NETHER,
                     MultiNoiseBiomeSourceParameterLists.NETHER, true, false));
 
-    private record Shape(String name, IntFunction<WorldFold> foldOfWidth) {
+    private record Shape(String name, IntFunction<WorldFold> foldOfWidth, boolean compressed) {
     }
 
     private static final List<Shape> SHAPES = List.of(
-            new Shape("torus", ClimateScanTest::torusOfWidth),
-            new Shape("cylinder", ClimateScanTest::cylinderOfWidth));
+            new Shape("torus", ClimateScanTest::torusOfWidth, true),
+            new Shape("cylinder", ClimateScanTest::cylinderOfWidth, false));
 
     private record Scan(double distinctBiomes, double topShare, double temperatureSpread) {
     }
@@ -140,7 +143,9 @@ class ClimateScanTest {
                 .append("top share = area fraction of the most common biome; 1.00 is a one-biome world.")
                 .append(" spread = standard deviation of the temperature field.").append(System.lineSeparator())
                 .append("The nether is the overworld width divided by the preset's nether scale, and carries five")
-                .append(" biomes in all, so it is reported and not gated.")
+                .append(" biomes in all, so it is reported and not gated.").append(System.lineSeparator())
+                .append("A cylinder is never compressed, so one lap of it is vanilla's own window of that size;")
+                .append(" the one-biome gate applies to the compressed torus alone.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         List<String> thin = new ArrayList<>();
@@ -171,7 +176,7 @@ class ClimateScanTest {
                         thin.add(type.name() + " " + preset.id());
                     }
 
-                    if (type.gated() && folded.topShare() > MAX_TOP_SHARE) {
+                    if (type.gated() && shape.compressed() && folded.topShare() > MAX_TOP_SHARE) {
                         dominated.add(String.format("%s %s %s at %.2f",
                                 type.name(), shape.name(), preset.id(), folded.topShare()));
                     }
@@ -263,15 +268,16 @@ class ClimateScanTest {
                 .append(GRID).append(" lines, spread across the ring and across ")
                 .append(CONTROL_LINE_SPREAD_BLOCKS).append(" blocks for the control, which has no ring; each is ")
                 .append(GRID).append(" points over ").append(UNBOUNDED_SPAN_BLOCKS).append(" blocks of Z at y=")
-                .append(SCAN_Y_BLOCKS).append(" blocks, ").append(SEEDS).append(" seeds, mean per line.")
+                .append(SCAN_Y_BLOCKS).append(" blocks, ").append(AXIS_SEEDS).append(" seeds, mean per line.")
                 .append(System.lineSeparator())
                 .append("The ring's own variation never enters a line, so this is the unbounded axis alone,")
                 .append(" against the same measure taken on an unbounded vanilla world.")
                 .append(System.lineSeparator())
                 .append("Zones per line is the scale measure and is gated at ")
                 .append(String.format("%.0f%%", MAX_ZONE_DRIFT * 100))
-                .append("; the spread is reported and not gated, its residual being the amplitude of the")
-                .append(" floored ring rather than the scale of this axis.")
+                .append("; the spread is gated at ").append(String.format("%.0f%%", MAX_SPREAD_DRIFT * 100))
+                .append(" - the ring's rule cannot move a line, so this is the estimator's own floor and")
+                .append(" catches a compression-class regression, not the ring.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         List<String> off = new ArrayList<>();
@@ -294,7 +300,13 @@ class ClimateScanTest {
                 double drift = Math.abs(folded.distinctBiomes() - control.distinctBiomes())
                         / control.distinctBiomes();
                 if (drift > MAX_ZONE_DRIFT) {
-                    off.add(String.format("%s %s off by %.0f%%", type.name(), preset.id(), drift * 100));
+                    off.add(String.format("%s %s zones off by %.0f%%", type.name(), preset.id(), drift * 100));
+                }
+
+                double spreadDrift = Math.abs(folded.temperatureSpread() - control.temperatureSpread())
+                        / control.temperatureSpread();
+                if (spreadDrift > MAX_SPREAD_DRIFT) {
+                    off.add(String.format("%s %s spread off by %.0f%%", type.name(), preset.id(), spreadDrift * 100));
                 }
             }
 
@@ -303,7 +315,7 @@ class ClimateScanTest {
 
         write(AXIS_REPORT, report.toString());
 
-        assertTrue(off.isEmpty(), "the unbounded axis does not carry vanilla's zone size: " + off);
+        assertTrue(off.isEmpty(), "the unbounded axis does not carry vanilla's zone size or spread: " + off);
     }
 
     private static AxisScan meanAlongZ(WorldType type, MultiNoiseBiomeSource source, int lineSpreadBlocks,
@@ -311,13 +323,13 @@ class ClimateScanTest {
         double distinct = 0.0;
         double spread = 0.0;
 
-        for (int s = 0; s < SEEDS; s++) {
+        for (int s = 0; s < AXIS_SEEDS; s++) {
             AxisScan scan = alongZ(type, source, lineSpreadBlocks, fold, SEED_BASE + s * SEED_STEP);
             distinct += scan.distinctBiomes();
             spread += scan.temperatureSpread();
         }
 
-        return new AxisScan(distinct / SEEDS, spread / SEEDS);
+        return new AxisScan(distinct / AXIS_SEEDS, spread / AXIS_SEEDS);
     }
 
     private static AxisScan alongZ(WorldType type, MultiNoiseBiomeSource source, int lineSpreadBlocks,

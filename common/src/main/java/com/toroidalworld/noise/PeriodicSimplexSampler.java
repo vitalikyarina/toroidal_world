@@ -22,9 +22,14 @@ public final class PeriodicSimplexSampler {
             WorldFold transformer, double scale, double x, double z) {
         WrapDomain xDomain = transformer.blockDomain(Direction.Axis.X);
         WrapDomain zDomain = transformer.blockDomain(Direction.Axis.Z);
-        long xPeriod = PeriodicNoiseSampler.period(xDomain, scale);
-        long zPeriod = PeriodicNoiseSampler.period(zDomain, scale);
-        long denominator = skewDenominator(xPeriod, zPeriod);
+        LapFloor floor = LapFloor.of(transformer);
+        long xPeriod = PeriodicNoiseSampler.period(xDomain, scale, floor);
+        long zPeriod = PeriodicNoiseSampler.period(zDomain, scale, floor);
+        double xs = foldAndScale(xDomain, xPeriod, scale, x) + xOffset;
+        double zs = foldAndScale(zDomain, zPeriod, scale, z) + zOffset;
+        long xLattice = lattice(xPeriod);
+        long zLattice = lattice(zPeriod);
+        long denominator = skewDenominator(xLattice, zLattice);
         long numerator = skewNumerator(denominator);
 
         double skew;
@@ -37,13 +42,10 @@ public final class PeriodicSimplexSampler {
             unskew = skew / (1.0 + 2.0 * skew);
         }
 
-        long xLapV = denominator == UNBOUNDED_PERIOD ? 0L : numerator * (xPeriod / denominator);
-        long zLapU = denominator == UNBOUNDED_PERIOD ? 0L : numerator * (zPeriod / denominator);
-        long xLapU = xPeriod + xLapV;
-        long zLapV = zPeriod + zLapU;
-
-        double xs = foldAndScale(xDomain, xPeriod, scale, x) + xOffset;
-        double zs = foldAndScale(zDomain, zPeriod, scale, z) + zOffset;
+        long xLapV = denominator == UNBOUNDED_PERIOD ? 0L : numerator * (xLattice / denominator);
+        long zLapU = denominator == UNBOUNDED_PERIOD ? 0L : numerator * (zLattice / denominator);
+        long xLapU = xLattice + xLapV;
+        long zLapV = zLattice + zLapU;
 
         double skewed = (xs + zs) * skew;
         long uCell = Mth.lfloor(xs + skewed);
@@ -105,7 +107,15 @@ public final class PeriodicSimplexSampler {
         return larger;
     }
 
+    private static long lattice(long period) {
+        return PeriodicNoiseSampler.closes(period) ? period : UNBOUNDED_PERIOD;
+    }
+
     private static double foldAndScale(WrapDomain domain, long period, double scale, double coord) {
+        if (period == PeriodicNoiseSampler.HELD_PERIOD) {
+            return 0.0;
+        }
+
         if (period == UNBOUNDED_PERIOD) {
             return coord * scale;
         }

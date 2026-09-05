@@ -108,11 +108,13 @@ class PeriodicSimplexSamplerTest {
     class SkewDerivation {
         @Test
         void sharesOneDenominatorBetweenTheTwoAxes() {
-            assertEquals(26, PeriodicNoiseSampler.period(DEFAULT.blockDomain(Direction.Axis.X), 0.05));
+            assertEquals(26, PeriodicNoiseSampler.period(DEFAULT.blockDomain(Direction.Axis.X), 0.05,
+                    LapFloor.of(DEFAULT)));
             assertEquals(26, PeriodicSimplexSampler.skewDenominator(26, 26));
             assertEquals(9, PeriodicSimplexSampler.skewNumerator(26));
 
-            assertEquals(102, PeriodicNoiseSampler.period(DEFAULT.blockDomain(Direction.Axis.X), 0.2));
+            assertEquals(102, PeriodicNoiseSampler.period(DEFAULT.blockDomain(Direction.Axis.X), 0.2,
+                    LapFloor.of(DEFAULT)));
             assertEquals(37, PeriodicSimplexSampler.skewNumerator(102));
         }
 
@@ -135,16 +137,16 @@ class PeriodicSimplexSamplerTest {
 
         @Test
         void takesTheLoopedAxisWhenTheOtherIsUnbounded() {
-            long xPeriod = PeriodicNoiseSampler.period(X_ONLY.blockDomain(Direction.Axis.X), 0.05);
-            long zPeriod = PeriodicNoiseSampler.period(X_ONLY.blockDomain(Direction.Axis.Z), 0.05);
+            long xPeriod = PeriodicNoiseSampler.period(X_ONLY.blockDomain(Direction.Axis.X), 0.05, LapFloor.of(X_ONLY));
+            long zPeriod = PeriodicNoiseSampler.period(X_ONLY.blockDomain(Direction.Axis.Z), 0.05, LapFloor.of(X_ONLY));
             assertEquals(0, zPeriod);
             assertEquals(xPeriod, PeriodicSimplexSampler.skewDenominator(xPeriod, zPeriod));
         }
 
         @Test
         void collapsesToZeroWhenThePeriodsAreCoprime() {
-            long xPeriod = PeriodicNoiseSampler.period(UNEVEN.blockDomain(Direction.Axis.X), 0.05);
-            long zPeriod = PeriodicNoiseSampler.period(UNEVEN.blockDomain(Direction.Axis.Z), 0.05);
+            long xPeriod = PeriodicNoiseSampler.period(UNEVEN.blockDomain(Direction.Axis.X), 0.05, LapFloor.of(UNEVEN));
+            long zPeriod = PeriodicNoiseSampler.period(UNEVEN.blockDomain(Direction.Axis.Z), 0.05, LapFloor.of(UNEVEN));
             assertEquals(51, xPeriod);
             assertEquals(13, zPeriod);
             assertEquals(1, PeriodicSimplexSampler.skewDenominator(xPeriod, zPeriod));
@@ -155,6 +157,41 @@ class PeriodicSimplexSamplerTest {
         void keepsVanillaSkewWhenNothingWraps() {
             assertEquals(0, PeriodicSimplexSampler.skewDenominator(0, 0));
             assertEquals(0, PeriodicSimplexSampler.skewNumerator(0));
+        }
+    }
+
+    @Nested
+    class HeldOctave {
+        private static final double STARVED_SCALE = 1.0 / 1024.0;
+
+        @Test
+        void aCylinderHoldsAStarvedOctaveAroundTheRingAndVariesAlongTheOpenAxis() {
+            Random random = new Random(SEED);
+            WrapDomain ring = X_ONLY.blockDomain(Direction.Axis.X);
+            WrapDomain open = X_ONLY.blockDomain(Direction.Axis.Z);
+            for (long worldSeed : WORLD_SEEDS) {
+                NoiseInstance noise = NoiseInstance.of(worldSeed);
+                double min = Double.MAX_VALUE;
+                double max = -Double.MAX_VALUE;
+                for (int i = 0; i < LINE_SAMPLES; i++) {
+                    double z = lineCoord(random, open, i);
+                    double x = blockInDomain(random, ring);
+                    double elsewhere = blockInDomain(random, ring);
+
+                    double base = noise.sample(X_ONLY, STARVED_SCALE, x, z);
+                    double around = noise.sample(X_ONLY, STARVED_SCALE, elsewhere, z);
+                    assertEquals(base, around,
+                            () -> "a starved octave varies around the ring between x=" + x + " and x=" + elsewhere
+                                    + " at z=" + z + " with seed " + worldSeed);
+                    assertTrue(Double.isFinite(base), () -> "sample at z=" + z + " is not finite");
+                    min = Math.min(min, base);
+                    max = Math.max(max, base);
+                }
+
+                double spread = max - min;
+                assertTrue(spread >= MIN_SPREAD,
+                        () -> "a held octave is flat along the open axis, spread " + spread + " with seed " + worldSeed);
+            }
         }
     }
 
