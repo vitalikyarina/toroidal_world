@@ -202,6 +202,7 @@ tasks.named('remapJar', AbstractArchiveTask) {
 // The loader-bound tests shared with the neoforge module, run here under Fabric Loader's JUnit launcher so the
 // mixins this jar ships are exercised by the loader that applies them.
 sourceSets.test.java.srcDir '../common/src/loaderTest/java'
+sourceSets.test.java.srcDir '../common/src/testFixtures/java'
 
 dependencies {
     testCompileOnly "org.jspecify:jspecify:${jspecify_version}"

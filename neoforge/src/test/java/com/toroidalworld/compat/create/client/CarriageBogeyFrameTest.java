@@ -1,5 +1,12 @@
 package com.toroidalworld.compat.create.client;
 
+import static com.toroidalworld.compat.CompatFoldFixture.DECK_CYLINDER;
+import static com.toroidalworld.compat.CompatFoldFixture.DECK_TORUS;
+import static com.toroidalworld.compat.CompatFoldFixture.MIRRORED;
+import static com.toroidalworld.compat.CompatFoldFixture.MIRROR_LINE_BLOCKS;
+import static com.toroidalworld.compat.CompatFoldFixture.PER_AXIS;
+import static com.toroidalworld.compat.CompatFoldFixture.SKEWED;
+import static com.toroidalworld.compat.CompatFoldFixture.WORLD_BLOCKS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -8,22 +15,11 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.DeckGroupFold;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
-import com.toroidalworld.shape.FlatShape;
 
-import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
 
 class CarriageBogeyFrameTest {
-    private static final int WORLD_CHUNKS = 16;
-    private static final int WORLD_BLOCKS = WORLD_CHUNKS * 2 * 16;
-    private static final int SKEW_CHUNKS = 4;
-    private static final int MIRROR_LINE_CHUNK = 3;
-    private static final int MIRROR_LINE_BLOCKS = MIRROR_LINE_CHUNK * 16;
     private static final int FIRST_CARRIAGE = 0;
     private static final int SECOND_CARRIAGE = 1;
     private static final double BOGEY_HEIGHT = 64.0;
@@ -36,19 +32,7 @@ class CarriageBogeyFrameTest {
     private static final Object TRAIN = new Object();
     private static final Object ANOTHER_TRAIN = new Object();
 
-    private static final WorldLoopBounds BOUNDS =
-            new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
-    private static final WorldLoopBounds X_ONLY =
-            new WorldLoopBounds(new AxisBounds.Looped(-WORLD_CHUNKS, WORLD_CHUNKS), AxisBounds.Unbounded.INSTANCE);
-
-    private static final WorldFold PER_AXIS = WorldFolds.of(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    private static final WorldFold DECK_TORUS = new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    private static final WorldFold SKEWED = new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, SKEW_CHUNKS));
-    private static final WorldFold MIRRORED =
-            new DeckGroupFold(FlatShape.mirrored(BOUNDS, Direction.Axis.Z, MIRROR_LINE_CHUNK));
-    private static final WorldFold CYLINDER = new DeckGroupFold(FlatShape.cylinder(X_ONLY));
-
-    private static final List<WorldFold> TRANSLATING = List.of(PER_AXIS, DECK_TORUS, SKEWED, CYLINDER);
+    private static final List<WorldFold> TRANSLATING = List.of(PER_AXIS, DECK_TORUS, SKEWED, DECK_CYLINDER);
 
     private static final class CountingLookup implements Supplier<Vec3> {
         private final Vec3 answer;
@@ -162,9 +146,9 @@ class CarriageBogeyFrameTest {
     @Test
     void aCarriageOnTheUnboundedAxisKeepsThatCoordinate() {
         CarriageBogeyFrame frame = new CarriageBogeyFrame();
-        frame.lead(CYLINDER, TRAIN, FIRST_CARRIAGE, new Vec3(INSIDE_X, BOGEY_HEIGHT, FAR_ALONG_Z));
+        frame.lead(DECK_CYLINDER, TRAIN, FIRST_CARRIAGE, new Vec3(INSIDE_X, BOGEY_HEIGHT, FAR_ALONG_Z));
 
-        Vec3 trailing = frame.trail(CYLINDER, TRAIN, FIRST_CARRIAGE,
+        Vec3 trailing = frame.trail(DECK_CYLINDER, TRAIN, FIRST_CARRIAGE,
                 new Vec3(ACROSS_THE_SEAM_X, BOGEY_HEIGHT, FAR_ALONG_Z), lookupPastTheBound());
 
         assertEquals(new Vec3(ACROSS_THE_SEAM_X + WORLD_BLOCKS, BOGEY_HEIGHT, FAR_ALONG_Z), trailing);

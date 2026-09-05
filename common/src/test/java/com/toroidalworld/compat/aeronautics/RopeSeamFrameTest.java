@@ -1,5 +1,7 @@
 package com.toroidalworld.compat.aeronautics;
 
+import static com.toroidalworld.compat.CompatFoldFixture.PER_AXIS;
+import static com.toroidalworld.compat.CompatFoldFixture.WORLD_BLOCKS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -14,10 +16,7 @@ import java.util.UUID;
 import org.joml.Vector3d;
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.shape.FlatShape;
 
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.RopeAttachment;
 import dev.simulated_team.simulated.content.blocks.rope.strand.server.RopeAttachmentPoint;
@@ -26,12 +25,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
 class RopeSeamFrameTest {
-    private static final int HALF_WIDTH_CHUNKS = 16;
-    private static final int WIDTH_BLOCKS = HALF_WIDTH_CHUNKS * 2 * 16;
-    private static final WorldFold FOLD = WorldFolds.of(FlatShape.latticeTorus(
-            new WorldLoopBounds(-HALF_WIDTH_CHUNKS, HALF_WIDTH_CHUNKS, -HALF_WIDTH_CHUNKS, HALF_WIDTH_CHUNKS),
-            FlatShape.NO_SKEW));
-
     private static final double ROPE_Y = 70.0;
     private static final double ROPE_Z = 10.0;
     private static final double BODY_Y = 80.0;
@@ -71,19 +64,19 @@ class RopeSeamFrameTest {
 
     @Test
     void anAttachmentAcrossTheSeamIsSeatedOnTheStrandsSide() {
-        assertEquals(at(-254.0 + WIDTH_BLOCKS),
-                RopeSeamFrame.seatAttachment(FOLD, NEAR_SIDE_STRAND, END_ON_A_BLOCK, at(-254.0)));
-        assertEquals(at(254.0 - WIDTH_BLOCKS),
-                RopeSeamFrame.seatAttachment(FOLD, FAR_SIDE_STRAND, START_ON_A_BLOCK, at(254.0)));
+        assertEquals(at(-254.0 + WORLD_BLOCKS),
+                RopeSeamFrame.seatAttachment(PER_AXIS, NEAR_SIDE_STRAND, END_ON_A_BLOCK, at(-254.0)));
+        assertEquals(at(254.0 - WORLD_BLOCKS),
+                RopeSeamFrame.seatAttachment(PER_AXIS, FAR_SIDE_STRAND, START_ON_A_BLOCK, at(254.0)));
     }
 
     @Test
     void theSeatAnchorsOnTheEndTheAttachmentNames() {
         Vector3d fartherThanHalfFromTheEndOnly = at(-4.0);
 
-        assertEquals(at(-4.0 + WIDTH_BLOCKS),
-                RopeSeamFrame.seatAttachment(FOLD, NEAR_SIDE_STRAND, END_ON_A_BLOCK, fartherThanHalfFromTheEndOnly));
-        assertSame(fartherThanHalfFromTheEndOnly, RopeSeamFrame.seatAttachment(FOLD, NEAR_SIDE_STRAND,
+        assertEquals(at(-4.0 + WORLD_BLOCKS),
+                RopeSeamFrame.seatAttachment(PER_AXIS, NEAR_SIDE_STRAND, END_ON_A_BLOCK, fartherThanHalfFromTheEndOnly));
+        assertSame(fartherThanHalfFromTheEndOnly, RopeSeamFrame.seatAttachment(PER_AXIS, NEAR_SIDE_STRAND,
                 START_ON_A_BLOCK, fartherThanHalfFromTheEndOnly));
     }
 
@@ -91,7 +84,7 @@ class RopeSeamFrameTest {
     void anAttachmentOnASubLevelIsGivenBackByIdentity() {
         Vector3d across = at(-254.0);
 
-        assertSame(across, RopeSeamFrame.seatAttachment(FOLD, NEAR_SIDE_STRAND, END_ON_A_BODY, across));
+        assertSame(across, RopeSeamFrame.seatAttachment(PER_AXIS, NEAR_SIDE_STRAND, END_ON_A_BODY, across));
     }
 
     @Test
@@ -100,7 +93,7 @@ class RopeSeamFrameTest {
 
         assertSame(across, RopeSeamFrame.seatAttachment(null, NEAR_SIDE_STRAND, END_ON_A_BLOCK, across));
         assertSame(across, RopeSeamFrame.seatAttachment(WorldFolds.NOOP, NEAR_SIDE_STRAND, END_ON_A_BLOCK, across));
-        assertSame(across, RopeSeamFrame.seatAttachment(FOLD, List.of(), END_ON_A_BLOCK, across));
+        assertSame(across, RopeSeamFrame.seatAttachment(PER_AXIS, List.of(), END_ON_A_BLOCK, across));
     }
 
     @Test
@@ -121,30 +114,30 @@ class RopeSeamFrameTest {
     @Test
     void aLappedBodyMovesTheWholeChainByOneLapAndOnlyOnce() {
         List<Vector3d> chain = chain(-10.0, 50.0, 110.0, 170.0, 230.0, 250.0);
-        Vec3 bodyAfterItsLap = bodyAt(251.5 - WIDTH_BLOCKS);
+        Vec3 bodyAfterItsLap = bodyAt(251.5 - WORLD_BLOCKS);
 
-        assertTrue(RopeSeamFrame.reseat(FOLD, chain, END_ON_A_BODY, bodyAfterItsLap));
-        assertEquals(chain(-10.0 - WIDTH_BLOCKS, 50.0 - WIDTH_BLOCKS, 110.0 - WIDTH_BLOCKS, 170.0 - WIDTH_BLOCKS,
-                230.0 - WIDTH_BLOCKS, 250.0 - WIDTH_BLOCKS), chain);
+        assertTrue(RopeSeamFrame.reseat(PER_AXIS, chain, END_ON_A_BODY, bodyAfterItsLap));
+        assertEquals(chain(-10.0 - WORLD_BLOCKS, 50.0 - WORLD_BLOCKS, 110.0 - WORLD_BLOCKS, 170.0 - WORLD_BLOCKS,
+                230.0 - WORLD_BLOCKS, 250.0 - WORLD_BLOCKS), chain);
 
-        assertFalse(RopeSeamFrame.reseat(FOLD, chain, END_ON_A_BODY, bodyAfterItsLap));
-        assertEquals(at(250.0 - WIDTH_BLOCKS), chain.getLast());
+        assertFalse(RopeSeamFrame.reseat(PER_AXIS, chain, END_ON_A_BODY, bodyAfterItsLap));
+        assertEquals(at(250.0 - WORLD_BLOCKS), chain.getLast());
     }
 
     @Test
     void theReseatFollowsTheEndTheAttachmentNames() {
         List<Vector3d> chain = chain(240.0, 250.0);
 
-        assertTrue(RopeSeamFrame.reseat(FOLD, chain, START_ON_A_BODY, bodyAt(239.5 - WIDTH_BLOCKS)));
-        assertEquals(chain(240.0 - WIDTH_BLOCKS, 250.0 - WIDTH_BLOCKS), chain);
+        assertTrue(RopeSeamFrame.reseat(PER_AXIS, chain, START_ON_A_BODY, bodyAt(239.5 - WORLD_BLOCKS)));
+        assertEquals(chain(240.0 - WORLD_BLOCKS, 250.0 - WORLD_BLOCKS), chain);
     }
 
     @Test
     void aBodyStillOnTheStrandsSideLeavesTheChainWhereItIs() {
         List<Vector3d> chain = chain(240.0, 250.0);
 
-        assertFalse(RopeSeamFrame.reseat(FOLD, chain, END_ON_A_BODY, bodyAt(251.5)));
-        assertFalse(RopeSeamFrame.reseat(null, chain, END_ON_A_BODY, bodyAt(251.5 - WIDTH_BLOCKS)));
+        assertFalse(RopeSeamFrame.reseat(PER_AXIS, chain, END_ON_A_BODY, bodyAt(251.5)));
+        assertFalse(RopeSeamFrame.reseat(null, chain, END_ON_A_BODY, bodyAt(251.5 - WORLD_BLOCKS)));
         assertEquals(chain(240.0, 250.0), chain);
     }
 }

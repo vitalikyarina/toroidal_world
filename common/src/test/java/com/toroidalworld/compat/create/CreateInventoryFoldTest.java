@@ -1,5 +1,9 @@
 package com.toroidalworld.compat.create;
 
+import static com.toroidalworld.compat.CompatFoldFixture.DECK_TORUS;
+import static com.toroidalworld.compat.CompatFoldFixture.MIRRORED;
+import static com.toroidalworld.compat.CompatFoldFixture.PER_AXIS;
+import static com.toroidalworld.compat.CompatFoldFixture.SKEWED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -12,11 +16,8 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.simibubi.create.api.packager.InventoryIdentifier;
-import com.toroidalworld.core.DeckGroupFold;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.shape.FlatShape;
 
 import net.createmod.catnip.math.BlockFace;
 import net.minecraft.core.BlockPos;
@@ -24,20 +25,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 class CreateInventoryFoldTest {
-    private static final int WORLD_CHUNKS = 16;
-    private static final int WORLD_BLOCKS = WORLD_CHUNKS * 2 * 16;
-    private static final int SKEW_CHUNKS = 4;
-    private static final int MIRROR_LINE_CHUNK = 3;
-
-    private static final WorldLoopBounds BOUNDS =
-            new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
-
-    private static final WorldFold PER_AXIS = WorldFolds.of(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    private static final WorldFold DECK_TORUS = new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    private static final WorldFold SKEWED = new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, SKEW_CHUNKS));
-    private static final WorldFold MIRRORED =
-            new DeckGroupFold(FlatShape.mirrored(BOUNDS, Direction.Axis.Z, MIRROR_LINE_CHUNK));
-
     private static final List<WorldFold> ALL = List.of(PER_AXIS, DECK_TORUS, SKEWED, MIRRORED);
 
     private static final BlockPos PAST_THE_BOUNDS = new BlockPos(300, 64, 10);

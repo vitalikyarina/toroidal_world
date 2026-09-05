@@ -1,5 +1,11 @@
 package com.toroidalworld.compat.create;
 
+import static com.toroidalworld.compat.CompatFoldFixture.DECK_TORUS;
+import static com.toroidalworld.compat.CompatFoldFixture.MIRRORED;
+import static com.toroidalworld.compat.CompatFoldFixture.MIRROR_LINE_BLOCKS;
+import static com.toroidalworld.compat.CompatFoldFixture.PER_AXIS;
+import static com.toroidalworld.compat.CompatFoldFixture.SKEWED;
+import static com.toroidalworld.compat.CompatFoldFixture.WORLD_BLOCKS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -15,7 +21,6 @@ import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.FlatShape;
 
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
@@ -23,26 +28,12 @@ class TrainMapSyncFoldTest {
     private record TwoWorlds(WorldFold wide, WorldFold narrow) {
     }
 
-    private static final int WORLD_CHUNKS = 16;
-    private static final int WORLD_BLOCKS = WORLD_CHUNKS * 2 * 16;
-    private static final int SKEW_CHUNKS = 4;
-    private static final int MIRROR_LINE_CHUNK = 3;
-    private static final int MIRROR_LINE_BLOCKS = MIRROR_LINE_CHUNK * 16;
     private static final float HEIGHT = 64.0F;
     private static final float TRACK_Z = 10.0F;
     private static final int FLOATS_PER_BOGEY = 3;
     private static final int FLOATS_PER_CARRIAGE = 6;
     private static final int NETHER_CHUNKS = 4;
     private static final int NETHER_BLOCKS = NETHER_CHUNKS * 2 * 16;
-
-    private static final WorldLoopBounds BOUNDS =
-            new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
-
-    private static final WorldFold PER_AXIS = WorldFolds.of(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    private static final WorldFold DECK_TORUS = new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    private static final WorldFold SKEWED = new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, SKEW_CHUNKS));
-    private static final WorldFold MIRRORED =
-            new DeckGroupFold(FlatShape.mirrored(BOUNDS, Direction.Axis.Z, MIRROR_LINE_CHUNK));
 
     private static final List<WorldFold> TRANSLATING = List.of(PER_AXIS, DECK_TORUS, SKEWED);
 

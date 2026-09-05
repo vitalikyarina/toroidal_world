@@ -1,5 +1,7 @@
 package com.toroidalworld.compat.sable;
 
+import static com.toroidalworld.compat.CompatFoldFixture.PER_AXIS;
+import static com.toroidalworld.compat.CompatFoldFixture.WORLD_BLOCKS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -12,11 +14,6 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.shape.FlatShape;
-
 import dev.ryanhcode.sable.api.physics.constraint.FixedConstraintConfiguration;
 import dev.ryanhcode.sable.api.physics.constraint.RotaryConstraintConfiguration;
 import dev.ryanhcode.sable.api.physics.object.box.BoxPhysicsObject;
@@ -25,12 +22,6 @@ import dev.ryanhcode.sable.companion.math.Pose3d;
 import net.minecraft.world.phys.Vec3;
 
 class SableMotorGoalTest {
-    private static final int HALF_WIDTH_CHUNKS = 16;
-    private static final int WIDTH_BLOCKS = HALF_WIDTH_CHUNKS * 2 * 16;
-    private static final int NO_SKEW = 0;
-    private static final WorldFold FOLD = WorldFolds.of(FlatShape.latticeTorus(
-            new WorldLoopBounds(-HALF_WIDTH_CHUNKS, HALF_WIDTH_CHUNKS, -HALF_WIDTH_CHUNKS, HALF_WIDTH_CHUNKS), NO_SKEW));
-
     private static final Vector3dc ORIGIN = new Vector3d();
     private static final Vector3dc UP = new Vector3d(0.0, 1.0, 0.0);
     private static final Quaterniondc IDENTITY = new Quaterniond();
@@ -41,7 +32,7 @@ class SableMotorGoalTest {
     private static final Vector3dc GOAL_NEAR_THE_SEAM = new Vector3d(250.0, HEIGHT, 3.0);
     private static final Vector3dc BODY_ACROSS_THE_SEAM = new Vector3d(-250.0, HEIGHT, 3.0);
     private static final Vector3dc BODY_ON_THE_SAME_HALF = new Vector3d(240.0, HEIGHT, 3.0);
-    private static final Vector3dc ONE_LAP_BACK = new Vector3d(-WIDTH_BLOCKS, 0.0, 0.0);
+    private static final Vector3dc ONE_LAP_BACK = new Vector3d(-WORLD_BLOCKS, 0.0, 0.0);
     private static final double STIFFNESS = 10.0;
     private static final double DAMPING = 2.0;
     private static final double MAX_FORCE = 100.0;
@@ -72,7 +63,7 @@ class SableMotorGoalTest {
     }
 
     private static SableMotorGoal goalOver(LiveBox body, Vector3dc staticAnchor, Quaterniondc orientation) {
-        SableMotorGoal goal = SableMotorGoal.of(FOLD, body,
+        SableMotorGoal goal = SableMotorGoal.of(PER_AXIS, body,
                 new FixedConstraintConfiguration(staticAnchor, ORIGIN, orientation));
         assertNotNull(goal);
         return goal;
@@ -144,7 +135,7 @@ class SableMotorGoalTest {
 
         assertNotNull(correction);
         Vector3d reseated = QUARTER_TURN.transform(correction.add(localTarget)).add(staticAnchor);
-        Vec3 expected = FOLD.nearestCopy(toVec3(BODY_ACROSS_THE_SEAM), toVec3(GOAL_NEAR_THE_SEAM));
+        Vec3 expected = PER_AXIS.nearestCopy(toVec3(BODY_ACROSS_THE_SEAM), toVec3(GOAL_NEAR_THE_SEAM));
         assertEquals(expected.x, reseated.x, EPSILON);
         assertEquals(expected.y, reseated.y, EPSILON);
         assertEquals(expected.z, reseated.z, EPSILON);
@@ -174,7 +165,7 @@ class SableMotorGoalTest {
 
     @Test
     void aRotaryConstraintCarriesNoGoal() {
-        assertNull(SableMotorGoal.of(FOLD, new LiveBox(BODY_ACROSS_THE_SEAM),
+        assertNull(SableMotorGoal.of(PER_AXIS, new LiveBox(BODY_ACROSS_THE_SEAM),
                 new RotaryConstraintConfiguration(ORIGIN, ORIGIN, UP, UP)));
     }
 

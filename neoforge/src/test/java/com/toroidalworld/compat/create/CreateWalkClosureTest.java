@@ -1,46 +1,26 @@
 package com.toroidalworld.compat.create;
 
+import static com.toroidalworld.compat.CompatFoldFixture.DECK_TORUS;
+import static com.toroidalworld.compat.CompatFoldFixture.MIRRORED;
+import static com.toroidalworld.compat.CompatFoldFixture.PER_AXIS;
+import static com.toroidalworld.compat.CompatFoldFixture.SKEWED;
+import static com.toroidalworld.compat.CompatFoldFixture.SKEW_CHUNKS;
+import static com.toroidalworld.compat.CompatFoldFixture.WORLD_BLOCKS;
+import static com.toroidalworld.compat.CompatFoldFixture.WORLD_CHUNKS;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.DeckGroupFold;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.shape.FlatShape;
-import com.toroidalworld.options.WorldLoopBounds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
 class CreateWalkClosureTest {
-    private static final int WORLD_CHUNKS = 16;
-    private static final int WORLD_BLOCKS = WORLD_CHUNKS * 2 * 16;
-    private static final int SKEW_CHUNKS = 4;
-    private static final int MIRROR_LINE_CHUNK = 3;
-
-    private static final WorldLoopBounds BOUNDS =
-            new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
-
     private static CreateWalkClosure closure(WorldFold transformer) {
         return new CreateWalkClosure(transformer);
-    }
-
-    private static WorldFold loopedWorld() {
-        return WorldFolds.of(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    }
-
-    private static WorldFold deckGroupTorus() {
-        return new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    }
-
-    private static WorldFold skewedTorus() {
-        return new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, SKEW_CHUNKS));
-    }
-
-    private static WorldFold mirroredWorld() {
-        return new DeckGroupFold(FlatShape.mirrored(BOUNDS, Direction.Axis.Z, MIRROR_LINE_CHUNK));
     }
 
     private static int walk(CreateWalkClosure closure, BlockPos from, Direction direction, int queries) {
@@ -57,7 +37,7 @@ class CreateWalkClosureTest {
 
     @Test
     void aRingClosesOnTheQueryThatNamesTheStartAgain() {
-        for (WorldFold fold : new WorldFold[] {loopedWorld(), deckGroupTorus(), skewedTorus()}) {
+        for (WorldFold fold : new WorldFold[] {PER_AXIS, DECK_TORUS, SKEWED}) {
             CreateWalkClosure closure = closure(fold);
             BlockPos start = new BlockPos(10, 64, 3);
 
@@ -70,7 +50,7 @@ class CreateWalkClosureTest {
 
     @Test
     void aRowAlongTheGlideAxisOfAMirroredWorldClosesAfterTwoLaps() {
-        CreateWalkClosure closure = closure(mirroredWorld());
+        CreateWalkClosure closure = closure(MIRRORED);
         int ringBlocks = 2 * WORLD_BLOCKS;
 
         int closedAt = walk(closure, new BlockPos(10, 64, 3), Direction.WEST, ringBlocks + 5);
@@ -80,7 +60,7 @@ class CreateWalkClosureTest {
 
     @Test
     void aRowAcrossTheSkewOfALatticeTorusClosesWhenTheShiftsAddUpToWholeLaps() {
-        CreateWalkClosure closure = closure(skewedTorus());
+        CreateWalkClosure closure = closure(SKEWED);
         int lapsUntilWhole = 2 * WORLD_CHUNKS / gcd(SKEW_CHUNKS, 2 * WORLD_CHUNKS);
         int ringBlocks = lapsUntilWhole * WORLD_BLOCKS;
 
@@ -91,7 +71,7 @@ class CreateWalkClosureTest {
 
     @Test
     void anOpenRowThroughTheSeamNeverCloses() {
-        for (WorldFold fold : new WorldFold[] {loopedWorld(), skewedTorus(), mirroredWorld()}) {
+        for (WorldFold fold : new WorldFold[] {PER_AXIS, SKEWED, MIRRORED}) {
             CreateWalkClosure closure = closure(fold);
 
             int closedAt = walk(closure, new BlockPos(250, 64, 3), Direction.EAST, 40);
@@ -102,7 +82,7 @@ class CreateWalkClosureTest {
 
     @Test
     void aVerticalLegNeverCloses() {
-        CreateWalkClosure closure = closure(loopedWorld());
+        CreateWalkClosure closure = closure(PER_AXIS);
 
         int closedAt = walk(closure, new BlockPos(0, 0, 0), Direction.UP, WORLD_BLOCKS * 2);
 
@@ -111,7 +91,7 @@ class CreateWalkClosureTest {
 
     @Test
     void theEmitLegOpensAtTheLeftEndAndClosesAfterEveryTube() {
-        CreateWalkClosure closure = closure(loopedWorld());
+        CreateWalkClosure closure = closure(PER_AXIS);
         BlockPos start = new BlockPos(10, 64, 3);
         walk(closure, start, Direction.WEST, WORLD_BLOCKS);
         BlockPos leftEnd = start.relative(Direction.WEST, WORLD_BLOCKS - 1);
@@ -123,7 +103,7 @@ class CreateWalkClosureTest {
 
     @Test
     void aJumpOpensANewLegWithItsOwnOrigin() {
-        CreateWalkClosure closure = closure(loopedWorld());
+        CreateWalkClosure closure = closure(PER_AXIS);
         walk(closure, new BlockPos(0, 64, 0), Direction.WEST, 100);
         BlockPos secondOrigin = new BlockPos(300, 64, 0);
 

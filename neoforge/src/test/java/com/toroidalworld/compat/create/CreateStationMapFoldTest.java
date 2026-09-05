@@ -1,5 +1,12 @@
 package com.toroidalworld.compat.create;
 
+import static com.toroidalworld.compat.CompatFoldFixture.DECK_CYLINDER;
+import static com.toroidalworld.compat.CompatFoldFixture.DECK_TORUS;
+import static com.toroidalworld.compat.CompatFoldFixture.MIRRORED;
+import static com.toroidalworld.compat.CompatFoldFixture.MIRROR_LINE_BLOCKS;
+import static com.toroidalworld.compat.CompatFoldFixture.PER_AXIS;
+import static com.toroidalworld.compat.CompatFoldFixture.SKEWED;
+import static com.toroidalworld.compat.CompatFoldFixture.WORLD_BLOCKS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -7,24 +14,13 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.DeckGroupFold;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
-import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 class CreateStationMapFoldTest {
-    private static final int WORLD_CHUNKS = 16;
-    private static final int WORLD_BLOCKS = WORLD_CHUNKS * 2 * 16;
-    private static final int SKEW_CHUNKS = 4;
-    private static final int MIRROR_LINE_CHUNK = 3;
-    private static final int MIRROR_LINE_BLOCKS = MIRROR_LINE_CHUNK * 16;
     private static final int MARKER_HEIGHT = 64;
     private static final int MAP_CENTRE_X = 250;
     private static final int MAP_CENTRE_Z = 10;
@@ -34,20 +30,8 @@ class CreateStationMapFoldTest {
     private static final double TOGGLED_X = -250.5;
     private static final double TOGGLED_Z = 10.5;
 
-    private static final WorldLoopBounds BOUNDS =
-            new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
-    private static final WorldLoopBounds X_ONLY =
-            new WorldLoopBounds(new AxisBounds.Looped(-WORLD_CHUNKS, WORLD_CHUNKS), AxisBounds.Unbounded.INSTANCE);
-
-    private static final WorldFold PER_AXIS = WorldFolds.of(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    private static final WorldFold DECK_TORUS = new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    private static final WorldFold SKEWED = new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, SKEW_CHUNKS));
-    private static final WorldFold MIRRORED =
-            new DeckGroupFold(FlatShape.mirrored(BOUNDS, Direction.Axis.Z, MIRROR_LINE_CHUNK));
-    private static final WorldFold CYLINDER = new DeckGroupFold(FlatShape.cylinder(X_ONLY));
-
-    private static final List<WorldFold> TRANSLATING = List.of(PER_AXIS, DECK_TORUS, SKEWED, CYLINDER);
-    private static final List<WorldFold> EVERY_SHAPE = List.of(PER_AXIS, DECK_TORUS, SKEWED, MIRRORED, CYLINDER);
+    private static final List<WorldFold> TRANSLATING = List.of(PER_AXIS, DECK_TORUS, SKEWED, DECK_CYLINDER);
+    private static final List<WorldFold> EVERY_SHAPE = List.of(PER_AXIS, DECK_TORUS, SKEWED, MIRRORED, DECK_CYLINDER);
 
     @Test
     void aTargetPastTheXBoundLandsOneWorldWidthBack() {
@@ -79,7 +63,7 @@ class CreateStationMapFoldTest {
 
     @Test
     void aTargetFarAlongTheUnboundedAxisKeepsThatCoordinate() {
-        BlockPos canonical = CreateStationMapFold.canonicalTarget(CYLINDER,
+        BlockPos canonical = CreateStationMapFold.canonicalTarget(DECK_CYLINDER,
                 new BlockPos(PAST_THE_X_BOUND, MARKER_HEIGHT, FAR_ALONG_Z));
 
         assertEquals(new BlockPos(PAST_THE_X_BOUND - WORLD_BLOCKS, MARKER_HEIGHT, FAR_ALONG_Z), canonical);
@@ -107,7 +91,7 @@ class CreateStationMapFoldTest {
 
     @Test
     void aTargetSeatedIntoTheMapFrameKeepsTheUnboundedAxis() {
-        BlockPos seated = CreateStationMapFold.targetInMapFrame(CYLINDER, MAP_CENTRE_X, MAP_CENTRE_Z,
+        BlockPos seated = CreateStationMapFold.targetInMapFrame(DECK_CYLINDER, MAP_CENTRE_X, MAP_CENTRE_Z,
                 new BlockPos(ACROSS_THE_SEAM_X, MARKER_HEIGHT, FAR_ALONG_Z));
 
         assertEquals(new BlockPos(ACROSS_THE_SEAM_X + WORLD_BLOCKS, MARKER_HEIGHT, FAR_ALONG_Z), seated);

@@ -1,5 +1,7 @@
 package com.toroidalworld.compat.create;
 
+import static com.toroidalworld.compat.CompatFoldFixture.DECK_TORUS;
+import static com.toroidalworld.compat.CompatFoldFixture.PER_AXIS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -10,20 +12,10 @@ import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.shape.FlatShape;
 
 class ServerFoldMemoTest {
-    private static final int WORLD_CHUNKS = 16;
-
-    private static final WorldLoopBounds BOUNDS =
-            new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
-
-    private static final WorldFold OVERWORLD_FOLD =
-            WorldFolds.of(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    private static final WorldFold NETHER_FOLD =
-            WorldFolds.of(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
+    private static final WorldFold OVERWORLD_FOLD = PER_AXIS;
+    private static final WorldFold NETHER_FOLD = DECK_TORUS;
 
     private final Object server = new Object();
     private final Object otherServer = new Object();

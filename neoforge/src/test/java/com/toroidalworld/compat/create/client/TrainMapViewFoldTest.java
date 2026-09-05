@@ -1,5 +1,13 @@
 package com.toroidalworld.compat.create.client;
 
+import static com.toroidalworld.compat.CompatFoldFixture.DECK_CYLINDER;
+import static com.toroidalworld.compat.CompatFoldFixture.DECK_TORUS;
+import static com.toroidalworld.compat.CompatFoldFixture.MIRRORED;
+import static com.toroidalworld.compat.CompatFoldFixture.MIRROR_LINE_BLOCKS;
+import static com.toroidalworld.compat.CompatFoldFixture.PER_AXIS;
+import static com.toroidalworld.compat.CompatFoldFixture.SKEWED;
+import static com.toroidalworld.compat.CompatFoldFixture.WORLD_BLOCKS;
+import static com.toroidalworld.compat.CompatFoldFixture.WORLD_CHUNKS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -9,45 +17,22 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.DeckGroupFold;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.SeamTransform;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.map.MapSurfaceCopies.Copies;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
-import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 class TrainMapViewFoldTest {
-    private static final int WORLD_CHUNKS = 16;
-    private static final int WORLD_BLOCKS = WORLD_CHUNKS * 2 * 16;
     private static final int WORLD_MIN = -WORLD_CHUNKS * 16;
     private static final int WORLD_MAX = WORLD_CHUNKS * 16 - 1;
-    private static final int SKEW_CHUNKS = 4;
-    private static final int MIRROR_LINE_CHUNK = 3;
-    private static final int MIRROR_LINE_BLOCKS = MIRROR_LINE_CHUNK * 16;
     private static final int VIEW_BLOCKS = 20;
     private static final int SURFACE_REACH = 5;
     private static final int MANY_WORLDS = 40;
     private static final int CLEAR_OF_THE_BOUND_BLOCKS = 100;
-
-    private static final WorldLoopBounds BOUNDS =
-            new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
-    private static final WorldLoopBounds X_ONLY =
-            new WorldLoopBounds(new AxisBounds.Looped(-WORLD_CHUNKS, WORLD_CHUNKS), AxisBounds.Unbounded.INSTANCE);
-
-    private static final WorldFold PER_AXIS = WorldFolds.of(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    private static final WorldFold DECK_TORUS = new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    private static final WorldFold SKEWED = new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, SKEW_CHUNKS));
-    private static final WorldFold MIRRORED =
-            new DeckGroupFold(FlatShape.mirrored(BOUNDS, Direction.Axis.Z, MIRROR_LINE_CHUNK));
-    private static final WorldFold CYLINDER = new DeckGroupFold(FlatShape.cylinder(X_ONLY));
 
     private static final List<WorldFold> TORI = List.of(PER_AXIS, DECK_TORUS, SKEWED, MIRRORED);
     private static final List<WorldFold> PLAIN_TORI = List.of(PER_AXIS, DECK_TORUS);
@@ -253,7 +238,7 @@ class TrainMapViewFoldTest {
     void anUnboundedAxisIsOneCopy() {
         Rect2i alongTheUnboundedAxis = new Rect2i(-100, -1000, 200, 5000);
 
-        List<DeckTransformation> copies = TrainMapViewFold.copies(CYLINDER, EVERYWHERE, alongTheUnboundedAxis);
+        List<DeckTransformation> copies = TrainMapViewFold.copies(DECK_CYLINDER, EVERYWHERE, alongTheUnboundedAxis);
 
         assertEquals(List.of(DeckTransformation.IDENTITY), copies);
     }
@@ -263,9 +248,9 @@ class TrainMapViewFoldTest {
         Rect2i alongTheUnboundedAxis = new Rect2i(-100, -1000, 200, 5000);
 
         assertEquals(List.of(DeckTransformation.IDENTITY, ONE_LAP_ALONG_X),
-                TrainMapViewFold.copiesDrawnFor(CYLINDER, EVERYWHERE, ENDING_ON_THE_X_BOUND));
+                TrainMapViewFold.copiesDrawnFor(DECK_CYLINDER, EVERYWHERE, ENDING_ON_THE_X_BOUND));
         assertEquals(List.of(DeckTransformation.IDENTITY),
-                TrainMapViewFold.copiesDrawnFor(CYLINDER, EVERYWHERE, alongTheUnboundedAxis));
+                TrainMapViewFold.copiesDrawnFor(DECK_CYLINDER, EVERYWHERE, alongTheUnboundedAxis));
     }
 
     private static BoundingBox box(Rect2i view) {

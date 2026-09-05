@@ -133,6 +133,7 @@ dependencies {
 // The loader-bound tests are shared with the fabric module: written once next to the code they cover, run under
 // each loader's own JUnit launcher.
 sourceSets.test.java.srcDir '../common/src/loaderTest/java'
+sourceSets.test.java.srcDir '../common/src/testFixtures/java'
 
 test {
     useJUnitPlatform()

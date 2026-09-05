@@ -1,5 +1,8 @@
 package com.toroidalworld.compat.create;
 
+import static com.toroidalworld.compat.CompatFoldFixture.DECK_TORUS;
+import static com.toroidalworld.compat.CompatFoldFixture.PER_AXIS;
+import static com.toroidalworld.compat.CompatFoldFixture.WORLD_BLOCKS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -10,23 +13,13 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.DeckGroupFold;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.core.BlockPos;
 
 class LappedKeysTest {
-    private static final int WORLD_CHUNKS = 16;
-    private static final int WORLD_BLOCKS = WORLD_CHUNKS * 2 * 16;
-
-    private static final WorldLoopBounds BOUNDS =
-            new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
-    private static final FlatShape TORUS = FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW);
-
-    private static final List<WorldFold> WRAPPING = List.of(WorldFolds.of(TORUS), new DeckGroupFold(TORUS));
+    private static final List<WorldFold> WRAPPING = List.of(PER_AXIS, DECK_TORUS);
 
     private static final BlockPos INSIDE = new BlockPos(250, 64, 10);
     private static final BlockPos ONE_LAP_ON = new BlockPos(250 + WORLD_BLOCKS, 64, 10);

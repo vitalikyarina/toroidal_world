@@ -1,5 +1,7 @@
 package com.toroidalworld.compat.create;
 
+import static com.toroidalworld.compat.CompatFoldFixture.PER_AXIS;
+import static com.toroidalworld.compat.CompatFoldFixture.WORLD_BLOCKS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,21 +14,9 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.shape.FlatShape;
-
 import net.minecraft.core.BlockPos;
 
 class CanonicalPositionKeysTest {
-    private static final int WORLD_CHUNKS = 16;
-    private static final int WORLD_BLOCKS = WORLD_CHUNKS * 2 * 16;
-
-    private static final WorldLoopBounds BOUNDS =
-            new WorldLoopBounds(-WORLD_CHUNKS, WORLD_CHUNKS, -WORLD_CHUNKS, WORLD_CHUNKS);
-    private static final WorldFold FOLD = WorldFolds.of(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-
     private static final BlockPos CANONICAL = new BlockPos(10, 64, 3);
     private static final BlockPos RAW = new BlockPos(10 + WORLD_BLOCKS, 64, 3);
     private static final BlockPos NEIGHBOUR = new BlockPos(-20, 64, 7);
@@ -35,7 +25,7 @@ class CanonicalPositionKeysTest {
     private static final String ABSENT = "absent";
 
     private static Set<BlockPos> canonicalKeys(BlockPos... positions) {
-        Set<BlockPos> keys = new CanonicalPositionKeys.CanonicalSet(FOLD);
+        Set<BlockPos> keys = new CanonicalPositionKeys.CanonicalSet(PER_AXIS);
         for (BlockPos position : positions) {
             keys.add(position);
         }
@@ -44,7 +34,7 @@ class CanonicalPositionKeysTest {
     }
 
     private static Map<BlockPos, String> canonicalEntries(BlockPos key) {
-        Map<BlockPos, String> entries = new CanonicalPositionKeys.CanonicalMap<>(FOLD);
+        Map<BlockPos, String> entries = new CanonicalPositionKeys.CanonicalMap<>(PER_AXIS);
         entries.put(key, VALUE);
 
         return entries;
@@ -52,9 +42,9 @@ class CanonicalPositionKeysTest {
 
     @Test
     void theRawPositionNamesTheCanonicalOneOneLapAway() {
-        assertTrue(FOLD.isOver(RAW), RAW + " must sit outside the bounds");
-        assertEquals(CANONICAL, FOLD.fold(RAW));
-        assertFalse(FOLD.isOver(NEIGHBOUR), NEIGHBOUR + " must sit inside the bounds");
+        assertTrue(PER_AXIS.isOver(RAW), RAW + " must sit outside the bounds");
+        assertEquals(CANONICAL, PER_AXIS.fold(RAW));
+        assertFalse(PER_AXIS.isOver(NEIGHBOUR), NEIGHBOUR + " must sit inside the bounds");
     }
 
     @Test
