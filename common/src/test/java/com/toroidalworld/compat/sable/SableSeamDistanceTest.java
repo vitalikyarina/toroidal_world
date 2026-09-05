@@ -16,9 +16,8 @@ import com.toroidalworld.shape.FlatShape;
 class SableSeamDistanceTest {
     private static final int HALF_WIDTH_CHUNKS_X = 16;
     private static final int HALF_WIDTH_CHUNKS_Z = 8;
-    private static final WorldFold FOLD = WorldFolds.of(FlatShape.latticeTorus(
-            new WorldLoopBounds(-HALF_WIDTH_CHUNKS_X, HALF_WIDTH_CHUNKS_X, -HALF_WIDTH_CHUNKS_Z, HALF_WIDTH_CHUNKS_Z),
-            FlatShape.NO_SKEW));
+    private static final WorldFold FOLD = WorldFolds.of(FlatShape.torus(
+            new WorldLoopBounds(-HALF_WIDTH_CHUNKS_X, HALF_WIDTH_CHUNKS_X, -HALF_WIDTH_CHUNKS_Z, HALF_WIDTH_CHUNKS_Z)));
 
     private static final Vector3dc FROM = new Vector3d(250.0, 70.0, 100.0);
     private static final Vector3dc TO = new Vector3d(-250.0, 100.0, -100.0);

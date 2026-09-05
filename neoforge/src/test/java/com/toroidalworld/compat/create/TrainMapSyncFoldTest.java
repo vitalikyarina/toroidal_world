@@ -41,10 +41,10 @@ class TrainMapSyncFoldTest {
             new WorldLoopBounds(-NETHER_CHUNKS, NETHER_CHUNKS, -NETHER_CHUNKS, NETHER_CHUNKS);
 
     private static final WorldFold NETHER_PER_AXIS =
-            WorldFolds.of(FlatShape.latticeTorus(NETHER_BOUNDS, FlatShape.NO_SKEW));
+            WorldFolds.of(FlatShape.torus(NETHER_BOUNDS));
 
     private static final WorldFold NETHER_DECK_TORUS =
-            new DeckGroupFold(FlatShape.latticeTorus(NETHER_BOUNDS, FlatShape.NO_SKEW));
+            new DeckGroupFold(FlatShape.torus(NETHER_BOUNDS));
 
     private static final List<TwoWorlds> WIDE_AND_NARROW =
             List.of(new TwoWorlds(PER_AXIS, NETHER_PER_AXIS), new TwoWorlds(DECK_TORUS, NETHER_DECK_TORUS));

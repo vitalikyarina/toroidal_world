@@ -21,8 +21,8 @@ public final class CompatFoldFixture {
     public static final WorldLoopBounds X_ONLY =
             new WorldLoopBounds(new AxisBounds.Looped(-WORLD_CHUNKS, WORLD_CHUNKS), AxisBounds.Unbounded.INSTANCE);
 
-    public static final WorldFold PER_AXIS = WorldFolds.of(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
-    public static final WorldFold DECK_TORUS = new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, FlatShape.NO_SKEW));
+    public static final WorldFold PER_AXIS = WorldFolds.of(FlatShape.torus(BOUNDS));
+    public static final WorldFold DECK_TORUS = new DeckGroupFold(FlatShape.torus(BOUNDS));
     public static final WorldFold SKEWED = new DeckGroupFold(FlatShape.latticeTorus(BOUNDS, SKEW_CHUNKS));
     public static final WorldFold MIRRORED =
             new DeckGroupFold(FlatShape.mirrored(BOUNDS, Direction.Axis.Z, MIRROR_LINE_CHUNK));

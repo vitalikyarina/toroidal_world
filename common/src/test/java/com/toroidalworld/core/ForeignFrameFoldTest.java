@@ -31,7 +31,7 @@ class ForeignFrameFoldTest {
     private static final int PLOT_BLOCK = PLOT_CHUNK * CoordinateConstants.CHUNK_WIDTH;
     private static final int SEA_LEVEL = 64;
 
-    private static final FlatShape SHAPE = FlatShape.latticeTorus(WorldLoopBounds.ofWidth(WORLD_CHUNKS), FlatShape.NO_SKEW);
+    private static final FlatShape SHAPE = FlatShape.torus(WorldLoopBounds.ofWidth(WORLD_CHUNKS));
     private static final ForeignSpan PLOT_CHUNKS = new ForeignSpan(PLOT_MIN_CHUNK, PLOT_MAX_CHUNK);
     private static final WorldFold FRAMED = WorldFolds.of(SHAPE, List.of(new ForeignFrame(PLOT_CHUNKS, PLOT_CHUNKS)));
     private static final WorldFold BARE = WorldFolds.of(SHAPE);
