@@ -3,10 +3,12 @@ package com.toroidalworld.compat.distanthorizons;
 import com.toroidalworld.api.ToroidalShape;
 
 import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 
 public final class DhFold {
     private static final Direction.Axis[] HORIZONTAL = {Direction.Axis.X, Direction.Axis.Z};
     private static final int SNAP_CELLS_PER_WORLD = 16;
+    private static final int BLOCK = 1;
 
     public static int sectionWidthBlocks(byte detailLevel) {
         return 1 << detailLevel;
@@ -32,43 +34,67 @@ public final class DhFold {
         return (byte) (maxRenderableDetailLevel(shape, leafDetailLevel) - leafDetailLevel);
     }
 
-    public static boolean keysFoldWithoutCollision(ToroidalShape shape, byte leafDetailLevel) {
-        return maxExactDetailLevel(shape) >= leafDetailLevel;
+    public static long periodBlocks(ToroidalShape shape, Direction.Axis axis, byte detailLevel) {
+        int worldWidth = shape.widthBlocks(axis);
+        int gcd = 1 << Math.min(Integer.numberOfTrailingZeros(worldWidth), detailLevel);
+        return (long) (worldWidth / gcd) * sectionWidthBlocks(detailLevel);
     }
 
-    public static boolean foldKeepsTheGrid(ToroidalShape shape, Direction.Axis axis, byte detailLevel, int section) {
-        if (!shape.loops(axis)) {
-            return true;
-        }
-
-        int width = sectionWidthBlocks(detailLevel);
-        return Math.floorMod(shape.foldBlock(axis, section * width), width) == 0;
-    }
-
-    public static boolean foldKeepsTheSpan(ToroidalShape shape, Direction.Axis axis, byte detailLevel, int section) {
-        if (!shape.loops(axis)) {
-            return true;
-        }
-
-        int width = sectionWidthBlocks(detailLevel);
-        int last = shape.foldBlock(axis, section * width) + width - 1;
-        return shape.foldBlock(axis, last) == last;
-    }
-
-    public static boolean isAddressableSection(ToroidalShape shape, byte detailLevel, int sectionX, int sectionZ) {
-        return foldKeepsTheGrid(shape, Direction.Axis.X, detailLevel, sectionX)
-                && foldKeepsTheSpan(shape, Direction.Axis.X, detailLevel, sectionX)
-                && foldKeepsTheGrid(shape, Direction.Axis.Z, detailLevel, sectionZ)
-                && foldKeepsTheSpan(shape, Direction.Axis.Z, detailLevel, sectionZ);
+    public static int periodSections(ToroidalShape shape, Direction.Axis axis, byte detailLevel) {
+        return (int) (periodBlocks(shape, axis, detailLevel) / sectionWidthBlocks(detailLevel));
     }
 
     public static int foldSection(ToroidalShape shape, Direction.Axis axis, byte detailLevel, int section) {
-        if (!shape.loops(axis) || detailLevel > maxExactDetailLevel(shape)) {
-            return section;
+        return foldByPeriod(shape, axis, detailLevel, sectionWidthBlocks(detailLevel), section);
+    }
+
+    public static int foldChunk(ToroidalShape shape, Direction.Axis axis, byte leafDetailLevel, int chunk) {
+        return foldByPeriod(shape, axis, leafDetailLevel, SectionPos.SECTION_SIZE, chunk);
+    }
+
+    public static int foldBlock(ToroidalShape shape, Direction.Axis axis, byte leafDetailLevel, int block) {
+        return foldByPeriod(shape, axis, leafDetailLevel, BLOCK, block);
+    }
+
+    private static int foldByPeriod(ToroidalShape shape, Direction.Axis axis, byte detailLevel, int unitBlocks,
+            int value) {
+        if (!shape.loops(axis)) {
+            return value;
+        }
+
+        long period = periodBlocks(shape, axis, detailLevel);
+        long laps = Math.floorDiv((long) value * unitBlocks - shape.minBlock(axis), period);
+        return (int) (value - laps * (period / unitBlocks));
+    }
+
+    public static boolean isCompleteSection(ToroidalShape shape, byte leafDetailLevel, byte detailLevel, int sectionX,
+            int sectionZ) {
+        return detailLevel <= leafDetailLevel
+                || foldedSpanInsideTheWorld(shape, Direction.Axis.X, detailLevel, sectionX)
+                        && foldedSpanInsideTheWorld(shape, Direction.Axis.Z, detailLevel, sectionZ);
+    }
+
+    public static boolean foldedSpanInsideTheWorld(ToroidalShape shape, Direction.Axis axis, byte detailLevel,
+            int section) {
+        if (!shape.loops(axis)) {
+            return true;
         }
 
         int width = sectionWidthBlocks(detailLevel);
-        return Math.floorDiv(shape.foldBlock(axis, section * width), width);
+        long corner = (long) foldSection(shape, axis, detailLevel, section) * width;
+        return corner + width <= shape.maxBlock(axis);
+    }
+
+    public static boolean containsACopy(ToroidalShape shape, Direction.Axis axis, byte detailLevel, int section,
+            byte copyDetailLevel, int copySection) {
+        long corner = (long) section * sectionWidthBlocks(detailLevel);
+        long copyCorner = (long) copySection * sectionWidthBlocks(copyDetailLevel);
+        if (shape.loops(axis)) {
+            long period = periodBlocks(shape, axis, copyDetailLevel);
+            copyCorner += Math.ceilDiv(corner - copyCorner, period) * period;
+        }
+
+        return corner <= copyCorner && copyCorner < corner + sectionWidthBlocks(detailLevel);
     }
 
     public static byte snapDetailLevel(ToroidalShape shape, byte leafDetailLevel) {
@@ -90,15 +116,15 @@ public final class DhFold {
 
     public static int nearestSection(ToroidalShape shape, Direction.Axis axis, byte snapLevel, byte detailLevel,
             int refBlock, int section) {
-        if (!shape.loops(axis) || detailLevel > maxExactDetailLevel(shape)) {
+        if (!shape.loops(axis)) {
             return section;
         }
 
-        int worldWidth = shape.widthBlocks(axis);
+        long period = periodBlocks(shape, axis, detailLevel);
         long laps = detailLevel <= snapLevel
-                ? lapsToward(worldWidth, snapCellCentreBlock(snapLevel, detailLevel, section) - refBlock)
-                : lapsToward(worldWidth, sectionCentreBlock(detailLevel, section) - refBlock);
-        return (int) (section - laps * (worldWidth / sectionWidthBlocks(detailLevel)));
+                ? lapsToward(period, snapCellCentreBlock(snapLevel, detailLevel, section) - refBlock)
+                : lapsToward(period, sectionCentreBlock(detailLevel, section) - refBlock);
+        return (int) (section - laps * (period / sectionWidthBlocks(detailLevel)));
     }
 
     public static boolean isNearestSection(ToroidalShape shape, Direction.Axis axis, byte snapLevel,

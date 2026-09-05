@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 import com.toroidalworld.api.ToroidalShape;
+import com.toroidalworld.compat.distanthorizons.DhFold;
 import com.toroidalworld.compat.distanthorizons.DhKeys;
 import com.toroidalworld.compat.distanthorizons.DhRepoLevel;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -103,7 +104,7 @@ public class FullDataSourceV2RepoMixin {
             return original.call(targetBlockX, targetBlockZ, returnCount, parentUpdates);
         }
 
-        return original.call(shape.foldBlock(Direction.Axis.X, targetBlockX),
-                shape.foldBlock(Direction.Axis.Z, targetBlockZ), returnCount, parentUpdates);
+        return original.call(DhFold.foldBlock(shape, Direction.Axis.X, DhKeys.LEAF, targetBlockX),
+                DhFold.foldBlock(shape, Direction.Axis.Z, DhKeys.LEAF, targetBlockZ), returnCount, parentUpdates);
     }
 }
