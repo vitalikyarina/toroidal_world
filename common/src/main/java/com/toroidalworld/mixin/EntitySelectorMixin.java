@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.command.SeamCommandErrors;
+import com.toroidalworld.core.FoldedBoxQuery;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -62,7 +63,7 @@ public class EntitySelectorMixin {
 
     private static boolean toroidal$insideThroughSeam(Entity entity, AABB absoluteAabb) {
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(entity.level());
-        AABB box = transformer == null ? absoluteAabb : transformer.foldBox(entity.position(), absoluteAabb).value();
+        AABB box = FoldedBoxQuery.toward(transformer, entity.position(), absoluteAabb);
         return box.intersects(entity.getBoundingBox());
     }
 }

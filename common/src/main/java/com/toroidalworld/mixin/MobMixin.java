@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.accessors.TransformerSource;
+import com.toroidalworld.core.FoldedBoxQuery;
 import com.toroidalworld.core.WorldFold;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -36,7 +37,7 @@ public class MobMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getHitbox()Lnet/minecraft/world/phys/AABB;"))
     private AABB toroidal$meleeHitboxThroughSeam(AABB hitbox) {
         WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? hitbox : transformer.foldBox(((Mob) (Object) this).position(), hitbox).value();
+        return FoldedBoxQuery.toward(transformer, ((Mob) (Object) this).position(), hitbox);
     }
 
     @ModifyExpressionValue(

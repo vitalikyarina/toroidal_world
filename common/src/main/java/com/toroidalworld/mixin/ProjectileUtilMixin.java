@@ -4,6 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.TransformerSource;
+import com.toroidalworld.core.FoldedBoxQuery;
 import com.toroidalworld.core.WorldFold;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -27,6 +28,6 @@ public class ProjectileUtilMixin {
             @Local(argsOnly = true, ordinal = 0) Vec3 from) {
         AABB box = original.call(candidate);
         WorldFold transformer = ((TransformerSource) candidate).toroidal$wrappedTransformer();
-        return transformer == null ? box : transformer.foldBox(from, box).value();
+        return FoldedBoxQuery.toward(transformer, from, box);
     }
 }
