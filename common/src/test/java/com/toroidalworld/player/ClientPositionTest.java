@@ -27,7 +27,7 @@ import net.minecraft.world.level.Level;
 class ClientPositionTest {
     private static final int WIDTH_CHUNKS = 32;
     private static final double WIDTH_BLOCKS = 512.0;
-    private static final WorldFold TORUS = WorldFolds.of(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(WIDTH_CHUNKS), 0));
+    private static final WorldFold TORUS = WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(WIDTH_CHUNKS)));
     private static final WorldFold CYLINDER_X = WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, WIDTH_CHUNKS)));
     private static final double MIRROR_X = 100.5;
     private static final double MIRROR_Z = -20.25;

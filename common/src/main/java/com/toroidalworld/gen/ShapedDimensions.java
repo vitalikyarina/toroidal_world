@@ -11,6 +11,7 @@ import com.toroidalworld.gen.DatapackStemOverrides.StemOverride;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.options.WorldLoopSizes;
+import com.toroidalworld.platform.Platforms;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.core.Holder;
@@ -41,7 +42,7 @@ public final class ShapedDimensions {
         }
 
         Map<ResourceKey<LevelStem>, LevelStem> stems = new HashMap<>(dimensions.dimensions());
-        stems.put(key, new LevelStem(stem.type(), marked));
+        stems.put(key, Platforms.get().withGenerator(stem, marked));
         return new WorldDimensions(stems);
     }
 
@@ -61,7 +62,7 @@ public final class ShapedDimensions {
                 stripped = new HashMap<>(dimensions.dimensions());
             }
 
-            stripped.put(entry.getKey(), new LevelStem(stem.type(), shaped.unshaped()));
+            stripped.put(entry.getKey(), Platforms.get().withGenerator(stem, shaped.unshaped()));
         }
 
         return stripped == null ? dimensions : new WorldDimensions(stripped);
@@ -84,13 +85,14 @@ public final class ShapedDimensions {
 
             ChunkGenerator rebuilt = shapedGeneratorFor(datapackStem.generator(), shape);
             if (rebuilt != null) {
-                restored.put(entry.key(), new LevelStem(datapackStem.type(), rebuilt));
+                restored.put(entry.key(), Platforms.get().withGenerator(datapackStem, rebuilt));
                 overrides.put(entry.key(), override(Outcome.RESHAPED, datapackStem));
                 continue;
             }
 
             ChunkGenerator stamped = stampedGeneratorFor(datapackStem.generator(), shape);
-            restored.put(entry.key(), stamped == null ? storedStem : new LevelStem(datapackStem.type(), stamped));
+            restored.put(entry.key(),
+                    stamped == null ? storedStem : Platforms.get().withGenerator(datapackStem, stamped));
             overrides.put(entry.key(), override(stamped == null ? Outcome.REFUSED : Outcome.STAMPED, datapackStem));
         }
 

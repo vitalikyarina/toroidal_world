@@ -132,7 +132,7 @@ class DeckGroupFoldMatrixTest {
             FlatShape.cylinder(X_ONLY), new Group(true, false, 0, false, false, 0));
 
     private static final Case TORUS = new Case("torus",
-            FlatShape.latticeTorus(BOTH, 0), new Group(true, true, 0, false, false, 0));
+            FlatShape.torus(BOTH), new Group(true, true, 0, false, false, 0));
 
     private static final Case LATTICE_TORUS = new Case("lattice torus",
             FlatShape.latticeTorus(BOTH, SKEW_CHUNKS), new Group(true, true, SKEW, false, false, 0));
@@ -459,9 +459,9 @@ class DeckGroupFoldMatrixTest {
 
         @Test
         void theTieDoesNotDependOnWhereTheBoundsAreDrawn() {
-            DeckGroupFold centred = new DeckGroupFold(FlatShape.latticeTorus(BOTH, 0));
-            DeckGroupFold shifted = new DeckGroupFold(FlatShape.latticeTorus(
-                    new WorldLoopBounds(new AxisBounds.Looped(-5, 11), new AxisBounds.Looped(-5, 11)), 0));
+            DeckGroupFold centred = new DeckGroupFold(FlatShape.torus(BOTH));
+            DeckGroupFold shifted = new DeckGroupFold(FlatShape.torus(
+                    new WorldLoopBounds(new AxisBounds.Looped(-5, 11), new AxisBounds.Looped(-5, 11))));
             BlockPos ref = new BlockPos(0, 64, 0);
             BlockPos target = new BlockPos(WIDTH / 2, 64, WIDTH / 2);
             BlockPos fromCentred = centred.nearestCopy(ref, target);

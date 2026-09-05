@@ -65,7 +65,7 @@ final class BakeStampFixture {
     private static final String UNUSED_IN_THIS_HARNESS = "The bake fixture never generates";
 
     static FlatShape squareTorus(int chunkWidth) {
-        return FlatShape.latticeTorus(WorldLoopBounds.ofWidth(chunkWidth), FlatShape.NO_SKEW);
+        return FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth));
     }
 
     static ResourceKey<LevelStem> stemKey(String path) {

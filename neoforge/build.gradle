@@ -135,6 +135,8 @@ sourceSets.test.java.srcDir '../common/src/loaderTest/java'
 
 test {
     useJUnitPlatform()
+    // A --tests pattern that names nothing in this module is a zero-test run, not a failed one.
+    filter { failOnNoMatchingTests = false }
     // The math this jar ships is tested in common; the loader suite alone would let a red common through.
     dependsOn(':common:test')
 }

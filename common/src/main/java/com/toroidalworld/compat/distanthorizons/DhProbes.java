@@ -13,33 +13,46 @@ import net.minecraft.core.Direction;
 
 public final class DhProbes {
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static final String NONE = "none";
 
-    private static final Set<String> SEEN_KEY_FOLDS = ConcurrentHashMap.newKeySet();
+    private static final Set<String> SEEN_KEY_PERIODS = ConcurrentHashMap.newKeySet();
 
-    private static volatile long lastRadiusCap = Long.MIN_VALUE;
-
-    public static void radiusCapped(int configChunks, int capChunks) {
-        long pair = ((long) configChunks << 32) | (capChunks & 0xFFFFFFFFL);
-        if (pair != lastRadiusCap) {
-            lastRadiusCap = pair;
-            LOGGER.info("[dh-compat] radius_capped config_chunks={} cap_chunks={}", configChunks, capChunks);
-        }
-    }
-
-    public static void keyFold(ToroidalShape shape, boolean folded) {
-        int widthX = shape.widthBlocks(Direction.Axis.X);
-        int widthZ = shape.widthBlocks(Direction.Axis.Z);
-        if (!SEEN_KEY_FOLDS.add(folded + ":" + widthX + ":" + widthZ)) {
+    public static void keyPeriod(ToroidalShape shape, byte leafDetailLevel) {
+        String widthX = widthValue(shape, Direction.Axis.X);
+        String widthZ = widthValue(shape, Direction.Axis.Z);
+        if (!SEEN_KEY_PERIODS.add(widthX + ":" + widthZ)) {
             return;
         }
 
-        LOGGER.info("[dh-compat] key_fold folded={} width_x_blocks={} width_z_blocks={}", folded, widthX, widthZ);
+        LOGGER.info("[dh-compat] key_period width_x_blocks={} period_x_blocks={} laps_x={}"
+                + " width_z_blocks={} period_z_blocks={} laps_z={}",
+                widthX, periodValue(shape, Direction.Axis.X, leafDetailLevel),
+                lapsValue(shape, Direction.Axis.X, leafDetailLevel),
+                widthZ, periodValue(shape, Direction.Axis.Z, leafDetailLevel),
+                lapsValue(shape, Direction.Axis.Z, leafDetailLevel));
+    }
+
+    static String widthValue(ToroidalShape shape, Direction.Axis axis) {
+        return shape.loops(axis) ? String.valueOf(shape.widthBlocks(axis)) : NONE;
+    }
+
+    static String periodValue(ToroidalShape shape, Direction.Axis axis, byte leafDetailLevel) {
+        return shape.loops(axis) ? String.valueOf(DhFold.periodBlocks(shape, axis, leafDetailLevel)) : NONE;
+    }
+
+    static String lapsValue(ToroidalShape shape, Direction.Axis axis, byte leafDetailLevel) {
+        return shape.loops(axis)
+                ? String.valueOf(DhFold.periodBlocks(shape, axis, leafDetailLevel) / shape.widthBlocks(axis))
+                : NONE;
     }
 
     public static void repoShape(Object repo, IDhLevel level, boolean present) {
-        String levelName = level == null ? "none" : level.getLevelWrapper().getDhIdentifier();
         LOGGER.info("[dh-compat] repo_shape repo={} level={} shape={}",
-                repo.getClass().getSimpleName(), levelName, present ? "present" : "absent");
+                repo.getClass().getSimpleName(), levelName(level), present ? "present" : "absent");
+    }
+
+    private static String levelName(IDhLevel level) {
+        return level == null ? NONE : level.getLevelWrapper().getDhIdentifier();
     }
 
     private DhProbes() {

@@ -33,16 +33,16 @@ class FlatShapeCodecTest {
         return List.of(
                 FlatShape.rectangle(),
                 FlatShape.cylinder(X_ONLY),
-                FlatShape.latticeTorus(SQUARE, 0),
+                FlatShape.torus(SQUARE),
                 FlatShape.latticeTorus(SQUARE, 5),
                 FlatShape.mirrored(Z_ONLY, Direction.Axis.X, 3),
                 FlatShape.mirrored(SQUARE, Direction.Axis.Z, -7));
     }
 
     @Test
-    void theFixtureCoversAllFiveIdentifications() {
+    void theFixtureCoversEveryIdentification() {
         assertEquals(
-                List.of(Identification.RECTANGLE, Identification.CYLINDER, Identification.LATTICE_TORUS,
+                List.of(Identification.RECTANGLE, Identification.CYLINDER, Identification.TORUS,
                         Identification.LATTICE_TORUS, Identification.MOBIUS, Identification.KLEIN),
                 everyIdentification().stream().map(FlatShape::identification).toList());
     }

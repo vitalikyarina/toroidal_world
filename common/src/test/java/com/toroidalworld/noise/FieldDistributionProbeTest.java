@@ -74,7 +74,7 @@ class FieldDistributionProbeTest {
     private static final int MIN_BLOCK = -256;
 
     private static final WorldFold WORLD = WorldFolds.of(
-            FlatShape.latticeTorus(new WorldLoopBounds(-16, 16, -16, 16), FlatShape.NO_SKEW));
+            FlatShape.torus(new WorldLoopBounds(-16, 16, -16, 16)));
 
     private static final long[] WORLD_SEEDS = {
             0x0153EL, 0xC0FFEEL, -1234567890123456789L, 42L, 8180061971476006269L, -8011452369450108867L,
@@ -398,8 +398,7 @@ class FieldDistributionProbeTest {
                 double zBlocks = zChunks * 16.0;
                 double scale = fx / WORLD_BLOCKS;
                 double fz = zBlocks * scale;
-                WorldFold world = WorldFolds.of(FlatShape.latticeTorus(
-                        new WorldLoopBounds(-16, 16, -zChunks / 2, zChunks / 2), FlatShape.NO_SKEW));
+                WorldFold world = WorldFolds.of(FlatShape.torus(new WorldLoopBounds(-16, 16, -zChunks / 2, zChunks / 2)));
                 double vanillaSum = 0.0;
                 double wrappedSum = 0.0;
                 for (int s = 0; s < seeds; s++) {

@@ -1,5 +1,9 @@
 package com.toroidalworld.core;
 
+import static com.toroidalworld.core.WorldFoldFixture.ODD_BOUNDS;
+import static com.toroidalworld.core.WorldFoldFixture.SQUARE;
+import static com.toroidalworld.core.WorldFoldFixture.UNEVEN_BOUNDS;
+import static com.toroidalworld.core.WorldFoldFixture.X_ONLY_BOUNDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -22,17 +26,15 @@ class SeamSpansTest {
     private static final int SAMPLES = 800;
     private static final int LAPS = 16;
 
-    private static final WorldFold EVEN = torus(-32, 32, -32, 32);
-    private static final WorldFold ODD = torus(-2, 3, -2, 3);
-    private static final WorldFold UNEVEN = torus(-48, 16, 0, 16);
-    private static final WorldFold X_ONLY = WorldFolds.of(FlatShape.cylinder(
-            new WorldLoopBounds(new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE)));
+    private static final WorldFold EVEN = torus(SQUARE);
+    private static final WorldFold ODD = torus(ODD_BOUNDS);
+    private static final WorldFold UNEVEN = torus(UNEVEN_BOUNDS);
+    private static final WorldFold X_ONLY = WorldFolds.of(FlatShape.cylinder(X_ONLY_BOUNDS));
 
     private static final List<WorldFold> FOLDS = List.of(EVEN, ODD, UNEVEN, X_ONLY, WorldFolds.NOOP);
 
-    private static WorldFold torus(int xChunkMin, int xChunkMax, int zChunkMin, int zChunkMax) {
-        return WorldFolds.of(FlatShape.latticeTorus(
-                new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax), FlatShape.NO_SKEW));
+    private static WorldFold torus(WorldLoopBounds bounds) {
+        return WorldFolds.of(FlatShape.torus(bounds));
     }
 
     private record Axis(boolean looped, int lower, int width) {

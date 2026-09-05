@@ -32,7 +32,7 @@ class WorldFoldsTest {
                 FlatShape.rectangle(),
                 FlatShape.cylinder(X_ONLY),
                 FlatShape.cylinder(Z_ONLY),
-                FlatShape.latticeTorus(SQUARE, 0));
+                FlatShape.torus(SQUARE));
     }
 
     private static final FlatShape SKEWED = FlatShape.latticeTorus(SQUARE, 5);
@@ -49,7 +49,7 @@ class WorldFoldsTest {
 
     @Test
     void aWorldTooNarrowToGenerateIsRefused() {
-        assertTrue(WorldFolds.verifyGeneratable(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(8), 0)).isError());
+        assertTrue(WorldFolds.verifyGeneratable(FlatShape.torus(WorldLoopBounds.ofWidth(8))).isError());
         assertTrue(WorldFolds.verifyGeneratable(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, 8)))
                 .isError());
     }
@@ -57,7 +57,7 @@ class WorldFoldsTest {
     @Test
     void aWorldAtTheGenerationFloorAndAnEndlessAxisAreAccepted() {
         assertTrue(WorldFolds.verifyGeneratable(
-                FlatShape.latticeTorus(WorldLoopBounds.ofWidth(WorldLoopSizes.MIN_CHUNK_WIDTH), 0))
+                FlatShape.torus(WorldLoopBounds.ofWidth(WorldLoopSizes.MIN_CHUNK_WIDTH)))
                 .result().isPresent());
         assertTrue(WorldFolds.verifyGeneratable(FlatShape.rectangle()).result().isPresent());
     }
@@ -68,7 +68,7 @@ class WorldFoldsTest {
             for (int chunkWidth : new int[] {preset.chunkWidth(), preset.endChunkWidth(),
                     preset.chunkWidth() / preset.netherScale()}) {
                 assertTrue(WorldFolds.verifyGeneratable(
-                        FlatShape.latticeTorus(WorldLoopBounds.ofWidth(chunkWidth), 0)).result().isPresent(),
+                        FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth))).result().isPresent(),
                         preset.id());
             }
         }
@@ -76,7 +76,7 @@ class WorldFoldsTest {
 
     @Test
     void theFoldContractIsNotHeldToTheGenerationFloor() {
-        assertTrue(WorldFolds.verifyFoldable(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(8), 0))
+        assertTrue(WorldFolds.verifyFoldable(FlatShape.torus(WorldLoopBounds.ofWidth(8)))
                 .result().isPresent(),
                 "narrow worlds are the arithmetic fixtures of half this suite; a width floor here breaks them");
     }

@@ -1,5 +1,9 @@
 package com.toroidalworld.core;
 
+import static com.toroidalworld.core.WorldFoldFixture.EVEN;
+import static com.toroidalworld.core.WorldFoldFixture.PER_AXIS;
+import static com.toroidalworld.core.WorldFoldFixture.SQUARE;
+import static com.toroidalworld.core.WorldFoldFixture.X_ONLY_BOUNDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
@@ -46,19 +50,8 @@ class IdentityFastPathTest {
     private static final int COPY_REACH = 3;
     private static final int WIDE_REGION_LAPS = 3;
 
-    private static final WorldLoopBounds SQUARE = new WorldLoopBounds(-32, 32, -32, 32);
-    private static final WorldLoopBounds X_ONLY_BOUNDS =
-            new WorldLoopBounds(new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE);
-
-    private static final WorldFold EVEN = transformer(-32, 32, -32, 32);
-    private static final WorldFold ODD = transformer(-2, 3, -2, 3);
-    private static final WorldFold UNEVEN = transformer(-48, 16, 0, 16);
-    private static final WorldFold X_ONLY = new WorldLoopTransformer(X_ONLY_BOUNDS);
-
-    private static final List<WorldFold> PER_AXIS = List.of(EVEN, ODD, UNEVEN, X_ONLY, WorldFolds.NOOP);
-
     private static final List<WorldFold> DECK_GROUP = List.of(
-            new DeckGroupFold(FlatShape.latticeTorus(SQUARE, FlatShape.NO_SKEW)),
+            new DeckGroupFold(FlatShape.torus(SQUARE)),
             new DeckGroupFold(FlatShape.latticeTorus(SQUARE, SKEW_CHUNKS)),
             new DeckGroupFold(FlatShape.mirrored(X_ONLY_BOUNDS, Direction.Axis.Z, 0)),
             new DeckGroupFold(FlatShape.mirrored(SQUARE, Direction.Axis.Z, MIRROR_LINE_CHUNK)));
@@ -491,10 +484,6 @@ class IdentityFastPathTest {
                 body.check(fold, random);
             }
         }
-    }
-
-    private static WorldFold transformer(int xChunkMin, int xChunkMax, int zChunkMin, int zChunkMax) {
-        return new WorldLoopTransformer(new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax));
     }
 
     private static int sampleCoord(Random random, int width, int cap) {

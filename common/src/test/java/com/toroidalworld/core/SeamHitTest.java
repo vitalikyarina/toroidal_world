@@ -27,7 +27,7 @@ class SeamHitTest {
     private static final WorldFold MIRRORS_X = new DeckGroupFold(
             FlatShape.mirrored(new WorldLoopBounds(UNBOUNDED, LOOPED), Direction.Axis.X, 0));
     private static final WorldFold TORUS = new DeckGroupFold(
-            FlatShape.latticeTorus(new WorldLoopBounds(LOOPED, LOOPED), FlatShape.NO_SKEW));
+            FlatShape.torus(new WorldLoopBounds(LOOPED, LOOPED)));
     private static final WorldFold RECTANGLE = new DeckGroupFold(FlatShape.rectangle());
 
     private static final BlockPos OVER_X = new BlockPos(130, 64, 40);

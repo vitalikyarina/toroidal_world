@@ -15,14 +15,14 @@ public final class TorusDimensions {
 
     public static WorldDimensions apply(WorldDimensions dimensions, TorusSettings settings) {
         WorldDimensions withTorusOverworld =
-                ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD, torus(settings.overworld()));
+                ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD, FlatShape.torus(settings.overworld()));
         if (withTorusOverworld == dimensions) {
             return dimensions;
         }
 
         WorldDimensions withTorusNether =
-                ShapedDimensions.withShape(withTorusOverworld, LevelStem.NETHER, torus(netherWrapping(settings)));
-        return ShapedDimensions.withShape(withTorusNether, LevelStem.END, torus(settings.end()));
+                ShapedDimensions.withShape(withTorusOverworld, LevelStem.NETHER, FlatShape.torus(netherWrapping(settings)));
+        return ShapedDimensions.withShape(withTorusNether, LevelStem.END, FlatShape.torus(settings.end()));
     }
 
     public static @Nullable TorusSettings read(WorldDimensions dimensions) {
@@ -36,10 +36,6 @@ public final class TorusDimensions {
                 overworld,
                 NetherScales.normalize(readNetherScale(dimensions, overworldChunkWidth), overworldChunkWidth),
                 readEndWrapping(dimensions));
-    }
-
-    private static FlatShape torus(WorldLoopBounds bounds) {
-        return FlatShape.latticeTorus(bounds, FlatShape.NO_SKEW);
     }
 
     private static @Nullable WorldLoopBounds torusBoundsOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {

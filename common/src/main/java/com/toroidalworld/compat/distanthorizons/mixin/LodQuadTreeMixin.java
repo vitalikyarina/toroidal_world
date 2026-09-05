@@ -30,7 +30,7 @@ public class LodQuadTreeMixin {
 
     @WrapMethod(method = "queuePosToReload")
     private void toroidal$reloadTheNearestCopy(long pos, Operation<Void> original) {
-        ToroidalShape shape = DhShapes.ofFoldedKeys(this.level);
+        ToroidalShape shape = DhShapes.of(this.level);
         if (shape == null) {
             original.call(pos);
             return;
@@ -44,7 +44,7 @@ public class LodQuadTreeMixin {
             method = "calcExpectedDetailLevel(Lcom/seibel/distanthorizons/core/pos/blockPos/DhBlockPos2D;IID)B",
             at = @At("RETURN"))
     private byte toroidal$capDetailAtTheWorld(byte expected) {
-        ToroidalShape shape = DhShapes.ofFoldedKeys(this.level);
+        ToroidalShape shape = DhShapes.of(this.level);
         if (shape == null) {
             return expected;
         }
@@ -53,15 +53,37 @@ public class LodQuadTreeMixin {
         return expected <= cap ? expected : cap;
     }
 
+    @WrapMethod(method = "calcExpectedDetailLevel(Lcom/seibel/distanthorizons/core/pos/blockPos/DhBlockPos2D;J)B")
+    private byte toroidal$splitAStraddler(DhBlockPos2D playerPos, long sectionPos, Operation<Byte> original) {
+        byte expected = original.call(playerPos, sectionPos);
+        ToroidalShape shape = DhShapes.of(this.level);
+        if (shape == null) {
+            return expected;
+        }
+
+        DhBlockPos2D center = ((QuadTree<?>) (Object) this).getCenterBlockPos();
+        byte leaf = DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL;
+        if (DhKeys.straddlesNearestCopy(shape, center.x, center.z, sectionPos)) {
+            byte cap = (byte) (DhKeys.snapLevel(shape) - leaf);
+            return expected <= cap ? expected : cap;
+        }
+
+        if (DhKeys.straddlesNearestCopy(shape, center.x, center.z, DhSectionPos.getParentPos(sectionPos))) {
+            byte cap = (byte) (DhSectionPos.getDetailLevel(sectionPos) + 1 - leaf);
+            return expected <= cap ? expected : cap;
+        }
+
+        return expected;
+    }
+
     @WrapOperation(
             method = {"onDetailLevelTooLow", "onDesiredDetailLevel"},
             at = @At(
                     value = "INVOKE",
                     target = "Lcom/seibel/distanthorizons/core/render/QuadTree/LodRenderSection;canRender()Z"))
-    private boolean toroidal$refuseASectionTheWorldDoesNotDivide(LodRenderSection section,
-            Operation<Boolean> original) {
+    private boolean toroidal$refuseAnIncompleteSection(LodRenderSection section, Operation<Boolean> original) {
         boolean canRender = original.call(section);
-        ToroidalShape shape = DhShapes.ofFoldedKeys(this.level);
+        ToroidalShape shape = DhShapes.of(this.level);
         if (shape == null) {
             return canRender;
         }
@@ -69,7 +91,10 @@ public class LodQuadTreeMixin {
         byte detailLevel = DhSectionPos.getDetailLevel(section.pos);
         int sectionX = DhSectionPos.getX(section.pos);
         int sectionZ = DhSectionPos.getZ(section.pos);
-        return DhFold.isAddressableSection(shape, detailLevel, sectionX, sectionZ) && canRender;
+        DhBlockPos2D center = ((QuadTree<?>) (Object) this).getCenterBlockPos();
+        return canRender
+                && DhFold.isCompleteSection(shape, DhKeys.LEAF, detailLevel, sectionX, sectionZ)
+                && DhKeys.isNearestCopy(shape, center.x, center.z, section.pos);
     }
 
     @WrapOperation(
@@ -87,9 +112,7 @@ public class LodQuadTreeMixin {
         }
 
         DhBlockPos2D center = ((QuadTree<?>) (Object) this).getCenterBlockPos();
-        int centerX = DhSectionPos.getCenterBlockPosX(section.pos);
-        int centerZ = DhSectionPos.getCenterBlockPosZ(section.pos);
-        if (DhFold.isNearestCopy(shape, center.x, center.z, centerX, centerZ)) {
+        if (DhKeys.isNearestCopy(shape, center.x, center.z, section.pos)) {
             original.call(holder, section);
         }
     }
@@ -99,8 +122,9 @@ public class LodQuadTreeMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lcom/seibel/distanthorizons/core/pos/DhSectionPos;contains(JJ)Z"))
-    private static boolean toroidal$cancelByTheFoldedSection(long sectionPos, long genPos, Operation<Boolean> original) {
-        ToroidalShape shape = DhShapes.withFoldedKeys(DhClientShapes.ofCurrentLevel());
-        return original.call(shape == null ? sectionPos : DhKeys.foldSection(shape, sectionPos), genPos);
+    private static boolean toroidal$cancelByACopyOfTheSection(long sectionPos, long genPos,
+            Operation<Boolean> original) {
+        ToroidalShape shape = DhClientShapes.ofCurrentLevel();
+        return shape == null ? original.call(sectionPos, genPos) : DhKeys.containsACopy(shape, sectionPos, genPos);
     }
 }

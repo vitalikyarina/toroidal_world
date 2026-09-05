@@ -14,15 +14,39 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
+// mc/1.21: calls the members unused on main.
 public final class ClientFrame {
-    public static @Nullable Vec3 nearestToPlayer(@Nullable Vec3 target) {
+    public static @Nullable BlockPos nearestCopy(@Nullable BlockPos anchor, @Nullable BlockPos target) {
         WorldFold fold = fold();
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (fold == null || player == null || target == null) {
+        if (fold == null || anchor == null || target == null) {
             return target;
         }
 
-        return fold.nearestCopy(player.position(), target);
+        return fold.nearestCopy(anchor, target);
+    }
+
+    public static @Nullable Vec3 nearestCopy(@Nullable Vec3 anchor, @Nullable Vec3 target) {
+        WorldFold fold = fold();
+        if (fold == null || anchor == null || target == null) {
+            return target;
+        }
+
+        return fold.nearestCopy(anchor, target);
+    }
+
+    public static @Nullable BlockPos nearestToPlayer(@Nullable BlockPos target) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        return nearestCopy(player == null ? null : player.blockPosition(), target);
+    }
+
+    public static @Nullable Vec3 nearestToPlayer(@Nullable Vec3 target) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        return nearestCopy(player == null ? null : player.position(), target);
+    }
+
+    public static @Nullable Vec3 nearestToCamera(@Nullable Vec3 target) {
+        Entity camera = Minecraft.getInstance().getCameraEntity();
+        return nearestCopy(camera == null ? null : camera.position(), target);
     }
 
     public static double nearestToCamera(Direction.Axis axis, double coord) {
@@ -39,12 +63,8 @@ public final class ClientFrame {
         Minecraft minecraft = Minecraft.getInstance();
         ClientLevel level = minecraft.level;
         LocalPlayer player = minecraft.player;
-        if (level == null || player == null) {
-            return canonical;
-        }
-
-        WorldFold fold = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
-        if (fold == null) {
+        WorldFold fold = fold();
+        if (level == null || player == null || fold == null) {
             return canonical;
         }
 
@@ -52,7 +72,7 @@ public final class ClientFrame {
         return holds(level, nearest) ? nearest : null;
     }
 
-    private static @Nullable WorldFold fold() {
+    public static @Nullable WorldFold fold() {
         return WorldLoopAttachments.wrappedClientBoundsTransformerOf(Minecraft.getInstance().level);
     }
 

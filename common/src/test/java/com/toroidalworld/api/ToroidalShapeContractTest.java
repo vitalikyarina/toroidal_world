@@ -35,7 +35,7 @@ class ToroidalShapeContractTest {
     private static final WorldLoopBounds X_ONLY = new WorldLoopBounds(LOOPED, AxisBounds.Unbounded.INSTANCE);
 
     private static ToroidalShape torus() {
-        return new WorldFoldToroidalShape(WorldFolds.of(FlatShape.latticeTorus(BOTH, FlatShape.NO_SKEW)));
+        return new WorldFoldToroidalShape(WorldFolds.of(FlatShape.torus(BOTH)));
     }
 
     private static ToroidalShape mobius() {
