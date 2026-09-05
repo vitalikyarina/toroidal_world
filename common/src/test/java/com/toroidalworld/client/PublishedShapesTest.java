@@ -17,8 +17,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
 class PublishedShapesTest {
-    private static final WorldFold WIDE = WorldFolds.of(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(64), 0));
-    private static final WorldFold NARROW = WorldFolds.of(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(16), 0));
+    private static final WorldFold WIDE = WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(64)));
+    private static final WorldFold NARROW = WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(16)));
     private static final ResourceKey<Level> DATAPACK_DIMENSION =
             ResourceKey.create(Registries.DIMENSION, Identifier.fromNamespaceAndPath("cject", "hollow"));
 

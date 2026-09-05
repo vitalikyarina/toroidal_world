@@ -113,7 +113,7 @@ class ClimateScanTest {
 
     private static WorldFold torusOfWidth(int widthBlocks) {
         return WorldFolds.of(
-                FlatShape.latticeTorus(WorldLoopBounds.ofWidth(widthBlocks / 16), FlatShape.NO_SKEW));
+                FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)));
     }
 
     private static WorldFold cylinderOfWidth(int widthBlocks) {

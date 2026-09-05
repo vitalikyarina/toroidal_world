@@ -33,7 +33,7 @@ class TilingCellGridTest {
     }
 
     private static WorldFold torus(int chunkWidth) {
-        return WorldFolds.of(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(chunkWidth), FlatShape.NO_SKEW));
+        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)));
     }
 
     @Nested
@@ -107,8 +107,8 @@ class TilingCellGridTest {
 
         @Test
         void eachAxisTakesItsOwnWidth() {
-            WorldFold transformer = WorldFolds.of(FlatShape.latticeTorus(
-                    new WorldLoopBounds(new AxisBounds.Looped(-9, 9), new AxisBounds.Looped(-16, 16)), FlatShape.NO_SKEW));
+            WorldFold transformer = WorldFolds.of(FlatShape.torus(
+                    new WorldLoopBounds(new AxisBounds.Looped(-9, 9), new AxisBounds.Looped(-16, 16))));
             TilingCellGrid grid = TilingCellGrid.of(transformer, TYPE_CELL_WIDTH);
 
             assertEquals(72, grid.xCellWidth());

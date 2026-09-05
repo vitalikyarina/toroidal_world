@@ -51,8 +51,7 @@ class PeriodicSimplexSamplerTest {
     private static final double VANILLA_KERNEL_RADIUS_SQR = 0.5;
 
     private static WorldFold transformer(int xChunkMin, int xChunkMax, int zChunkMin, int zChunkMax) {
-        return WorldFolds.of(FlatShape.latticeTorus(
-                new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax), FlatShape.NO_SKEW));
+        return WorldFolds.of(FlatShape.torus(new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax)));
     }
 
     private record NoiseInstance(SimplexNoise vanilla, int[] permutations, double xo, double zo) {

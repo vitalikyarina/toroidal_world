@@ -76,7 +76,7 @@ class ClimateScaleCompressionTest {
     }
 
     private static WorldFold square(int chunkWidth) {
-        return WorldFolds.of(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(chunkWidth), FlatShape.NO_SKEW));
+        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)));
     }
 
     private static void assertFactor(Field field, int chunkWidth) {
@@ -131,7 +131,7 @@ class ClimateScaleCompressionTest {
     @Test
     void theShorterLapDrivesARectangularWorld() {
         WorldFold rectangular = WorldFolds.of(
-                FlatShape.latticeTorus(new WorldLoopBounds(-16, 16, -8, 8), FlatShape.NO_SKEW));
+                FlatShape.torus(new WorldLoopBounds(-16, 16, -8, 8)));
 
         assertEquals(expected(TEMPERATURE, 256.0), actual(TEMPERATURE, rectangular, HORIZONTAL), TOLERANCE,
                 "256 blocks on Z against 512 on X");

@@ -45,10 +45,10 @@ public final class DensityFunctionFixture {
             CLIMATE_NOISE_DATA, NormalNoise.create(new LegacyRandomSource(SEED), CLIMATE_PARAMETERS));
 
     public static final WorldFold SQUARE =
-            WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(-16, 16, -16, 16), FlatShape.NO_SKEW));
+            WorldFolds.of(FlatShape.torus(new WorldLoopBounds(-16, 16, -16, 16)));
 
     public static final WorldFold RECTANGULAR =
-            WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(-16, 16, -8, 8), FlatShape.NO_SKEW));
+            WorldFolds.of(FlatShape.torus(new WorldLoopBounds(-16, 16, -8, 8)));
 
     public static final List<WorldFold> WORLDS = List.of(SQUARE, RECTANGULAR);
 

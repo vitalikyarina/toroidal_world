@@ -88,9 +88,9 @@ class NetherColumnProbeTest {
                         WorldLoopBounds.ofWidth(Direction.Axis.Z, this.zChunks)));
             }
 
-            return WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(
+            return WorldFolds.of(FlatShape.torus(new WorldLoopBounds(
                     -(this.xChunks / 2), this.xChunks - this.xChunks / 2,
-                    -(this.zChunks / 2), this.zChunks - this.zChunks / 2), FlatShape.NO_SKEW));
+                    -(this.zChunks / 2), this.zChunks - this.zChunks / 2)));
         }
 
         int spanBlocks(int chunks) {

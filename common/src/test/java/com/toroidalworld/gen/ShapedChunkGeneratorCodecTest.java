@@ -51,7 +51,7 @@ class ShapedChunkGeneratorCodecTest {
 
     @Test
     void theShapeFieldCarriesEveryShapeTheEngineCanFold() {
-        for (FlatShape shape : List.of(FlatShape.latticeTorus(SQUARE, 0), FlatShape.cylinder(X_ONLY))) {
+        for (FlatShape shape : List.of(FlatShape.torus(SQUARE), FlatShape.cylinder(X_ONLY))) {
             JsonElement written =
                     ShapedChunkGenerator.SHAPE_CODEC.encodeStart(JsonOps.INSTANCE, shape).getOrThrow();
             assertEquals(shape, ShapedChunkGenerator.SHAPE_CODEC.parse(JsonOps.INSTANCE, written).getOrThrow(),
@@ -62,7 +62,7 @@ class ShapedChunkGeneratorCodecTest {
     @Test
     void aTorusFieldIsStillTheLegacyWrappingValue() {
         assertEquals(WorldLoopBounds.CODEC.encodeStart(JsonOps.INSTANCE, SQUARE).getOrThrow(),
-                ShapedChunkGenerator.SHAPE_CODEC.encodeStart(JsonOps.INSTANCE, FlatShape.latticeTorus(SQUARE, 0))
+                ShapedChunkGenerator.SHAPE_CODEC.encodeStart(JsonOps.INSTANCE, FlatShape.torus(SQUARE))
                         .getOrThrow());
     }
 
@@ -148,7 +148,7 @@ class ShapedChunkGeneratorCodecTest {
     @Test
     void aTorusSitsUnderTheSameKeyAndValueInTheGeneratorsOwnEncoding() {
         RegistryOps<JsonElement> ops = WORLDGEN.createSerializationContext(JsonOps.INSTANCE);
-        FlatShape torus = FlatShape.latticeTorus(SQUARE, FlatShape.NO_SKEW);
+        FlatShape torus = FlatShape.torus(SQUARE);
 
         JsonElement encoded =
                 LoopedChunkGenerator.CODEC.codec().encodeStart(ops, noiseGenerator(torus)).getOrThrow();
@@ -162,7 +162,7 @@ class ShapedChunkGeneratorCodecTest {
     @Test
     void aSuperflatTorusSitsThereToo() {
         RegistryOps<JsonElement> ops = WORLDGEN.createSerializationContext(JsonOps.INSTANCE);
-        FlatShape torus = FlatShape.latticeTorus(SQUARE, FlatShape.NO_SKEW);
+        FlatShape torus = FlatShape.torus(SQUARE);
 
         JsonElement encoded =
                 LoopedFlatChunkGenerator.CODEC.codec().encodeStart(ops, flatGenerator(torus)).getOrThrow();

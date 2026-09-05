@@ -95,6 +95,7 @@ public record FlatShape(WorldLoopBounds bounds, int skewChunks, @Nullable Mirror
         CYLINDER,
         MOBIUS,
         KLEIN,
+        TORUS,
         LATTICE_TORUS
     }
 
@@ -131,6 +132,10 @@ public record FlatShape(WorldLoopBounds bounds, int skewChunks, @Nullable Mirror
         return new FlatShape(bounds, 0, null);
     }
 
+    public static FlatShape torus(WorldLoopBounds bounds) {
+        return new FlatShape(bounds, NO_SKEW, null);
+    }
+
     public static FlatShape latticeTorus(WorldLoopBounds bounds, int skewChunks) {
         return new FlatShape(bounds, skewChunks, null);
     }
@@ -147,7 +152,10 @@ public record FlatShape(WorldLoopBounds bounds, int skewChunks, @Nullable Mirror
         }
 
         if (xLooped && zLooped) {
-            return mirror != null ? Identification.KLEIN : Identification.LATTICE_TORUS;
+            if (mirror != null) {
+                return Identification.KLEIN;
+            }
+            return skewChunks == NO_SKEW ? Identification.TORUS : Identification.LATTICE_TORUS;
         }
 
         return mirror != null ? Identification.MOBIUS : Identification.CYLINDER;
