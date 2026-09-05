@@ -1,5 +1,7 @@
 package com.toroidalworld.core;
 
+import static com.toroidalworld.core.WorldFoldFixture.EVEN;
+import static com.toroidalworld.core.WorldFoldFixture.PER_AXIS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -9,9 +11,6 @@ import java.util.Random;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -24,18 +23,7 @@ class SeamDistanceTest {
     private static final int SAMPLES = 1500;
     private static final int LAPS = 5;
 
-    private static final WorldFold EVEN = transformer(-32, 32, -32, 32);
-    private static final WorldFold ODD = transformer(-2, 3, -2, 3);
-    private static final WorldFold UNEVEN = transformer(-48, 16, 0, 16);
-    private static final WorldFold X_ONLY = new WorldLoopTransformer(
-            new WorldLoopBounds(new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE));
-
-    private static final List<WorldFold> TRANSFORMERS =
-            List.of(EVEN, ODD, UNEVEN, X_ONLY, WorldFolds.NOOP);
-
-    private static WorldFold transformer(int xChunkMin, int xChunkMax, int zChunkMin, int zChunkMax) {
-        return new WorldLoopTransformer(new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax));
-    }
+    private static final List<WorldFold> TRANSFORMERS = PER_AXIS;
 
     private static int sampleChunk(Random random, WrapDomain domain) {
         int reach = 3 * (domain instanceof WrapDomain.Noop ? 1_000 : Math.min(domain.domainLength, 1_000));

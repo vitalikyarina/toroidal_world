@@ -1,5 +1,9 @@
 package com.toroidalworld.noise;
 
+import static com.toroidalworld.core.WorldFoldFixture.ODD_BOUNDS;
+import static com.toroidalworld.core.WorldFoldFixture.SQUARE;
+import static com.toroidalworld.core.WorldFoldFixture.UNEVEN_BOUNDS;
+import static com.toroidalworld.core.WorldFoldFixture.X_ONLY_BOUNDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -13,7 +17,6 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.core.Direction;
@@ -35,18 +38,16 @@ class PeriodicNoiseSamplerTest {
 
     private static final double[][] Y_PARAMS = {{0.0, 0.0}, {1.0, 2.0}};
 
-    private static final WorldFold EVEN = transformer(-32, 32, -32, 32);
-    private static final WorldFold ODD = transformer(-2, 3, -2, 3);
-    private static final WorldFold UNEVEN = transformer(-48, 16, 0, 16);
-    private static final WorldFold X_ONLY = WorldFolds.of(FlatShape.cylinder(
-            new WorldLoopBounds(new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE)));
+    private static final WorldFold EVEN = torus(SQUARE);
+    private static final WorldFold ODD = torus(ODD_BOUNDS);
+    private static final WorldFold UNEVEN = torus(UNEVEN_BOUNDS);
+    private static final WorldFold X_ONLY = WorldFolds.of(FlatShape.cylinder(X_ONLY_BOUNDS));
 
     private static final List<WorldFold> BOTH_AXES = List.of(EVEN, ODD, UNEVEN);
     private static final List<WorldFold> WRAPPED_X = List.of(EVEN, ODD, UNEVEN, X_ONLY);
 
-    private static WorldFold transformer(int xChunkMin, int xChunkMax, int zChunkMin, int zChunkMax) {
-        return WorldFolds.of(FlatShape.latticeTorus(
-                new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax), FlatShape.NO_SKEW));
+    private static WorldFold torus(WorldLoopBounds bounds) {
+        return WorldFolds.of(FlatShape.latticeTorus(bounds, FlatShape.NO_SKEW));
     }
 
     private record NoiseInstance(ImprovedNoise vanilla, byte[] permutations, double xo, double yo, double zo) {
