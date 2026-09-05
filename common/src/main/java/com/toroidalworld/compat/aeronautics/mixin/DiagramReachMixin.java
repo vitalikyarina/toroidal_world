@@ -4,7 +4,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import com.toroidalworld.compat.aeronautics.DiagramSeamBox;
+import com.toroidalworld.core.FoldedBoxQuery;
+import com.toroidalworld.storage.WorldLoopAttachments;
 
 import dev.simulated_team.simulated.content.entities.diagram.DiagramEntity;
 
@@ -15,6 +16,7 @@ import net.minecraft.world.phys.AABB;
 public class DiagramReachMixin {
     @ModifyVariable(method = "canPlayerUse", at = @At("STORE"), ordinal = 0)
     private AABB toroidal$foldDiagramBox(AABB box, Player player) {
-        return DiagramSeamBox.foldTowardPlayer(player, box);
+        return FoldedBoxQuery.toward(
+                WorldLoopAttachments.wrappedTransformerOfReader(player.level()), player.position(), box);
     }
 }

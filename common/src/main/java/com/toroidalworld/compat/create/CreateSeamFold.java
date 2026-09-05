@@ -125,11 +125,6 @@ public final class CreateSeamFold {
         return transformer == null ? point : transformer.nearestCopy(box.getCenter(), point);
     }
 
-    public static AABB foldBoxToward(@Nullable Level level, Vec3 anchor, AABB box) {
-        WorldFold transformer = transformerOf(level, null);
-        return transformer == null ? box : transformer.foldBox(anchor, box).value();
-    }
-
     public static Vec3 inFrameOf(WorldFold transformer, Vec3 viewer, Vec3 anchor, Vec3 point) {
         WorldFold.Folded<Vec3> seatedAnchor = transformer.nearestCopyOriented(viewer, anchor);
         if (seatedAnchor.isIdentity() && seatedAnchor.value() == anchor) {

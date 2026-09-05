@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.compat.create.CreateSeamFold;
+import com.toroidalworld.core.FoldedBoxQuery;
 import com.toroidalworld.core.FoldedCopies;
 import com.toroidalworld.core.WorldFold;
 
@@ -102,8 +103,7 @@ public final class CreateClientFrame {
             return box;
         }
 
-        WorldFold transformer = CreateSeamFold.transformerOf(level, null);
-        return transformer == null ? box : transformer.foldBox(anchor, box).value();
+        return FoldedBoxQuery.toward(CreateSeamFold.transformerOf(level, null), anchor, box);
     }
 
     public static @Nullable Vec3 camera() {

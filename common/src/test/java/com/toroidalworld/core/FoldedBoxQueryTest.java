@@ -17,12 +17,14 @@ import com.toroidalworld.shape.FlatShape;
 import net.minecraft.core.Direction;
 import net.minecraft.util.AbortableIterationConsumer;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 class FoldedBoxQueryTest {
     private static final int MIN_CHUNK = -8;
     private static final int MAX_CHUNK = 8;
     private static final int LOWER = MIN_CHUNK * CoordinateConstants.CHUNK_WIDTH;
     private static final int UPPER = MAX_CHUNK * CoordinateConstants.CHUNK_WIDTH;
+    private static final int WIDTH = UPPER - LOWER;
 
     private static final int BEFORE_SEAM = 8;
     private static final int PAST_SEAM = 12;
@@ -47,6 +49,9 @@ class FoldedBoxQueryTest {
     private static final AABB LAPPED_PIECE = new AABB(LOWER, MIN_Y, MIN_Z, LOWER + PAST_SEAM, MAX_Y, MAX_Z);
     private static final AABB MIRRORED_LAPPED_PIECE =
             new AABB(LOWER, MIN_Y, -MAX_Z, LOWER + PAST_SEAM, MAX_Y, -MIN_Z);
+
+    private static final Vec3 ANCHOR_BESIDE_THE_NEAR_PIECE = new Vec3(UPPER - BEFORE_SEAM / 2.0, MIN_Y, MIN_Z);
+    private static final Vec3 ANCHOR_ACROSS_THE_SEAM = new Vec3(LOWER + BEFORE_SEAM, MIN_Y, MIN_Z);
 
     private static final AABB BOX = new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
     private static final AABB EQUAL_BOX = new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
@@ -92,6 +97,27 @@ class FoldedBoxQueryTest {
         assertTrue(folded.stream().anyMatch(piece -> !piece.isIdentity()),
                 () -> "the mobius split carried no orientation: " + folded);
         assertEquals(List.of(NEAR_PIECE, MIRRORED_LAPPED_PIECE), FoldedBoxQuery.pieces(MOBIUS, ACROSS_THE_SEAM));
+    }
+
+    @Test
+    void towardANullFoldHandsTheArgumentBoxBack() {
+        assertSame(NEAR_PIECE, FoldedBoxQuery.toward(null, ANCHOR_ACROSS_THE_SEAM, NEAR_PIECE));
+    }
+
+    @Test
+    void towardAFoldThatWrapsNothingHandsTheArgumentBoxBack() {
+        assertSame(NEAR_PIECE, FoldedBoxQuery.toward(WorldFolds.NOOP, ANCHOR_ACROSS_THE_SEAM, NEAR_PIECE));
+    }
+
+    @Test
+    void towardAnAnchorBesideTheBoxHandsTheArgumentBoxBack() {
+        assertSame(NEAR_PIECE, FoldedBoxQuery.toward(CYLINDER, ANCHOR_BESIDE_THE_NEAR_PIECE, NEAR_PIECE));
+    }
+
+    @Test
+    void towardAnAnchorAcrossTheSeamSeatsTheBoxInTheLappedCopy() {
+        assertEquals(NEAR_PIECE.move(-WIDTH, 0.0, 0.0),
+                FoldedBoxQuery.toward(CYLINDER, ANCHOR_ACROSS_THE_SEAM, NEAR_PIECE));
     }
 
     @Test

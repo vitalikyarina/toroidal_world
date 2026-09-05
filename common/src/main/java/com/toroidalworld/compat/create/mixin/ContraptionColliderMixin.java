@@ -7,6 +7,8 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.toroidalworld.compat.create.CreateSeamFold;
+import com.toroidalworld.core.FoldedBoxQuery;
+import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -29,7 +31,7 @@ public class ContraptionColliderMixin {
                     target = "Lcom/simibubi/create/content/contraptions/ControlledContraptionEntity;getBoundingBox()Lnet/minecraft/world/phys/AABB;"))
     private static AABB toroidal$otherContraptionBoxInThisFrame(AABB otherBounds, @Local(name = "world") Level level,
             @Local(name = "position") Vec3 position) {
-        return CreateSeamFold.foldBoxToward(level, position, otherBounds);
+        return FoldedBoxQuery.toward(WorldLoopAttachments.wrappedTransformerOfReader(level), position, otherBounds);
     }
 
     @ModifyExpressionValue(method = "collideBlocks",

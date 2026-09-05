@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
 
 import net.minecraft.util.AbortableIterationConsumer;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 public final class FoldedBoxQuery {
     public static List<AABB> pieces(@Nullable WorldFold fold, AABB box) {
@@ -19,6 +20,10 @@ public final class FoldedBoxQuery {
 
         List<WorldFold.Folded<AABB>> folded = fold.split(box);
         return folded.stream().map(WorldFold.Folded::value).toList();
+    }
+
+    public static AABB toward(@Nullable WorldFold fold, Vec3 anchor, AABB box) {
+        return fold == null ? box : fold.foldBox(anchor, box).value();
     }
 
     public static <T> Consumer<T> deduplicating(Consumer<T> output) {
