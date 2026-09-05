@@ -62,7 +62,7 @@ public final class DhFold {
     }
 
     public static int foldSection(ToroidalShape shape, Direction.Axis axis, byte detailLevel, int section) {
-        if (!shape.loops(axis)) {
+        if (!shape.loops(axis) || detailLevel > maxExactDetailLevel(shape)) {
             return section;
         }
 
