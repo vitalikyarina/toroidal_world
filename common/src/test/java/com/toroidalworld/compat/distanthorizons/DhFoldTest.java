@@ -20,6 +20,7 @@ class DhFoldTest {
     private static final byte LEAF = 6;
     private static final byte CHUNK_16 = 8;
     private static final byte WORLD = 10;
+    private static final byte SNAP = 6;
 
     private static final int WIDTH_CHUNKS = 64;
     private static final int WIDTH_BLOCKS = WIDTH_CHUNKS * 16;
@@ -265,19 +266,19 @@ class DhFoldTest {
         @Test
         void aCanonicalSectionBehindTheSeamIsSeatedBesideTheReference() {
             int sectionsPerWorld = WIDTH_BLOCKS / DhFold.sectionWidthBlocks(LEAF);
-            assertEquals(-1, DhFold.nearestSection(shape, Direction.Axis.X, LEAF, 10, sectionsPerWorld - 1));
-            assertEquals(sectionsPerWorld, DhFold.nearestSection(shape, Direction.Axis.X, LEAF, WIDTH_BLOCKS - 10, 0));
+            assertEquals(-1, DhFold.nearestSection(shape, Direction.Axis.X, SNAP, LEAF, 10, sectionsPerWorld - 1));
+            assertEquals(sectionsPerWorld, DhFold.nearestSection(shape, Direction.Axis.X, SNAP, LEAF, WIDTH_BLOCKS - 10, 0));
         }
 
         @Test
         void aSectionAlreadyNearTheReferenceStays() {
-            assertEquals(4, DhFold.nearestSection(shape, Direction.Axis.X, LEAF, 300, 4));
+            assertEquals(4, DhFold.nearestSection(shape, Direction.Axis.X, SNAP, LEAF, 300, 4));
         }
 
         @Test
         void aSectionAboveTheExactLevelKeepsItsRawKey() {
             ToroidalShape tiny = torus(-16, 16);
-            assertEquals(-1, DhFold.nearestSection(tiny, Direction.Axis.X, (byte) 9, 0, -1));
+            assertEquals(-1, DhFold.nearestSection(tiny, Direction.Axis.X, SNAP, (byte) 9, 0, -1));
         }
     }
 
@@ -288,28 +289,30 @@ class DhFoldTest {
         @Test
         void aSectionJustAcrossTheSeamIsDrawnAndItsFarCopyIsNot() {
             int sectionsPerWorld = WIDTH_BLOCKS / DhFold.sectionWidthBlocks(LEAF);
-            assertTrue(DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, 60, 4));
-            assertFalse(DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, 60, 4 - sectionsPerWorld));
+            assertTrue(DhFold.isNearestSection(shape, Direction.Axis.X, SNAP, LEAF, 60, 4));
+            assertFalse(DhFold.isNearestSection(shape, Direction.Axis.X, SNAP, LEAF, 60, 4 - sectionsPerWorld));
         }
 
         @Test
         void theAntipodeTieDrawsThePositiveSide() {
-            assertTrue(DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, 32, 8));
-            assertFalse(DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, 32, -8));
+            assertTrue(DhFold.isNearestSection(shape, Direction.Axis.X, SNAP, LEAF, 32, 8));
+            assertFalse(DhFold.isNearestSection(shape, Direction.Axis.X, SNAP, LEAF, 32, -8));
         }
 
         @Test
-        void aSectionAboveTheExactLevelIsStillJudgedByItsCentre() {
+        void aSectionAsWideAsTheWorldStraddlesTheWindowAndNeverDrawsWhole() {
             ToroidalShape tiny = torus(-16, 16);
-            assertTrue(DhFold.isNearestSection(tiny, Direction.Axis.X, (byte) 9, 0, 0));
-            assertFalse(DhFold.isNearestSection(tiny, Direction.Axis.X, (byte) 9, 0, -1));
+            assertFalse(DhFold.isNearestSection(tiny, Direction.Axis.X, SNAP, (byte) 9, 0, 0));
+            assertFalse(DhFold.isNearestSection(tiny, Direction.Axis.X, SNAP, (byte) 9, 0, -1));
+            assertTrue(DhFold.overlapsNearestWindow(tiny, Direction.Axis.X, SNAP, (byte) 9, 0, 0));
+            assertTrue(DhFold.overlapsNearestWindow(tiny, Direction.Axis.X, SNAP, (byte) 9, 0, -1));
         }
 
         @Test
         void theUnboundedAxisOfACylinderNeverCulls() {
             ToroidalShape cylinder = cylinder(0, WIDTH_CHUNKS);
-            assertTrue(DhFold.isNearestSection(cylinder, Direction.Axis.Z, LEAF, 0, 5 * WIDTH_BLOCKS));
-            assertFalse(DhFold.isNearestSection(cylinder, Direction.Axis.X, LEAF, 0, WIDTH_BLOCKS / 64));
+            assertTrue(DhFold.isNearestSection(cylinder, Direction.Axis.Z, SNAP, LEAF, 0, 5 * WIDTH_BLOCKS));
+            assertFalse(DhFold.isNearestSection(cylinder, Direction.Axis.X, SNAP, LEAF, 0, WIDTH_BLOCKS / 64));
         }
     }
 
@@ -323,24 +326,24 @@ class DhFoldTest {
         void aSectionWhoseCornerIsNearButWhoseCentreIsFarIsSeatedOnTheFarSide() {
             int ref = 470;
             int section = SECTIONS_PER_WORLD - 1;
-            assertFalse(DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, ref, section));
-            assertTrue(DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, ref, section - SECTIONS_PER_WORLD));
-            assertEquals(section - SECTIONS_PER_WORLD, DhFold.nearestSection(shape, Direction.Axis.X, LEAF, ref, section));
+            assertFalse(DhFold.isNearestSection(shape, Direction.Axis.X, SNAP, LEAF, ref, section));
+            assertTrue(DhFold.isNearestSection(shape, Direction.Axis.X, SNAP, LEAF, ref, section - SECTIONS_PER_WORLD));
+            assertEquals(section - SECTIONS_PER_WORLD, DhFold.nearestSection(shape, Direction.Axis.X, SNAP, LEAF, ref, section));
         }
 
         @Test
         void everyLapCopyOfASectionResolvesToTheOneCopyTheGateKeeps() {
             for (int ref = -600; ref <= 600; ref += 37) {
                 for (int section = 0; section < SECTIONS_PER_WORLD; section++) {
-                    int kept = DhFold.nearestSection(shape, Direction.Axis.X, LEAF, ref, section);
+                    int kept = DhFold.nearestSection(shape, Direction.Axis.X, SNAP, LEAF, ref, section);
                     int drawn = 0;
                     for (int lap = -2; lap <= 2; lap++) {
                         int copy = section + lap * SECTIONS_PER_WORLD;
-                        if (DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, ref, copy)) {
+                        if (DhFold.isNearestSection(shape, Direction.Axis.X, SNAP, LEAF, ref, copy)) {
                             drawn++;
                             assertEquals(kept, copy, "ref " + ref + " section " + section);
                         }
-                        assertEquals(kept, DhFold.nearestSection(shape, Direction.Axis.X, LEAF, ref, copy));
+                        assertEquals(kept, DhFold.nearestSection(shape, Direction.Axis.X, SNAP, LEAF, ref, copy));
                     }
                     assertEquals(1, drawn, "ref " + ref + " section " + section);
                 }
@@ -391,6 +394,86 @@ class DhFoldTest {
             ToroidalShape cylinder = cylinder(0, WIDTH_CHUNKS);
             assertTrue(DhFold.overlapsNearestLap(cylinder, Direction.Axis.Z, REF, 9999 * LEAF_WIDTH, LEAF_WIDTH));
             assertTrue(DhFold.overlapsNearestLap(cylinder, Direction.Axis.Z, REF, -9999 * LEAF_WIDTH, LEAF_WIDTH));
+        }
+    }
+
+    @Nested
+    class TheLapIsDecidedAtTheSnapLevelAndInherited {
+        private static final byte CHUNK_32 = 9;
+
+        private final ToroidalShape shape = torus(-32, 32);
+
+        @Test
+        void theSnapCellIsASixteenthOfTheNarrowestLoopAndNeverBelowTheLeaf() {
+            assertEquals(6, DhFold.snapDetailLevel(torus(-32, 32), LEAF));
+            assertEquals(8, DhFold.snapDetailLevel(torus(-160, 160), LEAF));
+            assertEquals(6, DhFold.snapDetailLevel(torus(-16, 16), LEAF));
+            assertEquals(6, DhFold.snapDetailLevel(cylinder(0, WIDTH_CHUNKS), LEAF));
+            assertEquals(7, DhFold.snapDetailLevel(torus(0, 2 * WIDTH_CHUNKS), LEAF));
+        }
+
+        @Test
+        void aParentInTheWindowHasEveryChildInIt() {
+            for (int ref = -600; ref <= 600; ref += 37) {
+                for (byte level = LEAF + 1; level <= WORLD; level++) {
+                    for (int section = -6; section <= 6; section++) {
+                        if (!DhFold.isNearestSection(shape, Direction.Axis.X, SNAP, level, ref, section)) {
+                            continue;
+                        }
+
+                        byte child = (byte) (level - 1);
+                        String where = "ref " + ref + " level " + level + " section " + section;
+                        assertTrue(DhFold.isNearestSection(shape, Direction.Axis.X, SNAP, child, ref, 2 * section),
+                                where + " first child");
+                        assertTrue(DhFold.isNearestSection(shape, Direction.Axis.X, SNAP, child, ref, 2 * section + 1),
+                                where + " last child");
+                    }
+                }
+            }
+        }
+
+        @Test
+        void aParentOutsideTheWindowHasNoChildInIt() {
+            for (int ref = -600; ref <= 600; ref += 37) {
+                for (byte level = LEAF + 1; level <= WORLD; level++) {
+                    for (int section = -6; section <= 6; section++) {
+                        if (DhFold.overlapsNearestWindow(shape, Direction.Axis.X, SNAP, level, ref, section)) {
+                            continue;
+                        }
+
+                        byte child = (byte) (level - 1);
+                        String where = "ref " + ref + " level " + level + " section " + section;
+                        assertFalse(DhFold.overlapsNearestWindow(shape, Direction.Axis.X, SNAP, child, ref, 2 * section),
+                                where + " first child");
+                        assertFalse(DhFold.overlapsNearestWindow(shape, Direction.Axis.X, SNAP, child, ref, 2 * section + 1),
+                                where + " last child");
+                    }
+                }
+            }
+        }
+
+        @Test
+        void aHalfWorldSectionStraddlesTheWindowEdgeOnOneSideAndLiesWholeOnTheOther() {
+            assertTrue(DhFold.isNearestSection(shape, Direction.Axis.X, SNAP, CHUNK_32, 200, 0));
+            assertFalse(DhFold.isNearestSection(shape, Direction.Axis.X, SNAP, CHUNK_32, 200, -1));
+            assertTrue(DhFold.overlapsNearestWindow(shape, Direction.Axis.X, SNAP, CHUNK_32, 200, -1));
+            assertTrue(DhFold.overlapsNearestWindow(shape, Direction.Axis.X, SNAP, CHUNK_32, 200, 1));
+            assertFalse(DhFold.overlapsNearestWindow(shape, Direction.Axis.X, SNAP, CHUNK_32, 200, 2));
+        }
+
+        @Test
+        void theWindowAtTheSnapLevelIsOneWorldWide() {
+            int cellsPerWorld = WIDTH_BLOCKS / DhFold.sectionWidthBlocks(SNAP);
+            for (int ref = -600; ref <= 600; ref += 37) {
+                int inside = 0;
+                for (int cell = -3 * cellsPerWorld; cell < 3 * cellsPerWorld; cell++) {
+                    if (DhFold.isNearestSection(shape, Direction.Axis.X, SNAP, SNAP, ref, cell)) {
+                        inside++;
+                    }
+                }
+
+                assertEquals(cellsPerWorld, inside, "ref " + ref);
+            }
         }
     }
 }

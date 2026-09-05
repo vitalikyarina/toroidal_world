@@ -53,6 +53,29 @@ public class LodQuadTreeMixin {
         return expected <= cap ? expected : cap;
     }
 
+    @WrapMethod(method = "calcExpectedDetailLevel(Lcom/seibel/distanthorizons/core/pos/blockPos/DhBlockPos2D;J)B")
+    private byte toroidal$splitAStraddler(DhBlockPos2D playerPos, long sectionPos, Operation<Byte> original) {
+        byte expected = original.call(playerPos, sectionPos);
+        ToroidalShape shape = DhShapes.of(this.level);
+        if (shape == null) {
+            return expected;
+        }
+
+        DhBlockPos2D center = ((QuadTree<?>) (Object) this).getCenterBlockPos();
+        byte leaf = DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL;
+        if (DhKeys.straddlesNearestCopy(shape, center.x, center.z, sectionPos)) {
+            byte cap = (byte) (DhKeys.snapLevel(shape) - leaf);
+            return expected <= cap ? expected : cap;
+        }
+
+        if (DhKeys.straddlesNearestCopy(shape, center.x, center.z, DhSectionPos.getParentPos(sectionPos))) {
+            byte cap = (byte) (DhSectionPos.getDetailLevel(sectionPos) + 1 - leaf);
+            return expected <= cap ? expected : cap;
+        }
+
+        return expected;
+    }
+
     @WrapOperation(
             method = {"onDetailLevelTooLow", "onDesiredDetailLevel"},
             at = @At(
@@ -61,15 +84,21 @@ public class LodQuadTreeMixin {
     private boolean toroidal$refuseASectionTheWorldDoesNotDivide(LodRenderSection section,
             Operation<Boolean> original) {
         boolean canRender = original.call(section);
-        ToroidalShape shape = DhShapes.ofFoldedKeys(this.level);
+        ToroidalShape foldedShape = DhShapes.ofFoldedKeys(this.level);
+        if (foldedShape != null) {
+            byte detailLevel = DhSectionPos.getDetailLevel(section.pos);
+            int sectionX = DhSectionPos.getX(section.pos);
+            int sectionZ = DhSectionPos.getZ(section.pos);
+            canRender = DhFold.isAddressableSection(foldedShape, detailLevel, sectionX, sectionZ) && canRender;
+        }
+
+        ToroidalShape shape = DhShapes.of(this.level);
         if (shape == null) {
             return canRender;
         }
 
-        byte detailLevel = DhSectionPos.getDetailLevel(section.pos);
-        int sectionX = DhSectionPos.getX(section.pos);
-        int sectionZ = DhSectionPos.getZ(section.pos);
-        return DhFold.isAddressableSection(shape, detailLevel, sectionX, sectionZ) && canRender;
+        DhBlockPos2D center = ((QuadTree<?>) (Object) this).getCenterBlockPos();
+        return canRender && DhKeys.isNearestCopy(shape, center.x, center.z, section.pos);
     }
 
     @WrapOperation(

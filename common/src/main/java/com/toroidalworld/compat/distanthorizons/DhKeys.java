@@ -37,11 +37,12 @@ public final class DhKeys {
     }
 
     public static long nearestSection(ToroidalShape shape, int refBlockX, int refBlockZ, long pos) {
+        byte snap = snapLevel(shape);
         byte detail = DhSectionPos.getDetailLevel(pos);
         int rawX = DhSectionPos.getX(pos);
         int rawZ = DhSectionPos.getZ(pos);
-        int x = DhFold.nearestSection(shape, Direction.Axis.X, detail, refBlockX, rawX);
-        int z = DhFold.nearestSection(shape, Direction.Axis.Z, detail, refBlockZ, rawZ);
+        int x = DhFold.nearestSection(shape, Direction.Axis.X, snap, detail, refBlockX, rawX);
+        int z = DhFold.nearestSection(shape, Direction.Axis.Z, snap, detail, refBlockZ, rawZ);
         if (x == rawX && z == rawZ) {
             return pos;
         }
@@ -50,9 +51,24 @@ public final class DhKeys {
     }
 
     public static boolean isNearestCopy(ToroidalShape shape, int refBlockX, int refBlockZ, long pos) {
+        byte snap = snapLevel(shape);
         byte detail = DhSectionPos.getDetailLevel(pos);
-        return DhFold.isNearestSection(shape, Direction.Axis.X, detail, refBlockX, DhSectionPos.getX(pos))
-                && DhFold.isNearestSection(shape, Direction.Axis.Z, detail, refBlockZ, DhSectionPos.getZ(pos));
+        return DhFold.isNearestSection(shape, Direction.Axis.X, snap, detail, refBlockX, DhSectionPos.getX(pos))
+                && DhFold.isNearestSection(shape, Direction.Axis.Z, snap, detail, refBlockZ, DhSectionPos.getZ(pos));
+    }
+
+    public static boolean straddlesNearestCopy(ToroidalShape shape, int refBlockX, int refBlockZ, long pos) {
+        byte snap = snapLevel(shape);
+        byte detail = DhSectionPos.getDetailLevel(pos);
+        int x = DhSectionPos.getX(pos);
+        int z = DhSectionPos.getZ(pos);
+        return DhFold.overlapsNearestWindow(shape, Direction.Axis.X, snap, detail, refBlockX, x)
+                && DhFold.overlapsNearestWindow(shape, Direction.Axis.Z, snap, detail, refBlockZ, z)
+                && !isNearestCopy(shape, refBlockX, refBlockZ, pos);
+    }
+
+    public static byte snapLevel(ToroidalShape shape) {
+        return DhFold.snapDetailLevel(shape, DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL);
     }
 
     public static ChunkPos foldChunk(ToroidalShape shape, ChunkPos pos) {

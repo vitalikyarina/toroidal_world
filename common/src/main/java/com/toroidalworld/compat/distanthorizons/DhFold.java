@@ -6,6 +6,7 @@ import net.minecraft.core.Direction;
 
 public final class DhFold {
     private static final Direction.Axis[] HORIZONTAL = {Direction.Axis.X, Direction.Axis.Z};
+    private static final int SNAP_CELLS_PER_WORLD = 16;
 
     public static int sectionWidthBlocks(byte detailLevel) {
         return 1 << detailLevel;
@@ -70,26 +71,83 @@ public final class DhFold {
         return Math.floorDiv(shape.foldBlock(axis, section * width), width);
     }
 
-    public static int nearestSection(ToroidalShape shape, Direction.Axis axis, byte detailLevel, int refBlock,
-            int section) {
+    public static byte snapDetailLevel(ToroidalShape shape, byte leafDetailLevel) {
+        int narrowest = Integer.MAX_VALUE;
+        for (Direction.Axis axis : HORIZONTAL) {
+            if (shape.loops(axis)) {
+                narrowest = Math.min(narrowest, shape.widthBlocks(axis));
+            }
+        }
+
+        if (narrowest == Integer.MAX_VALUE) {
+            return leafDetailLevel;
+        }
+
+        int cell = narrowest / SNAP_CELLS_PER_WORLD;
+        int level = cell <= 0 ? 0 : Integer.SIZE - 1 - Integer.numberOfLeadingZeros(cell);
+        return (byte) Math.max(level, leafDetailLevel);
+    }
+
+    public static int nearestSection(ToroidalShape shape, Direction.Axis axis, byte snapLevel, byte detailLevel,
+            int refBlock, int section) {
         if (!shape.loops(axis) || detailLevel > maxExactDetailLevel(shape)) {
             return section;
         }
 
         int worldWidth = shape.widthBlocks(axis);
-        long laps = lapsToward(worldWidth, sectionCentreBlock(detailLevel, section) - refBlock);
+        long laps = detailLevel <= snapLevel
+                ? lapsToward(worldWidth, snapCellCentreBlock(snapLevel, detailLevel, section) - refBlock)
+                : lapsToward(worldWidth, sectionCentreBlock(detailLevel, section) - refBlock);
         return (int) (section - laps * (worldWidth / sectionWidthBlocks(detailLevel)));
     }
 
-    public static boolean isNearestSection(ToroidalShape shape, Direction.Axis axis, byte detailLevel, int refBlock,
-            int section) {
-        return !shape.loops(axis)
-                || lapsToward(shape.widthBlocks(axis), sectionCentreBlock(detailLevel, section) - refBlock) == 0;
+    public static boolean isNearestSection(ToroidalShape shape, Direction.Axis axis, byte snapLevel,
+            byte detailLevel, int refBlock, int section) {
+        if (!shape.loops(axis)) {
+            return true;
+        }
+
+        long worldWidth = shape.widthBlocks(axis);
+        if (detailLevel <= snapLevel) {
+            return lapsToward(worldWidth, snapCellCentreBlock(snapLevel, detailLevel, section) - refBlock) == 0;
+        }
+
+        long first = sectionCentreBlock(snapLevel, firstCell(snapLevel, detailLevel, section));
+        long last = sectionCentreBlock(snapLevel, lastCell(snapLevel, detailLevel, section));
+        return lapsToward(worldWidth, first - refBlock) == 0 && lapsToward(worldWidth, last - refBlock) == 0;
     }
 
-    private static long sectionCentreBlock(byte detailLevel, int section) {
+    public static boolean overlapsNearestWindow(ToroidalShape shape, Direction.Axis axis, byte snapLevel,
+            byte detailLevel, int refBlock, int section) {
+        if (!shape.loops(axis)) {
+            return true;
+        }
+
+        if (detailLevel <= snapLevel) {
+            return isNearestSection(shape, axis, snapLevel, detailLevel, refBlock, section);
+        }
+
+        long worldWidth = shape.widthBlocks(axis);
+        long first = sectionCentreBlock(snapLevel, firstCell(snapLevel, detailLevel, section));
+        long last = sectionCentreBlock(snapLevel, lastCell(snapLevel, detailLevel, section));
+        return lapsToward(worldWidth, first - refBlock) <= 0 && lapsToward(worldWidth, last - refBlock) >= 0;
+    }
+
+    private static long snapCellCentreBlock(byte snapLevel, byte detailLevel, int section) {
+        return sectionCentreBlock(snapLevel, section >> (snapLevel - detailLevel));
+    }
+
+    private static long firstCell(byte snapLevel, byte detailLevel, int section) {
+        return (long) section << (detailLevel - snapLevel);
+    }
+
+    private static long lastCell(byte snapLevel, byte detailLevel, int section) {
+        return firstCell(snapLevel, detailLevel, section) + (1L << (detailLevel - snapLevel)) - 1;
+    }
+
+    private static long sectionCentreBlock(byte detailLevel, long section) {
         int width = sectionWidthBlocks(detailLevel);
-        return (long) section * width + width / 2;
+        return section * width + width / 2;
     }
 
     private static long lapsToward(long worldWidth, long delta) {
