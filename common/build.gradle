@@ -158,6 +158,8 @@ neoForge.addModdingDependenciesTo(sourceSets.test)
 dependencies {
     testCompileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     testCompileOnly files(aeronauticsModJars).asFileTree.matching { include '*.jar' }
+    // The rope seam test builds Simulated's own RopeAttachment records, so the nested jars ride the test runtime too.
+    testRuntimeOnly files(aeronauticsModJars).asFileTree.matching { include '*.jar' }
     // The Create fold tests build Create's own identifiers, so the compat jars ride the test classpath too — the
     // bundled pair because catnip's BlockFace ships inside ponder, not in Create's outer jar.
     testCompileOnly "maven.modrinth:create:${create_version}"

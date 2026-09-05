@@ -40,17 +40,16 @@ public final class RopeSeamFrame {
 
     public static Vector3d seatAttachment(ServerRopeStrand strand, RopeAttachment attachment, ServerLevel level,
             Vector3d point) {
-        if (attachment.subLevelID() != null) {
+        return seatAttachment(foldOf(level), strand.getPoints(), attachment, point);
+    }
+
+    static Vector3d seatAttachment(@Nullable WorldFold fold, List<Vector3d> points, RopeAttachment attachment,
+            Vector3d point) {
+        if (attachment.subLevelID() != null || fold == null || points.isEmpty()) {
             return point;
         }
 
-        WorldFold fold = foldOf(level);
-        List<Vector3d> points = strand.getPoints();
-        if (fold == null || points.isEmpty()) {
-            return point;
-        }
-
-        Vector3d ownEnd = attachment.point() == RopeAttachmentPoint.END ? points.getLast() : points.getFirst();
+        Vector3d ownEnd = ownEndOf(points, attachment);
         Vec3 anchor = new Vec3(ownEnd.x, ownEnd.y, ownEnd.z);
         Vec3 raw = new Vec3(point.x, point.y, point.z);
         Vec3 seated = fold.nearestCopy(anchor, raw);
@@ -80,7 +79,7 @@ public final class RopeSeamFrame {
 
         SubLevelPhysicsSystem system = SubLevelPhysicsSystem.get(level);
         for (ServerRopeStrand strand : List.copyOf(manager.getAllStrands())) {
-            RopeAttachment attachment = shiftedAttachmentOf(strand, shifted);
+            RopeAttachment attachment = shiftedAttachmentOf(strand.getAttachments(), shifted);
             if (attachment != null) {
                 reseat(level, system, strand, attachment);
             }
@@ -89,22 +88,27 @@ public final class RopeSeamFrame {
 
     private static void reseat(ServerLevel level, @Nullable SubLevelPhysicsSystem system, ServerRopeStrand strand,
             RopeAttachment attachment) {
-        WorldFold fold = foldOf(level);
-        List<Vector3d> points = strand.getPoints();
-        if (fold == null || points.isEmpty()) {
-            return;
-        }
-
         Vec3 anchor = anchorOf(level, attachment);
         if (anchor == null) {
             return;
         }
 
-        Vector3d ownEnd = attachment.point() == RopeAttachmentPoint.END ? points.getLast() : points.getFirst();
+        if (reseat(foldOf(level), strand.getPoints(), attachment, anchor) && strand.isActive() && system != null) {
+            system.removeObject(strand);
+            system.addObject(strand);
+        }
+    }
+
+    static boolean reseat(@Nullable WorldFold fold, List<Vector3d> points, RopeAttachment attachment, Vec3 anchor) {
+        if (fold == null || points.isEmpty()) {
+            return false;
+        }
+
+        Vector3d ownEnd = ownEndOf(points, attachment);
         Vec3 raw = new Vec3(ownEnd.x, ownEnd.y, ownEnd.z);
         Vec3 seated = fold.nearestCopy(anchor, raw);
         if (seated.x == raw.x && seated.z == raw.z) {
-            return;
+            return false;
         }
 
         Vector3d delta = new Vector3d(seated.x - raw.x, 0.0, seated.z - raw.z);
@@ -112,10 +116,11 @@ public final class RopeSeamFrame {
             point.add(delta);
         }
 
-        if (strand.isActive() && system != null) {
-            system.removeObject(strand);
-            system.addObject(strand);
-        }
+        return true;
+    }
+
+    private static Vector3d ownEndOf(List<Vector3d> points, RopeAttachment attachment) {
+        return attachment.point() == RopeAttachmentPoint.END ? points.getLast() : points.getFirst();
     }
 
     private static @Nullable Vec3 anchorOf(ServerLevel level, RopeAttachment attachment) {
@@ -136,8 +141,8 @@ public final class RopeSeamFrame {
         return new Vec3(world.x, world.y, world.z);
     }
 
-    private static @Nullable RopeAttachment shiftedAttachmentOf(ServerRopeStrand strand, Set<UUID> shifted) {
-        for (RopeAttachment attachment : strand.getAttachments()) {
+    static @Nullable RopeAttachment shiftedAttachmentOf(Iterable<RopeAttachment> attachments, Set<UUID> shifted) {
+        for (RopeAttachment attachment : attachments) {
             UUID body = attachment.subLevelID();
             if (body != null && shifted.contains(body)) {
                 return attachment;
