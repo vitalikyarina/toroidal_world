@@ -30,11 +30,18 @@ public final class PeriodicNoiseSampler {
 
     private static final long UNBOUNDED_PERIOD = 0L;
 
-    private static final long FLOORED_PERIOD = 4L;
+    static final long HELD_PERIOD = -1L;
 
     public static double sample(byte[] permutations, double xOffset, double yOffset, double zOffset,
             WorldFold transformer, Context context,
             double x, double y, double z, double yScale, double yFudge) {
+        return sample(permutations, xOffset, yOffset, zOffset, transformer, context, x, y, z, yScale, yFudge,
+                LapFloor.of(transformer));
+    }
+
+    static double sample(byte[] permutations, double xOffset, double yOffset, double zOffset,
+            WorldFold transformer, Context context,
+            double x, double y, double z, double yScale, double yFudge, LapFloor floor) {
         SlotAxes axes = context.slotAxes();
         double scale = context.horizontalScale();
 
@@ -49,9 +56,9 @@ public final class PeriodicNoiseSampler {
         if (axes == SlotAxes.DEFAULT && context.xDivisor() == 1.0 && context.zDivisor() == 1.0) {
             WrapDomain xDomain = transformer.blockDomain(Direction.Axis.X);
             WrapDomain zDomain = transformer.blockDomain(Direction.Axis.Z);
-            xPeriod = period(xDomain, scale);
+            xPeriod = period(xDomain, scale, floor);
             yPeriod = UNBOUNDED_PERIOD;
-            zPeriod = period(zDomain, scale);
+            zPeriod = period(zDomain, scale, floor);
             xs = foldAndScale(xDomain, xPeriod, scale, x) + xOffset;
             ys = y + yOffset;
             zs = foldAndScale(zDomain, zPeriod, scale, z) + zOffset;
@@ -71,9 +78,9 @@ public final class PeriodicNoiseSampler {
             double xSlotScale = scale / axes.x().divisorIn(context);
             double ySlotScale = scale / axes.y().divisorIn(context);
             double zSlotScale = scale / axes.z().divisorIn(context);
-            xPeriod = period(xDomain, xSlotScale);
-            yPeriod = period(yDomain, ySlotScale);
-            zPeriod = period(zDomain, zSlotScale);
+            xPeriod = period(xDomain, xSlotScale, floor);
+            yPeriod = period(yDomain, ySlotScale, floor);
+            zPeriod = period(zDomain, zSlotScale, floor);
             xs = slotCoord(axes.x(), xDomain, xPeriod, xSlotScale, x) + xOffset;
             ys = slotCoord(axes.y(), yDomain, yPeriod, ySlotScale, y) + yOffset;
             zs = slotCoord(axes.z(), zDomain, zPeriod, zSlotScale, z) + zOffset;
@@ -119,16 +126,20 @@ public final class PeriodicNoiseSampler {
         return foldAndScale(domain, period, scale, coord);
     }
 
-    static long period(WrapDomain domain, double scale) {
+    static long period(WrapDomain domain, double scale, LapFloor floor) {
         if (!domain.loops()) {
             return UNBOUNDED_PERIOD;
         }
 
         long rounded = Math.round(domain.domainLength * scale);
-        return rounded < 2L ? FLOORED_PERIOD : rounded;
+        return rounded < 2L ? floor.period : rounded;
     }
 
     static double foldAndScale(WrapDomain domain, long period, double scale, double coord) {
+        if (period == HELD_PERIOD) {
+            return 0.0;
+        }
+
         if (period == UNBOUNDED_PERIOD) {
             return PerlinNoise.wrap(coord * scale);
         }
@@ -163,8 +174,12 @@ public final class PeriodicNoiseSampler {
         return Mth.lerp3(xAlpha, yAlpha, zAlpha, d000, d100, d010, d110, d001, d101, d011, d111);
     }
 
+    static boolean closes(long period) {
+        return period > UNBOUNDED_PERIOD;
+    }
+
     private static long wrapCell(long cell, long period) {
-        return period == UNBOUNDED_PERIOD ? cell : Math.floorMod(cell, period);
+        return closes(period) ? Math.floorMod(cell, period) : cell;
     }
 
     private static int p(byte[] permutations, long index) {

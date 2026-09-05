@@ -121,13 +121,26 @@ class PeriodicNoiseSamplerTest {
         @Test
         void roundsClampsAndPassesUnboundedThrough() {
             WrapDomain evenX = EVEN.blockDomain(Direction.Axis.X);
-            assertEquals(256, PeriodicNoiseSampler.period(evenX, 0.25));
-            assertEquals(1024, PeriodicNoiseSampler.period(evenX, 1.0));
-            assertEquals(102400, PeriodicNoiseSampler.period(evenX, 100.0));
-            assertEquals(94, PeriodicNoiseSampler.period(ODD.blockDomain(Direction.Axis.X), 1.17));
-            assertEquals(2, PeriodicNoiseSampler.period(evenX, 2.0 / 1024.0));
-            assertEquals(4, PeriodicNoiseSampler.period(evenX, 1.0 / 2048.0));
-            assertEquals(0, PeriodicNoiseSampler.period(X_ONLY.blockDomain(Direction.Axis.Z), 1.0));
+            LapFloor torus = LapFloor.of(EVEN);
+            assertEquals(LapFloor.FOUR_CELLS, torus);
+            assertEquals(256, PeriodicNoiseSampler.period(evenX, 0.25, torus));
+            assertEquals(1024, PeriodicNoiseSampler.period(evenX, 1.0, torus));
+            assertEquals(102400, PeriodicNoiseSampler.period(evenX, 100.0, torus));
+            assertEquals(94, PeriodicNoiseSampler.period(ODD.blockDomain(Direction.Axis.X), 1.17, LapFloor.of(ODD)));
+            assertEquals(2, PeriodicNoiseSampler.period(evenX, 2.0 / 1024.0, torus));
+            assertEquals(4, PeriodicNoiseSampler.period(evenX, 1.0 / 2048.0, torus));
+            assertEquals(0, PeriodicNoiseSampler.period(X_ONLY.blockDomain(Direction.Axis.Z), 1.0, LapFloor.of(X_ONLY)));
+        }
+
+        @Test
+        void holdsAStarvedOctaveOnACylinderAndFloorsItOnATorus() {
+            LapFloor cylinder = LapFloor.of(X_ONLY);
+            WrapDomain ring = X_ONLY.blockDomain(Direction.Axis.X);
+            assertEquals(LapFloor.HELD, cylinder);
+            assertEquals(PeriodicNoiseSampler.HELD_PERIOD, PeriodicNoiseSampler.period(ring, 1.0 / 2048.0, cylinder));
+            assertEquals(2, PeriodicNoiseSampler.period(ring, 2.0 / 1024.0, cylinder));
+            assertEquals(4, PeriodicNoiseSampler.period(EVEN.blockDomain(Direction.Axis.X), 1.0 / 2048.0,
+                    LapFloor.of(EVEN)));
         }
     }
 
@@ -271,6 +284,41 @@ class PeriodicNoiseSamplerTest {
                     assertEquals(base, lap,
                             () -> "sample(" + x + ", " + y + ", " + z + ") vs one X lap at period 1");
                 }
+            }
+        }
+    }
+
+    @Nested
+    class HeldOctave {
+        private static final double STARVED_SCALE = 1.0 / 2048.0;
+
+        @Test
+        void aCylinderHoldsAStarvedOctaveAroundTheRingAndVariesAlongTheOpenAxis() {
+            Random random = new Random(SEED);
+            WrapDomain ring = X_ONLY.blockDomain(Direction.Axis.X);
+            WrapDomain open = X_ONLY.blockDomain(Direction.Axis.Z);
+            for (long worldSeed : WORLD_SEEDS) {
+                NoiseInstance noise = NoiseInstance.of(worldSeed);
+                double min = Double.MAX_VALUE;
+                double max = -Double.MAX_VALUE;
+                for (int i = 0; i < LINE_SAMPLES; i++) {
+                    double y = sampleY(random);
+                    double z = lineCoord(random, open, i);
+                    double x = blockInDomain(random, ring);
+                    double elsewhere = blockInDomain(random, ring);
+
+                    double base = noise.sample(X_ONLY, STARVED_SCALE, x, y, z, 0.0, 0.0);
+                    double around = noise.sample(X_ONLY, STARVED_SCALE, elsewhere, y, z, 0.0, 0.0);
+                    assertEquals(base, around,
+                            () -> "a starved octave varies around the ring between x=" + x + " and x=" + elsewhere
+                                    + " at z=" + z + " with seed " + worldSeed);
+                    min = Math.min(min, base);
+                    max = Math.max(max, base);
+                }
+
+                double spread = max - min;
+                assertTrue(spread >= MIN_SPREAD,
+                        () -> "a held octave is flat along the open axis, spread " + spread + " with seed " + worldSeed);
             }
         }
     }
