@@ -72,6 +72,10 @@ public final class SableMotorGoal {
             return false;
         }
 
+        if (this.written == ALL_LINEAR_WRITTEN) {
+            this.written = 0;
+        }
+
         this.targets[axis] = target;
         this.stiffness[axis] = stiffness;
         this.damping[axis] = damping;
@@ -79,6 +83,10 @@ public final class SableMotorGoal {
         this.maxForce[axis] = maxForce;
         this.written |= 1 << axis;
         return true;
+    }
+
+    public boolean completed() {
+        return this.written == ALL_LINEAR_WRITTEN;
     }
 
     public double target(int axis) {
@@ -102,7 +110,7 @@ public final class SableMotorGoal {
     }
 
     public @Nullable Vector3d seatCorrection() {
-        if (this.written != ALL_LINEAR_WRITTEN || this.body.isRemoved()) {
+        if (!this.completed() || this.body.isRemoved()) {
             return null;
         }
 

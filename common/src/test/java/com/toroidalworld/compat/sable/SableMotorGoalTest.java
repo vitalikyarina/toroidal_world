@@ -30,6 +30,7 @@ class SableMotorGoalTest {
     private static final double MASS = 1.0;
     private static final double HEIGHT = 70.0;
     private static final Vector3dc GOAL_NEAR_THE_SEAM = new Vector3d(250.0, HEIGHT, 3.0);
+    private static final Vector3dc GOAL_ACROSS_THE_SEAM = new Vector3d(-240.0, HEIGHT, 3.0);
     private static final Vector3dc BODY_ACROSS_THE_SEAM = new Vector3d(-250.0, HEIGHT, 3.0);
     private static final Vector3dc BODY_ON_THE_SAME_HALF = new Vector3d(240.0, HEIGHT, 3.0);
     private static final Vector3dc ONE_LAP_BACK = new Vector3d(-WORLD_BLOCKS, 0.0, 0.0);
@@ -106,6 +107,42 @@ class SableMotorGoalTest {
 
         goal.record(2, GOAL_NEAR_THE_SEAM.z(), STIFFNESS, DAMPING, false, MAX_FORCE);
         assertNotNull(goal.seatCorrection());
+    }
+
+    @Test
+    void completionNeedsAllThreeLinearAxes() {
+        SableMotorGoal goal = goalOver(new LiveBox(BODY_ACROSS_THE_SEAM), ORIGIN, IDENTITY);
+
+        goal.record(0, GOAL_NEAR_THE_SEAM.x(), STIFFNESS, DAMPING, false, MAX_FORCE);
+        goal.record(1, GOAL_NEAR_THE_SEAM.y(), STIFFNESS, DAMPING, false, MAX_FORCE);
+        goal.record(ANGULAR_ORDINAL, 0.0, STIFFNESS, DAMPING, false, MAX_FORCE);
+        assertFalse(goal.completed());
+
+        goal.record(2, GOAL_NEAR_THE_SEAM.z(), STIFFNESS, DAMPING, false, MAX_FORCE);
+        assertTrue(goal.completed());
+    }
+
+    @Test
+    void theFirstRecordAfterACompletedSetOpensANewOne() {
+        SableMotorGoal goal = goalOver(new LiveBox(BODY_ACROSS_THE_SEAM), ORIGIN, IDENTITY);
+        aimAt(goal, GOAL_NEAR_THE_SEAM);
+
+        goal.record(0, GOAL_NEAR_THE_SEAM.x(), STIFFNESS, DAMPING, false, MAX_FORCE);
+
+        assertFalse(goal.completed());
+        assertNull(goal.seatCorrection());
+    }
+
+    @Test
+    void aChangedTargetRecomputesTheCorrection() {
+        SableMotorGoal goal = goalOver(new LiveBox(BODY_ACROSS_THE_SEAM), ORIGIN, IDENTITY);
+        aimAt(goal, GOAL_NEAR_THE_SEAM);
+        assertEquals(ONE_LAP_BACK, goal.seatCorrection());
+
+        aimAt(goal, GOAL_ACROSS_THE_SEAM);
+
+        assertTrue(goal.completed());
+        assertNull(goal.seatCorrection());
     }
 
     @Test

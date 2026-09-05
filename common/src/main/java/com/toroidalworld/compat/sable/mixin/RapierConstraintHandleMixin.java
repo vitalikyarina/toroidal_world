@@ -60,16 +60,15 @@ public class RapierConstraintHandleMixin implements SableMotorGoalHolder, SableC
             return;
         }
 
-        Vector3d correction = goal.seatCorrection();
-        if (correction == null) {
-            original.call(sceneHandle, handle, axis, target, stiffness, damping, hasForceLimit, maxForce);
+        if (!goal.completed()) {
             return;
         }
 
+        Vector3d correction = goal.seatCorrection();
         for (int linear = 0; linear < SableMotorGoal.LINEAR_AXES; linear++) {
-            original.call(sceneHandle, handle, linear, goal.target(linear) + correction.get(linear),
-                    goal.stiffness(linear), goal.damping(linear), goal.forceLimited(linear),
-                    goal.maxForce(linear));
+            double shift = correction == null ? 0.0 : correction.get(linear);
+            original.call(sceneHandle, handle, linear, goal.target(linear) + shift, goal.stiffness(linear),
+                    goal.damping(linear), goal.forceLimited(linear), goal.maxForce(linear));
         }
     }
 }
