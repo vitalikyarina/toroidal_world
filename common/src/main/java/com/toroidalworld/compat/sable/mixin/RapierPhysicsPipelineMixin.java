@@ -1,8 +1,5 @@
 package com.toroidalworld.compat.sable.mixin;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -13,12 +10,13 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.toroidalworld.compat.sable.SableConstraintEdge;
 import com.toroidalworld.compat.sable.SableConstraintEdges;
 import com.toroidalworld.compat.sable.SableConstraintGraph;
+import com.toroidalworld.compat.sable.SableConstraintGraphs;
 import com.toroidalworld.compat.sable.SableConstraintJoin;
 import com.toroidalworld.compat.sable.SableMotorGoal;
 import com.toroidalworld.compat.sable.SableMotorGoals;
+import com.toroidalworld.storage.WorldLoopAttachments;
 
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.PhysicsPipelineBody;
@@ -28,17 +26,17 @@ import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
 import net.minecraft.server.level.ServerLevel;
 
 @Mixin(targets = "dev.ryanhcode.sable.physics.impl.rapier.RapierPhysicsPipeline", remap = false)
-public class RapierPhysicsPipelineMixin implements SableConstraintEdges {
+public class RapierPhysicsPipelineMixin implements SableConstraintGraphs {
     @Shadow
     @Final
     private ServerLevel level;
 
     @Unique
-    private final List<SableConstraintEdge> toroidal$constraintEdges = new ArrayList<>();
+    private final SableConstraintGraph toroidal$constraintGraph = new SableConstraintGraph();
 
     @Override
-    public List<SableConstraintEdge> toroidal$constraintEdges() {
-        return this.toroidal$constraintEdges;
+    public SableConstraintGraph toroidal$constraintGraph() {
+        return this.toroidal$constraintGraph;
     }
 
     @ModifyVariable(method = "addConstraint", at = @At("HEAD"), argsOnly = true)
@@ -53,12 +51,15 @@ public class RapierPhysicsPipelineMixin implements SableConstraintEdges {
     private void toroidal$recordConstraint(PhysicsPipelineBody bodyA, PhysicsPipelineBody bodyB,
             PhysicsConstraintConfiguration<?> configuration, CallbackInfoReturnable<PhysicsConstraintHandle> cir) {
         PhysicsConstraintHandle handle = cir.getReturnValue();
-        if (handle == null) {
+        if (handle == null || WorldLoopAttachments.wrappedTransformerOf(this.level) == null) {
             return;
         }
 
         if (bodyA != null && bodyB != null) {
-            SableConstraintGraph.record((PhysicsPipeline) (Object) this, bodyA, bodyB, handle);
+            if (handle instanceof SableConstraintEdges edges) {
+                edges.toroidal$constraintEdge(this.toroidal$constraintGraph.record(bodyA, bodyB));
+            }
+
             return;
         }
 

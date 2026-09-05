@@ -8,36 +8,50 @@ import java.util.Set;
 
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.PhysicsPipelineBody;
-import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
 
 public final class SableConstraintGraph {
-    public static void record(PhysicsPipeline pipeline, PhysicsPipelineBody first, PhysicsPipelineBody second,
-            PhysicsConstraintHandle handle) {
-        if (!(pipeline instanceof SableConstraintEdges holder)) {
-            return;
-        }
-
-        holder.toroidal$constraintEdges().add(new SableConstraintEdge(first, second, handle));
-    }
+    private final List<SableConstraintEdge> edges = new ArrayList<>();
 
     public static List<PhysicsPipelineBody> groupOf(PhysicsPipeline pipeline, PhysicsPipelineBody start) {
-        if (!(pipeline instanceof SableConstraintEdges holder)) {
+        return pipeline instanceof SableConstraintGraphs holder
+                ? holder.toroidal$constraintGraph().groupOf(start)
+                : List.of(start);
+    }
+
+    public SableConstraintEdge record(PhysicsPipelineBody first, PhysicsPipelineBody second) {
+        SableConstraintEdge edge = new SableConstraintEdge(this, first, second);
+        this.edges.add(edge);
+        return edge;
+    }
+
+    public void drop(SableConstraintEdge edge) {
+        this.edges.removeIf(candidate -> candidate == edge);
+    }
+
+    public void dropBody(PhysicsPipelineBody body) {
+        this.edges.removeIf(edge -> edge.touches(body));
+    }
+
+    public int size() {
+        return this.edges.size();
+    }
+
+    public boolean isEmpty() {
+        return this.edges.isEmpty();
+    }
+
+    public List<PhysicsPipelineBody> groupOf(PhysicsPipelineBody start) {
+        if (this.edges.isEmpty()) {
             return List.of(start);
         }
 
-        List<SableConstraintEdge> edges = holder.toroidal$constraintEdges();
-        if (edges.isEmpty()) {
-            return List.of(start);
-        }
-
-        edges.removeIf(edge -> !edge.live());
         List<PhysicsPipelineBody> group = new ArrayList<>();
         Set<PhysicsPipelineBody> seen = Collections.newSetFromMap(new IdentityHashMap<>());
         group.add(start);
         seen.add(start);
         for (int index = 0; index < group.size(); index++) {
             PhysicsPipelineBody body = group.get(index);
-            for (SableConstraintEdge edge : edges) {
+            for (SableConstraintEdge edge : this.edges) {
                 PhysicsPipelineBody other = edge.otherEnd(body);
                 if (other != null && seen.add(other)) {
                     group.add(other);
@@ -46,8 +60,5 @@ public final class SableConstraintGraph {
         }
 
         return group;
-    }
-
-    private SableConstraintGraph() {
     }
 }

@@ -1,7 +1,7 @@
 package com.toroidalworld.compat.sable;
 
-import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 public interface SableConstraintEdges {
-    List<SableConstraintEdge> toroidal$constraintEdges();
+    void toroidal$constraintEdge(@Nullable SableConstraintEdge edge);
 }

@@ -3,11 +3,14 @@ package com.toroidalworld.compat.sable;
 import org.jspecify.annotations.Nullable;
 
 import dev.ryanhcode.sable.api.physics.PhysicsPipelineBody;
-import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
 
-public record SableConstraintEdge(PhysicsPipelineBody first, PhysicsPipelineBody second, PhysicsConstraintHandle handle) {
-    boolean live() {
-        return !this.first.isRemoved() && !this.second.isRemoved() && this.handle.isValid();
+public record SableConstraintEdge(SableConstraintGraph graph, PhysicsPipelineBody first, PhysicsPipelineBody second) {
+    public void drop() {
+        this.graph.drop(this);
+    }
+
+    boolean touches(PhysicsPipelineBody body) {
+        return body == this.first || body == this.second;
     }
 
     @Nullable PhysicsPipelineBody otherEnd(PhysicsPipelineBody body) {
