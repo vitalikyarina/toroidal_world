@@ -7,10 +7,9 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.api.ToroidalShape;
 import com.toroidalworld.compat.distanthorizons.DhClientShapes;
-import com.toroidalworld.compat.distanthorizons.DhFold;
+import com.toroidalworld.compat.distanthorizons.DhKeys;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos2D;
 import com.seibel.distanthorizons.core.render.QuadTree.LodQuadTree;
 import com.seibel.distanthorizons.core.render.QuadTree.LodRenderSection;
@@ -38,8 +37,6 @@ public class RenderBufferHandlerMixin {
         }
 
         DhBlockPos2D center = this.lodQuadTree.getCenterBlockPos();
-        int centerX = DhSectionPos.getCenterBlockPosX(section.pos);
-        int centerZ = DhSectionPos.getCenterBlockPosZ(section.pos);
-        return DhFold.isNearestCopy(shape, center.x, center.z, centerX, centerZ);
+        return DhKeys.isNearestCopy(shape, center.x, center.z, section.pos);
     }
 }

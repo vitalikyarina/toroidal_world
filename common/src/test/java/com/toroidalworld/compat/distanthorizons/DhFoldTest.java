@@ -273,6 +273,12 @@ class DhFoldTest {
         void aSectionAlreadyNearTheReferenceStays() {
             assertEquals(4, DhFold.nearestSection(shape, Direction.Axis.X, LEAF, 300, 4));
         }
+
+        @Test
+        void aSectionAboveTheExactLevelKeepsItsRawKey() {
+            ToroidalShape tiny = torus(-16, 16);
+            assertEquals(-1, DhFold.nearestSection(tiny, Direction.Axis.X, (byte) 9, 0, -1));
+        }
     }
 
     @Nested
@@ -281,22 +287,64 @@ class DhFoldTest {
 
         @Test
         void aSectionJustAcrossTheSeamIsDrawnAndItsFarCopyIsNot() {
-            assertTrue(DhFold.isNearestCopy(shape, 60, 0, 288, 32));
-            assertFalse(DhFold.isNearestCopy(shape, 60, 0, 288 - WIDTH_BLOCKS, 32));
+            int sectionsPerWorld = WIDTH_BLOCKS / DhFold.sectionWidthBlocks(LEAF);
+            assertTrue(DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, 60, 4));
+            assertFalse(DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, 60, 4 - sectionsPerWorld));
         }
 
         @Test
-        void theAntipodeTieDrawsExactlyOneCopy() {
-            boolean plus = DhFold.isNearestCopy(shape, 0, 0, WIDTH_BLOCKS / 2, 0);
-            boolean minus = DhFold.isNearestCopy(shape, 0, 0, -WIDTH_BLOCKS / 2, 0);
-            assertTrue(plus != minus, "both copies of the antipode section were drawn, or neither");
+        void theAntipodeTieDrawsThePositiveSide() {
+            assertTrue(DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, 32, 8));
+            assertFalse(DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, 32, -8));
+        }
+
+        @Test
+        void aSectionAboveTheExactLevelIsStillJudgedByItsCentre() {
+            ToroidalShape tiny = torus(-16, 16);
+            assertTrue(DhFold.isNearestSection(tiny, Direction.Axis.X, (byte) 9, 0, 0));
+            assertFalse(DhFold.isNearestSection(tiny, Direction.Axis.X, (byte) 9, 0, -1));
         }
 
         @Test
         void theUnboundedAxisOfACylinderNeverCulls() {
             ToroidalShape cylinder = cylinder(0, WIDTH_CHUNKS);
-            assertTrue(DhFold.isNearestCopy(cylinder, 0, 0, 32, 5 * WIDTH_BLOCKS));
-            assertFalse(DhFold.isNearestCopy(cylinder, 0, 0, 32 + WIDTH_BLOCKS, 0));
+            assertTrue(DhFold.isNearestSection(cylinder, Direction.Axis.Z, LEAF, 0, 5 * WIDTH_BLOCKS));
+            assertFalse(DhFold.isNearestSection(cylinder, Direction.Axis.X, LEAF, 0, WIDTH_BLOCKS / 64));
+        }
+    }
+
+    @Nested
+    class TheReloadLandsOnTheCopyTheGateKeeps {
+        private static final int SECTIONS_PER_WORLD = WIDTH_BLOCKS / DhFold.sectionWidthBlocks(LEAF);
+
+        private final ToroidalShape shape = torus(0, WIDTH_CHUNKS);
+
+        @Test
+        void aSectionWhoseCornerIsNearButWhoseCentreIsFarIsSeatedOnTheFarSide() {
+            int ref = 470;
+            int section = SECTIONS_PER_WORLD - 1;
+            assertFalse(DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, ref, section));
+            assertTrue(DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, ref, section - SECTIONS_PER_WORLD));
+            assertEquals(section - SECTIONS_PER_WORLD, DhFold.nearestSection(shape, Direction.Axis.X, LEAF, ref, section));
+        }
+
+        @Test
+        void everyLapCopyOfASectionResolvesToTheOneCopyTheGateKeeps() {
+            for (int ref = -600; ref <= 600; ref += 37) {
+                for (int section = 0; section < SECTIONS_PER_WORLD; section++) {
+                    int kept = DhFold.nearestSection(shape, Direction.Axis.X, LEAF, ref, section);
+                    int drawn = 0;
+                    for (int lap = -2; lap <= 2; lap++) {
+                        int copy = section + lap * SECTIONS_PER_WORLD;
+                        if (DhFold.isNearestSection(shape, Direction.Axis.X, LEAF, ref, copy)) {
+                            drawn++;
+                            assertEquals(kept, copy, "ref " + ref + " section " + section);
+                        }
+                        assertEquals(kept, DhFold.nearestSection(shape, Direction.Axis.X, LEAF, ref, copy));
+                    }
+                    assertEquals(1, drawn, "ref " + ref + " section " + section);
+                }
+            }
         }
     }
 
