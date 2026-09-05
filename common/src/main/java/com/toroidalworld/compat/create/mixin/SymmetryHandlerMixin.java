@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.equipment.symmetryWand.SymmetryHandler;
-import com.toroidalworld.compat.create.client.CreateClientFrame;
+import com.toroidalworld.client.ClientFrame;
 
 import net.minecraft.world.phys.Vec3;
 
@@ -19,11 +19,11 @@ public abstract class SymmetryHandlerMixin {
 
     @ModifyExpressionValue(method = "onRenderWorld", at = @At(value = "INVOKE", target = MIRROR_POSITION))
     private static Vec3 toroidal$mirrorInTheRenderFrame(Vec3 canonical) {
-        return CreateClientFrame.nearestCopy(CreateClientFrame.camera(), canonical);
+        return ClientFrame.nearestToCamera(canonical);
     }
 
     @ModifyExpressionValue(method = "onClientTick", at = @At(value = "INVOKE", target = MIRROR_POSITION))
     private static Vec3 toroidal$mirrorInTheParticleFrame(Vec3 canonical) {
-        return CreateClientFrame.nearestCopy(CreateClientFrame.camera(), canonical);
+        return ClientFrame.nearestToCamera(canonical);
     }
 }

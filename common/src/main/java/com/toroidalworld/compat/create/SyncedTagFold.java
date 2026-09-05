@@ -3,7 +3,6 @@ package com.toroidalworld.compat.create;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.net.TagPositions;
-import com.toroidalworld.storage.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -30,17 +29,11 @@ public final class SyncedTagFold {
 
     public static CompoundTag inFrameOf(BlockEntity blockEntity, CompoundTag tag) {
         Level level = blockEntity.getLevel();
-        if (level == null || !level.isClientSide) {
+        if (level == null || !level.isClientSide || !CreateClientFrame.isClientLevel(level)) {
             return tag;
         }
 
-        WorldFold clientTransformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
-        BlockPos viewer = CreateClientFrame.viewer();
-        if (clientTransformer == null || viewer == null) {
-            return tag;
-        }
-
-        return seatedIn(TABLE, clientTransformer, viewer, blockEntity.getClass(), tag);
+        return TABLE.seatedIn(CreateClientFrame.VIEWER_SEAT, blockEntity.getClass(), tag);
     }
 
     static CompoundTag seatedIn(TagPositions.Table table, WorldFold fold, BlockPos anchor,

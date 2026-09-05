@@ -13,9 +13,6 @@ import dev.ryanhcode.sable.companion.math.Pose3d;
 import dev.ryanhcode.sable.companion.math.Pose3dc;
 import dev.ryanhcode.sable.network.packets.tcp.ClientboundStartTrackingSubLevelPacket;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.world.level.Level;
-
 @Mixin(value = ClientboundStartTrackingSubLevelPacket.class, remap = false)
 public class ClientboundStartTrackingSubLevelPacketMixin {
     @Shadow
@@ -28,8 +25,7 @@ public class ClientboundStartTrackingSubLevelPacketMixin {
 
     @Inject(method = "handle", at = @At("HEAD"))
     private void toroidal$reseatReceivedPoses(CallbackInfo ci) {
-        Level level = Minecraft.getInstance().level;
-        SableClientFrame.reseat(level, this.lastPose);
-        SableClientFrame.reseat(level, this.pose);
+        SableClientFrame.reseat(this.lastPose);
+        SableClientFrame.reseat(this.pose);
     }
 }

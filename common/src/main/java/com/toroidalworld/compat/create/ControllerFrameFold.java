@@ -16,11 +16,7 @@ public final class ControllerFrameFold {
         }
 
         if (level.isClientSide) {
-            WorldFold clientTransformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(level);
-            BlockPos viewer = CreateClientFrame.viewer();
-            return clientTransformer == null || viewer == null
-                    ? controller
-                    : clientTransformer.nearestCopy(viewer, controller);
+            return CreateClientFrame.nearestCopy(level, controller);
         }
 
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);

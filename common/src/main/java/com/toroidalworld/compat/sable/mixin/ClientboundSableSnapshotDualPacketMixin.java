@@ -27,7 +27,7 @@ public class ClientboundSableSnapshotDualPacketMixin {
             at = @At("HEAD"))
     private void toroidal$reseatReceivedPoses(Level level, PacketReceiveMode mode, CallbackInfo ci) {
         for (ClientboundSableSnapshotDualPacket.Entry entry : this.entries) {
-            SableClientFrame.reseat(level, entry.pose());
+            SableClientFrame.reseat(entry.pose());
         }
     }
 }
