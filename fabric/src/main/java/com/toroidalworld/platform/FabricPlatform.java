@@ -16,6 +16,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.dimension.LevelStem;
 
 public final class FabricPlatform implements Platform {
     private static final String LOADER_MOD_ID = "fabricloader";
@@ -55,5 +57,10 @@ public final class FabricPlatform implements Platform {
     @Override
     public IntFunction<RegistryFriendlyByteBuf> packetBuffers(ServerPlayer player) {
         return capacity -> new RegistryFriendlyByteBuf(Unpooled.buffer(capacity), player.registryAccess());
+    }
+
+    @Override
+    public LevelStem withGenerator(LevelStem stem, ChunkGenerator generator) {
+        return new LevelStem(stem.type(), generator);
     }
 }
