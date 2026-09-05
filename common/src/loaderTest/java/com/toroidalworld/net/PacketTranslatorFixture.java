@@ -23,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 
 final class PacketTranslatorFixture {
     static final WorldFold TRANSFORMER =
-            WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(-32, 32, -32, 32), FlatShape.NO_SKEW));
+            WorldFolds.of(FlatShape.torus(new WorldLoopBounds(-32, 32, -32, 32)));
     static final WorldFold MIRRORED_TRANSFORMER = new DeckGroupFold(FlatShape.mirrored(
             new WorldLoopBounds(new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE),
             Direction.Axis.Z, 0));
