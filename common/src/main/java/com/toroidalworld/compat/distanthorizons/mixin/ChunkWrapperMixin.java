@@ -24,7 +24,8 @@ import net.minecraft.world.level.chunk.ChunkAccess;
         "com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper_neoforge",
         "com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper_fabric"})
 public class ChunkWrapperMixin {
-    @Shadow
+    // Mixin refuses a remappable @Shadow on a multi-target mixin; the field is Distant Horizons' own, never remapped.
+    @Shadow(remap = false)
     @Final
     private ILevelWrapper wrappedLevel;
 
