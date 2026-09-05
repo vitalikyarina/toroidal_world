@@ -1,31 +1,22 @@
 package com.toroidalworld.compat.sable;
 
-import org.slf4j.Logger;
-
-import com.toroidalworld.core.ForeignFrames;
 import com.mojang.logging.LogUtils;
+import com.toroidalworld.compat.ModPresence;
+import com.toroidalworld.core.ForeignFrames;
 
 public final class SableMod {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
-    private static final String SABLE_CLASS = "dev/ryanhcode/sable/Sable.class";
-
-    private static final boolean PRESENT = probe();
+    private static final ModPresence GATE = ModPresence.of(LogUtils.getLogger(),
+            "dev/ryanhcode/sable/Sable.class",
+            "[sable-compat] gate sable_present");
 
     public static boolean present() {
-        return PRESENT;
+        return GATE.present();
     }
 
     public static void register() {
-        if (PRESENT) {
+        if (present()) {
             ForeignFrames.register(new SableFrames());
         }
-    }
-
-    private static boolean probe() {
-        boolean present = SableMod.class.getClassLoader().getResource(SABLE_CLASS) != null;
-        LOGGER.info("[sable-compat] gate sable_present={}", present);
-        return present;
     }
 
     private SableMod() {

@@ -1,24 +1,15 @@
 package com.toroidalworld.compat.aeronautics;
 
-import org.slf4j.Logger;
-
 import com.mojang.logging.LogUtils;
+import com.toroidalworld.compat.ModPresence;
 
 public final class SimulatedMod {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
-    private static final String SIMULATED_CLASS = "dev/simulated_team/simulated/Simulated.class";
-
-    private static final boolean PRESENT = probe();
+    private static final ModPresence GATE = ModPresence.of(LogUtils.getLogger(),
+            "dev/simulated_team/simulated/Simulated.class",
+            "[aeronautics-compat] gate simulated_present");
 
     public static boolean present() {
-        return PRESENT;
-    }
-
-    private static boolean probe() {
-        boolean present = SimulatedMod.class.getClassLoader().getResource(SIMULATED_CLASS) != null;
-        LOGGER.info("[aeronautics-compat] gate simulated_present={}", present);
-        return present;
+        return GATE.present();
     }
 
     private SimulatedMod() {

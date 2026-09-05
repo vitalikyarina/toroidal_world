@@ -1,24 +1,15 @@
 package com.toroidalworld.compat.aeronautics;
 
-import org.slf4j.Logger;
-
 import com.mojang.logging.LogUtils;
+import com.toroidalworld.compat.ModPresence;
 
 public final class OffroadMod {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
-    private static final String OFFROAD_CLASS = "dev/ryanhcode/offroad/Offroad.class";
-
-    private static final boolean PRESENT = probe();
+    private static final ModPresence GATE = ModPresence.of(LogUtils.getLogger(),
+            "dev/ryanhcode/offroad/Offroad.class",
+            "[aeronautics-compat] gate offroad_present");
 
     public static boolean present() {
-        return PRESENT;
-    }
-
-    private static boolean probe() {
-        boolean present = OffroadMod.class.getClassLoader().getResource(OFFROAD_CLASS) != null;
-        LOGGER.info("[aeronautics-compat] gate offroad_present={}", present);
-        return present;
+        return GATE.present();
     }
 
     private OffroadMod() {
