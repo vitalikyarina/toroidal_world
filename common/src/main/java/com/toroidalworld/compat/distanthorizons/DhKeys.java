@@ -49,6 +49,12 @@ public final class DhKeys {
         return DhSectionPos.encode(detail, x, z);
     }
 
+    public static boolean isNearestCopy(ToroidalShape shape, int refBlockX, int refBlockZ, long pos) {
+        byte detail = DhSectionPos.getDetailLevel(pos);
+        return DhFold.isNearestSection(shape, Direction.Axis.X, detail, refBlockX, DhSectionPos.getX(pos))
+                && DhFold.isNearestSection(shape, Direction.Axis.Z, detail, refBlockZ, DhSectionPos.getZ(pos));
+    }
+
     public static ChunkPos foldChunk(ToroidalShape shape, ChunkPos pos) {
         int x = shape.foldChunk(Direction.Axis.X, pos.x());
         int z = shape.foldChunk(Direction.Axis.Z, pos.z());

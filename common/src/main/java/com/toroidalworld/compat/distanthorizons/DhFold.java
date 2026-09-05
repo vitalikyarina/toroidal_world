@@ -72,26 +72,28 @@ public final class DhFold {
 
     public static int nearestSection(ToroidalShape shape, Direction.Axis axis, byte detailLevel, int refBlock,
             int section) {
-        if (!shape.loops(axis)) {
+        if (!shape.loops(axis) || detailLevel > maxExactDetailLevel(shape)) {
             return section;
         }
 
+        int worldWidth = shape.widthBlocks(axis);
+        long laps = lapsToward(worldWidth, sectionCentreBlock(detailLevel, section) - refBlock);
+        return (int) (section - laps * (worldWidth / sectionWidthBlocks(detailLevel)));
+    }
+
+    public static boolean isNearestSection(ToroidalShape shape, Direction.Axis axis, byte detailLevel, int refBlock,
+            int section) {
+        return !shape.loops(axis)
+                || lapsToward(shape.widthBlocks(axis), sectionCentreBlock(detailLevel, section) - refBlock) == 0;
+    }
+
+    private static long sectionCentreBlock(byte detailLevel, int section) {
         int width = sectionWidthBlocks(detailLevel);
-        double nearest = shape.nearestCoord(axis, refBlock, section * width);
-        return Math.floorDiv((int) Math.round(nearest), width);
+        return (long) section * width + width / 2;
     }
 
-    public static boolean isNearestCopy(ToroidalShape shape, int refBlockX, int refBlockZ, int blockX, int blockZ) {
-        return isNearestCoord(shape, Direction.Axis.X, refBlockX, blockX)
-                && isNearestCoord(shape, Direction.Axis.Z, refBlockZ, blockZ);
-    }
-
-    private static boolean isNearestCoord(ToroidalShape shape, Direction.Axis axis, int ref, int coord) {
-        if (!shape.loops(axis)) {
-            return true;
-        }
-
-        return shape.nearestCoord(axis, ref, coord) == coord && 2L * (coord - ref) != -shape.widthBlocks(axis);
+    private static long lapsToward(long worldWidth, long delta) {
+        return Math.floorDiv(2 * delta - 1 + worldWidth, 2 * worldWidth);
     }
 
     public static boolean overlapsNearestLap(ToroidalShape shape, Direction.Axis axis, int refBlock, int minBlock,

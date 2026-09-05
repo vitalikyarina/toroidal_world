@@ -87,9 +87,7 @@ public class LodQuadTreeMixin {
         }
 
         DhBlockPos2D center = ((QuadTree<?>) (Object) this).getCenterBlockPos();
-        int centerX = DhSectionPos.getCenterBlockPosX(section.pos);
-        int centerZ = DhSectionPos.getCenterBlockPosZ(section.pos);
-        if (DhFold.isNearestCopy(shape, center.x, center.z, centerX, centerZ)) {
+        if (DhKeys.isNearestCopy(shape, center.x, center.z, section.pos)) {
             original.call(holder, section);
         }
     }
