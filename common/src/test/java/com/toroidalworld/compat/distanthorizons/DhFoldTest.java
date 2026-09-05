@@ -2,6 +2,7 @@ package com.toroidalworld.compat.distanthorizons;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Nested;
@@ -148,27 +149,78 @@ class DhFoldTest {
     }
 
     @Nested
-    class KeysFoldOnlyWhereTheLeafDividesTheWorld {
+    class KeysFoldByThePeriodOfTheirLevel {
+        private static final int ODD_CHUNKS = 101;
+        private static final int ODD_BLOCKS = ODD_CHUNKS * 16;
+        private static final int ODD_LEAF_SECTIONS = 101;
+
+        private final ToroidalShape odd = torus(0, ODD_CHUNKS);
+
         @Test
-        void aWidthTheLeafDividesFoldsWithoutCollision() {
-            assertTrue(DhFold.keysFoldWithoutCollision(torus(0, 104), LEAF));
-            assertTrue(DhFold.keysFoldWithoutCollision(torus(0, WIDTH_CHUNKS), LEAF));
+        void thePeriodIsTheSmallestWholeNumberOfLapsTheSectionGridDivides() {
+            assertEquals(4 * ODD_BLOCKS, DhFold.periodBlocks(odd, Direction.Axis.X, LEAF));
+            assertEquals(2 * 800, DhFold.periodBlocks(torus(0, 50), Direction.Axis.X, LEAF));
+            assertEquals(1664, DhFold.periodBlocks(torus(0, 104), Direction.Axis.X, LEAF));
+            assertEquals(ODD_LEAF_SECTIONS, DhFold.periodSections(odd, Direction.Axis.X, LEAF));
+            assertEquals(25, DhFold.periodSections(torus(0, 50), Direction.Axis.X, LEAF));
+            assertEquals(26, DhFold.periodSections(torus(0, 104), Direction.Axis.X, LEAF));
         }
 
         @Test
-        void aWidthTheLeafDoesNotDivideCollides() {
-            assertFalse(DhFold.keysFoldWithoutCollision(torus(0, 101), LEAF));
-            assertFalse(DhFold.keysFoldWithoutCollision(torus(0, 50), LEAF));
+        void aLapThatLandsOffTheSectionGridKeepsItsOwnKeys() {
+            assertEquals(26, DhFold.foldSection(odd, Direction.Axis.X, LEAF, 26));
+            assertEquals(75, DhFold.foldSection(odd, Direction.Axis.X, LEAF, 75));
+            assertEquals(100, DhFold.foldSection(odd, Direction.Axis.X, LEAF, -1));
+            assertEquals(13, DhFold.foldSection(torus(0, 50), Direction.Axis.X, LEAF, 13));
         }
 
         @Test
-        void theUnboundedAxisOfACylinderNeverBlocksTheFold() {
-            assertTrue(DhFold.keysFoldWithoutCollision(cylinder(0, 104), LEAF));
+        void theLapThatLandsOnTheGridFoldsOntoTheFirst() {
+            assertEquals(0, DhFold.foldSection(odd, Direction.Axis.X, LEAF, ODD_LEAF_SECTIONS));
+            assertEquals(5, DhFold.foldSection(odd, Direction.Axis.X, LEAF, 5 + 2 * ODD_LEAF_SECTIONS));
+            assertEquals(0, DhFold.foldSection(torus(0, 50), Direction.Axis.X, LEAF, 25));
+            assertEquals(0, DhFold.foldSection(torus(0, 104), Direction.Axis.X, LEAF, 26));
+        }
+
+        @Test
+        void twoSectionsShareAKeyOnlyAWholeNumberOfWorldWidthsApart() {
+            for (int section = -300; section <= 300; section++) {
+                int key = DhFold.foldSection(odd, Direction.Axis.X, LEAF, section);
+                assertTrue(0 <= key && key < ODD_LEAF_SECTIONS, "section " + section);
+                assertEquals(key, DhFold.foldSection(odd, Direction.Axis.X, LEAF, section + ODD_LEAF_SECTIONS));
+                for (int apart = 1; apart < ODD_LEAF_SECTIONS; apart++) {
+                    assertNotEquals(key, DhFold.foldSection(odd, Direction.Axis.X, LEAF, section + apart),
+                            "section " + section + " apart " + apart);
+                }
+            }
+        }
+
+        @Test
+        void theChunkFoldLandsInTheFoldedSectionOfItsRawSection() {
+            for (ToroidalShape shape : new ToroidalShape[] {odd, torus(-50, 50), torus(-16, 16)}) {
+                for (int chunk = -500; chunk <= 500; chunk++) {
+                    int folded = DhFold.foldChunk(shape, Direction.Axis.X, LEAF, chunk);
+                    assertEquals(chunk & 3, folded & 3, "chunk " + chunk);
+                    assertEquals(DhFold.foldSection(shape, Direction.Axis.X, LEAF, Math.floorDiv(chunk, 4)),
+                            DhFold.foldSection(shape, Direction.Axis.X, LEAF, Math.floorDiv(folded, 4)),
+                            "chunk " + chunk);
+                }
+            }
+        }
+
+        @Test
+        void theUnboundedAxisOfACylinderHasNoPeriodToFoldBy() {
+            ToroidalShape cylinder = cylinder(0, ODD_CHUNKS);
+            assertEquals(9999, DhFold.foldSection(cylinder, Direction.Axis.Z, LEAF, 9999));
+            assertEquals(9999, DhFold.foldChunk(cylinder, Direction.Axis.Z, LEAF, 9999));
+            assertEquals(26, DhFold.foldSection(cylinder, Direction.Axis.X, LEAF, 26));
+            assertEquals(0, DhFold.foldSection(cylinder, Direction.Axis.X, LEAF, ODD_LEAF_SECTIONS));
         }
     }
 
     @Nested
-    class KeysAboveTheExactLevelStayRaw {
+    class KeysAboveTheExactLevelFoldByAWiderPeriod {
+        private static final byte SECTION_128 = 7;
         private static final byte SECTION_512 = 9;
 
         private final ToroidalShape tiny = torus(-16, 16);
@@ -179,9 +231,11 @@ class DhFoldTest {
         }
 
         @Test
-        void aSectionAboveTheExactLevelIsItsOwnKey() {
-            assertEquals(-1, DhFold.foldSection(tiny, Direction.Axis.X, SECTION_512, -1));
+        void aSectionAsWideAsTheWorldFoldsOntoOneKeyWhateverItsLap() {
+            assertEquals(512, DhFold.periodBlocks(tiny, Direction.Axis.X, SECTION_512));
+            assertEquals(0, DhFold.foldSection(tiny, Direction.Axis.X, SECTION_512, -1));
             assertEquals(0, DhFold.foldSection(tiny, Direction.Axis.X, SECTION_512, 0));
+            assertEquals(0, DhFold.foldSection(tiny, Direction.Axis.X, SECTION_512, 7));
         }
 
         @Test
@@ -189,50 +243,94 @@ class DhFoldTest {
             assertEquals(0, DhFold.foldSection(tiny, Direction.Axis.X, CHUNK_16, -2));
             assertEquals(-1, DhFold.foldSection(tiny, Direction.Axis.X, CHUNK_16, -1));
         }
+
+        @Test
+        void aWorldTheSectionDoesNotDivideFoldsByWholeLapsOfIt() {
+            ToroidalShape odd = torus(0, 101);
+            assertEquals(8 * 1616, DhFold.periodBlocks(odd, Direction.Axis.X, SECTION_128));
+            assertEquals(101, DhFold.periodSections(odd, Direction.Axis.X, SECTION_128));
+            assertEquals(50, DhFold.foldSection(odd, Direction.Axis.X, SECTION_128, 50 + 101));
+            assertEquals(2 * 1600, DhFold.periodBlocks(torus(-50, 50), Direction.Axis.X, SECTION_128));
+        }
     }
 
     @Nested
-    class ASectionIsAddressableOrItIsNotDrawn {
+    class ASectionIsCompleteOrItIsNotDrawn {
+        private static final byte SECTION_128 = 7;
         private static final byte SECTION_256 = 8;
 
+        private final ToroidalShape odd = torus(0, 101);
+
         @Test
-        void aSectionInsideTheWorldIsAddressableAtEveryLevel() {
-            ToroidalShape shape = torus(0, 101);
-            assertTrue(DhFold.isAddressableSection(shape, LEAF, 5, 5));
-            assertTrue(DhFold.isAddressableSection(shape, SECTION_256, 1, 1));
+        void aLeafIsCompleteWhereverItSits() {
+            assertTrue(DhFold.isCompleteSection(odd, LEAF, LEAF, 25, 25));
+            assertTrue(DhFold.isCompleteSection(odd, LEAF, LEAF, 26, 26));
+            assertTrue(DhFold.isCompleteSection(odd, LEAF, LEAF, -1, 300));
         }
 
         @Test
-        void aSectionPastTheSeamIsAddressableWhenItsWidthDividesTheWorld() {
-            assertTrue(DhFold.isAddressableSection(torus(0, 104), LEAF, 26, 26));
+        void aCoarseSectionInsideTheFirstLapIsComplete() {
+            assertTrue(DhFold.isCompleteSection(odd, LEAF, SECTION_256, 1, 1));
+            assertTrue(DhFold.isCompleteSection(odd, LEAF, SECTION_256, 5, 0));
+            assertTrue(DhFold.isCompleteSection(torus(0, 104), LEAF, SECTION_256, 5, 5));
         }
 
         @Test
-        void aSectionPastTheSeamIsNotAddressableWhenItsWidthDoesNot() {
-            ToroidalShape shape = torus(0, 101);
-            assertFalse(DhFold.foldKeepsTheGrid(shape, Direction.Axis.X, LEAF, 26));
-            assertFalse(DhFold.isAddressableSection(shape, LEAF, 26, 26));
+        void aCoarseSectionHangingOverTheWorldEdgeIsNot() {
+            assertFalse(DhFold.foldedSpanInsideTheWorld(odd, Direction.Axis.X, SECTION_256, 6));
+            assertFalse(DhFold.isCompleteSection(odd, LEAF, SECTION_256, 6, 1));
+            assertFalse(DhFold.foldedSpanInsideTheWorld(torus(0, 104), Direction.Axis.X, SECTION_256, 6));
         }
 
         @Test
-        void aSectionHangingOverTheWorldEdgeIsNotAddressable() {
-            ToroidalShape shape = torus(0, 101);
-            assertTrue(DhFold.foldKeepsTheGrid(shape, Direction.Axis.X, LEAF, 25));
-            assertFalse(DhFold.foldKeepsTheSpan(shape, Direction.Axis.X, LEAF, 25));
-            assertFalse(DhFold.isAddressableSection(shape, LEAF, 25, 25));
+        void aCoarseSectionInAFarLapIsCompleteOnlyWhereItFoldsIntoTheFirst() {
+            assertFalse(DhFold.foldedSpanInsideTheWorld(odd, Direction.Axis.X, SECTION_256, 7));
+            assertFalse(DhFold.foldedSpanInsideTheWorld(odd, Direction.Axis.X, SECTION_256, 6 + 101));
+            assertTrue(DhFold.foldedSpanInsideTheWorld(odd, Direction.Axis.X, SECTION_256, 1 + 101));
+            assertTrue(DhFold.foldedSpanInsideTheWorld(torus(0, 104), Direction.Axis.X, SECTION_256, 13));
         }
 
         @Test
-        void aCoarseSectionInsideAWorldItDoesNotDivideIsStillAddressable() {
-            ToroidalShape shape = torus(0, 104);
-            assertTrue(DhFold.isAddressableSection(shape, SECTION_256, 5, 5));
-            assertFalse(DhFold.foldKeepsTheSpan(shape, Direction.Axis.X, SECTION_256, 6));
+        void aStraddlerOfAnOffGridWorldEdgeIsIncompleteOnBothSides() {
+            ToroidalShape shifted = torus(-50, 50);
+            assertFalse(DhFold.foldedSpanInsideTheWorld(shifted, Direction.Axis.X, SECTION_128, 6));
+            assertFalse(DhFold.foldedSpanInsideTheWorld(shifted, Direction.Axis.X, SECTION_128, -7));
+            assertTrue(DhFold.foldedSpanInsideTheWorld(shifted, Direction.Axis.X, SECTION_128, 0));
+            assertTrue(DhFold.foldedSpanInsideTheWorld(shifted, Direction.Axis.X, SECTION_128, -6));
         }
 
         @Test
-        void theUnboundedAxisOfACylinderIsAlwaysAddressable() {
-            assertTrue(DhFold.foldKeepsTheGrid(cylinder(0, 101), Direction.Axis.Z, LEAF, 9999));
-            assertTrue(DhFold.foldKeepsTheSpan(cylinder(0, 101), Direction.Axis.Z, LEAF, 9999));
+        void theUnboundedAxisOfACylinderIsAlwaysComplete() {
+            assertTrue(DhFold.foldedSpanInsideTheWorld(cylinder(0, 101), Direction.Axis.Z, SECTION_256, 9999));
+            assertTrue(DhFold.isCompleteSection(cylinder(0, 101), LEAF, SECTION_256, 1, 9999));
+        }
+    }
+
+    @Nested
+    class ASectionContainsACopyOfAGenerationPosition {
+        private static final byte SECTION_128 = 7;
+
+        private final ToroidalShape odd = torus(0, 101);
+
+        @Test
+        void theCopyInsideTheSectionIsFoundWhicheverLapTheSectionIsIn() {
+            assertTrue(DhFold.containsACopy(odd, Direction.Axis.X, SECTION_128, 114, LEAF, 26));
+            assertTrue(DhFold.containsACopy(odd, Direction.Axis.X, SECTION_128, 114, LEAF, 27));
+            assertFalse(DhFold.containsACopy(odd, Direction.Axis.X, SECTION_128, 114, LEAF, 28));
+            assertFalse(DhFold.containsACopy(odd, Direction.Axis.X, SECTION_128, 114, LEAF, 25));
+        }
+
+        @Test
+        void aSectionContainsItsOwnCopiesAndNoNeighbour() {
+            assertTrue(DhFold.containsACopy(odd, Direction.Axis.X, LEAF, 5, LEAF, 5 + 3 * 101));
+            assertFalse(DhFold.containsACopy(odd, Direction.Axis.X, LEAF, 5, LEAF, 6));
+        }
+
+        @Test
+        void theUnboundedAxisOfACylinderContainsOnlyWhatLiesInside() {
+            ToroidalShape cylinder = cylinder(0, 101);
+            assertTrue(DhFold.containsACopy(cylinder, Direction.Axis.Z, SECTION_128, 3, LEAF, 7));
+            assertFalse(DhFold.containsACopy(cylinder, Direction.Axis.Z, SECTION_128, 3, LEAF, 7 + 101));
         }
     }
 
@@ -276,9 +374,18 @@ class DhFoldTest {
         }
 
         @Test
-        void aSectionAboveTheExactLevelKeepsItsRawKey() {
+        void aSectionAboveTheExactLevelIsSeatedByItsOwnPeriod() {
             ToroidalShape tiny = torus(-16, 16);
-            assertEquals(-1, DhFold.nearestSection(tiny, Direction.Axis.X, SNAP, (byte) 9, 0, -1));
+            assertEquals(0, DhFold.nearestSection(tiny, Direction.Axis.X, SNAP, (byte) 9, 0, -1));
+            assertEquals(-1, DhFold.nearestSection(tiny, Direction.Axis.X, SNAP, (byte) 9, -100, -1));
+        }
+
+        @Test
+        void aKeyOfAWiderPeriodIsSeatedOnTheCopyNearestTheReference() {
+            ToroidalShape odd = torus(0, 101);
+            int ref = 4 * 1616 + 10;
+            assertEquals(106, DhFold.nearestSection(odd, Direction.Axis.X, SNAP, LEAF, ref, 5));
+            assertEquals(106, DhFold.nearestSection(odd, Direction.Axis.X, SNAP, LEAF, ref, 106 + 101));
         }
     }
 

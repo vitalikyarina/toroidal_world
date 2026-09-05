@@ -25,8 +25,8 @@ class DhProbesTest {
     }
 
     @Test
-    void theKeyFoldLineSurvivesACylinder() {
-        assertDoesNotThrow(() -> DhProbes.keyFold(cylinder(), true));
+    void theKeyPeriodLineSurvivesACylinder() {
+        assertDoesNotThrow(() -> DhProbes.keyPeriod(cylinder(), DhKeys.LEAF));
     }
 
     @Test

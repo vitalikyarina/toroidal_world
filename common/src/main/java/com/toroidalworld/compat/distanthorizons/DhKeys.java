@@ -13,6 +13,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.ChunkPos;
 
 public final class DhKeys {
+    public static final byte LEAF = DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL;
+
     public static long foldSection(ToroidalShape shape, long pos) {
         byte detail = DhSectionPos.getDetailLevel(pos);
         int rawX = DhSectionPos.getX(pos);
@@ -27,13 +29,42 @@ public final class DhKeys {
     }
 
     public static DhChunkPos foldChunk(ToroidalShape shape, DhChunkPos pos) {
-        int x = shape.foldChunk(Direction.Axis.X, pos.getX());
-        int z = shape.foldChunk(Direction.Axis.Z, pos.getZ());
+        int x = DhFold.foldChunk(shape, Direction.Axis.X, LEAF, pos.getX());
+        int z = DhFold.foldChunk(shape, Direction.Axis.Z, LEAF, pos.getZ());
         if (x == pos.getX() && z == pos.getZ()) {
             return pos;
         }
 
         return new DhChunkPos(x, z);
+    }
+
+    public static ChunkPos foldChunk(ToroidalShape shape, ChunkPos pos) {
+        int x = DhFold.foldChunk(shape, Direction.Axis.X, LEAF, pos.x());
+        int z = DhFold.foldChunk(shape, Direction.Axis.Z, LEAF, pos.z());
+        if (x == pos.x() && z == pos.z()) {
+            return pos;
+        }
+
+        return new ChunkPos(x, z);
+    }
+
+    public static DhBlockPos foldBlock(ToroidalShape shape, DhBlockPos pos) {
+        int x = shape.foldBlock(Direction.Axis.X, pos.getX());
+        int z = shape.foldBlock(Direction.Axis.Z, pos.getZ());
+        if (x == pos.getX() && z == pos.getZ()) {
+            return pos;
+        }
+
+        return new DhBlockPos(x, pos.getY(), z);
+    }
+
+    public static boolean containsACopy(ToroidalShape shape, long sectionPos, long copyPos) {
+        byte detail = DhSectionPos.getDetailLevel(sectionPos);
+        byte copyDetail = DhSectionPos.getDetailLevel(copyPos);
+        return DhFold.containsACopy(shape, Direction.Axis.X, detail, DhSectionPos.getX(sectionPos), copyDetail,
+                DhSectionPos.getX(copyPos))
+                && DhFold.containsACopy(shape, Direction.Axis.Z, detail, DhSectionPos.getZ(sectionPos), copyDetail,
+                        DhSectionPos.getZ(copyPos));
     }
 
     public static long nearestSection(ToroidalShape shape, int refBlockX, int refBlockZ, long pos) {
@@ -68,27 +99,7 @@ public final class DhKeys {
     }
 
     public static byte snapLevel(ToroidalShape shape) {
-        return DhFold.snapDetailLevel(shape, DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL);
-    }
-
-    public static ChunkPos foldChunk(ToroidalShape shape, ChunkPos pos) {
-        int x = shape.foldChunk(Direction.Axis.X, pos.x());
-        int z = shape.foldChunk(Direction.Axis.Z, pos.z());
-        if (x == pos.x() && z == pos.z()) {
-            return pos;
-        }
-
-        return new ChunkPos(x, z);
-    }
-
-    public static DhBlockPos foldBlock(ToroidalShape shape, DhBlockPos pos) {
-        int x = shape.foldBlock(Direction.Axis.X, pos.getX());
-        int z = shape.foldBlock(Direction.Axis.Z, pos.getZ());
-        if (x == pos.getX() && z == pos.getZ()) {
-            return pos;
-        }
-
-        return new DhBlockPos(x, pos.getY(), z);
+        return DhFold.snapDetailLevel(shape, LEAF);
     }
 
     public static void reseat(IBaseDTO<?> dto, Object key) {
