@@ -13,7 +13,7 @@ public final class SableConstraintGraph {
     private final List<SableConstraintEdge> edges = new ArrayList<>();
 
     public static List<PhysicsPipelineBody> groupOf(PhysicsPipeline pipeline, PhysicsPipelineBody start) {
-        return pipeline instanceof SableConstraintGraphs holder
+        return pipeline instanceof SableConstraintGraphHolder holder
                 ? holder.toroidal$constraintGraph().groupOf(start)
                 : List.of(start);
     }

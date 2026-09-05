@@ -10,12 +10,13 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.toroidalworld.compat.sable.SableConstraintEdges;
+import com.toroidalworld.compat.sable.SableConstraintEdgeHolder;
 import com.toroidalworld.compat.sable.SableConstraintGraph;
-import com.toroidalworld.compat.sable.SableConstraintGraphs;
+import com.toroidalworld.compat.sable.SableConstraintGraphHolder;
 import com.toroidalworld.compat.sable.SableConstraintJoin;
 import com.toroidalworld.compat.sable.SableMotorGoal;
-import com.toroidalworld.compat.sable.SableMotorGoals;
+import com.toroidalworld.compat.sable.SableMotorGoalHolder;
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
@@ -26,7 +27,7 @@ import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
 import net.minecraft.server.level.ServerLevel;
 
 @Mixin(targets = "dev.ryanhcode.sable.physics.impl.rapier.RapierPhysicsPipeline", remap = false)
-public class RapierPhysicsPipelineMixin implements SableConstraintGraphs {
+public class RapierPhysicsPipelineMixin implements SableConstraintGraphHolder {
     @Shadow
     @Final
     private ServerLevel level;
@@ -51,20 +52,21 @@ public class RapierPhysicsPipelineMixin implements SableConstraintGraphs {
     private void toroidal$recordConstraint(PhysicsPipelineBody bodyA, PhysicsPipelineBody bodyB,
             PhysicsConstraintConfiguration<?> configuration, CallbackInfoReturnable<PhysicsConstraintHandle> cir) {
         PhysicsConstraintHandle handle = cir.getReturnValue();
-        if (handle == null || WorldLoopAttachments.wrappedTransformerOf(this.level) == null) {
+        WorldFold fold = WorldLoopAttachments.wrappedTransformerOf(this.level);
+        if (handle == null || fold == null) {
             return;
         }
 
         if (bodyA != null && bodyB != null) {
-            if (handle instanceof SableConstraintEdges edges) {
-                edges.toroidal$constraintEdge(this.toroidal$constraintGraph.record(bodyA, bodyB));
+            if (handle instanceof SableConstraintEdgeHolder holder) {
+                holder.toroidal$constraintEdge(this.toroidal$constraintGraph.record(bodyA, bodyB));
             }
 
             return;
         }
 
-        if (bodyA == null && bodyB != null && handle instanceof SableMotorGoals goals) {
-            goals.toroidal$motorGoal(SableMotorGoal.of(this.level, bodyB, configuration));
+        if (bodyA == null && bodyB != null && handle instanceof SableMotorGoalHolder holder) {
+            holder.toroidal$motorGoal(SableMotorGoal.of(fold, bodyB, configuration));
         }
     }
 }

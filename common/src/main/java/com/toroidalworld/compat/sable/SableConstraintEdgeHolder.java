@@ -2,6 +2,6 @@ package com.toroidalworld.compat.sable;
 
 import org.jspecify.annotations.Nullable;
 
-public interface SableConstraintEdges {
+public interface SableConstraintEdgeHolder {
     void toroidal$constraintEdge(@Nullable SableConstraintEdge edge);
 }

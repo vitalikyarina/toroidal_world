@@ -7,7 +7,6 @@ import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
 
 import dev.ryanhcode.sable.api.physics.PhysicsPipelineBody;
 import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
@@ -17,7 +16,6 @@ import dev.ryanhcode.sable.api.physics.constraint.GenericConstraintConfiguration
 import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintConfiguration;
 import dev.ryanhcode.sable.api.physics.constraint.RotaryConstraintConfiguration;
 
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
 public final class SableMotorGoal {
@@ -25,7 +23,7 @@ public final class SableMotorGoal {
 
     private static final int ALL_LINEAR_WRITTEN = (1 << LINEAR_AXES) - 1;
 
-    private final ServerLevel level;
+    private final WorldFold fold;
     private final PhysicsPipelineBody body;
     private final Vector3d staticAnchor = new Vector3d();
     private final Quaterniond staticOrientation = new Quaterniond();
@@ -37,23 +35,23 @@ public final class SableMotorGoal {
     private final double[] maxForce = new double[LINEAR_AXES];
     private int written;
 
-    private SableMotorGoal(ServerLevel level, PhysicsPipelineBody body, Vector3dc staticAnchor,
+    private SableMotorGoal(WorldFold fold, PhysicsPipelineBody body, Vector3dc staticAnchor,
             Quaterniondc staticOrientation, Vector3dc bodyAnchor) {
-        this.level = level;
+        this.fold = fold;
         this.body = body;
         this.staticAnchor.set(staticAnchor);
         this.staticOrientation.set(staticOrientation);
         this.bodyAnchor.set(bodyAnchor);
     }
 
-    public static @Nullable SableMotorGoal of(ServerLevel level, PhysicsPipelineBody body,
+    public static @Nullable SableMotorGoal of(WorldFold fold, PhysicsPipelineBody body,
             PhysicsConstraintConfiguration<?> configuration) {
         return switch (configuration) {
-            case FixedConstraintConfiguration config -> new SableMotorGoal(level, body, config.pos1(),
+            case FixedConstraintConfiguration config -> new SableMotorGoal(fold, body, config.pos1(),
                     config.orientation(), config.pos2());
-            case FreeConstraintConfiguration config -> new SableMotorGoal(level, body, config.pos1(),
+            case FreeConstraintConfiguration config -> new SableMotorGoal(fold, body, config.pos1(),
                     config.orientation(), config.pos2());
-            case GenericConstraintConfiguration config -> new SableMotorGoal(level, body, config.pos1(),
+            case GenericConstraintConfiguration config -> new SableMotorGoal(fold, body, config.pos1(),
                     config.orientation1(), config.pos2());
             case RotaryConstraintConfiguration ignored -> null;
         };
@@ -104,8 +102,7 @@ public final class SableMotorGoal {
     }
 
     public @Nullable Vector3d seatCorrection() {
-        WorldFold fold = WorldLoopAttachments.wrappedTransformerOf(this.level);
-        if (fold == null || this.written != ALL_LINEAR_WRITTEN || this.body.isRemoved()) {
+        if (this.written != ALL_LINEAR_WRITTEN || this.body.isRemoved()) {
             return null;
         }
 
@@ -118,7 +115,7 @@ public final class SableMotorGoal {
                 .transform(new Vector3d(this.targets[0], this.targets[1], this.targets[2]))
                 .add(this.staticAnchor);
         Vec3 raw = new Vec3(goal.x, goal.y, goal.z);
-        Vec3 seated = fold.nearestCopy(anchor, raw);
+        Vec3 seated = this.fold.nearestCopy(anchor, raw);
         if (seated.x == raw.x && seated.z == raw.z) {
             return null;
         }

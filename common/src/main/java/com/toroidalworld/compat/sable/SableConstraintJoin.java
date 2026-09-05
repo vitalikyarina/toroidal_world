@@ -26,7 +26,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
 public final class SableConstraintJoin {
-    private record Anchors(Vector3dc first, Vector3dc second) {
+    record Anchors(Vector3dc first, Vector3dc second) {
     }
 
     public static PhysicsConstraintConfiguration<?> seat(ServerLevel level, PhysicsPipeline pipeline,
@@ -103,7 +103,7 @@ public final class SableConstraintJoin {
         SablePoseFold.shiftGroup(system, movingIsB ? groupB : groupA, new Vector3d(lapX, 0.0, lapZ), null, null);
     }
 
-    private static PhysicsConstraintConfiguration<?> withAnchor(PhysicsConstraintConfiguration<?> configuration,
+    static PhysicsConstraintConfiguration<?> withAnchor(PhysicsConstraintConfiguration<?> configuration,
             boolean first, Vector3dc anchor) {
         return switch (configuration) {
             case FixedConstraintConfiguration config -> first
@@ -123,7 +123,7 @@ public final class SableConstraintJoin {
         };
     }
 
-    private static Anchors anchorsOf(PhysicsConstraintConfiguration<?> configuration) {
+    static Anchors anchorsOf(PhysicsConstraintConfiguration<?> configuration) {
         return switch (configuration) {
             case FixedConstraintConfiguration config -> new Anchors(config.pos1(), config.pos2());
             case FreeConstraintConfiguration config -> new Anchors(config.pos1(), config.pos2());

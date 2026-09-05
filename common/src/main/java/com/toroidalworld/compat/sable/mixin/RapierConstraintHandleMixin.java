@@ -11,12 +11,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.toroidalworld.compat.sable.SableConstraintEdge;
-import com.toroidalworld.compat.sable.SableConstraintEdges;
+import com.toroidalworld.compat.sable.SableConstraintEdgeHolder;
 import com.toroidalworld.compat.sable.SableMotorGoal;
-import com.toroidalworld.compat.sable.SableMotorGoals;
+import com.toroidalworld.compat.sable.SableMotorGoalHolder;
 
 @Mixin(targets = "dev.ryanhcode.sable.physics.impl.rapier.constraint.RapierConstraintHandle", remap = false)
-public class RapierConstraintHandleMixin implements SableMotorGoals, SableConstraintEdges {
+public class RapierConstraintHandleMixin implements SableMotorGoalHolder, SableConstraintEdgeHolder {
     @Unique
     private @Nullable SableMotorGoal toroidal$motorGoal;
 

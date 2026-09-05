@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.toroidalworld.compat.sable.SableConstraintGraphs;
+import com.toroidalworld.compat.sable.SableConstraintGraphHolder;
 import com.toroidalworld.compat.sable.SablePoseFold;
 
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
@@ -38,8 +38,8 @@ public class SubLevelPhysicsSystemMixin {
 
     @Inject(method = "onSubLevelRemoved", at = @At("HEAD"))
     private void toroidal$dropConstraintEdges(SubLevel subLevel, SubLevelRemovalReason reason, CallbackInfo callback) {
-        if (subLevel instanceof PhysicsPipelineBody body && this.pipeline instanceof SableConstraintGraphs graphs) {
-            graphs.toroidal$constraintGraph().dropBody(body);
+        if (subLevel instanceof PhysicsPipelineBody body && this.pipeline instanceof SableConstraintGraphHolder holder) {
+            holder.toroidal$constraintGraph().dropBody(body);
         }
     }
 }
