@@ -189,11 +189,18 @@ final class BlendedNoiseFixture {
     static double sample(byte[] permutations, double xOffset, double yOffset, double zOffset,
             WorldFold fold, double scale,
             double x, double y, double z, double yScale, double yFudge, double verticalShare) {
+        return sample(permutations, xOffset, yOffset, zOffset, fold, scale, x, y, z, yScale, yFudge, verticalShare,
+                LapFloor.of(fold));
+    }
+
+    static double sample(byte[] permutations, double xOffset, double yOffset, double zOffset,
+            WorldFold fold, double scale,
+            double x, double y, double z, double yScale, double yFudge, double verticalShare, LapFloor floor) {
         GenerationTransformerContext.Context context = GenerationTransformerContext.context();
 
         try (GenerationTransformerContext.Context.ScaleScope _ = context.withScale(scale, verticalShare)) {
             return PeriodicNoiseSampler.sample(permutations, xOffset, yOffset, zOffset, fold, context,
-                    x, y, z, yScale, yFudge);
+                    x, y, z, yScale, yFudge, floor);
         }
     }
 
