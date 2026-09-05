@@ -16,16 +16,6 @@ public final class DhProbes {
 
     private static final Set<String> SEEN_KEY_FOLDS = ConcurrentHashMap.newKeySet();
 
-    private static volatile long lastRadiusCap = Long.MIN_VALUE;
-
-    public static void radiusCapped(int configChunks, int capChunks) {
-        long pair = ((long) configChunks << 32) | (capChunks & 0xFFFFFFFFL);
-        if (pair != lastRadiusCap) {
-            lastRadiusCap = pair;
-            LOGGER.info("[dh-compat] radius_capped config_chunks={} cap_chunks={}", configChunks, capChunks);
-        }
-    }
-
     public static void keyFold(ToroidalShape shape, boolean folded) {
         String widthX = widthValue(shape, Direction.Axis.X);
         String widthZ = widthValue(shape, Direction.Axis.Z);

@@ -15,8 +15,9 @@
     "GeneratedFullDataSourceProviderMixin"
   ],
   "client": [
-    "ConfigEntryMixin",
+    "LodQuadTreeAccessor",
     "LodQuadTreeMixin",
+    "QuadTreeMixin",
     "RenderBufferHandlerMixin"
   ],
   "injectors": {
