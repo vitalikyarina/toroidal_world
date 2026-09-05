@@ -88,6 +88,18 @@ class SeamFrameTest {
     }
 
     @Test
+    void anUnboundScopeReadsThePoseRawAndHandsTheOuterBindingBack() {
+        SeamFrame.with(FOLD, (Level) null, () -> ENTITY_ON_FAR_HALF, () -> {
+            assertTrue(SeamFrame.isNoShift(SeamFrame.unbound(() -> SeamFrame.shiftOf(POSE_NEAR_SEAM))));
+            assertFalse(SeamFrame.unbound(SeamFrame::isBound));
+            assertTrue(SeamFrame.isBound());
+            assertEquals(-WIDTH_BLOCKS, SeamFrame.shiftOf(POSE_NEAR_SEAM).x(), 0.0);
+            return null;
+        });
+        assertFalse(SeamFrame.isBound());
+    }
+
+    @Test
     void anUnwrappedLevelBindsNothing() {
         Vector3dc shift = SeamFrame.with((WorldFold) null, (Level) null, () -> ENTITY_ON_FAR_HALF,
                 () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));

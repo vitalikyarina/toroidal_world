@@ -106,20 +106,22 @@ public final class SableMotorGoal {
             return null;
         }
 
-        Vec3 anchor = SableConstraintJoin.bodyFrame(this.body, this.bodyAnchor);
-        if (anchor == null) {
-            return null;
-        }
+        return SeamFrame.unbound(() -> {
+            Vec3 anchor = SableBodyPose.anchorInWorld(this.body, this.bodyAnchor);
+            if (anchor == null) {
+                return null;
+            }
 
-        Vector3d goal = this.staticOrientation
-                .transform(new Vector3d(this.targets[0], this.targets[1], this.targets[2]))
-                .add(this.staticAnchor);
-        Vec3 raw = new Vec3(goal.x, goal.y, goal.z);
-        Vec3 seated = this.fold.nearestCopy(anchor, raw);
-        if (seated.x == raw.x && seated.z == raw.z) {
-            return null;
-        }
+            Vector3d goal = this.staticOrientation
+                    .transform(new Vector3d(this.targets[0], this.targets[1], this.targets[2]))
+                    .add(this.staticAnchor);
+            Vec3 raw = new Vec3(goal.x, goal.y, goal.z);
+            Vec3 seated = this.fold.nearestCopy(anchor, raw);
+            if (seated.x == raw.x && seated.z == raw.z) {
+                return null;
+            }
 
-        return this.staticOrientation.transformInverse(new Vector3d(seated.x - raw.x, 0.0, seated.z - raw.z));
+            return this.staticOrientation.transformInverse(new Vector3d(seated.x - raw.x, 0.0, seated.z - raw.z));
+        });
     }
 }

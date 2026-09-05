@@ -2,7 +2,6 @@ package com.toroidalworld.compat.sable;
 
 import java.util.List;
 
-import org.joml.Quaterniondc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
@@ -13,10 +12,10 @@ import com.toroidalworld.storage.WorldLoopAttachments;
 
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.PhysicsPipelineBody;
-import dev.ryanhcode.sable.api.physics.object.box.BoxPhysicsObject;
 import dev.ryanhcode.sable.companion.math.BoundingBox3d;
 import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import dev.ryanhcode.sable.companion.math.Pose3d;
+import dev.ryanhcode.sable.companion.math.Pose3dc;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem;
 import dev.ryanhcode.sable.sublevel.system.ticket.PhysicsChunkTicketManager;
@@ -42,9 +41,9 @@ public final class SablePoseFold {
         Vector3d centroid = new Vector3d();
         int counted = 0;
         for (PhysicsPipelineBody body : group) {
-            Vector3dc position = positionOf(body, subLevel, readback);
-            if (position != null) {
-                centroid.add(position);
+            Pose3dc pose = poseOf(body, subLevel, readback);
+            if (pose != null) {
+                centroid.add(pose.position());
                 counted++;
             }
         }
@@ -73,16 +72,15 @@ public final class SablePoseFold {
 
     private static void shift(SubLevelPhysicsSystem system, PhysicsPipeline pipeline, PhysicsPipelineBody body,
             @Nullable ServerSubLevel self, @Nullable Pose3d readback, Vector3dc lap) {
-        Vector3dc position = positionOf(body, self, readback);
-        Quaterniondc orientation = orientationOf(body, self, readback);
-        if (position == null || orientation == null) {
+        Pose3dc pose = poseOf(body, self, readback);
+        if (pose == null) {
             return;
         }
 
-        Vector3d target = new Vector3d(position).add(lap);
+        Vector3d target = new Vector3d(pose.position()).add(lap);
         Vector3d linearBefore = pipeline.getLinearVelocity(body, new Vector3d());
         Vector3d angularBefore = pipeline.getAngularVelocity(body, new Vector3d());
-        pipeline.teleport(body, target, orientation);
+        pipeline.teleport(body, target, pose.orientation());
         Vector3d linearLost = linearBefore.sub(pipeline.getLinearVelocity(body, new Vector3d()), new Vector3d());
         Vector3d angularLost = angularBefore.sub(pipeline.getAngularVelocity(body, new Vector3d()), new Vector3d());
         if (linearLost.lengthSquared() > VELOCITY_EPSILON_SQUARED || angularLost.lengthSquared() > VELOCITY_EPSILON_SQUARED) {
@@ -122,30 +120,9 @@ public final class SablePoseFold {
         }
     }
 
-    private static @Nullable Vector3dc positionOf(PhysicsPipelineBody body, @Nullable ServerSubLevel self,
+    private static @Nullable Pose3dc poseOf(PhysicsPipelineBody body, @Nullable ServerSubLevel self,
             @Nullable Pose3d readback) {
-        if (body == self) {
-            return readback.position();
-        }
-
-        if (body instanceof ServerSubLevel subLevel) {
-            return subLevel.logicalPose().position();
-        }
-
-        return body instanceof BoxPhysicsObject box ? box.getPose().position() : null;
-    }
-
-    private static @Nullable Quaterniondc orientationOf(PhysicsPipelineBody body, @Nullable ServerSubLevel self,
-            @Nullable Pose3d readback) {
-        if (body == self) {
-            return readback.orientation();
-        }
-
-        if (body instanceof ServerSubLevel subLevel) {
-            return subLevel.logicalPose().orientation();
-        }
-
-        return body instanceof BoxPhysicsObject box ? box.getPose().orientation() : null;
+        return body == self ? readback : SableBodyPose.of(body);
     }
 
     private SablePoseFold() {

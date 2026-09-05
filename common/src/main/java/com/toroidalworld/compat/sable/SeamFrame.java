@@ -71,13 +71,11 @@ public final class SeamFrame {
 
     public static <R> R with(@Nullable WorldFold fold, @Nullable Level level, Supplier<Vec3> anchor,
             Supplier<R> body) {
-        Binding previous = BOUND.get();
-        rebind(fold == null ? null : new Binding(fold, level, anchor));
-        try {
-            return body.get();
-        } finally {
-            rebind(previous);
-        }
+        return scoped(fold == null ? null : new Binding(fold, level, anchor), body);
+    }
+
+    public static <R> R unbound(Supplier<R> body) {
+        return scoped(null, body);
     }
 
     public static boolean isBound() {
@@ -99,6 +97,16 @@ public final class SeamFrame {
 
     public static boolean isNoShift(Vector3dc shift) {
         return shift == NO_SHIFT;
+    }
+
+    private static <R> R scoped(@Nullable Binding binding, Supplier<R> body) {
+        Binding previous = BOUND.get();
+        rebind(binding);
+        try {
+            return body.get();
+        } finally {
+            rebind(previous);
+        }
     }
 
     private static void rebind(@Nullable Binding binding) {
