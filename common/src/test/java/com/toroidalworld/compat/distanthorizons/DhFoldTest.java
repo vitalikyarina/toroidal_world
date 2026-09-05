@@ -167,6 +167,30 @@ class DhFoldTest {
     }
 
     @Nested
+    class KeysAboveTheExactLevelStayRaw {
+        private static final byte SECTION_512 = 9;
+
+        private final ToroidalShape tiny = torus(-16, 16);
+
+        @Test
+        void aWorldCentredOnZeroIsExactUpToItsHalfWidth() {
+            assertEquals(CHUNK_16, DhFold.maxExactDetailLevel(tiny));
+        }
+
+        @Test
+        void aSectionAboveTheExactLevelIsItsOwnKey() {
+            assertEquals(-1, DhFold.foldSection(tiny, Direction.Axis.X, SECTION_512, -1));
+            assertEquals(0, DhFold.foldSection(tiny, Direction.Axis.X, SECTION_512, 0));
+        }
+
+        @Test
+        void aSectionAtTheExactLevelStillFolds() {
+            assertEquals(0, DhFold.foldSection(tiny, Direction.Axis.X, CHUNK_16, -2));
+            assertEquals(-1, DhFold.foldSection(tiny, Direction.Axis.X, CHUNK_16, -1));
+        }
+    }
+
+    @Nested
     class ASectionIsAddressableOrItIsNotDrawn {
         private static final byte SECTION_256 = 8;
 
