@@ -27,13 +27,17 @@ public final class DhProbes {
     }
 
     public static void keyFold(ToroidalShape shape, boolean folded) {
-        int widthX = shape.widthBlocks(Direction.Axis.X);
-        int widthZ = shape.widthBlocks(Direction.Axis.Z);
+        String widthX = widthValue(shape, Direction.Axis.X);
+        String widthZ = widthValue(shape, Direction.Axis.Z);
         if (!SEEN_KEY_FOLDS.add(folded + ":" + widthX + ":" + widthZ)) {
             return;
         }
 
         LOGGER.info("[dh-compat] key_fold folded={} width_x_blocks={} width_z_blocks={}", folded, widthX, widthZ);
+    }
+
+    static String widthValue(ToroidalShape shape, Direction.Axis axis) {
+        return shape.loops(axis) ? String.valueOf(shape.widthBlocks(axis)) : "none";
     }
 
     public static void repoShape(Object repo, IDhLevel level, boolean present) {
