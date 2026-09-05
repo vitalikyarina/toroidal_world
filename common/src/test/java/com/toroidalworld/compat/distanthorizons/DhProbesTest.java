@@ -21,7 +21,7 @@ class DhProbesTest {
     private static ToroidalShape cylinder() {
         AxisBounds.Looped looped = new AxisBounds.Looped(0, WIDTH_CHUNKS);
         return TestShapes.of(WorldFolds.of(
-                FlatShape.latticeTorus(new WorldLoopBounds(looped, AxisBounds.Unbounded.INSTANCE), FlatShape.NO_SKEW)));
+                FlatShape.torus(new WorldLoopBounds(looped, AxisBounds.Unbounded.INSTANCE))));
     }
 
     @Test

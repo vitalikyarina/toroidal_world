@@ -19,7 +19,7 @@ class ChunkViewSweepTest {
             new WorldLoopBounds(new AxisBounds.Looped(MIN_CHUNK, MAX_CHUNK + 1), AxisBounds.Unbounded.INSTANCE);
     private static final WorldFold CYLINDER = WorldFolds.of(FlatShape.cylinder(LOOPS_ON_X));
     private static final WorldFold TORUS =
-            WorldFolds.of(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(MAX_CHUNK - MIN_CHUNK + 1), 0));
+            WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(MAX_CHUNK - MIN_CHUNK + 1)));
 
     private static final int VIEW_DISTANCE = 8;
     private static final int VIEW_SPAN = 2 * (VIEW_DISTANCE + 1) + 1;

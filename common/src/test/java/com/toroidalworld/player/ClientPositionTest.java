@@ -29,7 +29,7 @@ import net.minecraft.world.level.Level;
 class ClientPositionTest {
     private static final int WIDTH_CHUNKS = 32;
     private static final double WIDTH_BLOCKS = 512.0;
-    private static final FlatShape TORUS_SHAPE = FlatShape.latticeTorus(WorldLoopBounds.ofWidth(WIDTH_CHUNKS), 0);
+    private static final FlatShape TORUS_SHAPE = FlatShape.torus(WorldLoopBounds.ofWidth(WIDTH_CHUNKS));
     private static final WorldFold TORUS = WorldFolds.of(TORUS_SHAPE);
     private static final WorldFold CYLINDER_X = WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, WIDTH_CHUNKS)));
     private static final int PLOT_MIN_CHUNK = 1_280_000;

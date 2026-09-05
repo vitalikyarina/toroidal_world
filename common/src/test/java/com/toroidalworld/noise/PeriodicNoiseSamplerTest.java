@@ -47,7 +47,7 @@ class PeriodicNoiseSamplerTest {
     private static final List<WorldFold> WRAPPED_X = List.of(EVEN, ODD, UNEVEN, X_ONLY);
 
     private static WorldFold torus(WorldLoopBounds bounds) {
-        return WorldFolds.of(FlatShape.latticeTorus(bounds, FlatShape.NO_SKEW));
+        return WorldFolds.of(FlatShape.torus(bounds));
     }
 
     private record NoiseInstance(ImprovedNoise vanilla, byte[] permutations, double xo, double yo, double zo) {

@@ -34,7 +34,7 @@ class SeamSpansTest {
     private static final List<WorldFold> FOLDS = List.of(EVEN, ODD, UNEVEN, X_ONLY, WorldFolds.NOOP);
 
     private static WorldFold torus(WorldLoopBounds bounds) {
-        return WorldFolds.of(FlatShape.latticeTorus(bounds, FlatShape.NO_SKEW));
+        return WorldFolds.of(FlatShape.torus(bounds));
     }
 
     private record Axis(boolean looped, int lower, int width) {

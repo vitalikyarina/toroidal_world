@@ -27,7 +27,7 @@ class SeamTravelTest {
     private static final double MIN_BLOCK = -256.0;
     private static final double TOLERANCE = 1.0E-9;
     private static final WorldFold TORUS =
-            WorldFolds.of(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(WIDTH_CHUNKS), 0));
+            WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(WIDTH_CHUNKS)));
     private static final WorldFold CYLINDER_X =
             WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, WIDTH_CHUNKS)));
 

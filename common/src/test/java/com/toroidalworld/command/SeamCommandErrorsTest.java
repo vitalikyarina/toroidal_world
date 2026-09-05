@@ -23,8 +23,7 @@ class SeamCommandErrorsTest {
     private static final int MAX_BLOCK = 511;
     private static final double FAR_OUTSIDE = 20481032.0;
 
-    private static final WorldFold TORUS = WorldFolds.of(FlatShape.latticeTorus(
-            new WorldLoopBounds(-32, 32, -32, 32), FlatShape.NO_SKEW));
+    private static final WorldFold TORUS = WorldFolds.of(FlatShape.torus(new WorldLoopBounds(-32, 32, -32, 32)));
 
     private static final WorldFold X_ONLY = WorldFolds.of(FlatShape.cylinder(
             new WorldLoopBounds(new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE)));

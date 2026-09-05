@@ -27,13 +27,13 @@ class DhFoldTest {
     private static ToroidalShape torus(int minChunk, int maxChunk) {
         AxisBounds.Looped looped = new AxisBounds.Looped(minChunk, maxChunk);
         return TestShapes.of(
-                WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(looped, looped), FlatShape.NO_SKEW)));
+                WorldFolds.of(FlatShape.torus(new WorldLoopBounds(looped, looped))));
     }
 
     private static ToroidalShape cylinder(int minChunk, int maxChunk) {
         AxisBounds.Looped looped = new AxisBounds.Looped(minChunk, maxChunk);
         return TestShapes.of(WorldFolds.of(
-                FlatShape.latticeTorus(new WorldLoopBounds(looped, AxisBounds.Unbounded.INSTANCE), FlatShape.NO_SKEW)));
+                FlatShape.torus(new WorldLoopBounds(looped, AxisBounds.Unbounded.INSTANCE))));
     }
 
     @Nested

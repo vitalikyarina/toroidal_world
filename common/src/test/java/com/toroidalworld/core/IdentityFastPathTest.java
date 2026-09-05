@@ -51,7 +51,7 @@ class IdentityFastPathTest {
     private static final int WIDE_REGION_LAPS = 3;
 
     private static final List<WorldFold> DECK_GROUP = List.of(
-            new DeckGroupFold(FlatShape.latticeTorus(SQUARE, FlatShape.NO_SKEW)),
+            new DeckGroupFold(FlatShape.torus(SQUARE)),
             new DeckGroupFold(FlatShape.latticeTorus(SQUARE, SKEW_CHUNKS)),
             new DeckGroupFold(FlatShape.mirrored(X_ONLY_BOUNDS, Direction.Axis.Z, 0)),
             new DeckGroupFold(FlatShape.mirrored(SQUARE, Direction.Axis.Z, MIRROR_LINE_CHUNK)));

@@ -27,7 +27,7 @@ class ChunkTrackingDifferenceTest {
     private static final WorldFold CYLINDER = WorldFolds.of(FlatShape.cylinder(
             new WorldLoopBounds(new AxisBounds.Looped(MIN_CHUNK, MAX_CHUNK + 1), AxisBounds.Unbounded.INSTANCE)));
     private static final WorldFold TORUS =
-            WorldFolds.of(FlatShape.latticeTorus(WorldLoopBounds.ofWidth(MAX_CHUNK - MIN_CHUNK + 1), 0));
+            WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(MAX_CHUNK - MIN_CHUNK + 1)));
 
     @Test
     void aJumpAlongTheUnboundedAxisEntersTheDestinationAndLeavesTheOrigin() {

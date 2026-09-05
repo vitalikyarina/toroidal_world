@@ -18,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
 
 class SeamDistanceBoundsTest {
     private static final WorldFold WORLD =
-            WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(-16, 16, -16, 16), FlatShape.NO_SKEW));
+            WorldFolds.of(FlatShape.torus(new WorldLoopBounds(-16, 16, -16, 16)));
 
     private static final Vec3 PLAYER = new Vec3(253.5, 64.0, 0.0);
     private static final Vec3 ACROSS_THE_SEAM = new Vec3(-253.5, 64.0, 0.0);

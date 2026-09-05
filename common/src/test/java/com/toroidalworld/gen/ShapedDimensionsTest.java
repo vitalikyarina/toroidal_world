@@ -34,7 +34,7 @@ import net.minecraft.world.level.levelgen.flat.FlatLevelGeneratorSettings;
 class ShapedDimensionsTest {
     private static final HolderLookup.Provider WORLDGEN = VanillaRegistries.createLookup();
 
-    private static final FlatShape TORUS = FlatShape.latticeTorus(WorldLoopBounds.ofWidth(32), FlatShape.NO_SKEW);
+    private static final FlatShape TORUS = FlatShape.torus(WorldLoopBounds.ofWidth(32));
 
     private static final FlatShape CYLINDER = FlatShape.cylinder(
             new WorldLoopBounds(new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE));

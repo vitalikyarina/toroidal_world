@@ -47,9 +47,9 @@ class WrappingSettingsPayloadTest {
                 FlatShape.rectangle(),
                 FlatShape.cylinder(X_ONLY),
                 FlatShape.cylinder(Z_ONLY),
-                FlatShape.latticeTorus(SQUARE, 0),
+                FlatShape.torus(SQUARE),
                 FlatShape.latticeTorus(SQUARE, 5),
-                FlatShape.latticeTorus(new WorldLoopBounds(-4096, 4096, -4096, 4096), 0),
+                FlatShape.torus(new WorldLoopBounds(-4096, 4096, -4096, 4096)),
                 FlatShape.mirrored(Z_ONLY, Direction.Axis.X, 3),
                 FlatShape.mirrored(SQUARE, Direction.Axis.Z, -7));
         for (ResourceKey<Level> dimension : DIMENSIONS) {

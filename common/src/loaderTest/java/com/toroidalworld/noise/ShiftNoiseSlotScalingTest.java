@@ -33,7 +33,7 @@ class ShiftNoiseSlotScalingTest {
             NOISE_DATA, NormalNoise.create(new LegacyRandomSource(SEED), PARAMETERS));
 
     private static final WorldFold SQUARE =
-            WorldFolds.of(FlatShape.latticeTorus(new WorldLoopBounds(-16, 16, -16, 16), FlatShape.NO_SKEW));
+            WorldFolds.of(FlatShape.torus(new WorldLoopBounds(-16, 16, -16, 16)));
 
     private static final SlotAxes NONE_X = new SlotAxes(SlotAxis.NONE, SlotAxis.X, SlotAxis.Z);
 
