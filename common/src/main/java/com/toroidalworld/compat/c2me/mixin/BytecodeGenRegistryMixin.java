@@ -7,6 +7,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.compat.c2me.C2meFoldedNoiseEmitter;
 import com.toroidalworld.compat.c2me.C2meFoldedNoiseNode;
+import com.toroidalworld.compat.c2me.C2meWarpedAxisEmitter;
+import com.toroidalworld.compat.c2me.C2meWarpedAxisNode;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.BytecodeGenRegistry;
 
 // Registered from C2ME's own static initialiser: the registry freezes on first read, and a later arrival is rejected.
@@ -15,5 +17,6 @@ public class BytecodeGenRegistryMixin {
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void toroidal$registerFoldedNoise(CallbackInfo ci) {
         BytecodeGenRegistry.REGISTRY.registerExactMatch(C2meFoldedNoiseNode.class, C2meFoldedNoiseEmitter.INSTANCE);
+        BytecodeGenRegistry.REGISTRY.registerExactMatch(C2meWarpedAxisNode.class, C2meWarpedAxisEmitter.INSTANCE);
     }
 }

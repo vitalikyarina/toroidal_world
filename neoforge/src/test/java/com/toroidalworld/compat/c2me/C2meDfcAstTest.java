@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.ClimateScaleCompression;
 import com.toroidalworld.noise.ContextScaledNoise;
+import com.toroidalworld.noise.DomainWarp;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
 import com.ishland.c2me.opts.dfc.common.ast.McToAst;
@@ -61,7 +62,7 @@ class C2meDfcAstTest {
     }
 
     @Test
-    void shiftedNoiseDropsTheHorizontalShiftAndKeepsShiftY() {
+    void shiftedNoiseCarriesEveryShift() {
         assertFoldMatchesVanilla(withShiftY(withLiveNoise(DensityFunctions.shiftedNoise2d(
                 DensityFunctions.constant(SHIFT_X), DensityFunctions.constant(SHIFT_Z), XZ_SCALE, NOISE_DATA))));
     }
@@ -213,6 +214,8 @@ class C2meDfcAstTest {
             };
             case MulNode mul -> evaluate(mul.left, x, y, z) * evaluate(mul.right, x, y, z);
             case AddNode add -> evaluate(add.left, x, y, z) + evaluate(add.right, x, y, z);
+            case C2meWarpedAxisNode warped -> DomainWarp.apply(warped.domain,
+                    warped.axis == CoordinateNode.Axis.X ? x : z, evaluate(warped.shift, x, y, z), warped.xzScale);
             default -> throw new IllegalStateException("no interpreter for " + node.getClass().getName());
         };
     }
