@@ -214,6 +214,8 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    // A --tests pattern that names nothing in this module is a zero-test run, not a failed one.
+    filter { failOnNoMatchingTests = false }
     systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
     // The vanilla log4j config writes logs/latest.log into the working directory — kept under build/, as FML does.
     workingDir = layout.buildDirectory.dir('test-run').get().asFile
