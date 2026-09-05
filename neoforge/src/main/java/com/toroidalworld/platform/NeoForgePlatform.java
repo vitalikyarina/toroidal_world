@@ -11,6 +11,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.dimension.LevelStem;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -55,5 +57,10 @@ public final class NeoForgePlatform implements Platform {
     public IntFunction<RegistryFriendlyByteBuf> packetBuffers(ServerPlayer player) {
         return capacity -> new RegistryFriendlyByteBuf(
                 Unpooled.buffer(capacity), player.registryAccess(), player.connection.getConnectionType());
+    }
+
+    @Override
+    public LevelStem withGenerator(LevelStem stem, ChunkGenerator generator) {
+        return new LevelStem(stem.type(), generator, stem.seedOverride());
     }
 }
