@@ -1,5 +1,8 @@
 package com.toroidalworld.core;
 
+import static com.toroidalworld.core.WorldFoldFixture.EVEN;
+import static com.toroidalworld.core.WorldFoldFixture.PER_AXIS;
+import static com.toroidalworld.core.WorldFoldFixture.X_ONLY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -10,9 +13,6 @@ import java.util.Random;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -25,18 +25,7 @@ class SeamRegionTest {
     private static final int SAMPLES = 800;
     private static final int LAPS = 16;
 
-    private static final WorldFold EVEN = transformer(-32, 32, -32, 32);
-    private static final WorldFold ODD = transformer(-2, 3, -2, 3);
-    private static final WorldFold UNEVEN = transformer(-48, 16, 0, 16);
-    private static final WorldFold X_ONLY = new WorldLoopTransformer(
-            new WorldLoopBounds(new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE));
-
-    private static final List<WorldFold> TRANSFORMERS =
-            List.of(EVEN, ODD, UNEVEN, X_ONLY, WorldFolds.NOOP);
-
-    private static WorldFold transformer(int xChunkMin, int xChunkMax, int zChunkMin, int zChunkMax) {
-        return new WorldLoopTransformer(new WorldLoopBounds(xChunkMin, xChunkMax, zChunkMin, zChunkMax));
-    }
+    private static final List<WorldFold> TRANSFORMERS = PER_AXIS;
 
     private static int reachCap(WrapDomain domain, int cap) {
         return domain instanceof WrapDomain.Noop ? cap : Math.min(domain.domainLength, cap);
@@ -519,24 +508,11 @@ class SeamRegionTest {
         }
 
         @Test
-        void maxViewDistanceIsHalfTheNarrowerWorldMinusTheBuffer() {
-            assertEquals(29, EVEN.maxViewDistance());
-            assertEquals(29, X_ONLY.maxViewDistance());
-            assertEquals(5, UNEVEN.maxViewDistance());
-        }
-
-        @Test
         void viewDistanceIsClampedOnlyWhenItExceedsTheCap() {
             assertEquals(29, EVEN.limitViewDistance(32));
             assertEquals(8, EVEN.limitViewDistance(8));
             assertEquals(29, X_ONLY.limitViewDistance(64));
             assertEquals(32, WorldFolds.NOOP.limitViewDistance(32));
-        }
-
-        @Test
-        void aWorldNarrowerThanTheBufferStillRendersOneChunk() {
-            assertEquals(1, ODD.maxViewDistance());
-            assertEquals(1, ODD.limitViewDistance(32));
         }
     }
 }

@@ -10,8 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.util.Random;
 
-import org.jspecify.annotations.Nullable;
-
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.AbstractCompiledDensityFunction;
@@ -61,14 +59,6 @@ final class C2meCompiledFunctions {
     }
 
     static DensityFunction compileFolded(String name, DensityFunction source, WorldFold fold) {
-        return compile(name, source, fold);
-    }
-
-    static DensityFunction compileUnfolded(String name, DensityFunction source) {
-        return compile(name, source, null);
-    }
-
-    private static DensityFunction compile(String name, DensityFunction source, @Nullable WorldFold fold) {
         DensityFunction compiled = GenerationTransformerContext.withRouterBuild(fold, () -> {
             BytecodeGen.Context context = BytecodeGen.initContext();
             DensityFunction function = context.compileDelayed(name, source);
