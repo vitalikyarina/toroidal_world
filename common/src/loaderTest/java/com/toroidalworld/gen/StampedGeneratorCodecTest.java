@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import com.toroidalworld.ToroidalWorld;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.serialization.DataResult;
@@ -32,9 +33,10 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 class StampedGeneratorCodecTest {
     private static final String SHAPE_KEY = ToroidalWorld.MODID + ":" + ShapedChunkGenerator.WRAPPING_KEY;
     private static final String CLIMATE_SCALE_KEY =
-            ToroidalWorld.MODID + ":" + ShapedChunkGenerator.CLIMATE_SCALE_KEY;
+            ToroidalWorld.MODID + ":" + GenerationOptions.CLIMATE_SCALE_KEY;
 
-    private static final ClimateScale UNCOMPRESSED = ClimateScale.OFF;
+    private static final GenerationOptions UNCOMPRESSED =
+            GenerationOptions.DEFAULT.withClimateScale(ClimateScale.OFF);
 
     private static final int STAMPED_CHUNK_WIDTH = 64;
 
@@ -59,7 +61,7 @@ class StampedGeneratorCodecTest {
 
         ChunkGenerator decoded = decode(encoded).getOrThrow();
         assertEquals(shape, ShapedChunkGenerator.wrappedShapeOf(decoded));
-        assertEquals(ClimateScale.AUTO, ShapedChunkGenerator.climateScaleOf(decoded));
+        assertEquals(ClimateScale.AUTO, ShapedChunkGenerator.generationOptionsOf(decoded).climateScale());
     }
 
     @Test
@@ -71,7 +73,7 @@ class StampedGeneratorCodecTest {
 
         ChunkGenerator decoded = decode(encoded).getOrThrow();
         assertEquals(shape, ShapedChunkGenerator.wrappedShapeOf(decoded));
-        assertEquals(ClimateScale.OFF, ShapedChunkGenerator.climateScaleOf(decoded));
+        assertEquals(ClimateScale.OFF, ShapedChunkGenerator.generationOptionsOf(decoded).climateScale());
     }
 
     @Test

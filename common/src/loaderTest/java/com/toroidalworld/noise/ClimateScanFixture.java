@@ -5,8 +5,8 @@ import java.util.List;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopPresets;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.SharedConstants;
@@ -32,10 +32,6 @@ public final class ClimateScanFixture {
 
     public record WorldType(String name, ResourceKey<NoiseGeneratorSettings> settings,
             ResourceKey<MultiNoiseBiomeSourceParameterList> biomes, boolean nether, boolean gated) {
-
-        public int widthBlocks(WorldLoopPresets preset) {
-            return this.nether ? preset.blockWidth() / preset.netherScale() : preset.blockWidth();
-        }
     }
 
     public static final List<WorldType> TYPES = List.of(
@@ -74,20 +70,30 @@ public final class ClimateScanFixture {
     }
 
     public static WorldFold strongTorusOfWidth(int widthBlocks) {
-        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)), ClimateScale.STRONG);
+        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)),
+                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.STRONG));
+    }
+
+    public static WorldFold guaranteedTorusOfWidth(int widthBlocks) {
+        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)),
+                GenerationOptions.DEFAULT.withGuaranteedLand(true));
     }
 
     public static WorldFold uncompressedTorusOfWidth(int widthBlocks) {
-        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)), ClimateScale.OFF);
+        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)),
+                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.OFF));
     }
 
     public static WorldFold cylinderOfWidth(int widthBlocks) {
         return WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, widthBlocks / 16)));
     }
 
+    public static NoiseGeneratorSettings settingsOf(WorldType type) {
+        return holders.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(type.settings()).value();
+    }
+
     public static RandomState randomState(WorldType type, WorldFold fold, long seed) {
-        NoiseGeneratorSettings settings =
-                holders.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(type.settings()).value();
+        NoiseGeneratorSettings settings = settingsOf(type);
         return GenerationTransformerContext.withRouterBuild(fold.isWrapped() ? fold : null,
                 () -> RandomState.create(settings, noises, seed));
     }

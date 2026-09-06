@@ -25,8 +25,11 @@ class WorldLoopPresetsJsonTest {
     private static final String LOOPED_GENERATOR_ID = "toroidal_world:toroidal";
     private static final String CYLINDER_PRESET_PREFIX = "cylinder_";
     private static final String CLIMATE_COMPRESSION_KEY = "climate_compression";
+    private static final String GUARANTEED_LAND_KEY = "guaranteed_land";
 
     private static final boolean TORUS_CLIMATE_COMPRESSION = false;
+
+    private static final boolean TORUS_GUARANTEED_LAND = false;
 
     @Test
     void everyPresetShipsATorusWorldPresetMatchingItsConfiguration() throws IOException {
@@ -76,12 +79,17 @@ class WorldLoopPresetsJsonTest {
 
         if (climateCompression == null) {
             assertFalse(generator.has(CLIMATE_COMPRESSION_KEY), context + ": a cylinder states no climate choice");
+            assertFalse(generator.has(GUARANTEED_LAND_KEY), context + ": a cylinder states no land choice");
             return;
         }
 
         assertNotNull(generator.get(CLIMATE_COMPRESSION_KEY), context + ": the climate choice is not stated");
         assertEquals(climateCompression, generator.get(CLIMATE_COMPRESSION_KEY).getAsBoolean(),
                 context + ": climate compression");
+
+        assertNotNull(generator.get(GUARANTEED_LAND_KEY), context + ": the land choice is not stated");
+        assertEquals(TORUS_GUARANTEED_LAND, generator.get(GUARANTEED_LAND_KEY).getAsBoolean(),
+                context + ": guaranteed land");
     }
 
     private static JsonObject readPresetJson(String presetId) throws IOException {

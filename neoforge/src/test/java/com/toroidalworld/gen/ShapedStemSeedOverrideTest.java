@@ -12,6 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import com.toroidalworld.options.GenerationOptions;
+
 import java.util.Map;
 import java.util.OptionalLong;
 
@@ -64,7 +66,7 @@ class ShapedStemSeedOverrideTest {
         NoiseBasedChunkGenerator noise = (NoiseBasedChunkGenerator) noiseGenerator(worldgen);
         LevelStem declared = declaredStem(
                 new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), SHAPE,
-                        WorldFolds.CLIMATE_SCALE_DEFAULT));
+                        GenerationOptions.DEFAULT));
 
         WorldDimensions stripped = ShapedDimensions.stripShapes(selected(Map.of(LevelStem.OVERWORLD, declared)));
 

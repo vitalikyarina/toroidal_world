@@ -11,6 +11,7 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.noise.ClimateCompressionCacheFixture.Storing;
 import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.FlatShape;
 
@@ -94,15 +95,18 @@ class ClimateScaleCompressionTest {
     }
 
     private static WorldFold uncompressedSquare(int chunkWidth) {
-        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)), ClimateScale.OFF);
+        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)),
+                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.OFF));
     }
 
     private static WorldFold strongSquare(int chunkWidth) {
-        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)), ClimateScale.STRONG);
+        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)),
+                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.STRONG));
     }
 
     private static WorldFold customSquare(int chunkWidth, int factor) {
-        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)), ClimateScale.custom(factor));
+        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)),
+                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.custom(factor)));
     }
 
     private static void assertFactor(Field field, int chunkWidth) {
@@ -289,8 +293,8 @@ class ClimateScaleCompressionTest {
         assertEquals(1.0, actual(TEMPERATURE, strongSquare(32), 0.5), 0.0, "strong, declared vertical share");
         assertEquals(1.0, actual(TEMPERATURE, customSquare(32, 8), 0.5), 0.0, "custom, declared vertical share");
 
-        WorldFold cylinder = WorldFolds.of(
-                FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, 32)), ClimateScale.STRONG);
+        WorldFold cylinder = WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, 32)),
+                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.STRONG));
         assertEquals(1.0, actual(TEMPERATURE, cylinder, HORIZONTAL), 0.0, "strong on a cylinder");
     }
 

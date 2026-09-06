@@ -37,7 +37,6 @@
   "gui.toroidal_world.toroidal_settings.too_large": "Забагато — щонайбільше %s чанків.",
   "gui.toroidal_world.toroidal_settings.section.additional": "Додаткові можливості",
   "gui.toroidal_world.toroidal_settings.climate_compression": "Компактні біоми",
-  "gui.toroidal_world.toroidal_settings.climate_mode.off": "Вимкнено",
   "gui.toroidal_world.toroidal_settings.climate_mode.off.hint": "Біоми лишаються звичного розміру, тож малий світ може бути суцільним лісом або суцільною пустелею.",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto": "Авто",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto.hint": "Зменшує біоми рівно настільки, щоб повний клімат умістився в один оберт; на достатньо широкому світі не змінює нічого.",
@@ -48,6 +47,8 @@
   "gui.toroidal_world.toroidal_settings.climate_keeps": "Берегова лінія та рельєф лишаються звичного розміру.",
   "gui.toroidal_world.toroidal_settings.climate_factor": "Зменшити біоми в",
   "gui.toroidal_world.toroidal_settings.climate_factor_hint": "У скільки разів біоми стають меншими: значення температури при обраному розмірі, а рослинність бере своє. Одиниця означає, що цей режим тут нічого не змінює — клімат уже вміщується. Вводиться лише у Власному, цілим числом від 1 до 16.",
+  "gui.toroidal_world.toroidal_settings.guaranteed_land": "Гарантована земля",
+  "gui.toroidal_world.toroidal_settings.guaranteed_land_hint": "Не дає світу вийти суцільним океаном: там, де на оберті ніде стати, рівень суходолу піднімається рівно настільки, щоб з'явився один острів. Світ, у якому земля вже є, лишається незмінним.",
 
   "gui.toroidal_world.cylinder_settings.title": "Налаштування циліндричного світу",
   "gui.toroidal_world.cylinder_settings.axis": "Вісь зациклення",

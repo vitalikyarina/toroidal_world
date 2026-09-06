@@ -37,7 +37,6 @@
   "gui.toroidal_world.toroidal_settings.too_large": "Demasiado grande — como máximo %s chunks.",
   "gui.toroidal_world.toroidal_settings.section.additional": "Opciones adicionales",
   "gui.toroidal_world.toroidal_settings.climate_compression": "Biomas compactos",
-  "gui.toroidal_world.toroidal_settings.climate_mode.off": "Apagado",
   "gui.toroidal_world.toroidal_settings.climate_mode.off.hint": "Los biomas conservan su tamaño habitual, así que un mundo pequeño puede ser todo bosque o todo desierto.",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto": "Automático",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto.hint": "Reduce los biomas justo lo necesario para que un clima completo quepa en una vuelta; en un mundo ya bastante ancho no cambia nada.",
@@ -48,6 +47,8 @@
   "gui.toroidal_world.toroidal_settings.climate_keeps": "Las costas y el relieve conservan su tamaño habitual.",
   "gui.toroidal_world.toroidal_settings.climate_factor": "Reducir los biomas",
   "gui.toroidal_world.toroidal_settings.climate_factor_hint": "Cuántas veces más pequeños se vuelven los biomas: el valor de la temperatura para el tamaño elegido; la vegetación toma el suyo. Un 1 significa que este modo no cambia nada con este tamaño: el clima ya cabe. Solo se puede escribir en Personalizado, con un número entero de 1 a 16.",
+  "gui.toroidal_world.toroidal_settings.guaranteed_land": "Tierra garantizada",
+  "gui.toroidal_world.toroidal_settings.guaranteed_land_hint": "Evita que un mundo salga siendo todo océano: donde una vuelta no dejaría dónde pisar, el nivel del terreno sube lo justo para que aparezca una isla. Un mundo que ya tiene tierra se deja como está.",
 
   "gui.toroidal_world.cylinder_settings.title": "Ajustes del mundo cilíndrico",
   "gui.toroidal_world.cylinder_settings.axis": "Eje de bucle",

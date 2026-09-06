@@ -37,7 +37,6 @@
   "gui.toroidal_world.toroidal_settings.too_large": "Za dużo — co najwyżej %s chunków.",
   "gui.toroidal_world.toroidal_settings.section.additional": "Opcje dodatkowe",
   "gui.toroidal_world.toroidal_settings.climate_compression": "Zwarte biomy",
-  "gui.toroidal_world.toroidal_settings.climate_mode.off": "Wyłączone",
   "gui.toroidal_world.toroidal_settings.climate_mode.off.hint": "Biomy zachowują zwykły rozmiar, więc mały świat może być samym lasem albo samą pustynią.",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto": "Automatycznie",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto.hint": "Zmniejsza biomy dokładnie tyle, by pełen klimat zmieścił się w jednym okrążeniu; na dostatecznie szerokim świecie niczego nie zmienia.",
@@ -48,6 +47,8 @@
   "gui.toroidal_world.toroidal_settings.climate_keeps": "Linia brzegowa i rzeźba terenu zachowują zwykły rozmiar.",
   "gui.toroidal_world.toroidal_settings.climate_factor": "Zmniejsz biomy",
   "gui.toroidal_world.toroidal_settings.climate_factor_hint": "Ile razy mniejsze stają się biomy: wartość temperatury przy wybranym rozmiarze, roślinność bierze własną. Jedynka oznacza, że przy tym rozmiarze ten tryb niczego nie zmienia — klimat już się mieści. Wpisywane tylko przy Własne, liczbą całkowitą od 1 do 16.",
+  "gui.toroidal_world.toroidal_settings.guaranteed_land": "Gwarantowany ląd",
+  "gui.toroidal_world.toroidal_settings.guaranteed_land_hint": "Zapobiega powstaniu świata złożonego z samego oceanu: tam, gdzie na okrążeniu nie byłoby gdzie stanąć, poziom lądu podnosi się dokładnie na tyle, by pojawiła się jedna wyspa. Świat, który już ma ląd, pozostaje bez zmian.",
 
   "gui.toroidal_world.cylinder_settings.title": "Ustawienia świata cylindrycznego",
   "gui.toroidal_world.cylinder_settings.axis": "Oś zapętlenia",
