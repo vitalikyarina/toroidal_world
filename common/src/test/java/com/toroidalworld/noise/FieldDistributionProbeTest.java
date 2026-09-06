@@ -73,6 +73,9 @@ class FieldDistributionProbeTest {
     private static final int GRID = WORLD_BLOCKS / QUART;
     private static final int MIN_BLOCK = -256;
 
+    private static final Path REPORT =
+            Path.of(System.getProperty("toroidal.reports", "build/reports")).resolve("field-distribution-probe.txt");
+
     private static final WorldFold WORLD = WorldFolds.of(
             FlatShape.torus(new WorldLoopBounds(-16, 16, -16, 16)));
 
@@ -264,10 +267,9 @@ class FieldDistributionProbeTest {
                 Math.sqrt(this.pooledUncorrectedVariance / this.pooledVanillaVariance),
                 pooledCorrectedRatio));
 
-        Path out = Path.of("build", "reports", "field-distribution-probe.txt");
         try {
-            Files.createDirectories(out.getParent());
-            Files.writeString(out, report.toString());
+            Files.createDirectories(REPORT.getParent());
+            Files.writeString(REPORT, report.toString());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

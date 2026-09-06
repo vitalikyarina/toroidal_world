@@ -150,8 +150,8 @@ test {
             excludeTestsMatching 'com.toroidalworld.scan.*'
         }
     }
-    // The test JVM's working directory is FML's own, so the scans are told where the module's reports go.
-    systemProperty 'toroidal.scan.reports', layout.buildDirectory.dir('reports/scan').get().asFile.absolutePath
+    // The test JVM's working directory is FML's own, so a test that writes a report is told where the module's go.
+    systemProperty 'toroidal.reports', layout.buildDirectory.dir('reports').get().asFile.absolutePath
     // The math this jar ships is tested in common; the loader suite alone would let a red common through.
     dependsOn(':common:test')
 }

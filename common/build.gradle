@@ -197,6 +197,8 @@ test {
     // The vanilla log4j config writes logs/latest.log into the working directory — kept under build/, as FML does.
     workingDir = layout.buildDirectory.dir('test-run').get().asFile
     doFirst { workingDir.mkdirs() }
+    // The working directory is not the module, so a test that writes a report is told where the module's reports go.
+    systemProperty 'toroidal.reports', layout.buildDirectory.dir('reports').get().asFile.absolutePath
 }
 
 tasks.withType(JavaCompile).configureEach {
