@@ -11,20 +11,25 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.simibubi.create.content.trains.graph.TrackEdge;
+import com.simibubi.create.content.trains.graph.TrackGraph;
 import com.simibubi.create.content.trains.graph.TrackNode;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.simibubi.create.content.trains.track.BezierConnection;
 import com.simibubi.create.content.trains.track.TrackMaterial;
 import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.BezierCurveFold;
+import com.toroidalworld.compat.create.CreateFrameSeat;
 import com.toroidalworld.compat.create.CreateSeamFold;
+import com.toroidalworld.core.WorldFold;
 
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = TrackEdge.class, remap = false)
 public abstract class TrackEdgeMixin {
     private static final String FIRST_NODE_ANCHOR = "toroidal$firstNodeAnchor";
     private static final String OTHER_NEAR_END = "toroidal$otherNearEnd";
+    private static final String OTHER_SEAT = "toroidal$otherSeat";
 
     @Shadow
     public TrackNode node1;
@@ -81,10 +86,43 @@ public abstract class TrackEdgeMixin {
     private Vec3 toroidal$foldIntersectionOtherNearEnd(TrackNodeLocation target, Operation<Vec3> original,
             TrackNode node1, TrackNode node2, TrackEdge other, TrackNode other1, TrackNode other2,
             @Share(FIRST_NODE_ANCHOR) LocalRef<Vec3> anchorRef,
-            @Share(OTHER_NEAR_END) LocalRef<Vec3> otherNearEndRef) {
-        Vec3 folded = toroidal$folded(target, toroidal$anchorOf(node1, anchorRef), original.call(target));
+            @Share(OTHER_NEAR_END) LocalRef<Vec3> otherNearEndRef,
+            @Share(OTHER_SEAT) LocalRef<CreateFrameSeat> seatRef) {
+        Vec3 rawNearEnd = original.call(target);
+        WorldFold transformer = CreateSeamFold.transformerOf(null, target.getDimension());
+        if (transformer == null) {
+            otherNearEndRef.set(rawNearEnd);
+            return rawNearEnd;
+        }
+
+        CreateFrameSeat seat =
+                CreateFrameSeat.of(transformer, toroidal$anchorOf(node1, anchorRef), rawNearEnd);
+        seatRef.set(seat);
+        Vec3 folded = seat.seated().value();
         otherNearEndRef.set(folded);
         return folded;
+    }
+
+    @WrapOperation(method = "getIntersection",
+            at = @At(value = "INVOKE",
+                    target = CreateInvokeTargets.BEZIER_CONNECTION_GET_BOUNDS,
+                    ordinal = 1))
+    private AABB toroidal$foldIntersectionOtherBounds(BezierConnection turn, Operation<AABB> original,
+            @Share(OTHER_SEAT) LocalRef<CreateFrameSeat> seatRef) {
+        AABB bounds = original.call(turn);
+        CreateFrameSeat seat = seatRef.get();
+        return seat == null ? bounds : seat.apply(bounds);
+    }
+
+    @WrapOperation(method = "getIntersection",
+            at = @At(value = "INVOKE",
+                    target = CreateInvokeTargets.TRACK_EDGE_GET_POSITION,
+                    ordinal = 2))
+    private Vec3 toroidal$foldIntersectionOtherCurve(TrackEdge target, TrackGraph graph, double t,
+            Operation<Vec3> original, @Share(OTHER_SEAT) LocalRef<CreateFrameSeat> seatRef) {
+        Vec3 position = original.call(target, graph, t);
+        CreateFrameSeat seat = seatRef.get();
+        return seat == null ? position : seat.apply(position);
     }
 
     @WrapOperation(method = "getIntersection",

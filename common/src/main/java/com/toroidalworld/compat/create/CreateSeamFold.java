@@ -126,12 +126,7 @@ public final class CreateSeamFold {
     }
 
     public static Vec3 inFrameOf(WorldFold transformer, Vec3 viewer, Vec3 anchor, Vec3 point) {
-        WorldFold.Folded<Vec3> seatedAnchor = transformer.nearestCopyOriented(viewer, anchor);
-        if (seatedAnchor.isIdentity() && seatedAnchor.value() == anchor) {
-            return point;
-        }
-
-        return seatedAnchor.value().add(seatedAnchor.orientation().applyToDelta(point.subtract(anchor)));
+        return CreateFrameSeat.of(transformer, viewer, anchor).apply(point);
     }
 
     public static Vec3 inFrameOf(@Nullable Level level, Vec3 viewer, Vec3 anchor, Vec3 point) {
