@@ -227,6 +227,14 @@ test {
             excludeTestsMatching 'com.toroidalworld.scan.*'
         }
     }
+    if (project.hasProperty('scans')) {
+        // Only scan classes are in this run, so concurrency here can never reach a gate test.
+        systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
+        systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+        systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'fixed'
+        systemProperty 'junit.jupiter.execution.parallel.config.fixed.parallelism', '4'
+        maxHeapSize = '4g'
+    }
     systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
     // The test JVM's working directory is kept under build/, so a test that writes a report is told where the module's go.
     systemProperty 'toroidal.reports', layout.buildDirectory.dir('reports').get().asFile.absolutePath
