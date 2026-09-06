@@ -1,11 +1,13 @@
 package com.toroidalworld.compat.sable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -18,6 +20,7 @@ import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintConfiguration
 import dev.ryanhcode.sable.api.physics.constraint.RotaryConstraintConfiguration;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.companion.math.Pose3dc;
 import dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem;
 
 import net.minecraft.server.level.ServerLevel;
@@ -40,7 +43,7 @@ public final class SableConstraintJoin {
                 return seatStaticAnchor(level, fold, bodyA == null, bodyA == null ? bodyB : bodyA, configuration);
             }
 
-            shiftSmallerGroup(level, fold, pipeline, bodyA, bodyB, configuration);
+            seatIntoOneFrame(level, fold, pipeline, bodyA, bodyB, configuration);
             return configuration;
         });
     }
@@ -74,7 +77,7 @@ public final class SableConstraintJoin {
         return withAnchor(configuration, staticIsFirst, anchor);
     }
 
-    private static void shiftSmallerGroup(ServerLevel level, WorldFold fold, PhysicsPipeline pipeline,
+    private static void seatIntoOneFrame(ServerLevel level, WorldFold fold, PhysicsPipeline pipeline,
             PhysicsPipelineBody bodyA, PhysicsPipelineBody bodyB,
             PhysicsConstraintConfiguration<?> configuration) {
         if (bodyA.isRemoved() || bodyB.isRemoved()) {
@@ -93,18 +96,31 @@ public final class SableConstraintJoin {
             return;
         }
 
-        List<PhysicsPipelineBody> groupA = SableConstraintGraph.groupOf(pipeline, bodyA);
-        List<PhysicsPipelineBody> groupB = SableConstraintGraph.groupOf(pipeline, bodyB);
-        boolean movingIsB = groupB.size() <= groupA.size();
-        Vec3 moving = movingIsB ? worldB : worldA;
-        Vec3 nearest = fold.nearestCopy(movingIsB ? worldA : worldB, moving);
-        double lapX = nearest.x - moving.x;
-        double lapZ = nearest.z - moving.z;
-        if (lapX == 0.0 && lapZ == 0.0) {
+        Vec3 lapForB = SableJoinDirection.lapOnto(fold, worldA, worldB);
+        if (lapForB.x == 0.0 && lapForB.z == 0.0) {
             return;
         }
 
-        SablePoseFold.shiftGroup(system, movingIsB ? groupB : groupA, new Vector3d(lapX, 0.0, lapZ), null, null);
+        List<PhysicsPipelineBody> groupA = SableConstraintGraph.groupOf(pipeline, bodyA);
+        List<PhysicsPipelineBody> groupB = SableConstraintGraph.groupOf(pipeline, bodyB);
+        List<Vec3> positionsA = positionsOf(groupA);
+        List<Vec3> positionsB = positionsOf(groupB);
+        SableJoinDirection.Choice choice = SableJoinDirection.choose(fold, lapForB, positionsA, positionsB);
+        Vec3 lap = choice.lap();
+        SablePoseFold.shiftGroup(system, choice.movingIsB() ? groupB : groupA,
+                new Vector3d(lap.x, 0.0, lap.z), null, null);
+    }
+
+    private static List<Vec3> positionsOf(List<PhysicsPipelineBody> group) {
+        List<Vec3> positions = new ArrayList<>(group.size());
+        for (PhysicsPipelineBody body : group) {
+            Pose3dc pose = SableBodyPose.of(body);
+            if (pose != null) {
+                positions.add(JomlVectors.read(pose.position()));
+            }
+        }
+
+        return positions;
     }
 
     static PhysicsConstraintConfiguration<?> withAnchor(PhysicsConstraintConfiguration<?> configuration,
