@@ -14,15 +14,17 @@ import net.minecraft.world.level.levelgen.WorldDimensions;
 public final class TorusDimensions {
 
     public static WorldDimensions apply(WorldDimensions dimensions, TorusSettings settings) {
-        WorldDimensions withTorusOverworld =
-                ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD, FlatShape.torus(settings.overworld()));
+        boolean climateCompression = settings.climateCompression();
+        WorldDimensions withTorusOverworld = ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD,
+                FlatShape.torus(settings.overworld()), climateCompression);
         if (withTorusOverworld == dimensions) {
             return dimensions;
         }
 
-        WorldDimensions withTorusNether =
-                ShapedDimensions.withShape(withTorusOverworld, LevelStem.NETHER, FlatShape.torus(netherWrapping(settings)));
-        return ShapedDimensions.withShape(withTorusNether, LevelStem.END, FlatShape.torus(settings.end()));
+        WorldDimensions withTorusNether = ShapedDimensions.withShape(withTorusOverworld, LevelStem.NETHER,
+                FlatShape.torus(netherWrapping(settings)), climateCompression);
+        return ShapedDimensions.withShape(withTorusNether, LevelStem.END, FlatShape.torus(settings.end()),
+                climateCompression);
     }
 
     public static @Nullable TorusSettings read(WorldDimensions dimensions) {
@@ -35,7 +37,8 @@ public final class TorusDimensions {
         return new TorusSettings(
                 overworld,
                 NetherScales.normalize(readNetherScale(dimensions, overworldChunkWidth), overworldChunkWidth),
-                readEndWrapping(dimensions));
+                readEndWrapping(dimensions),
+                ShapedDimensions.climateCompressionOf(dimensions, LevelStem.OVERWORLD));
     }
 
     private static @Nullable WorldLoopBounds torusBoundsOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {

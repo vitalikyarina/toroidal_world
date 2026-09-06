@@ -38,6 +38,8 @@
   "gui.toroidal_world.toroidal_settings.end_effective": "End: %s chunks = %s blocks",
   "gui.toroidal_world.toroidal_settings.too_small": "Too small — at least %s chunks.",
   "gui.toroidal_world.toroidal_settings.too_large": "Too large — at most %s chunks.",
+  "gui.toroidal_world.toroidal_settings.climate_compression": "Compact biomes",
+  "gui.toroidal_world.toroidal_settings.climate_hint": "Shrink biomes so every climate fits into your world, however small. Off, biomes stay their usual size, so a small world may be all forest or all desert.",
 
   "gui.toroidal_world.cylinder_settings.title": "Cylinder World Settings",
   "gui.toroidal_world.cylinder_settings.axis": "Looping axis",

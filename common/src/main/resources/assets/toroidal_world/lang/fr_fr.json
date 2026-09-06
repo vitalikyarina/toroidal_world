@@ -38,6 +38,8 @@
   "gui.toroidal_world.toroidal_settings.end_effective": "End : %s tronçons = %s blocs",
   "gui.toroidal_world.toroidal_settings.too_small": "Trop petit — au moins %s tronçons.",
   "gui.toroidal_world.toroidal_settings.too_large": "Trop grand — au plus %s tronçons.",
+  "gui.toroidal_world.toroidal_settings.climate_compression": "Biomes compacts",
+  "gui.toroidal_world.toroidal_settings.climate_hint": "Réduit les biomes pour que chaque climat tienne dans votre monde, si petit soit-il. Désactivé, les biomes gardent leur taille habituelle : un petit monde peut n'être que forêt ou que désert.",
 
   "gui.toroidal_world.cylinder_settings.title": "Réglages du monde cylindrique",
   "gui.toroidal_world.cylinder_settings.axis": "Axe de bouclage",

@@ -92,6 +92,7 @@ class ClimateScanTest {
 
     private static final List<Shape> SHAPES = List.of(
             new Shape("torus", ClimateScanTest::torusOfWidth, true),
+            new Shape("torus, uncompressed", ClimateScanTest::uncompressedTorusOfWidth, false),
             new Shape("cylinder", ClimateScanTest::cylinderOfWidth, false));
 
     private record Scan(double distinctBiomes, double topShare, double temperatureSpread) {
@@ -119,6 +120,10 @@ class ClimateScanTest {
                 FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)));
     }
 
+    private static WorldFold uncompressedTorusOfWidth(int widthBlocks) {
+        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)), false);
+    }
+
     private static WorldFold cylinderOfWidth(int widthBlocks) {
         return WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, widthBlocks / 16)));
     }
@@ -144,8 +149,9 @@ class ClimateScanTest {
                 .append(" spread = standard deviation of the temperature field.").append(System.lineSeparator())
                 .append("The nether is the overworld width divided by the preset's nether scale, and carries five")
                 .append(" biomes in all, so it is reported and not gated.").append(System.lineSeparator())
-                .append("A cylinder is never compressed, so one lap of it is vanilla's own window of that size;")
-                .append(" the one-biome gate applies to the compressed torus alone.")
+                .append("A torus that declined compression and a cylinder are never compressed, so one lap of")
+                .append(" either is vanilla's own window of that size; the one-biome gate applies to the")
+                .append(" compressed torus alone.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         List<String> thin = new ArrayList<>();

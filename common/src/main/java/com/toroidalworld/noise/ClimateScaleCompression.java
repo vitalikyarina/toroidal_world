@@ -1,8 +1,10 @@
 package com.toroidalworld.noise;
 
+import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 
 import it.unimi.dsi.fastutil.doubles.DoubleList;
+import net.minecraft.core.Direction;
 
 public final class ClimateScaleCompression {
     static final double CELLS_PER_LAP = 1.5;
@@ -11,12 +13,14 @@ public final class ClimateScaleCompression {
 
     private static final double NO_COMPRESSION = 1.0;
 
-    public static double factor(WrapDomain xDomain, WrapDomain zDomain, DoubleList amplitudes,
-            double lowestFreqInputFactor, double baseScale, double verticalShare) {
-        if (verticalShare != HORIZONTAL_SHARE) {
+    public static double factor(WorldFold fold, DoubleList amplitudes, double lowestFreqInputFactor,
+            double baseScale, double verticalShare) {
+        if (!fold.compressesClimate() || verticalShare != HORIZONTAL_SHARE) {
             return NO_COMPRESSION;
         }
 
+        WrapDomain xDomain = fold.blockDomain(Direction.Axis.X);
+        WrapDomain zDomain = fold.blockDomain(Direction.Axis.Z);
         if (!xDomain.loops() || !zDomain.loops()) {
             return NO_COMPRESSION;
         }

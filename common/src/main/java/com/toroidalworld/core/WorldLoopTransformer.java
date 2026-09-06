@@ -24,6 +24,8 @@ final class WorldLoopTransformer implements WorldFold {
 
     private final boolean wrapped;
 
+    private final boolean compressesClimate;
+
     private final int maxViewDistance;
 
     WorldLoopTransformer(WorldLoopBounds bounds) {
@@ -31,8 +33,15 @@ final class WorldLoopTransformer implements WorldFold {
     }
 
     WorldLoopTransformer(WorldLoopBounds bounds, List<ForeignFrame> foreignFrames) {
+        this(bounds, foreignFrames, WorldFolds.CLIMATE_COMPRESSION_DEFAULT);
+    }
+
+    WorldLoopTransformer(WorldLoopBounds bounds, List<ForeignFrame> foreignFrames, boolean climateCompression) {
         this.bounds = bounds;
-        this.wrapped = bounds.x() instanceof AxisBounds.Looped || bounds.z() instanceof AxisBounds.Looped;
+        boolean xLooped = bounds.x() instanceof AxisBounds.Looped;
+        boolean zLooped = bounds.z() instanceof AxisBounds.Looped;
+        this.wrapped = xLooped || zLooped;
+        this.compressesClimate = climateCompression && xLooped && zLooped;
         this.maxViewDistance = bounds.maxViewDistance();
 
         this.coords = new CoordOps(
@@ -336,6 +345,11 @@ final class WorldLoopTransformer implements WorldFold {
     @Override
     public boolean preservesLocalIndices() {
         return true;
+    }
+
+    @Override
+    public boolean compressesClimate() {
+        return this.compressesClimate;
     }
 
     @Override

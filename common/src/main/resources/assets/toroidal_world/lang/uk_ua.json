@@ -38,6 +38,8 @@
   "gui.toroidal_world.toroidal_settings.end_effective": "Енд: %s чанків = %s блоків",
   "gui.toroidal_world.toroidal_settings.too_small": "Замало — щонайменше %s чанків.",
   "gui.toroidal_world.toroidal_settings.too_large": "Забагато — щонайбільше %s чанків.",
+  "gui.toroidal_world.toroidal_settings.climate_compression": "Компактні біоми",
+  "gui.toroidal_world.toroidal_settings.climate_hint": "Зменшує біоми, щоб усі клімати вмістилися у світ, хай який малий. Вимкнено — біоми звичного розміру, тож малий світ може бути суцільним лісом або суцільною пустелею.",
 
   "gui.toroidal_world.cylinder_settings.title": "Налаштування циліндричного світу",
   "gui.toroidal_world.cylinder_settings.axis": "Вісь зациклення",

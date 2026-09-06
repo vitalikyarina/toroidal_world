@@ -151,9 +151,8 @@ class C2meDfcAstTest {
     }
 
     private static void assertCorrectionIsLive(WorldFold fold) {
-        double compression = ClimateScaleCompression.factor(fold.blockDomain(Direction.Axis.X),
-                fold.blockDomain(Direction.Axis.Z), CLIMATE_AMPLITUDES, Math.pow(2.0, CLIMATE_FIRST_OCTAVE),
-                CLIMATE_XZ_SCALE, FLAT_Y_SCALE / CLIMATE_XZ_SCALE);
+        double compression = ClimateScaleCompression.factor(fold, CLIMATE_AMPLITUDES,
+                Math.pow(2.0, CLIMATE_FIRST_OCTAVE), CLIMATE_XZ_SCALE, FLAT_Y_SCALE / CLIMATE_XZ_SCALE);
 
         assertTrue(compression > 1.0,
                 "the climate fixture sits outside the compressed regime in " + fold + ", so the case proves nothing");

@@ -38,6 +38,8 @@
   "gui.toroidal_world.toroidal_settings.end_effective": "End: %s chunks = %s bloques",
   "gui.toroidal_world.toroidal_settings.too_small": "Demasiado pequeño — al menos %s chunks.",
   "gui.toroidal_world.toroidal_settings.too_large": "Demasiado grande — como máximo %s chunks.",
+  "gui.toroidal_world.toroidal_settings.climate_compression": "Biomas compactos",
+  "gui.toroidal_world.toroidal_settings.climate_hint": "Reduce los biomas para que todos los climas quepan en tu mundo, por pequeño que sea. Apagado, los biomas conservan su tamaño habitual, así que un mundo pequeño puede ser todo bosque o todo desierto.",
 
   "gui.toroidal_world.cylinder_settings.title": "Ajustes del mundo cilíndrico",
   "gui.toroidal_world.cylinder_settings.axis": "Eje de bucle",

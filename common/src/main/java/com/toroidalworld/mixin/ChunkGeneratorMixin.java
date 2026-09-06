@@ -19,6 +19,9 @@ public class ChunkGeneratorMixin implements ShapeStamp {
     @Unique
     private volatile @Nullable WorldFold toroidal$stampedTransformer;
 
+    @Unique
+    private volatile boolean toroidal$stampedClimateCompression = WorldFolds.CLIMATE_COMPRESSION_DEFAULT;
+
     @Override
     public @Nullable FlatShape toroidal$stampedShape() {
         return this.toroidal$stampedShape;
@@ -30,14 +33,21 @@ public class ChunkGeneratorMixin implements ShapeStamp {
     }
 
     @Override
-    public void toroidal$stamp(FlatShape shape) {
+    public boolean toroidal$stampedClimateCompression() {
+        return this.toroidal$stampedClimateCompression;
+    }
+
+    @Override
+    public void toroidal$stamp(FlatShape shape, boolean climateCompression) {
         this.toroidal$stampedShape = shape;
-        this.toroidal$stampedTransformer = WorldFolds.of(shape);
+        this.toroidal$stampedClimateCompression = climateCompression;
+        this.toroidal$stampedTransformer = WorldFolds.of(shape, climateCompression);
     }
 
     @Override
     public void toroidal$clearStamp() {
         this.toroidal$stampedShape = null;
+        this.toroidal$stampedClimateCompression = WorldFolds.CLIMATE_COMPRESSION_DEFAULT;
         this.toroidal$stampedTransformer = null;
     }
 }

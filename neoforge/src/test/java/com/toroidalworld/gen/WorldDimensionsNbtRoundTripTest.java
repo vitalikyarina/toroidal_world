@@ -29,6 +29,7 @@ class WorldDimensionsNbtRoundTripTest {
     private static final int OVERWORLD_CHUNK_WIDTH = 128;
     private static final int NETHER_SCALE = 8;
     private static final int END_CHUNK_WIDTH = 256;
+    private static final boolean CLIMATE_COMPRESSION = false;
 
     private static HolderLookup.Provider worldgen;
 
@@ -59,11 +60,14 @@ class WorldDimensionsNbtRoundTripTest {
                 ShapedDimensions.shapeOf(reread, LevelStem.NETHER));
         assertEquals(ShapedDimensions.shapeOf(shaped, LevelStem.END),
                 ShapedDimensions.shapeOf(reread, LevelStem.END));
+        assertEquals(CLIMATE_COMPRESSION, ShapedDimensions.climateCompressionOf(reread, LevelStem.OVERWORLD));
+        assertEquals(CLIMATE_COMPRESSION, ShapedDimensions.climateCompressionOf(reread, LevelStem.NETHER));
+        assertEquals(CLIMATE_COMPRESSION, ShapedDimensions.climateCompressionOf(reread, LevelStem.END));
     }
 
     private static WorldDimensions shapedPreset() {
         TorusSettings settings = new TorusSettings(WorldLoopBounds.ofWidth(OVERWORLD_CHUNK_WIDTH), NETHER_SCALE,
-                WorldLoopBounds.ofWidth(END_CHUNK_WIDTH));
+                WorldLoopBounds.ofWidth(END_CHUNK_WIDTH), CLIMATE_COMPRESSION);
         return TorusDimensions.apply(normalWorldDimensions(), settings);
     }
 

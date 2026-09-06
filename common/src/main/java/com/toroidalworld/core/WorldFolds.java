@@ -14,6 +14,8 @@ public final class WorldFolds {
     private static final String COUPLED_AXES = "its axes do not decompose";
     private static final String REVERSED_LOCAL_INDICES = "its seam reverses the local indices inside a chunk";
 
+    public static final boolean CLIMATE_COMPRESSION_DEFAULT = true;
+
     public static final WorldFold NOOP = of(FlatShape.rectangle());
 
     public static WorldFold of(FlatShape shape) {
@@ -21,9 +23,17 @@ public final class WorldFolds {
     }
 
     public static WorldFold of(FlatShape shape, List<ForeignFrame> foreignFrames) {
+        return of(shape, foreignFrames, CLIMATE_COMPRESSION_DEFAULT);
+    }
+
+    public static WorldFold of(FlatShape shape, boolean climateCompression) {
+        return of(shape, List.of(), climateCompression);
+    }
+
+    private static WorldFold of(FlatShape shape, List<ForeignFrame> foreignFrames, boolean climateCompression) {
         verifyFoldable(shape).getOrThrow(IllegalArgumentException::new);
 
-        return new WorldLoopTransformer(shape.bounds(), foreignFrames);
+        return new WorldLoopTransformer(shape.bounds(), foreignFrames, climateCompression);
     }
 
     public static DataResult<FlatShape> verifyFoldable(FlatShape shape) {

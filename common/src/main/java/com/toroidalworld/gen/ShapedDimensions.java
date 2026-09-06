@@ -6,6 +6,7 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.ShapeStamp;
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.gen.DatapackStemOverrides.Outcome;
 import com.toroidalworld.gen.DatapackStemOverrides.StemOverride;
 import com.toroidalworld.options.WorldLoopBounds;
@@ -30,13 +31,20 @@ import net.minecraft.world.level.levelgen.WorldDimensions;
 public final class ShapedDimensions {
 
     public static WorldDimensions withShape(WorldDimensions dimensions, ResourceKey<LevelStem> key, FlatShape shape) {
+        return withShape(dimensions, key, shape, WorldFolds.CLIMATE_COMPRESSION_DEFAULT);
+    }
+
+    public static WorldDimensions withShape(WorldDimensions dimensions, ResourceKey<LevelStem> key, FlatShape shape,
+            boolean climateCompression) {
         LevelStem stem = dimensions.get(key).orElse(null);
         if (stem == null) {
             return dimensions;
         }
 
-        ChunkGenerator rebuilt = shapedGeneratorFor(stem.generator(), shape);
-        ChunkGenerator marked = rebuilt != null ? rebuilt : stampedGeneratorFor(stem.generator(), shape);
+        ChunkGenerator rebuilt = shapedGeneratorFor(stem.generator(), shape, climateCompression);
+        ChunkGenerator marked = rebuilt != null
+                ? rebuilt
+                : stampedGeneratorFor(stem.generator(), shape, climateCompression);
         if (marked == null) {
             return dimensions;
         }
@@ -83,14 +91,15 @@ public final class ShapedDimensions {
                 continue;
             }
 
-            ChunkGenerator rebuilt = shapedGeneratorFor(datapackStem.generator(), shape);
+            boolean climateCompression = ShapedChunkGenerator.climateCompressionOf(storedStem.generator());
+            ChunkGenerator rebuilt = shapedGeneratorFor(datapackStem.generator(), shape, climateCompression);
             if (rebuilt != null) {
                 restored.put(entry.key(), Platforms.get().withGenerator(datapackStem, rebuilt));
                 overrides.put(entry.key(), override(Outcome.RESHAPED, datapackStem));
                 continue;
             }
 
-            ChunkGenerator stamped = stampedGeneratorFor(datapackStem.generator(), shape);
+            ChunkGenerator stamped = stampedGeneratorFor(datapackStem.generator(), shape, climateCompression);
             restored.put(entry.key(),
                     stamped == null ? storedStem : Platforms.get().withGenerator(datapackStem, stamped));
             overrides.put(entry.key(), override(stamped == null ? Outcome.REFUSED : Outcome.STAMPED, datapackStem));
@@ -126,6 +135,7 @@ public final class ShapedDimensions {
             return;
         }
 
+        boolean climateCompression = ShapedChunkGenerator.climateCompressionOf(overworld.generator());
         double overworldScale = overworld.type().value().coordinateScale();
         dimensions.holders().forEach(entry -> {
             LevelStem stem = entry.value();
@@ -137,7 +147,7 @@ public final class ShapedDimensions {
 
             FlatShape derived = derivedShape(worldShape, overworldScale, stem.type().value().coordinateScale());
             if (derived != null) {
-                stamp.toroidal$stamp(derived);
+                stamp.toroidal$stamp(derived, climateCompression);
             }
         });
     }
@@ -145,6 +155,13 @@ public final class ShapedDimensions {
     public static @Nullable FlatShape shapeOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {
         LevelStem stem = dimensions.get(key).orElse(null);
         return stem == null ? null : ShapedChunkGenerator.wrappedShapeOf(stem.generator());
+    }
+
+    public static boolean climateCompressionOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {
+        LevelStem stem = dimensions.get(key).orElse(null);
+        return stem == null
+                ? WorldFolds.CLIMATE_COMPRESSION_DEFAULT
+                : ShapedChunkGenerator.climateCompressionOf(stem.generator());
     }
 
     public static boolean canTakeShape(WorldDimensions dimensions) {
@@ -179,24 +196,26 @@ public final class ShapedDimensions {
                 : null;
     }
 
-    private static @Nullable ChunkGenerator shapedGeneratorFor(ChunkGenerator generator, FlatShape shape) {
+    private static @Nullable ChunkGenerator shapedGeneratorFor(ChunkGenerator generator, FlatShape shape,
+            boolean climateCompression) {
         ChunkGenerator base = baseOf(generator);
         if (!isRebuildable(base)) {
             return null;
         }
 
         return base instanceof NoiseBasedChunkGenerator noise
-                ? new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), shape)
-                : new LoopedFlatChunkGenerator(((FlatLevelSource) base).settings(), shape);
+                ? new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), shape, climateCompression)
+                : new LoopedFlatChunkGenerator(((FlatLevelSource) base).settings(), shape, climateCompression);
     }
 
-    private static @Nullable ChunkGenerator stampedGeneratorFor(ChunkGenerator generator, FlatShape shape) {
+    private static @Nullable ChunkGenerator stampedGeneratorFor(ChunkGenerator generator, FlatShape shape,
+            boolean climateCompression) {
         ChunkGenerator base = baseOf(generator);
         if (!isStampable(base)) {
             return null;
         }
 
-        ((ShapeStamp) base).toroidal$stamp(shape);
+        ((ShapeStamp) base).toroidal$stamp(shape, climateCompression);
         return base;
     }
 
