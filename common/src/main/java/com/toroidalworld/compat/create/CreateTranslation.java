@@ -6,6 +6,7 @@ import com.simibubi.create.content.contraptions.glue.GlueEffectPacket;
 import com.simibubi.create.content.equipment.bell.SoulPulseEffectPacket;
 import com.simibubi.create.content.equipment.symmetryWand.SymmetryEffectPacket;
 import com.simibubi.create.content.kinetics.mechanicalArm.ArmPlacementPacket;
+import com.simibubi.create.content.logistics.box.PackageDestroyPacket;
 import com.simibubi.create.content.logistics.depot.EjectorPlacementPacket;
 import com.simibubi.create.content.logistics.packagePort.PackagePortPlacementPacket;
 import com.simibubi.create.content.logistics.packagerLink.WiFiEffectPacket;
@@ -20,6 +21,7 @@ import com.toroidalworld.net.TagPositions;
 import com.toroidalworld.net.TranslationContext;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 
 public final class CreateTranslation {
     public static final String CONTROLLER_KEY = "Controller";
@@ -119,10 +121,19 @@ public final class CreateTranslation {
             BlockPos outlined = seat(context, payload.pos());
             return outlined == payload.pos() ? payload : new HighlightPacket(outlined);
         });
+
+        PacketTranslator.registerClientboundPayloadRewriter(PackageDestroyPacket.class, (payload, context) -> {
+            Vec3 broken = seat(context, payload.location());
+            return broken == payload.location() ? payload : new PackageDestroyPacket(broken, payload.box());
+        });
     }
 
     private static BlockPos seat(TranslationContext context, BlockPos pos) {
         return context.nearestCopy(pos);
+    }
+
+    private static Vec3 seat(TranslationContext context, Vec3 point) {
+        return context.nearestCopy(point);
     }
 
     private CreateTranslation() {
