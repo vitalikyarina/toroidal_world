@@ -1,6 +1,8 @@
 package com.toroidalworld.compat.journeymap.mixin;
 
 import java.awt.geom.Point2D;
+import java.io.File;
+import java.util.SortedMap;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,6 +18,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.platform.Window;
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
+import com.toroidalworld.compat.journeymap.RegionWorldHolder;
 
 import journeymap.api.v2.client.display.Context;
 import journeymap.api.v2.client.util.UIState;
@@ -39,6 +42,12 @@ public abstract class MapRendererMixin {
     protected int zoom;
 
     @Shadow(remap = false)
+    private File worldDir;
+
+    @Shadow(remap = false)
+    SortedMap<?, ?> regions;
+
+    @Shadow(remap = false)
     public abstract void clear();
 
     @Shadow(remap = false)
@@ -55,22 +64,48 @@ public abstract class MapRendererMixin {
     @Unique
     private ResourceKey<Level> toroidal$lastLevelDimension;
 
-    // JourneyMap never evicts tiles on a dimension change, and one render with the new state poisons the region-image cache.
+    @Unique
+    private File toroidal$lastWorldDir;
+
     @Inject(method = "center(Ljava/io/File;Ljourneymap/client/model/map/MapType;DDI)Z", at = @At("HEAD"))
-    private void toroidal$dropTilesOnDimensionChange(CallbackInfoReturnable<Boolean> cir) {
+    private void toroidal$dropTilesOnWorldChange(File worldDir, @Coerce Object mapType, double blockX,
+            double blockZ, int zoom, CallbackInfoReturnable<Boolean> cir) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
             return;
         }
 
         ResourceKey<Level> dimension = level.dimension();
-        if (toroidal$lastLevelDimension != null && toroidal$lastLevelDimension != dimension) {
+        String reason = JourneyMapFold.staleGridReason(toroidal$lastLevelDimension, dimension,
+                toroidal$lastWorldDir, worldDir);
+        if (reason != null) {
+            boolean byWorld = JourneyMapFold.WORLD_CHANGED.equals(reason);
+            JourneyMapFold.gridDropped(reason,
+                    byWorld ? toroidal$lastWorldDir.getName() : toroidal$lastLevelDimension.location().toString(),
+                    byWorld ? worldDir.getName() : dimension.location().toString(),
+                    this.regions.size());
             this.clear();
-            JourneyMapFold.gridDropped(toroidal$lastLevelDimension.location().toString(),
-                    dimension.location().toString());
         }
 
         toroidal$lastLevelDimension = dimension;
+        if (worldDir != null) {
+            toroidal$lastWorldDir = worldDir;
+        }
+    }
+
+    @WrapOperation(
+            method = "loadInMemoryRegions",
+            at = @At(value = "INVOKE",
+                    target = "Ljava/util/SortedMap;putIfAbsent(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"))
+    private Object toroidal$onlyThisWorldsRegions(SortedMap<Object, Object> regions, Object regionCoord, Object tile,
+            Operation<Object> original) {
+        File dir = this.worldDir;
+        if (dir != null && regionCoord instanceof RegionWorldHolder region
+                && !dir.equals(region.toroidal$regionWorldDir())) {
+            return null;
+        }
+
+        return original.call(regions, regionCoord, tile);
     }
 
     @ModifyVariable(
