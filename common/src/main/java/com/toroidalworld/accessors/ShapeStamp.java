@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.shape.FlatShape;
 
 public interface ShapeStamp {
@@ -15,11 +16,11 @@ public interface ShapeStamp {
         return null;
     }
 
-    default boolean toroidal$stampedClimateCompression() {
-        return WorldFolds.CLIMATE_COMPRESSION_DEFAULT;
+    default ClimateScale toroidal$stampedClimateScale() {
+        return WorldFolds.CLIMATE_SCALE_DEFAULT;
     }
 
-    default void toroidal$stamp(FlatShape shape, boolean climateCompression) {
+    default void toroidal$stamp(FlatShape shape, ClimateScale climateScale) {
     }
 
     default void toroidal$clearStamp() {

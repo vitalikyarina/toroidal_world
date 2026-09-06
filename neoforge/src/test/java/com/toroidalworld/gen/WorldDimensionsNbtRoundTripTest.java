@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.torus.TorusDimensions;
 import com.toroidalworld.shape.torus.TorusSettings;
@@ -28,7 +29,7 @@ class WorldDimensionsNbtRoundTripTest {
     private static final int OVERWORLD_CHUNK_WIDTH = 128;
     private static final int NETHER_SCALE = 8;
     private static final int END_CHUNK_WIDTH = 256;
-    private static final boolean CLIMATE_COMPRESSION = false;
+    private static final ClimateScale CLIMATE_SCALE = ClimateScale.OFF;
 
     private static HolderLookup.Provider worldgen;
 
@@ -59,14 +60,14 @@ class WorldDimensionsNbtRoundTripTest {
                 ShapedDimensions.shapeOf(reread, LevelStem.NETHER));
         assertEquals(ShapedDimensions.shapeOf(shaped, LevelStem.END),
                 ShapedDimensions.shapeOf(reread, LevelStem.END));
-        assertEquals(CLIMATE_COMPRESSION, ShapedDimensions.climateCompressionOf(reread, LevelStem.OVERWORLD));
-        assertEquals(CLIMATE_COMPRESSION, ShapedDimensions.climateCompressionOf(reread, LevelStem.NETHER));
-        assertEquals(CLIMATE_COMPRESSION, ShapedDimensions.climateCompressionOf(reread, LevelStem.END));
+        assertEquals(CLIMATE_SCALE, ShapedDimensions.climateScaleOf(reread, LevelStem.OVERWORLD));
+        assertEquals(CLIMATE_SCALE, ShapedDimensions.climateScaleOf(reread, LevelStem.NETHER));
+        assertEquals(CLIMATE_SCALE, ShapedDimensions.climateScaleOf(reread, LevelStem.END));
     }
 
     private static WorldDimensions shapedPreset() {
         TorusSettings settings = new TorusSettings(WorldLoopBounds.ofWidth(OVERWORLD_CHUNK_WIDTH), NETHER_SCALE,
-                WorldLoopBounds.ofWidth(END_CHUNK_WIDTH), CLIMATE_COMPRESSION);
+                WorldLoopBounds.ofWidth(END_CHUNK_WIDTH), CLIMATE_SCALE);
         return TorusDimensions.apply(WorldPresets.createNormalWorldDimensions(worldgen), settings);
     }
 

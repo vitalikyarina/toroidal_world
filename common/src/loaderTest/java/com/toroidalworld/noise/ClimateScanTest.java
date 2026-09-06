@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopPresets;
 import com.toroidalworld.shape.FlatShape;
@@ -92,6 +93,7 @@ class ClimateScanTest {
 
     private static final List<Shape> SHAPES = List.of(
             new Shape("torus", ClimateScanTest::torusOfWidth, true),
+            new Shape("torus, strong", ClimateScanTest::strongTorusOfWidth, true),
             new Shape("torus, uncompressed", ClimateScanTest::uncompressedTorusOfWidth, false),
             new Shape("cylinder", ClimateScanTest::cylinderOfWidth, false));
 
@@ -120,8 +122,12 @@ class ClimateScanTest {
                 FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)));
     }
 
+    private static WorldFold strongTorusOfWidth(int widthBlocks) {
+        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)), ClimateScale.STRONG);
+    }
+
     private static WorldFold uncompressedTorusOfWidth(int widthBlocks) {
-        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)), false);
+        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)), ClimateScale.OFF);
     }
 
     private static WorldFold cylinderOfWidth(int widthBlocks) {

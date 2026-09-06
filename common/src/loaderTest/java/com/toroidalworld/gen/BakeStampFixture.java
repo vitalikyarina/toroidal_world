@@ -13,6 +13,7 @@ import com.mojang.serialization.MapCodec;
 import com.toroidalworld.accessors.ShapeStamp;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.FlatShape;
 
@@ -81,11 +82,11 @@ final class BakeStampFixture {
     }
 
     static ChunkGenerator stamped(ChunkGenerator generator, FlatShape shape) {
-        return stamped(generator, shape, WorldFolds.CLIMATE_COMPRESSION_DEFAULT);
+        return stamped(generator, shape, WorldFolds.CLIMATE_SCALE_DEFAULT);
     }
 
-    static ChunkGenerator stamped(ChunkGenerator generator, FlatShape shape, boolean climateCompression) {
-        ((ShapeStamp) generator).toroidal$stamp(shape, climateCompression);
+    static ChunkGenerator stamped(ChunkGenerator generator, FlatShape shape, ClimateScale climateScale) {
+        ((ShapeStamp) generator).toroidal$stamp(shape, climateScale);
         return generator;
     }
 
@@ -238,8 +239,8 @@ final class BakeStampFixture {
         }
 
         @Override
-        public boolean climateCompression() {
-            return WorldFolds.CLIMATE_COMPRESSION_DEFAULT;
+        public ClimateScale climateScale() {
+            return WorldFolds.CLIMATE_SCALE_DEFAULT;
         }
 
         @Override

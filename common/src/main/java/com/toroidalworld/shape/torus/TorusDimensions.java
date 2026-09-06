@@ -3,6 +3,7 @@ package com.toroidalworld.shape.torus;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.gen.ShapedDimensions;
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.options.NetherScales;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.FlatShape;
@@ -14,17 +15,17 @@ import net.minecraft.world.level.levelgen.WorldDimensions;
 public final class TorusDimensions {
 
     public static WorldDimensions apply(WorldDimensions dimensions, TorusSettings settings) {
-        boolean climateCompression = settings.climateCompression();
+        ClimateScale climateScale = settings.climateScale();
         WorldDimensions withTorusOverworld = ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD,
-                FlatShape.torus(settings.overworld()), climateCompression);
+                FlatShape.torus(settings.overworld()), climateScale);
         if (withTorusOverworld == dimensions) {
             return dimensions;
         }
 
         WorldDimensions withTorusNether = ShapedDimensions.withShape(withTorusOverworld, LevelStem.NETHER,
-                FlatShape.torus(netherWrapping(settings)), climateCompression);
+                FlatShape.torus(netherWrapping(settings)), climateScale);
         return ShapedDimensions.withShape(withTorusNether, LevelStem.END, FlatShape.torus(settings.end()),
-                climateCompression);
+                climateScale);
     }
 
     public static @Nullable TorusSettings read(WorldDimensions dimensions) {
@@ -38,7 +39,7 @@ public final class TorusDimensions {
                 overworld,
                 NetherScales.normalize(readNetherScale(dimensions, overworldChunkWidth), overworldChunkWidth),
                 readEndWrapping(dimensions),
-                ShapedDimensions.climateCompressionOf(dimensions, LevelStem.OVERWORLD));
+                ShapedDimensions.climateScaleOf(dimensions, LevelStem.OVERWORLD));
     }
 
     private static @Nullable WorldLoopBounds torusBoundsOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {

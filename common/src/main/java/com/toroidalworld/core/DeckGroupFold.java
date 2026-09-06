@@ -3,6 +3,7 @@ package com.toroidalworld.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.shape.FlatShape;
@@ -28,18 +29,18 @@ public final class DeckGroupFold implements WorldFold {
 
     private final boolean wrapped;
 
-    private final boolean compressesClimate;
+    private final ClimateScale climateScale;
 
     public DeckGroupFold(FlatShape shape) {
-        this(shape, WorldFolds.CLIMATE_COMPRESSION_DEFAULT);
+        this(shape, WorldFolds.CLIMATE_SCALE_DEFAULT);
     }
 
-    public DeckGroupFold(FlatShape shape, boolean climateCompression) {
+    public DeckGroupFold(FlatShape shape, ClimateScale climateScale) {
         this.shape = shape;
         boolean xLooped = shape.bounds().x() instanceof AxisBounds.Looped;
         boolean zLooped = shape.bounds().z() instanceof AxisBounds.Looped;
         this.wrapped = xLooped || zLooped;
-        this.compressesClimate = climateCompression && xLooped && zLooped;
+        this.climateScale = xLooped && zLooped ? climateScale : ClimateScale.OFF;
         this.chunks = new Lattice(shape, 1);
         this.blocks = new Lattice(shape, CoordinateConstants.CHUNK_WIDTH);
     }
@@ -69,8 +70,8 @@ public final class DeckGroupFold implements WorldFold {
     }
 
     @Override
-    public boolean compressesClimate() {
-        return this.compressesClimate;
+    public ClimateScale climateScale() {
+        return this.climateScale;
     }
 
     @Override

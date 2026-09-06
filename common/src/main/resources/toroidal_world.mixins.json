@@ -135,6 +135,7 @@
     "NoiseBasedChunkGeneratorCarversMixin",
     "NoiseBasedChunkGeneratorMixin",
     "NoiseBasedStateProviderMixin",
+    "NoiseHolderMixin",
     "NormalNoiseMixin",
     "OreVeinSeamMixin",
     "ParrotMixin",
