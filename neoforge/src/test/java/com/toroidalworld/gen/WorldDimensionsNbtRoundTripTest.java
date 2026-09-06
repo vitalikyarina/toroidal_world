@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.torus.TorusDimensions;
 import com.toroidalworld.shape.torus.TorusSettings;
@@ -30,7 +31,8 @@ class WorldDimensionsNbtRoundTripTest {
     private static final int OVERWORLD_CHUNK_WIDTH = 128;
     private static final int NETHER_SCALE = 8;
     private static final int END_CHUNK_WIDTH = 256;
-    private static final ClimateScale CLIMATE_SCALE = ClimateScale.OFF;
+    private static final GenerationOptions GENERATION_OPTIONS =
+            GenerationOptions.DEFAULT.withClimateScale(ClimateScale.OFF);
 
     private static HolderLookup.Provider worldgen;
 
@@ -61,14 +63,14 @@ class WorldDimensionsNbtRoundTripTest {
                 ShapedDimensions.shapeOf(reread, LevelStem.NETHER));
         assertEquals(ShapedDimensions.shapeOf(shaped, LevelStem.END),
                 ShapedDimensions.shapeOf(reread, LevelStem.END));
-        assertEquals(CLIMATE_SCALE, ShapedDimensions.climateScaleOf(reread, LevelStem.OVERWORLD));
-        assertEquals(CLIMATE_SCALE, ShapedDimensions.climateScaleOf(reread, LevelStem.NETHER));
-        assertEquals(CLIMATE_SCALE, ShapedDimensions.climateScaleOf(reread, LevelStem.END));
+        assertEquals(GENERATION_OPTIONS, ShapedDimensions.generationOptionsOf(reread, LevelStem.OVERWORLD));
+        assertEquals(GENERATION_OPTIONS, ShapedDimensions.generationOptionsOf(reread, LevelStem.NETHER));
+        assertEquals(GENERATION_OPTIONS, ShapedDimensions.generationOptionsOf(reread, LevelStem.END));
     }
 
     private static WorldDimensions shapedPreset() {
         TorusSettings settings = new TorusSettings(WorldLoopBounds.ofWidth(OVERWORLD_CHUNK_WIDTH), NETHER_SCALE,
-                WorldLoopBounds.ofWidth(END_CHUNK_WIDTH), CLIMATE_SCALE);
+                WorldLoopBounds.ofWidth(END_CHUNK_WIDTH), GENERATION_OPTIONS);
         return TorusDimensions.apply(normalWorldDimensions(), settings);
     }
 

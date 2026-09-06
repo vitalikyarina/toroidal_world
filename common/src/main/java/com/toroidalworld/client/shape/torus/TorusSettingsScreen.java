@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 import com.toroidalworld.client.screen.DigitsEditBox;
 import com.toroidalworld.client.shape.LoopSizeControls;
 import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
 
 import net.minecraft.ChatFormatting;
@@ -34,6 +35,10 @@ public class TorusSettingsScreen extends Screen {
                     .withStyle(ChatFormatting.BOLD);
     private static final Component CLIMATE_KEEPS =
             Component.translatable("gui.toroidal_world.toroidal_settings.climate_keeps");
+    private static final Component GUARANTEED_LAND_LABEL =
+            Component.translatable("gui.toroidal_world.toroidal_settings.guaranteed_land");
+    private static final Component GUARANTEED_LAND_HINT =
+            Component.translatable("gui.toroidal_world.toroidal_settings.guaranteed_land_hint");
     private static final Component CLIMATE_FACTOR_HINT =
             Component.translatable("gui.toroidal_world.toroidal_settings.climate_factor_hint");
 
@@ -54,20 +59,24 @@ public class TorusSettingsScreen extends Screen {
 
     private HeaderAndFooterLayout layout;
 
+    private final GenerationOptions generationOptions;
     private ClimateScale climateScale;
+    private boolean guaranteedLand;
     private String factorText;
     private @Nullable Integer effectiveFactor;
     private EditBox factorEdit;
     private Button doneButton;
 
     public TorusSettingsScreen(Screen parent, WorldLoopBounds current, int currentNetherScale,
-            WorldLoopBounds currentEnd, ClimateScale currentClimateScale, OnDone onDone) {
+            WorldLoopBounds currentEnd, GenerationOptions currentOptions, OnDone onDone) {
         super(TITLE);
         this.parent = parent;
         this.onDone = onDone;
-        this.climateScale = currentClimateScale;
-        this.factorText = String.valueOf(currentClimateScale.factor());
-        this.effectiveFactor = currentClimateScale.factor();
+        this.generationOptions = currentOptions;
+        this.climateScale = currentOptions.climateScale();
+        this.guaranteedLand = currentOptions.guaranteedLand();
+        this.factorText = String.valueOf(this.climateScale.factor());
+        this.effectiveFactor = this.climateScale.factor();
         this.controls = new LoopSizeControls(current.chunkWidth(), currentNetherScale, currentEnd.chunkWidth(),
                 this::onControlsChanged);
     }
@@ -92,6 +101,11 @@ public class TorusSettingsScreen extends Screen {
                         (button, mode) -> this.chooseMode(mode)));
 
         contents.addChild(CommonLayouts.labeledElement(this.font, this.factorField(), FACTOR_LABEL));
+
+        contents.addChild(CycleButton.onOffBuilder(this.guaranteedLand)
+                .withTooltip(chosen -> Tooltip.create(GUARANTEED_LAND_HINT))
+                .create(0, 0, LoopSizeControls.FIELD_WIDTH, LoopSizeControls.FIELD_HEIGHT, GUARANTEED_LAND_LABEL,
+                        (button, chosen) -> this.guaranteedLand = chosen));
 
         LinearLayout footer = this.layout.addToFooter(LinearLayout.horizontal().spacing(FOOTER_SPACING));
         this.doneButton = footer.addChild(Button.builder(CommonComponents.GUI_DONE, button -> this.commit()).build());
@@ -137,7 +151,8 @@ public class TorusSettingsScreen extends Screen {
             return UNKNOWN_FACTOR;
         }
 
-        OptionalDouble factor = ClimateFactorPreview.temperatureFactor(this.parent, this.climateScale, chunkWidth);
+        OptionalDouble factor = ClimateFactorPreview.temperatureFactor(this.parent,
+                this.generationOptions.withClimateScale(this.climateScale), chunkWidth);
         return factor.isPresent() ? display(factor.getAsDouble()) : UNKNOWN_FACTOR;
     }
 
@@ -177,7 +192,8 @@ public class TorusSettingsScreen extends Screen {
                 ? ClimateScale.custom(this.effectiveFactor)
                 : this.climateScale;
         this.onDone.accept(WorldLoopBounds.ofWidth(this.controls.effectiveSize()), this.controls.netherScale(),
-                WorldLoopBounds.ofWidth(this.controls.effectiveEndSize()), chosenClimateScale);
+                WorldLoopBounds.ofWidth(this.controls.effectiveEndSize()),
+                this.generationOptions.withClimateScale(chosenClimateScale).withGuaranteedLand(this.guaranteedLand));
         this.onClose();
     }
 
@@ -205,6 +221,6 @@ public class TorusSettingsScreen extends Screen {
     @FunctionalInterface
     public interface OnDone {
         void accept(WorldLoopBounds wrapping, int netherScale, WorldLoopBounds endWrapping,
-                ClimateScale climateScale);
+                GenerationOptions generationOptions);
     }
 }

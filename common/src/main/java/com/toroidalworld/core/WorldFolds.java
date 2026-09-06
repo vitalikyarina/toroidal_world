@@ -3,7 +3,7 @@ package com.toroidalworld.core;
 import java.util.List;
 import java.util.Optional;
 
-import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.options.WorldLoopSizes;
 import com.toroidalworld.shape.FlatShape;
@@ -15,8 +15,6 @@ public final class WorldFolds {
     private static final String COUPLED_AXES = "its axes do not decompose";
     private static final String REVERSED_LOCAL_INDICES = "its seam reverses the local indices inside a chunk";
 
-    public static final ClimateScale CLIMATE_SCALE_DEFAULT = ClimateScale.AUTO;
-
     public static final WorldFold NOOP = of(FlatShape.rectangle());
 
     public static WorldFold of(FlatShape shape) {
@@ -24,17 +22,18 @@ public final class WorldFolds {
     }
 
     public static WorldFold of(FlatShape shape, List<ForeignFrame> foreignFrames) {
-        return of(shape, foreignFrames, CLIMATE_SCALE_DEFAULT);
+        return of(shape, foreignFrames, GenerationOptions.DEFAULT);
     }
 
-    public static WorldFold of(FlatShape shape, ClimateScale climateScale) {
-        return of(shape, List.of(), climateScale);
+    public static WorldFold of(FlatShape shape, GenerationOptions generationOptions) {
+        return of(shape, List.of(), generationOptions);
     }
 
-    private static WorldFold of(FlatShape shape, List<ForeignFrame> foreignFrames, ClimateScale climateScale) {
+    private static WorldFold of(FlatShape shape, List<ForeignFrame> foreignFrames,
+            GenerationOptions generationOptions) {
         verifyFoldable(shape).getOrThrow(IllegalArgumentException::new);
 
-        return new WorldLoopTransformer(shape.bounds(), foreignFrames, climateScale);
+        return new WorldLoopTransformer(shape.bounds(), foreignFrames, generationOptions);
     }
 
     public static DataResult<FlatShape> verifyFoldable(FlatShape shape) {

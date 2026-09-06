@@ -51,6 +51,8 @@
   "gui.toroidal_world.toroidal_settings.climate_keeps": "Les côtes et le relief gardent leur taille habituelle.",
   "gui.toroidal_world.toroidal_settings.climate_factor": "Réduire les biomes de",
   "gui.toroidal_world.toroidal_settings.climate_factor_hint": "Combien de fois les biomes rétrécissent : la valeur de la température à la taille choisie, la végétation prend la sienne. Un 1 signifie que ce mode ne change rien à cette taille — le climat tient déjà. Saisissable en Personnalisé uniquement, en nombre entier de 1 à 16.",
+  "gui.toroidal_world.toroidal_settings.guaranteed_land": "Terres garanties",
+  "gui.toroidal_world.toroidal_settings.guaranteed_land_hint": "Empêche un monde d'être entièrement océanique : là où un tour ne laisserait nulle part où se poser, le niveau des terres monte juste assez pour qu'une île apparaisse. Un monde qui a déjà des terres reste inchangé.",
 
   "gui.toroidal_world.cylinder_settings.title": "Réglages du monde cylindrique",
   "gui.toroidal_world.cylinder_settings.axis": "Axe de bouclage",

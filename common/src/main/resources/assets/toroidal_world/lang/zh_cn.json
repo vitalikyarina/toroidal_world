@@ -51,6 +51,8 @@
   "gui.toroidal_world.toroidal_settings.climate_keeps": "海岸线和地形保持原有大小。",
   "gui.toroidal_world.toroidal_settings.climate_factor": "生物群系缩小倍数",
   "gui.toroidal_world.toroidal_settings.climate_factor_hint": "生物群系会小多少倍：所选大小下气温的数值，植被取它自己的。数值为 1 表示该模式在这个大小下不改变任何东西，气候已经装得下。仅在“自定义”下可输入，为 1 到 16 的整数。",
+  "gui.toroidal_world.toroidal_settings.guaranteed_land": "保证陆地",
+  "gui.toroidal_world.toroidal_settings.guaranteed_land_hint": "防止世界生成为一片汪洋：当绕行一周都无处落脚时，陆地高度会恰好抬升到出现一座岛屿为止。已经有陆地的世界不受影响。",
 
   "gui.toroidal_world.cylinder_settings.title": "圆柱面世界设置",
   "gui.toroidal_world.cylinder_settings.axis": "循环轴",

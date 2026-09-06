@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
-import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.shape.FlatShape;
 import com.toroidalworld.shape.torus.TorusDimensions;
 import com.toroidalworld.shape.torus.TorusSettings;
@@ -96,12 +95,12 @@ class CreationShapeTest {
 
         assertNotNull(ShapedDimensions.shapeOf(shaped, LevelStem.NETHER), "the nether was never reached");
         for (ResourceKey<LevelStem> key : List.of(LevelStem.OVERWORLD, LevelStem.NETHER, LevelStem.END)) {
-            assertEquals(TorusSettings.DEFAULT.climateScale(),
-                    ShapedDimensions.climateScaleOf(shaped, key), key.location().toString());
+            assertEquals(TorusSettings.DEFAULT.generationOptions().climateScale(),
+                    ShapedDimensions.generationOptionsOf(shaped, key).climateScale(), key.location().toString());
         }
         TorusSettings read = TorusDimensions.read(shaped);
         assertNotNull(read, "the shaped world does not read back as a torus");
-        assertEquals(TorusSettings.DEFAULT.climateScale(), read.climateScale());
+        assertEquals(TorusSettings.DEFAULT.generationOptions().climateScale(), read.generationOptions().climateScale());
     }
 
     @Test
