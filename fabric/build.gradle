@@ -152,8 +152,8 @@ test {
         }
     }
     systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
-    // The test JVM's working directory is kept under build/, so the scans are told where the module's reports go.
-    systemProperty 'toroidal.scan.reports', layout.buildDirectory.dir('reports/scan').get().asFile.absolutePath
+    // The test JVM's working directory is kept under build/, so a test that writes a report is told where the module's go.
+    systemProperty 'toroidal.reports', layout.buildDirectory.dir('reports').get().asFile.absolutePath
     // The vanilla log4j config writes logs/latest.log into the working directory — kept under build/, as FML does.
     workingDir = layout.buildDirectory.dir('test-run').get().asFile
     doFirst { workingDir.mkdirs() }
