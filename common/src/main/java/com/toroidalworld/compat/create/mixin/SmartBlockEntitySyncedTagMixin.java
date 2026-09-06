@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
-import com.toroidalworld.compat.create.SyncedTagFold;
+import com.toroidalworld.compat.SyncedTagFold;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;

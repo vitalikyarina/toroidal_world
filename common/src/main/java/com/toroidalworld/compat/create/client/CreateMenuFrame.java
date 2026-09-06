@@ -4,7 +4,7 @@ import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.compat.create.ThreadScope;
+import com.toroidalworld.core.ThreadScope;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 

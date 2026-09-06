@@ -1,6 +1,6 @@
-package com.toroidalworld.compat.create;
+package com.toroidalworld.compat;
 
-import com.toroidalworld.compat.create.client.CreateClientFrame;
+import com.toroidalworld.client.ClientFrame;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.net.TagPositions;
 
@@ -12,6 +12,18 @@ import net.minecraft.world.phys.Vec3;
 
 public final class SyncedTagFold {
     private static final TagPositions.Table TABLE = new TagPositions.Table();
+
+    private static final TagPositions.Seat VIEWER_SEAT = new TagPositions.Seat() {
+        @Override
+        public BlockPos seat(BlockPos stored) {
+            return ClientFrame.nearestToPlayer(stored);
+        }
+
+        @Override
+        public Vec3 seat(Vec3 stored) {
+            return ClientFrame.nearestToPlayer(stored);
+        }
+    };
 
     public static void register(Class<?> blockEntityType, TagPositions.PositionShape shape, String... keys) {
         TABLE.register(blockEntityType, shape, keys);
@@ -29,11 +41,11 @@ public final class SyncedTagFold {
 
     public static CompoundTag inFrameOf(BlockEntity blockEntity, CompoundTag tag) {
         Level level = blockEntity.getLevel();
-        if (level == null || !level.isClientSide || !CreateClientFrame.isClientLevel(level)) {
+        if (level == null || !level.isClientSide || !ClientFrame.isClientLevel(level)) {
             return tag;
         }
 
-        return TABLE.seatedIn(CreateClientFrame.VIEWER_SEAT, blockEntity.getClass(), tag);
+        return TABLE.seatedIn(VIEWER_SEAT, blockEntity.getClass(), tag);
     }
 
     static CompoundTag seatedIn(TagPositions.Table table, WorldFold fold, BlockPos anchor,

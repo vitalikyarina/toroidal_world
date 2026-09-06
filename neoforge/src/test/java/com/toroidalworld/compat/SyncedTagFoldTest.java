@@ -1,4 +1,4 @@
-package com.toroidalworld.compat.create;
+package com.toroidalworld.compat;
 
 import static com.toroidalworld.compat.CompatFoldFixture.DECK_TORUS;
 import static com.toroidalworld.compat.CompatFoldFixture.PER_AXIS;

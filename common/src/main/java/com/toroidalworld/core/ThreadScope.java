@@ -1,4 +1,4 @@
-package com.toroidalworld.compat.create;
+package com.toroidalworld.core;
 
 import java.util.function.Supplier;
 

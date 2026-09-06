@@ -9,7 +9,6 @@ import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.core.FoldedBoxQuery;
 import com.toroidalworld.core.FoldedCopies;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.net.TagPositions;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -19,24 +18,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class CreateClientFrame {
-    public static final TagPositions.Seat VIEWER_SEAT = new TagPositions.Seat() {
-        @Override
-        public BlockPos seat(BlockPos stored) {
-            return inViewerFrame(stored);
-        }
-
-        @Override
-        public Vec3 seat(Vec3 stored) {
-            return ClientFrame.nearestToPlayer(stored);
-        }
-    };
-
     public static BlockPos nearestCopy(@Nullable BlockGetter world, BlockPos canonical) {
-        return isClientLevel(world) ? inViewerFrame(canonical) : canonical;
+        return ClientFrame.isClientLevel(world) ? inViewerFrame(canonical) : canonical;
     }
 
     public static Collection<BlockPos> nearestCopies(@Nullable BlockGetter world, Collection<BlockPos> canonical) {
-        return isClientLevel(world) ? FoldedCopies.of(canonical, CreateClientFrame::inViewerFrame) : canonical;
+        return ClientFrame.isClientLevel(world) ? FoldedCopies.of(canonical, CreateClientFrame::inViewerFrame) : canonical;
     }
 
     public static BlockPos inViewerFrame(BlockPos canonical) {
@@ -67,10 +54,6 @@ public final class CreateClientFrame {
 
     public static AABB foldBoxToward(@Nullable Vec3 anchor, AABB box) {
         return anchor == null ? box : FoldedBoxQuery.toward(ClientFrame.fold(), anchor, box);
-    }
-
-    public static boolean isClientLevel(@Nullable BlockGetter world) {
-        return world != null && world == Minecraft.getInstance().level;
     }
 
     private CreateClientFrame() {

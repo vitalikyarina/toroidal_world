@@ -12,6 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
 
 // mc/1.21: calls the members unused on main.
@@ -70,6 +71,10 @@ public final class ClientFrame {
 
         BlockPos nearest = fold.nearestCopy(player.blockPosition(), canonical);
         return holds(level, nearest) ? nearest : null;
+    }
+
+    public static boolean isClientLevel(@Nullable BlockGetter world) {
+        return world != null && world == Minecraft.getInstance().level;
     }
 
     public static @Nullable WorldFold fold() {
