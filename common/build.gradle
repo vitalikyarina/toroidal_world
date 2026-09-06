@@ -125,6 +125,14 @@ test {
             excludeTestsMatching 'com.toroidalworld.scan.*'
         }
     }
+    if (project.hasProperty('scans')) {
+        // Only scan classes are in this run, so concurrency here can never reach a gate test.
+        systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
+        systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+        systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'fixed'
+        systemProperty 'junit.jupiter.execution.parallel.config.fixed.parallelism', '4'
+        maxHeapSize = '4g'
+    }
     // The vanilla log4j config writes logs/latest.log into the working directory — kept under build/, as FML does.
     workingDir = layout.buildDirectory.dir('test-run').get().asFile
     doFirst { workingDir.mkdirs() }
