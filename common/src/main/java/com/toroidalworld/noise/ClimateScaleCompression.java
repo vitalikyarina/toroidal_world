@@ -37,7 +37,7 @@ public final class ClimateScaleCompression {
 
     public static double factor(WorldFold fold, boolean climateField, DoubleList amplitudes,
             double lowestFreqInputFactor, double baseScale, double verticalShare) {
-        ClimateScale scale = fold.climateScale();
+        ClimateScale scale = fold.generationOptions().climateScale();
         if (scale.mode() == ClimateScale.Mode.OFF || verticalShare != HORIZONTAL_SHARE) {
             return NO_COMPRESSION;
         }

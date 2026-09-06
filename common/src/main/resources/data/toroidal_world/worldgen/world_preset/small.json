@@ -19,7 +19,8 @@
             "max_chunk": 32
           }
         },
-        "climate_compression": false
+        "climate_compression": false,
+        "guaranteed_land": true
       }
     },
     "minecraft:the_nether": {
@@ -41,7 +42,8 @@
             "max_chunk": 8
           }
         },
-        "climate_compression": false
+        "climate_compression": false,
+        "guaranteed_land": true
       }
     },
     "minecraft:the_end": {
@@ -62,7 +64,8 @@
             "max_chunk": 160
           }
         },
-        "climate_compression": false
+        "climate_compression": false,
+        "guaranteed_land": true
       }
     }
   }

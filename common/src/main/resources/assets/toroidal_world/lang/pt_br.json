@@ -48,6 +48,8 @@
   "gui.toroidal_world.toroidal_settings.climate_keeps": "As costas e o relevo mantêm o tamanho normal.",
   "gui.toroidal_world.toroidal_settings.climate_factor": "Reduzir os biomas em",
   "gui.toroidal_world.toroidal_settings.climate_factor_hint": "Quantas vezes menores os biomas ficam: o valor da temperatura no tamanho escolhido, e a vegetação toma o seu. Um 1 significa que este modo não muda nada neste tamanho — o clima já cabe. Só é digitável em Personalizado, como número inteiro de 1 a 16.",
+  "gui.toroidal_world.toroidal_settings.guaranteed_land": "Terra garantida",
+  "gui.toroidal_world.toroidal_settings.guaranteed_land_hint": "Impede que um mundo saia inteiramente oceânico: onde uma volta não deixaria onde pisar, o nível do terreno sobe apenas o bastante para surgir uma ilha. Um mundo que já tem terra fica como está.",
 
   "gui.toroidal_world.cylinder_settings.title": "Configurações do mundo cilíndrico",
   "gui.toroidal_world.cylinder_settings.axis": "Eixo de repetição",
