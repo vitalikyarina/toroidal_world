@@ -3,6 +3,7 @@ package com.toroidalworld.compat.create.mixin;
 import java.util.Set;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
@@ -19,6 +20,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 @Mixin(value = ConnectivityHandler.class, remap = false)
 public class ConnectivityHandlerMixin {
+    @Unique
     private static final String FORM_MULTI = "formMulti(Lnet/minecraft/world/level/block/entity/BlockEntityType;"
             + "Lnet/minecraft/world/level/BlockGetter;Lcom/simibubi/create/api/connectivity/"
             + "ConnectivityHandler$SearchCache;Ljava/util/List;)V";

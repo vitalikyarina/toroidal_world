@@ -1,6 +1,7 @@
 package com.toroidalworld.compat.create.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -14,7 +15,9 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = Train.class, remap = false)
 public class TrainDistanceMixin {
+    @Unique
     private static final String RANKED_METHOD = "distanceToLocationSqr";
+    @Unique
     private static final String VEC3_DISTANCE_TO_SQR =
             "Lnet/minecraft/world/phys/Vec3;distanceToSqr(Lnet/minecraft/world/phys/Vec3;)D";
 

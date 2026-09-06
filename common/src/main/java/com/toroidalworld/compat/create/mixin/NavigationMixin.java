@@ -1,6 +1,7 @@
 package com.toroidalworld.compat.create.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -18,9 +19,11 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = Navigation.class, remap = false)
 public abstract class NavigationMixin {
+    @Unique
     private static final String SEARCH = "search(DDZLjava/util/ArrayList;"
             + "Lcom/simibubi/create/content/trains/entity/Navigation$StationTest;)V";
 
+    @Unique
     private static final String DESTINATION_FOLD = "toroidal$destinationFold";
 
     @WrapOperation(method = SEARCH,
@@ -44,6 +47,7 @@ public abstract class NavigationMixin {
         return toroidal$nearestTo(newNodePosition, destinationNode, original.call(destinationNode), memo);
     }
 
+    @Unique
     private Vec3 toroidal$nearestTo(Vec3 anchor, TrackNodeLocation destinationNode, Vec3 rawDestination,
             LocalRef<FoldedPoint> memo) {
         FoldedPoint known = memo.get();

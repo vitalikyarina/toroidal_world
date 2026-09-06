@@ -1,6 +1,7 @@
 package com.toroidalworld.compat.aeronautics.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -21,6 +22,7 @@ import net.minecraft.world.level.LevelAccessor;
 
 @Mixin(value = MagnetMap.class, remap = false)
 public class MagnetMapMixin {
+    @Unique
     private static final String SEARCH_FOLD = "toroidal$searchFold";
 
     @WrapMethod(method = "addMagnet")

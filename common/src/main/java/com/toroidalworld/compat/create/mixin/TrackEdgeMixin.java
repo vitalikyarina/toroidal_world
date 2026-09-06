@@ -2,6 +2,7 @@ package com.toroidalworld.compat.create.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -27,8 +28,11 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = TrackEdge.class, remap = false)
 public abstract class TrackEdgeMixin {
+    @Unique
     private static final String FIRST_NODE_ANCHOR = "toroidal$firstNodeAnchor";
+    @Unique
     private static final String OTHER_NEAR_END = "toroidal$otherNearEnd";
+    @Unique
     private static final String OTHER_SEAT = "toroidal$otherSeat";
 
     @Shadow
@@ -142,6 +146,7 @@ public abstract class TrackEdgeMixin {
         return toroidal$folded(target, otherNearEnd, original.call(target));
     }
 
+    @Unique
     private Vec3 toroidal$anchorOf(TrackNode node, LocalRef<Vec3> anchorRef) {
         Vec3 anchor = anchorRef.get();
         if (anchor == null) {
@@ -152,10 +157,12 @@ public abstract class TrackEdgeMixin {
         return anchor;
     }
 
+    @Unique
     private Vec3 toroidal$nearestToFirstNode(TrackNodeLocation target, Vec3 rawTarget) {
         return toroidal$folded(target, this.node1.getLocation().getLocation(), rawTarget);
     }
 
+    @Unique
     private Vec3 toroidal$folded(TrackNodeLocation target, Vec3 anchor, Vec3 rawTarget) {
         return CreateSeamFold.nearestCopy(target.getDimension(), anchor, rawTarget);
     }

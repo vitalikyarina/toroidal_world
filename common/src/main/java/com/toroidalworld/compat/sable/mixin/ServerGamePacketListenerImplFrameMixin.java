@@ -2,6 +2,7 @@ package com.toroidalworld.compat.sable.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -23,35 +24,36 @@ public abstract class ServerGamePacketListenerImplFrameMixin {
 
     @WrapMethod(method = "handleMovePlayer")
     private void toroidal$frameOnMove(ServerboundMovePlayerPacket packet, Operation<Void> original) {
-        framed(() -> original.call(packet));
+        toroidal$framed(() -> original.call(packet));
     }
 
     @WrapMethod(method = "handleMoveVehicle")
     private void toroidal$frameOnVehicleMove(ServerboundMoveVehiclePacket packet, Operation<Void> original) {
-        framed(() -> original.call(packet));
+        toroidal$framed(() -> original.call(packet));
     }
 
     @WrapMethod(method = "handlePlayerAction")
     private void toroidal$frameOnPlayerAction(ServerboundPlayerActionPacket packet, Operation<Void> original) {
-        framed(() -> original.call(packet));
+        toroidal$framed(() -> original.call(packet));
     }
 
     @WrapMethod(method = "handleUseItemOn")
     private void toroidal$frameOnUseItemOn(ServerboundUseItemOnPacket packet, Operation<Void> original) {
-        framed(() -> original.call(packet));
+        toroidal$framed(() -> original.call(packet));
     }
 
     @WrapMethod(method = "handleUseItem")
     private void toroidal$frameOnUseItem(ServerboundUseItemPacket packet, Operation<Void> original) {
-        framed(() -> original.call(packet));
+        toroidal$framed(() -> original.call(packet));
     }
 
     @WrapMethod(method = "handleInteract")
     private void toroidal$frameOnInteract(ServerboundInteractPacket packet, Operation<Void> original) {
-        framed(() -> original.call(packet));
+        toroidal$framed(() -> original.call(packet));
     }
 
-    private void framed(Runnable body) {
+    @Unique
+    private void toroidal$framed(Runnable body) {
         SeamFrame.run(this.player.serverLevel(), this.player::position, body);
     }
 }

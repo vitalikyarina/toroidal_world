@@ -2,6 +2,7 @@ package com.toroidalworld.compat.sable.mixin;
 
 import org.joml.Vector3d;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -16,6 +17,7 @@ import net.minecraft.world.entity.player.Player;
 
 @Mixin(ServerboundPunchSubLevelPacket.class)
 public abstract class ServerboundPunchSubLevelPacketMixin {
+    @Unique
     private static final String PLAYER_INVERSE = "Ldev/ryanhcode/sable/companion/math/Pose3d;transformPositionInverse(Lorg/joml/Vector3d;)Lorg/joml/Vector3d;";
 
     @WrapOperation(

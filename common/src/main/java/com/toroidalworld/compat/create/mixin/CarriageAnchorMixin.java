@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -143,11 +144,13 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
         return carriageEntity == null ? null : carriageEntity.level();
     }
 
+    @Unique
     private Vec3 toroidal$inCutoffFrame(Vec3 anchor, Vec3 target) {
         return CreateSeamFold.nearestCopy(toroidal$carriageLevel(),
                 this.pivot == null ? null : this.pivot.getDimension(), anchor, target);
     }
 
+    @Unique
     private void toroidal$carryAboard(Entity carriage, Vec3 written) {
         Vec3 standing = carriage.position();
         Vec3 renamed = CreateSeamFold.nearestCopy(carriage.level(), written, standing);
@@ -173,6 +176,7 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
         }
     }
 
+    @Unique
     private @Nullable Vec3 toroidal$anchorInLocalFrame(@Nullable Vec3 anchor) {
         Entity carriageEntity = toroidal$entity();
         if (anchor == null || carriageEntity == null) {
@@ -185,6 +189,7 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
                 : toroidal$anchorInClientFrame(anchor);
     }
 
+    @Unique
     private @Nullable Vec3 toroidal$anchorInClientFrame(@Nullable Vec3 anchor) {
         Entity carriageEntity = toroidal$entity();
         if (anchor == null || carriageEntity == null || !carriageEntity.level().isClientSide()) {
@@ -194,6 +199,7 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
         return CreateSeamFold.nearestCopy(carriageEntity.level(), carriageEntity.position(), anchor);
     }
 
+    @Unique
     private @Nullable Entity toroidal$entity() {
         return this.entity.get() instanceof Entity carriageEntity ? carriageEntity : null;
     }

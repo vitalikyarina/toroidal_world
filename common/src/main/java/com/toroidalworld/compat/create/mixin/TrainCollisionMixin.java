@@ -1,6 +1,7 @@
 package com.toroidalworld.compat.create.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
@@ -15,16 +16,22 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = Train.class, remap = false)
 public abstract class TrainCollisionMixin {
+    @Unique
     private static final String COLLIDING_METHOD = "findCollidingTrain";
+    @Unique
     private static final String TRAVELLING_POINT_POSITION =
             "Lcom/simibubi/create/content/trains/entity/TravellingPoint;"
                     + "getPosition(Lcom/simibubi/create/content/trains/graph/TrackGraph;)"
                     + "Lnet/minecraft/world/phys/Vec3;";
+    @Unique
     private static final String VEC3_ADD =
             "Lnet/minecraft/world/phys/Vec3;add(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;";
 
+    @Unique
     private static final String OTHER_START_LOCAL = "start2";
+    @Unique
     private static final int SPAN_END_ARGUMENT = 1;
+    @Unique
     private static final int SPAN_START_ARGUMENT = 0;
 
     @ModifyVariable(method = COLLIDING_METHOD, at = @At("HEAD"), argsOnly = true, ordinal = SPAN_END_ARGUMENT)

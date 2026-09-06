@@ -2,6 +2,7 @@ package com.toroidalworld.compat.create.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -42,6 +43,7 @@ public abstract class CarriageBogeyMixin {
         return original.call(leading, toroidal$nearest(leading, trailing));
     }
 
+    @Unique
     private Vec3 toroidal$nearest(Vec3 leading, Vec3 trailing) {
         return CreateSeamFold.nearestCopy(getDimension(), leading, trailing);
     }

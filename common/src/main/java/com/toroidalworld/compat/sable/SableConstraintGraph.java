@@ -41,10 +41,6 @@ public final class SableConstraintGraph {
         }
     }
 
-    public int size() {
-        return this.edges.size();
-    }
-
     public boolean isEmpty() {
         return this.edges.isEmpty();
     }
