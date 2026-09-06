@@ -1,6 +1,14 @@
-package com.toroidalworld.noise;
+package com.toroidalworld.scan;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static com.toroidalworld.noise.ClimateScanFixture.SCAN_Y_BLOCKS;
+import static com.toroidalworld.noise.ClimateScanFixture.SEED_BASE;
+import static com.toroidalworld.noise.ClimateScanFixture.TYPES;
+import static com.toroidalworld.noise.ClimateScanFixture.biomeSource;
+import static com.toroidalworld.noise.ClimateScanFixture.cylinderOfWidth;
+import static com.toroidalworld.noise.ClimateScanFixture.guaranteedTorusOfWidth;
+import static com.toroidalworld.noise.ClimateScanFixture.randomState;
+import static com.toroidalworld.noise.ClimateScanFixture.settingsOf;
+import static com.toroidalworld.noise.ClimateScanFixture.torusOfWidth;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -12,8 +20,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.IntFunction;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -22,44 +30,28 @@ import org.junit.jupiter.api.Test;
 import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.ClimateScale;
-import com.toroidalworld.options.GenerationOptions;
+import com.toroidalworld.noise.ClimateScanFixture;
+import com.toroidalworld.noise.ClimateScanFixture.WorldType;
+import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.options.NetherScales;
-import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopPresets;
 import com.toroidalworld.options.WorldLoopSizes;
-import com.toroidalworld.shape.FlatShape;
 
-import net.minecraft.SharedConstants;
-import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
-import net.minecraft.core.HolderGetter;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.QuartPos;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.data.registries.VanillaRegistries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.Bootstrap;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
-import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterList;
-import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists;
 import net.minecraft.world.level.levelgen.DensityFunction;
-import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
-import net.minecraft.world.level.levelgen.synth.NormalNoise;
 
-class ClimateScanTest {
+class ClimateScan {
     private static final int GRID = 64;
     private static final int LAND_GRID = 32;
     private static final int SEEDS = 3;
     private static final int AXIS_SEEDS = 16;
     private static final int LAND_SEEDS = 32;
-    private static final long SEED_BASE = 0x5EED5EED5L;
     private static final long SEED_STEP = 0x9E3779B97F4A7C15L;
-
-    private static final int SCAN_Y_BLOCKS = 64;
 
     private static final double MAX_TOP_SHARE = 0.45;
 
@@ -85,30 +77,15 @@ class ClimateScanTest {
 
     private static final double MAX_SPREAD_DRIFT = 0.10;
 
-    private static final Path REPORT = Path.of("build", "reports", "climate-scan.txt");
+    private static final Path REPORTS = Path.of(System.getProperty("toroidal.scan.reports", "build/reports/scan"));
 
-    private static final Path AXIS_REPORT = Path.of("build", "reports", "climate-cylinder-axis.txt");
+    private static final Path REPORT = REPORTS.resolve("climate-scan.txt");
 
-    private static final Path LAND_REPORT = Path.of("build", "reports", "land-scan.txt");
+    private static final Path AXIS_REPORT = REPORTS.resolve("climate-cylinder-axis.txt");
 
-    private static final Path PATCH_REPORT = Path.of("build", "reports", "land-patch-scan.txt");
+    private static final Path LAND_REPORT = REPORTS.resolve("land-scan.txt");
 
-    private static HolderLookup.Provider holders;
-    private static HolderGetter<NormalNoise.NoiseParameters> noises;
-
-    private record WorldType(String name, ResourceKey<NoiseGeneratorSettings> settings,
-            ResourceKey<MultiNoiseBiomeSourceParameterList> biomes, boolean nether, boolean gated) {
-    }
-
-    private static final List<WorldType> TYPES = List.of(
-            new WorldType("default", NoiseGeneratorSettings.OVERWORLD,
-                    MultiNoiseBiomeSourceParameterLists.OVERWORLD, false, true),
-            new WorldType("large biomes", NoiseGeneratorSettings.LARGE_BIOMES,
-                    MultiNoiseBiomeSourceParameterLists.OVERWORLD, false, true),
-            new WorldType("amplified", NoiseGeneratorSettings.AMPLIFIED,
-                    MultiNoiseBiomeSourceParameterLists.OVERWORLD, false, true),
-            new WorldType("nether", NoiseGeneratorSettings.NETHER,
-                    MultiNoiseBiomeSourceParameterLists.NETHER, true, false));
+    private static final Path PATCH_REPORT = REPORTS.resolve("land-patch-scan.txt");
 
     private record Width(String id, int chunkWidth, int netherScale) {
         int widthBlocks(WorldType type) {
@@ -135,10 +112,10 @@ class ClimateScanTest {
     }
 
     private static final List<Shape> SHAPES = List.of(
-            new Shape("torus", ClimateScanTest::torusOfWidth, true),
-            new Shape("torus, strong", ClimateScanTest::strongTorusOfWidth, true),
-            new Shape("torus, uncompressed", ClimateScanTest::uncompressedTorusOfWidth, false),
-            new Shape("cylinder", ClimateScanTest::cylinderOfWidth, false));
+            new Shape("torus", ClimateScanFixture::torusOfWidth, true),
+            new Shape("torus, strong", ClimateScanFixture::strongTorusOfWidth, true),
+            new Shape("torus, uncompressed", ClimateScanFixture::uncompressedTorusOfWidth, false),
+            new Shape("cylinder", ClimateScanFixture::cylinderOfWidth, false));
 
     private record Scan(double distinctBiomes, double topShare, double temperatureSpread, double landShare) {
     }
@@ -148,50 +125,7 @@ class ClimateScanTest {
 
     @BeforeAll
     static void bootstrapVanilla() {
-        SharedConstants.tryDetectVersion();
-        Bootstrap.bootStrap();
-        holders = VanillaRegistries.createLookup();
-        noises = holders.lookupOrThrow(Registries.NOISE);
-    }
-
-    private static MultiNoiseBiomeSource biomeSource(WorldType type) {
-        Holder<MultiNoiseBiomeSourceParameterList> preset = holders
-                .lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST).getOrThrow(type.biomes());
-        return MultiNoiseBiomeSource.createFromPreset(preset);
-    }
-
-    private static WorldFold torusOfWidth(int widthBlocks) {
-        return WorldFolds.of(
-                FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)));
-    }
-
-    private static WorldFold strongTorusOfWidth(int widthBlocks) {
-        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)),
-                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.STRONG));
-    }
-
-    private static WorldFold guaranteedTorusOfWidth(int widthBlocks) {
-        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)),
-                GenerationOptions.DEFAULT.withGuaranteedLand(true));
-    }
-
-    private static WorldFold uncompressedTorusOfWidth(int widthBlocks) {
-        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)),
-                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.OFF));
-    }
-
-    private static WorldFold cylinderOfWidth(int widthBlocks) {
-        return WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, widthBlocks / 16)));
-    }
-
-    private static NoiseGeneratorSettings settingsOf(WorldType type) {
-        return holders.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(type.settings()).value();
-    }
-
-    private static RandomState randomState(WorldType type, WorldFold fold, long seed) {
-        NoiseGeneratorSettings settings = settingsOf(type);
-        return GenerationTransformerContext.withRouterBuild(fold.isWrapped() ? fold : null,
-                () -> RandomState.create(settings, noises, seed));
+        ClimateScanFixture.bootstrapVanilla();
     }
 
     @Test
@@ -555,73 +489,6 @@ class ClimateScanTest {
     }
 
     @Test
-    void theScanSamplesAWorldThatActuallyRepeatsOneWidthAway() {
-        WorldType type = TYPES.getFirst();
-        MultiNoiseBiomeSource source = biomeSource(type);
-        int width = WorldLoopPresets.TINY.blockWidth();
-        WorldFold fold = torusOfWidth(width);
-        Climate.Sampler sampler = randomState(type, fold, SEED_BASE).sampler();
-        int quartY = QuartPos.fromBlock(SCAN_Y_BLOCKS);
-        Map<String, Integer> broken = new HashMap<>();
-
-        GenerationTransformerContext.runWithTransformer(fold, () -> {
-            for (int i = 0; i < GRID; i++) {
-                int x = i * (width / GRID);
-                int z = (i * 37) % width;
-                Climate.TargetPoint here = sampler.sample(QuartPos.fromBlock(x), quartY, QuartPos.fromBlock(z));
-                Climate.TargetPoint lapAway =
-                        sampler.sample(QuartPos.fromBlock(x + width), quartY, QuartPos.fromBlock(z));
-                collect(broken, "temperature", here.temperature(), lapAway.temperature());
-                collect(broken, "humidity", here.humidity(), lapAway.humidity());
-                collect(broken, "continentalness", here.continentalness(), lapAway.continentalness());
-                collect(broken, "erosion", here.erosion(), lapAway.erosion());
-                collect(broken, "depth", here.depth(), lapAway.depth());
-                collect(broken, "weirdness", here.weirdness(), lapAway.weirdness());
-                source.getNoiseBiome(QuartPos.fromBlock(x), quartY, QuartPos.fromBlock(z), sampler);
-            }
-        });
-
-        assertTrue(broken.isEmpty(), "the scan is not sampling a folded world, mismatches of " + GRID
-                + " samples per field: " + broken);
-    }
-
-    @Test
-    void theCylinderScanRepeatsOnItsLoopedAxisAlone() {
-        WorldType type = TYPES.getFirst();
-        int width = WorldLoopPresets.TINY.blockWidth();
-        WorldFold fold = cylinderOfWidth(width);
-        Climate.Sampler sampler = randomState(type, fold, SEED_BASE).sampler();
-        int quartY = QuartPos.fromBlock(SCAN_Y_BLOCKS);
-        Map<String, Integer> broken = new HashMap<>();
-        Map<String, Integer> varyingAcross = new HashMap<>();
-
-        GenerationTransformerContext.runWithTransformer(fold, () -> {
-            for (int i = 0; i < GRID; i++) {
-                int x = i * (width / GRID);
-                int z = (i * 37) % width;
-                Climate.TargetPoint here = sampler.sample(QuartPos.fromBlock(x), quartY, QuartPos.fromBlock(z));
-                Climate.TargetPoint alongX =
-                        sampler.sample(QuartPos.fromBlock(x + width), quartY, QuartPos.fromBlock(z));
-                Climate.TargetPoint alongZ =
-                        sampler.sample(QuartPos.fromBlock(x), quartY, QuartPos.fromBlock(z + width));
-                collect(broken, "temperature", here.temperature(), alongX.temperature());
-                collect(broken, "humidity", here.humidity(), alongX.humidity());
-                collect(broken, "continentalness", here.continentalness(), alongX.continentalness());
-                collect(broken, "erosion", here.erosion(), alongX.erosion());
-                collect(broken, "depth", here.depth(), alongX.depth());
-                collect(broken, "weirdness", here.weirdness(), alongX.weirdness());
-                collect(varyingAcross, "temperature", alongZ.temperature(), here.temperature());
-                collect(varyingAcross, "continentalness", alongZ.continentalness(), here.continentalness());
-            }
-        });
-
-        assertTrue(broken.isEmpty(), "the looped axis does not repeat one width away, mismatches of " + GRID
-                + " samples per field: " + broken);
-        assertEquals(2, varyingAcross.size(),
-                "the unbounded axis repeats one width away, so the scan is not sampling a cylinder");
-    }
-
-    @Test
     void theCylinderCarriesVanillaClimateAlongItsUnboundedAxis() {
         StringBuilder report = new StringBuilder();
         report.append("Cylinder, climate along the unbounded axis - the axis that carries no lap and so is")
@@ -720,12 +587,6 @@ class ClimateScanTest {
         });
 
         return new AxisScan(totals[0] / GRID, totals[1] / GRID);
-    }
-
-    private static void collect(Map<String, Integer> broken, String field, long here, long lapAway) {
-        if (here != lapAway) {
-            broken.merge(field, 1, Integer::sum);
-        }
     }
 
     private static Scan meanScan(WorldType type, MultiNoiseBiomeSource source, int widthBlocks, WorldFold fold) {
