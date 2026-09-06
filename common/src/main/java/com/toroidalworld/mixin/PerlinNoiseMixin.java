@@ -1,9 +1,13 @@
 package com.toroidalworld.mixin;
 
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 
+import com.toroidalworld.accessors.ClimateCompressionCache;
+import com.toroidalworld.noise.ClimateScaleCompression.Resolved;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.noise.PeriodicOctaveSampler;
@@ -15,7 +19,10 @@ import net.minecraft.world.level.levelgen.synth.ImprovedNoise;
 import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 
 @Mixin(PerlinNoise.class)
-public class PerlinNoiseMixin {
+public class PerlinNoiseMixin implements ClimateCompressionCache {
+    @Unique
+    private @Nullable Resolved toroidal$climateCompression;
+
     @Shadow
     @Final
     private ImprovedNoise[] noiseLevels;
@@ -40,7 +47,17 @@ public class PerlinNoiseMixin {
             return original.call(x, y, z, yScale, yFudge, useNoiseOrigin);
         }
 
-        return PeriodicOctaveSampler.sample(generation, this.noiseLevels, this.amplitudes,
+        return PeriodicOctaveSampler.sample(generation, this, this.noiseLevels, this.amplitudes,
                 this.lowestFreqInputFactor, this.lowestFreqValueFactor, x, y, z, yScale, yFudge, useNoiseOrigin);
+    }
+
+    @Override
+    public @Nullable Resolved toroidal$climateCompression() {
+        return this.toroidal$climateCompression;
+    }
+
+    @Override
+    public void toroidal$climateCompression(Resolved resolved) {
+        this.toroidal$climateCompression = resolved;
     }
 }

@@ -1,5 +1,6 @@
 package com.toroidalworld.noise;
 
+import com.toroidalworld.accessors.ClimateCompressionCache;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 
@@ -12,6 +13,24 @@ public final class ClimateScaleCompression {
     private static final double HORIZONTAL_SHARE = 0.0;
 
     private static final double NO_COMPRESSION = 1.0;
+
+    public record Resolved(WorldFold fold, double baseScale, double verticalShare, double factor) {
+        boolean covers(WorldFold fold, double baseScale, double verticalShare) {
+            return this.fold == fold && this.baseScale == baseScale && this.verticalShare == verticalShare;
+        }
+    }
+
+    public static double resolve(ClimateCompressionCache cache, WorldFold fold, DoubleList amplitudes,
+            double lowestFreqInputFactor, double baseScale, double verticalShare) {
+        Resolved resolved = cache.toroidal$climateCompression();
+        if (resolved == null || !resolved.covers(fold, baseScale, verticalShare)) {
+            resolved = new Resolved(fold, baseScale, verticalShare,
+                    factor(fold, amplitudes, lowestFreqInputFactor, baseScale, verticalShare));
+            cache.toroidal$climateCompression(resolved);
+        }
+
+        return resolved.factor();
+    }
 
     public static double factor(WorldFold fold, DoubleList amplitudes, double lowestFreqInputFactor,
             double baseScale, double verticalShare) {

@@ -1,5 +1,6 @@
 package com.toroidalworld.noise;
 
+import com.toroidalworld.accessors.ClimateCompressionCache;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 
@@ -11,6 +12,7 @@ public final class PeriodicOctaveSampler {
     @SuppressWarnings("deprecation")
     public static double sample(
             Context generation,
+            ClimateCompressionCache compression,
             ImprovedNoise[] noiseLevels,
             DoubleList amplitudes,
             double lowestFreqInputFactor,
@@ -23,7 +25,7 @@ public final class PeriodicOctaveSampler {
             boolean useNoiseOrigin) {
         double declaredScale = generation.horizontalScale();
         WorldFold transformer = generation.transformer();
-        double baseScale = declaredScale * ClimateScaleCompression.factor(transformer, amplitudes,
+        double baseScale = declaredScale * ClimateScaleCompression.resolve(compression, transformer, amplitudes,
                 lowestFreqInputFactor, declaredScale, generation.verticalShare());
         boolean yCarriesWorldAxis = generation.slotAxes().y().carriesWorldAxis();
         double value = 0.0;
