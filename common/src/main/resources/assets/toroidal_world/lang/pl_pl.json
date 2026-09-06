@@ -40,7 +40,6 @@
   "gui.toroidal_world.toroidal_settings.too_large": "Za dużo — co najwyżej %s chunków.",
   "gui.toroidal_world.toroidal_settings.section.additional": "Opcje dodatkowe",
   "gui.toroidal_world.toroidal_settings.climate_compression": "Zwarte biomy",
-  "gui.toroidal_world.toroidal_settings.climate_mode.off": "Wyłączone",
   "gui.toroidal_world.toroidal_settings.climate_mode.off.hint": "Biomy zachowują zwykły rozmiar, więc mały świat może być samym lasem albo samą pustynią.",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto": "Automatycznie",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto.hint": "Zmniejsza biomy dokładnie tyle, by pełen klimat zmieścił się w jednym okrążeniu; na dostatecznie szerokim świecie niczego nie zmienia.",

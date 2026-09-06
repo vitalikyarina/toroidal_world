@@ -40,7 +40,6 @@
   "gui.toroidal_world.toroidal_settings.too_large": "Trop grand — au plus %s tronçons.",
   "gui.toroidal_world.toroidal_settings.section.additional": "Options supplémentaires",
   "gui.toroidal_world.toroidal_settings.climate_compression": "Biomes compacts",
-  "gui.toroidal_world.toroidal_settings.climate_mode.off": "Désactivé",
   "gui.toroidal_world.toroidal_settings.climate_mode.off.hint": "Les biomes gardent leur taille habituelle : un petit monde peut n'être que forêt ou que désert.",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto": "Automatique",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto.hint": "Réduit les biomes juste assez pour qu'un climat complet tienne en un tour ; sur un monde déjà assez large, il ne change rien.",
