@@ -15,7 +15,11 @@ import net.minecraft.world.phys.Vec3;
 
 public final class MagnetSeamDelta {
     public static Vector3d fold(SimMagnet magnet, Vector3d relative) {
-        WorldFold fold = WorldLoopAttachments.wrappedTransformerOfReader(levelOf(magnet));
+        Level level = levelOf(magnet);
+        return fold(level == null ? null : WorldLoopAttachments.wrappedTransformerOfReader(level), relative);
+    }
+
+    static Vector3d fold(@Nullable WorldFold fold, Vector3d relative) {
         if (fold == null) {
             return relative;
         }

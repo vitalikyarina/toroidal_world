@@ -12,7 +12,10 @@ import net.minecraft.world.phys.Vec3;
 public final class SpringSeamFrame {
 
     public static Vector3d seat(@Nullable Level level, Vector3dc own, Vector3d partner) {
-        WorldFold fold = WorldLoopAttachments.wrappedTransformerOfReader(level);
+        return seat(level == null ? null : WorldLoopAttachments.wrappedTransformerOfReader(level), own, partner);
+    }
+
+    static Vector3d seat(@Nullable WorldFold fold, Vector3dc own, Vector3d partner) {
         if (fold == null) {
             return partner;
         }
