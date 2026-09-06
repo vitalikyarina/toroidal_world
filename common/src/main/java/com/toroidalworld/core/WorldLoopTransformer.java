@@ -3,7 +3,7 @@ package com.toroidalworld.core;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 
@@ -25,20 +25,20 @@ final class WorldLoopTransformer implements WorldFold {
 
     private final boolean wrapped;
 
-    private final ClimateScale climateScale;
+    private final GenerationOptions generationOptions;
 
     private final int maxViewDistance;
 
     WorldLoopTransformer(WorldLoopBounds bounds) {
-        this(bounds, WorldFolds.CLIMATE_SCALE_DEFAULT);
+        this(bounds, GenerationOptions.DEFAULT);
     }
 
-    WorldLoopTransformer(WorldLoopBounds bounds, ClimateScale climateScale) {
+    WorldLoopTransformer(WorldLoopBounds bounds, GenerationOptions generationOptions) {
         this.bounds = bounds;
         boolean xLooped = bounds.x() instanceof AxisBounds.Looped;
         boolean zLooped = bounds.z() instanceof AxisBounds.Looped;
         this.wrapped = xLooped || zLooped;
-        this.climateScale = xLooped && zLooped ? climateScale : ClimateScale.OFF;
+        this.generationOptions = xLooped && zLooped ? generationOptions : GenerationOptions.NONE;
         this.maxViewDistance = bounds.maxViewDistance();
 
         this.coords = new CoordOps(blockDomainFor(bounds.x()), blockDomainFor(bounds.z()));
@@ -337,8 +337,8 @@ final class WorldLoopTransformer implements WorldFold {
     }
 
     @Override
-    public ClimateScale climateScale() {
-        return this.climateScale;
+    public GenerationOptions generationOptions() {
+        return this.generationOptions;
     }
 
     @Override

@@ -15,9 +15,9 @@ public final class TorusShapeSetup {
     private static Screen createScreen(Screen parent) {
         TorusSettings settings = TorusShape.settings();
         return new TorusSettingsScreen(parent, settings.overworld(), settings.netherScale(), settings.end(),
-                settings.climateScale(),
-                (chosen, chosenScale, chosenEnd, chosenClimateScale) ->
-                        TorusShape.settings(new TorusSettings(chosen, chosenScale, chosenEnd, chosenClimateScale)));
+                settings.generationOptions(),
+                (chosen, chosenScale, chosenEnd, chosenOptions) ->
+                        TorusShape.settings(new TorusSettings(chosen, chosenScale, chosenEnd, chosenOptions)));
     }
 
     private TorusShapeSetup() {

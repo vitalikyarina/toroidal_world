@@ -7,7 +7,7 @@ import org.jspecify.annotations.Nullable;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.noise.ClimateFields;
 import com.toroidalworld.noise.ClimateScaleCompression;
-import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.FlatShape;
 
@@ -26,7 +26,7 @@ final class ClimateFactorPreview {
 
     private static final double HORIZONTAL_SHARE = 0.0;
 
-    static OptionalDouble temperatureFactor(Screen parent, ClimateScale climateScale, int chunkWidth) {
+    static OptionalDouble temperatureFactor(Screen parent, GenerationOptions generationOptions, int chunkWidth) {
         NoiseHolder temperature = temperatureNoise(parent);
         if (temperature == null) {
             return OptionalDouble.empty();
@@ -35,7 +35,7 @@ final class ClimateFactorPreview {
         NormalNoise.NoiseParameters parameters = temperature.noiseData().value();
         boolean climateField = temperature.noiseData().unwrapKey().filter(ClimateFields::isClimate).isPresent();
         return OptionalDouble.of(ClimateScaleCompression.factor(
-                WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)), climateScale),
+                WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)), generationOptions),
                 climateField,
                 parameters.amplitudes(),
                 Math.pow(2.0, parameters.firstOctave()),

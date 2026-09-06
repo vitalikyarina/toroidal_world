@@ -3,7 +3,7 @@ package com.toroidalworld.core;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.shape.FlatShape;
@@ -29,18 +29,18 @@ public final class DeckGroupFold implements WorldFold {
 
     private final boolean wrapped;
 
-    private final ClimateScale climateScale;
+    private final GenerationOptions generationOptions;
 
     public DeckGroupFold(FlatShape shape) {
-        this(shape, WorldFolds.CLIMATE_SCALE_DEFAULT);
+        this(shape, GenerationOptions.DEFAULT);
     }
 
-    public DeckGroupFold(FlatShape shape, ClimateScale climateScale) {
+    public DeckGroupFold(FlatShape shape, GenerationOptions generationOptions) {
         this.shape = shape;
         boolean xLooped = shape.bounds().x() instanceof AxisBounds.Looped;
         boolean zLooped = shape.bounds().z() instanceof AxisBounds.Looped;
         this.wrapped = xLooped || zLooped;
-        this.climateScale = xLooped && zLooped ? climateScale : ClimateScale.OFF;
+        this.generationOptions = xLooped && zLooped ? generationOptions : GenerationOptions.NONE;
         this.chunks = new Lattice(shape, 1);
         this.blocks = new Lattice(shape, CoordinateConstants.CHUNK_WIDTH);
     }
@@ -70,8 +70,8 @@ public final class DeckGroupFold implements WorldFold {
     }
 
     @Override
-    public ClimateScale climateScale() {
-        return this.climateScale;
+    public GenerationOptions generationOptions() {
+        return this.generationOptions;
     }
 
     @Override

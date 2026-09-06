@@ -2,7 +2,7 @@ package com.toroidalworld.core;
 
 import java.util.Optional;
 
-import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.options.WorldLoopSizes;
 import com.toroidalworld.shape.FlatShape;
@@ -14,18 +14,16 @@ public final class WorldFolds {
     private static final String COUPLED_AXES = "its axes do not decompose";
     private static final String REVERSED_LOCAL_INDICES = "its seam reverses the local indices inside a chunk";
 
-    public static final ClimateScale CLIMATE_SCALE_DEFAULT = ClimateScale.AUTO;
-
     public static final WorldFold NOOP = of(FlatShape.rectangle());
 
     public static WorldFold of(FlatShape shape) {
-        return of(shape, CLIMATE_SCALE_DEFAULT);
+        return of(shape, GenerationOptions.DEFAULT);
     }
 
-    public static WorldFold of(FlatShape shape, ClimateScale climateScale) {
+    public static WorldFold of(FlatShape shape, GenerationOptions generationOptions) {
         verifyFoldable(shape).getOrThrow(IllegalArgumentException::new);
 
-        return new WorldLoopTransformer(shape.bounds(), climateScale);
+        return new WorldLoopTransformer(shape.bounds(), generationOptions);
     }
 
     public static DataResult<FlatShape> verifyFoldable(FlatShape shape) {
