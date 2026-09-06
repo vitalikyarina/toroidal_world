@@ -197,7 +197,9 @@ public class TorusSettingsScreen extends Screen {
     }
 
     private static Component modeLabel(ClimateScale.Mode mode) {
-        return Component.translatable(CLIMATE_MODE_KEY_PREFIX + mode.getSerializedName());
+        return mode == ClimateScale.Mode.OFF
+                ? CommonComponents.OPTION_OFF
+                : Component.translatable(CLIMATE_MODE_KEY_PREFIX + mode.getSerializedName());
     }
 
     private static Component modeHint(ClimateScale.Mode mode) {

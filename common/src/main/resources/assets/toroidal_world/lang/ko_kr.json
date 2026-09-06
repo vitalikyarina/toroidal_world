@@ -37,7 +37,6 @@
   "gui.toroidal_world.toroidal_settings.too_large": "너무 큽니다 — 최대 %s 청크.",
   "gui.toroidal_world.toroidal_settings.section.additional": "추가 옵션",
   "gui.toroidal_world.toroidal_settings.climate_compression": "촘촘한 생물 군계",
-  "gui.toroidal_world.toroidal_settings.climate_mode.off": "끔",
   "gui.toroidal_world.toroidal_settings.climate_mode.off.hint": "생물 군계가 평소 크기를 유지하므로, 작은 세계는 온통 숲이거나 온통 사막일 수 있습니다.",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto": "자동",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto.hint": "기후 한 벌이 한 바퀴에 들어갈 만큼만 생물 군계를 줄입니다. 이미 충분히 넓은 세계에서는 아무것도 바뀌지 않습니다.",

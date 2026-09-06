@@ -20,7 +20,7 @@
           }
         },
         "climate_compression": false,
-        "guaranteed_land": true
+        "guaranteed_land": false
       }
     },
     "minecraft:the_nether": {
@@ -43,7 +43,7 @@
           }
         },
         "climate_compression": false,
-        "guaranteed_land": true
+        "guaranteed_land": false
       }
     },
     "minecraft:the_end": {
@@ -65,7 +65,7 @@
           }
         },
         "climate_compression": false,
-        "guaranteed_land": true
+        "guaranteed_land": false
       }
     }
   }

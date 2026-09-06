@@ -37,7 +37,6 @@
   "gui.toroidal_world.toroidal_settings.too_large": "Забагато — щонайбільше %s чанків.",
   "gui.toroidal_world.toroidal_settings.section.additional": "Додаткові можливості",
   "gui.toroidal_world.toroidal_settings.climate_compression": "Компактні біоми",
-  "gui.toroidal_world.toroidal_settings.climate_mode.off": "Вимкнено",
   "gui.toroidal_world.toroidal_settings.climate_mode.off.hint": "Біоми лишаються звичного розміру, тож малий світ може бути суцільним лісом або суцільною пустелею.",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto": "Авто",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto.hint": "Зменшує біоми рівно настільки, щоб повний клімат умістився в один оберт; на достатньо широкому світі не змінює нічого.",

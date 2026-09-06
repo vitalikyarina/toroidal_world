@@ -29,7 +29,7 @@ class WorldLoopPresetsJsonTest {
 
     private static final boolean TORUS_CLIMATE_COMPRESSION = false;
 
-    private static final boolean TORUS_GUARANTEED_LAND = true;
+    private static final boolean TORUS_GUARANTEED_LAND = false;
 
     @Test
     void everyPresetShipsATorusWorldPresetMatchingItsConfiguration() throws IOException {

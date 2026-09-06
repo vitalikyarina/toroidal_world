@@ -10,7 +10,7 @@ public record TorusSettings(WorldLoopBounds overworld, int netherScale, WorldLoo
         GenerationOptions generationOptions) {
     private static final int DEFAULT_SIZE_CHUNKS = 32;
     private static final GenerationOptions DEFAULT_GENERATION_OPTIONS =
-            new GenerationOptions(ClimateScale.OFF, true);
+            new GenerationOptions(ClimateScale.OFF, false);
 
     public static final TorusSettings DEFAULT = new TorusSettings(
             WorldLoopBounds.ofWidth(DEFAULT_SIZE_CHUNKS),

@@ -37,7 +37,6 @@
   "gui.toroidal_world.toroidal_settings.too_large": "Zu groß — höchstens %s Chunks.",
   "gui.toroidal_world.toroidal_settings.section.additional": "Weitere Optionen",
   "gui.toroidal_world.toroidal_settings.climate_compression": "Kompakte Biome",
-  "gui.toroidal_world.toroidal_settings.climate_mode.off": "Aus",
   "gui.toroidal_world.toroidal_settings.climate_mode.off.hint": "Biome behalten ihre gewohnte Größe, sodass eine kleine Welt ganz Wald oder ganz Wüste sein kann.",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto": "Automatisch",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto.hint": "Verkleinert Biome gerade so weit, dass ein vollständiges Klima in eine Runde passt; auf einer bereits breiten Welt ändert es nichts.",

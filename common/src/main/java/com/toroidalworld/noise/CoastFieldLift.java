@@ -2,9 +2,7 @@ package com.toroidalworld.noise;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
-import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.accessors.CoastLiftCache;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
@@ -24,10 +22,6 @@ public final class CoastFieldLift {
     private static final int STRIDE_BLOCKS = 16;
 
     private static final int GRID_CAP = 64;
-
-    private static final long UNRESOLVED_PATCH = -1L;
-
-    private static final String LIFT_FORMAT = "%.2f";
 
     private static final int[][] NEIGHBOURS = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
@@ -54,33 +48,16 @@ public final class CoastFieldLift {
         int zGrid = Math.max(1, zDomain.domainLength / stride);
         long cellBlocks = (long) stride * stride;
 
-        long lapBlocks = (long) xDomain.domainLength * zDomain.domainLength;
-        long rawPatch = 0L;
-
-        for (int i = 0; i < CANDIDATES.length; i++) {
-            double candidate = CANDIDATES[i];
+        for (double candidate : CANDIDATES) {
             apply(coasts, candidate);
             long patch = GenerationTransformerContext.withTransformer(fold,
                     () -> largestPatch(density, seaLevel, stride, xGrid, zGrid)) * cellBlocks;
-            if (i == 0) {
-                rawPatch = patch;
-            }
-
             if (patch >= LAND_FLOOR_BLOCKS) {
-                probe(lapBlocks, rawPatch, patch, candidate);
                 return;
             }
         }
 
-        double last = CANDIDATES[CANDIDATES.length - 1];
-        apply(coasts, last);
-        probe(lapBlocks, rawPatch, UNRESOLVED_PATCH, last);
-    }
-
-    private static void probe(long lapBlocks, long rawPatch, long foldedPatch, double lift) {
-        ToroidalWorld.LOGGER.info(
-                "[world-loop] coast_lift lap_blocks={} raw_patch_blocks={} folded_patch_blocks={} lift={} floor_blocks={}",
-                lapBlocks, rawPatch, foldedPatch, String.format(Locale.ROOT, LIFT_FORMAT, lift), LAND_FLOOR_BLOCKS);
+        apply(coasts, CANDIDATES[CANDIDATES.length - 1]);
     }
 
     private static void apply(List<CoastLiftCache> coasts, double lift) {
