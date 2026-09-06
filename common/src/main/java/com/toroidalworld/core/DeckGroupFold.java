@@ -28,10 +28,18 @@ public final class DeckGroupFold implements WorldFold {
 
     private final boolean wrapped;
 
+    private final boolean compressesClimate;
+
     public DeckGroupFold(FlatShape shape) {
+        this(shape, WorldFolds.CLIMATE_COMPRESSION_DEFAULT);
+    }
+
+    public DeckGroupFold(FlatShape shape, boolean climateCompression) {
         this.shape = shape;
-        this.wrapped = shape.bounds().x() instanceof AxisBounds.Looped
-                || shape.bounds().z() instanceof AxisBounds.Looped;
+        boolean xLooped = shape.bounds().x() instanceof AxisBounds.Looped;
+        boolean zLooped = shape.bounds().z() instanceof AxisBounds.Looped;
+        this.wrapped = xLooped || zLooped;
+        this.compressesClimate = climateCompression && xLooped && zLooped;
         this.chunks = new Lattice(shape, 1);
         this.blocks = new Lattice(shape, CoordinateConstants.CHUNK_WIDTH);
     }
@@ -58,6 +66,11 @@ public final class DeckGroupFold implements WorldFold {
     @Override
     public boolean preservesLocalIndices() {
         return this.shape.preservesLocalIndices();
+    }
+
+    @Override
+    public boolean compressesClimate() {
+        return this.compressesClimate;
     }
 
     @Override

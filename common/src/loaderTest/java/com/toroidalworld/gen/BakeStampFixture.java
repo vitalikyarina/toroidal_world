@@ -81,7 +81,11 @@ final class BakeStampFixture {
     }
 
     static ChunkGenerator stamped(ChunkGenerator generator, FlatShape shape) {
-        ((ShapeStamp) generator).toroidal$stamp(shape);
+        return stamped(generator, shape, WorldFolds.CLIMATE_COMPRESSION_DEFAULT);
+    }
+
+    static ChunkGenerator stamped(ChunkGenerator generator, FlatShape shape, boolean climateCompression) {
+        ((ShapeStamp) generator).toroidal$stamp(shape, climateCompression);
         return generator;
     }
 
@@ -231,6 +235,11 @@ final class BakeStampFixture {
         @Override
         public FlatShape shape() {
             return this.shape;
+        }
+
+        @Override
+        public boolean climateCompression() {
+            return WorldFolds.CLIMATE_COMPRESSION_DEFAULT;
         }
 
         @Override

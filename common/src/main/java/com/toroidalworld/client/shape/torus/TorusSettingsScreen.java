@@ -5,6 +5,8 @@ import com.toroidalworld.options.WorldLoopBounds;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.screens.Screen;
@@ -13,6 +15,10 @@ import net.minecraft.network.chat.Component;
 
 public class TorusSettingsScreen extends Screen {
     private static final Component TITLE = Component.translatable("gui.toroidal_world.toroidal_settings.title");
+    private static final Component CLIMATE_LABEL =
+            Component.translatable("gui.toroidal_world.toroidal_settings.climate_compression");
+    private static final Component CLIMATE_HINT =
+            Component.translatable("gui.toroidal_world.toroidal_settings.climate_hint");
 
     private static final int FOOTER_SPACING = 8;
     private static final int CONTENTS_SPACING = 8;
@@ -22,13 +28,15 @@ public class TorusSettingsScreen extends Screen {
     private final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
     private final LoopSizeControls controls;
 
+    private boolean climateCompression;
     private Button doneButton;
 
     public TorusSettingsScreen(Screen parent, WorldLoopBounds current, int currentNetherScale,
-            WorldLoopBounds currentEnd, OnDone onDone) {
+            WorldLoopBounds currentEnd, boolean currentClimateCompression, OnDone onDone) {
         super(TITLE);
         this.parent = parent;
         this.onDone = onDone;
+        this.climateCompression = currentClimateCompression;
         this.controls = new LoopSizeControls(current.chunkWidth(), currentNetherScale, currentEnd.chunkWidth(),
                 this::refreshDoneButton);
     }
@@ -40,6 +48,11 @@ public class TorusSettingsScreen extends Screen {
         LinearLayout contents = this.layout.addToContents(LinearLayout.vertical().spacing(CONTENTS_SPACING));
         this.controls.addPresets(contents);
         this.controls.addFields(this.font, contents);
+
+        contents.addChild(CycleButton.onOffBuilder(this.climateCompression)
+                .withTooltip(chosen -> Tooltip.create(CLIMATE_HINT))
+                .create(0, 0, LoopSizeControls.FIELD_WIDTH, LoopSizeControls.FIELD_HEIGHT, CLIMATE_LABEL,
+                        (button, chosen) -> this.climateCompression = chosen));
 
         LinearLayout footer = this.layout.addToFooter(LinearLayout.horizontal().spacing(FOOTER_SPACING));
         this.doneButton = footer.addChild(Button.builder(CommonComponents.GUI_DONE, button -> this.commit()).build());
@@ -70,12 +83,13 @@ public class TorusSettingsScreen extends Screen {
         }
 
         this.onDone.accept(WorldLoopBounds.ofWidth(this.controls.effectiveSize()), this.controls.netherScale(),
-                WorldLoopBounds.ofWidth(this.controls.effectiveEndSize()));
+                WorldLoopBounds.ofWidth(this.controls.effectiveEndSize()), this.climateCompression);
         this.onClose();
     }
 
     @FunctionalInterface
     public interface OnDone {
-        void accept(WorldLoopBounds wrapping, int netherScale, WorldLoopBounds endWrapping);
+        void accept(WorldLoopBounds wrapping, int netherScale, WorldLoopBounds endWrapping,
+                boolean climateCompression);
     }
 }

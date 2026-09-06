@@ -35,6 +35,8 @@
   "gui.toroidal_world.toroidal_settings.end_effective": "Ende: %s Chunks = %s Blöcke",
   "gui.toroidal_world.toroidal_settings.too_small": "Zu klein — mindestens %s Chunks.",
   "gui.toroidal_world.toroidal_settings.too_large": "Zu groß — höchstens %s Chunks.",
+  "gui.toroidal_world.toroidal_settings.climate_compression": "Kompakte Biome",
+  "gui.toroidal_world.toroidal_settings.climate_hint": "Verkleinert die Biome, damit jedes Klima in die Welt passt, so klein sie auch ist. Aus: Biome behalten ihre gewohnte Größe, sodass eine kleine Welt ganz Wald oder ganz Wüste sein kann.",
 
   "gui.toroidal_world.cylinder_settings.title": "Einstellungen der zylindrischen Welt",
   "gui.toroidal_world.cylinder_settings.axis": "Schleifenachse",

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.SharedConstants;
@@ -62,7 +63,8 @@ class ShapedStemSeedOverrideTest {
     void stripShapesKeepsTheSeedOverride() {
         NoiseBasedChunkGenerator noise = (NoiseBasedChunkGenerator) noiseGenerator(worldgen);
         LevelStem declared = declaredStem(
-                new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), SHAPE));
+                new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), SHAPE,
+                        WorldFolds.CLIMATE_COMPRESSION_DEFAULT));
 
         WorldDimensions stripped = ShapedDimensions.stripShapes(selected(Map.of(LevelStem.OVERWORLD, declared)));
 

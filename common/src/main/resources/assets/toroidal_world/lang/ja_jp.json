@@ -35,6 +35,8 @@
   "gui.toroidal_world.toroidal_settings.end_effective": "エンド：%s チャンク = %s ブロック",
   "gui.toroidal_world.toroidal_settings.too_small": "小さすぎます — 最低 %s チャンクです。",
   "gui.toroidal_world.toroidal_settings.too_large": "大きすぎます — 最大 %s チャンクです。",
+  "gui.toroidal_world.toroidal_settings.climate_compression": "コンパクトなバイオーム",
+  "gui.toroidal_world.toroidal_settings.climate_hint": "バイオームを縮小し、どんなに小さなワールドにもすべての気候が収まるようにします。オフにするとバイオームは通常の大きさのままなので、小さなワールドは森だけ、砂漠だけになることがあります。",
 
   "gui.toroidal_world.cylinder_settings.title": "円筒形ワールド設定",
   "gui.toroidal_world.cylinder_settings.axis": "ループする軸",

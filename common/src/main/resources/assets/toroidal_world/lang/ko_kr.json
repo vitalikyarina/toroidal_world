@@ -35,6 +35,8 @@
   "gui.toroidal_world.toroidal_settings.end_effective": "엔드: %s 청크 = %s 블록",
   "gui.toroidal_world.toroidal_settings.too_small": "너무 작습니다 — 최소 %s 청크.",
   "gui.toroidal_world.toroidal_settings.too_large": "너무 큽니다 — 최대 %s 청크.",
+  "gui.toroidal_world.toroidal_settings.climate_compression": "촘촘한 생물 군계",
+  "gui.toroidal_world.toroidal_settings.climate_hint": "생물 군계를 줄여 아무리 작은 세계에도 모든 기후가 들어가게 합니다. 끄면 생물 군계는 평소 크기를 유지하므로, 작은 세계는 온통 숲이거나 온통 사막일 수 있습니다.",
 
   "gui.toroidal_world.cylinder_settings.title": "원통형 세계 설정",
   "gui.toroidal_world.cylinder_settings.axis": "순환 축",

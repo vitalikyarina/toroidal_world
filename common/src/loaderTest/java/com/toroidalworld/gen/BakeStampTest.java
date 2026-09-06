@@ -15,6 +15,7 @@ import static com.toroidalworld.gen.BakeStampFixture.stamped;
 import static com.toroidalworld.gen.BakeStampFixture.stem;
 import static com.toroidalworld.gen.BakeStampFixture.stemKey;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -57,6 +58,8 @@ class BakeStampTest {
     private static final int STORED_NETHER_CHUNK_WIDTH = 64;
     private static final int STORED_END_CHUNK_WIDTH = 192;
     private static final int DATAPACK_DECLARED_CHUNK_WIDTH = 128;
+
+    private static final boolean UNCOMPRESSED = false;
 
     private static final ResourceKey<LevelStem> FOREIGN = stemKey("foreign");
     private static final ResourceKey<LevelStem> SIBLING = stemKey("sibling");
@@ -308,6 +311,31 @@ class BakeStampTest {
         FlatShape shape = shapeOf(baked, LevelStem.OVERWORLD);
         assertNotNull(shape, "the datapack overworld carries no fold");
         assertEquals(STORED_OVERWORLD_CHUNK_WIDTH, chunkWidth(shape, Direction.Axis.X));
+    }
+
+    @Test
+    void aForeignStemTakesTheOverworldsChoiceAgainstCompression() {
+        ChunkGenerator overworld = stamped(noiseSubclassGenerator(worldgen), squareTorus(OVERWORLD_CHUNK_WIDTH),
+                UNCOMPRESSED);
+        Registry<LevelStem> baked = bake(
+                Map.of(LevelStem.OVERWORLD, stem(SAME_SCALE, overworld)),
+                Map.of(FOREIGN, stem(SAME_SCALE, foreignGenerator())));
+
+        assertNotNull(shapeOf(baked, FOREIGN), "the foreign stem carries no fold, so this run says nothing");
+        assertFalse(ShapedChunkGenerator.climateCompressionOf(generatorOf(baked, FOREIGN)));
+    }
+
+    @Test
+    void aDatapackOverworldTakesTheChoiceAStoredOverworldCarries() {
+        ChunkGenerator stored = stamped(noiseSubclassGenerator(worldgen),
+                squareTorus(STORED_OVERWORLD_CHUNK_WIDTH), UNCOMPRESSED);
+        Registry<LevelStem> baked = bake(
+                Map.of(LevelStem.OVERWORLD, stem(SAME_SCALE, stored)),
+                Map.of(LevelStem.OVERWORLD, stem(SAME_SCALE, noiseGenerator(worldgen))));
+
+        LoopedChunkGenerator restored = assertInstanceOf(LoopedChunkGenerator.class,
+                generatorOf(baked, LevelStem.OVERWORLD));
+        assertFalse(restored.climateCompression());
     }
 
     private static Map<ResourceKey<LevelStem>, LevelStem> storedToroidalWorld() {

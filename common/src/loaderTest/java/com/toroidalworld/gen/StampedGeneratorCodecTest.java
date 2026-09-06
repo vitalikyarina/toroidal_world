@@ -30,6 +30,10 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 @Timeout(60)
 class StampedGeneratorCodecTest {
     private static final String SHAPE_KEY = ToroidalWorld.MODID + ":" + ShapedChunkGenerator.WRAPPING_KEY;
+    private static final String CLIMATE_COMPRESSION_KEY =
+            ToroidalWorld.MODID + ":" + ShapedChunkGenerator.CLIMATE_COMPRESSION_KEY;
+
+    private static final boolean UNCOMPRESSED = false;
 
     private static final int STAMPED_CHUNK_WIDTH = 64;
 
@@ -50,7 +54,23 @@ class StampedGeneratorCodecTest {
         CompoundTag encoded = encode(stamped(noiseGenerator(worldgen), shape));
 
         assertTrue(encoded.contains(SHAPE_KEY), "the stamped shape never reached the encoded generator");
-        assertEquals(shape, ShapedChunkGenerator.wrappedShapeOf(decode(encoded).getOrThrow()));
+        assertFalse(encoded.contains(CLIMATE_COMPRESSION_KEY), "a compressed stamp wrote the choice it need not");
+
+        ChunkGenerator decoded = decode(encoded).getOrThrow();
+        assertEquals(shape, ShapedChunkGenerator.wrappedShapeOf(decoded));
+        assertTrue(ShapedChunkGenerator.climateCompressionOf(decoded));
+    }
+
+    @Test
+    void aStampedChoiceAgainstCompressionSurvivesTheRoundTrip() {
+        FlatShape shape = squareTorus(STAMPED_CHUNK_WIDTH);
+        CompoundTag encoded = encode(stamped(noiseGenerator(worldgen), shape, UNCOMPRESSED));
+
+        assertTrue(encoded.contains(CLIMATE_COMPRESSION_KEY), "the stamped choice never reached the encoded generator");
+
+        ChunkGenerator decoded = decode(encoded).getOrThrow();
+        assertEquals(shape, ShapedChunkGenerator.wrappedShapeOf(decoded));
+        assertFalse(ShapedChunkGenerator.climateCompressionOf(decoded));
     }
 
     @Test

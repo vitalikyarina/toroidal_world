@@ -39,20 +39,24 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
             instance -> instance.group(
                     BiomeSource.CODEC.fieldOf(BIOME_SOURCE_KEY).forGetter(ChunkGenerator::getBiomeSource),
                     NoiseGeneratorSettings.CODEC.fieldOf(SETTINGS_KEY).forGetter(NoiseBasedChunkGenerator::generatorSettings),
-                    SHAPE_CODEC.fieldOf(WRAPPING_KEY).forGetter(LoopedChunkGenerator::shape)
+                    SHAPE_CODEC.fieldOf(WRAPPING_KEY).forGetter(LoopedChunkGenerator::shape),
+                    CLIMATE_COMPRESSION_CODEC.forGetter(LoopedChunkGenerator::climateCompression)
             ).apply(instance, instance.stable(LoopedChunkGenerator::new)));
 
     private static final int BASE_HEIGHT_CACHE_CAP = 1 << 18;
 
     private final FlatShape shape;
+    private final boolean climateCompression;
     private final WorldFold transformer;
 
     private final List<Map<Long, Integer>> baseHeightCache;
 
-    public LoopedChunkGenerator(BiomeSource biomeSource, Holder<NoiseGeneratorSettings> settings, FlatShape shape) {
+    public LoopedChunkGenerator(BiomeSource biomeSource, Holder<NoiseGeneratorSettings> settings, FlatShape shape,
+            boolean climateCompression) {
         super(biomeSource, settings);
         this.shape = shape;
-        this.transformer = WorldFolds.of(shape);
+        this.climateCompression = climateCompression;
+        this.transformer = WorldFolds.of(shape, climateCompression);
 
         List<Map<Long, Integer>> caches = new ArrayList<>();
         for (int i = 0; i < Heightmap.Types.values().length; i++) {
@@ -64,6 +68,11 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
     @Override
     public FlatShape shape() {
         return this.shape;
+    }
+
+    @Override
+    public boolean climateCompression() {
+        return this.climateCompression;
     }
 
     @Override
