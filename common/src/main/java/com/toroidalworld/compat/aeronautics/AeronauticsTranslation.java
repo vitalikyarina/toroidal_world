@@ -43,6 +43,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+// Nothing on a CompoundTag key or a payload component says it holds a world position, so every list below is
+// enumerated from the read code of the Aeronautics 1.3.2 bundle and a bump of aeronautics_version means reading
+// it again.
 public final class AeronauticsTranslation {
     private static final String SPRING_GOAL_KEY = "Goal";
     private static final String MERGING_GLUE_PARTNER_KEY = "PartnerPosition";
