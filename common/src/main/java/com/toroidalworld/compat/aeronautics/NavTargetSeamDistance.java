@@ -12,7 +12,7 @@ import net.minecraft.world.phys.Vec3;
 public final class NavTargetSeamDistance {
     public static double sqrDistance(@Nullable Level level, Vec3 from, double x, double y, double z,
             Operation<Double> original) {
-        WorldFold fold = level == null ? null : WorldLoopAttachments.wrappedTransformerOfReader(level);
+        WorldFold fold = WorldLoopAttachments.wrappedTransformerOfReader(level);
         if (fold == null) {
             return original.call(from, x, y, z);
         }

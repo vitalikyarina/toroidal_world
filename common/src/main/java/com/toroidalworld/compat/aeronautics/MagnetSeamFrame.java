@@ -1,7 +1,6 @@
 package com.toroidalworld.compat.aeronautics;
 
 import org.joml.Vector3d;
-import org.jspecify.annotations.Nullable;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -17,7 +16,7 @@ public final class MagnetSeamFrame {
     private static final double HALF = 0.5;
 
     public static Vector3d midpoint(DockingConnectorBlockEntity dock1, DockingConnectorBlockEntity dock2, Vector3d average) {
-        WorldFold fold = foldOf(dock1.getLevel());
+        WorldFold fold = WorldLoopAttachments.wrappedTransformerOfReader(dock1.getLevel());
         if (fold == null) {
             return average;
         }
@@ -34,7 +33,7 @@ public final class MagnetSeamFrame {
 
     public static Object seatNearbyMagnet(BlockEntity self, Object nearby) {
         Level level = self.getLevel();
-        WorldFold fold = foldOf(level);
+        WorldFold fold = WorldLoopAttachments.wrappedTransformerOfReader(level);
         if (fold == null || !(nearby instanceof Vector3d position)) {
             return nearby;
         }
@@ -53,10 +52,6 @@ public final class MagnetSeamFrame {
         Vec3 tip = dock.getTipPosition();
         SubLevel shell = dock.getLatestSubLevel();
         return shell == null ? tip : shell.logicalPose().transformPosition(tip);
-    }
-
-    private static @Nullable WorldFold foldOf(@Nullable Level level) {
-        return level == null ? null : WorldLoopAttachments.wrappedTransformerOfReader(level);
     }
 
     private MagnetSeamFrame() {

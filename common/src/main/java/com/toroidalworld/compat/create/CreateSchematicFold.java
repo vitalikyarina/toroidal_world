@@ -15,7 +15,8 @@ import net.minecraft.world.phys.AABB;
 
 public final class CreateSchematicFold {
     public static ItemStack anchoredNear(@Nullable Level level, BlockPos reference, ItemStack blueprint) {
-        return anchoredNear(seamTransformer(level), AllDataComponents.SCHEMATIC_ANCHOR, reference, blueprint);
+        return anchoredNear(WorldLoopAttachments.wrappedTransformerOfReader(level),
+                AllDataComponents.SCHEMATIC_ANCHOR, reference, blueprint);
     }
 
     static ItemStack anchoredNear(@Nullable WorldFold transformer, DataComponentType<BlockPos> anchorComponent,
@@ -36,8 +37,8 @@ public final class CreateSchematicFold {
     }
 
     public static BlockPos visitedInSchematicFrame(@Nullable Level level, ItemStack blueprint, BlockPos visited) {
-        return visitedInSchematicFrame(seamTransformer(level), AllDataComponents.SCHEMATIC_ANCHOR, blueprint,
-                visited);
+        return visitedInSchematicFrame(WorldLoopAttachments.wrappedTransformerOfReader(level),
+                AllDataComponents.SCHEMATIC_ANCHOR, blueprint, visited);
     }
 
     static BlockPos visitedInSchematicFrame(@Nullable WorldFold transformer,
@@ -51,7 +52,7 @@ public final class CreateSchematicFold {
     }
 
     public static AABB glueInScanFrame(@Nullable Level level, AABB scanBox, AABB glueBox) {
-        WorldFold transformer = seamTransformer(level);
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOfReader(level);
         if (transformer == null) {
             return glueBox;
         }
@@ -64,7 +65,7 @@ public final class CreateSchematicFold {
     }
 
     public static boolean regionExceedsWorld(@Nullable Level level, BlockPos first, BlockPos second) {
-        return regionExceedsWorld(seamTransformer(level), first, second);
+        return regionExceedsWorld(WorldLoopAttachments.wrappedTransformerOfReader(level), first, second);
     }
 
     static boolean regionExceedsWorld(@Nullable WorldFold transformer, BlockPos first, BlockPos second) {
@@ -73,10 +74,6 @@ public final class CreateSchematicFold {
         }
 
         return transformer.foldsOntoItself(BoundingBox.fromCorners(first, second));
-    }
-
-    private static @Nullable WorldFold seamTransformer(@Nullable Level level) {
-        return level == null ? null : WorldLoopAttachments.wrappedTransformerOfReader(level);
     }
 
     private CreateSchematicFold() {

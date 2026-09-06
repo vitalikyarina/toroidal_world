@@ -1,6 +1,5 @@
 package com.toroidalworld.compat.aeronautics;
 
-import org.jspecify.annotations.Nullable;
 import com.toroidalworld.compat.sable.SeamFrame;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -16,7 +15,7 @@ public final class MergingGlueSeamFrame {
 
     public static void control(BlockEntity controller, BlockEntity partner, Runnable original) {
         Level level = controller.getLevel();
-        WorldFold fold = level == null ? null : WorldLoopAttachments.wrappedTransformerOfReader(level);
+        WorldFold fold = WorldLoopAttachments.wrappedTransformerOfReader(level);
         SubLevel own = Sable.HELPER.getContaining(controller);
         SubLevel other = Sable.HELPER.getContaining(partner);
         if (fold == null || own == null || other == null) {

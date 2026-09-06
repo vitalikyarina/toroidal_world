@@ -70,8 +70,8 @@ public final class WorldLoopAttachments {
         return null;
     }
 
-    public static @Nullable WorldFold wrappedTransformerOfReader(LevelReader reader) {
-        Level level = levelOf(reader);
+    public static @Nullable WorldFold wrappedTransformerOfReader(@Nullable LevelReader reader) {
+        Level level = reader == null ? null : levelOf(reader);
         if (level == null) {
             return null;
         }

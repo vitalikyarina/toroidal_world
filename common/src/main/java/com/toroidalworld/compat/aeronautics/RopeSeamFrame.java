@@ -40,7 +40,8 @@ public final class RopeSeamFrame {
 
     public static Vector3d seatAttachment(ServerRopeStrand strand, RopeAttachment attachment, ServerLevel level,
             Vector3d point) {
-        return seatAttachment(foldOf(level), strand.getPoints(), attachment, point);
+        return seatAttachment(WorldLoopAttachments.wrappedTransformerOfReader(level), strand.getPoints(),
+                attachment, point);
     }
 
     static Vector3d seatAttachment(@Nullable WorldFold fold, List<Vector3d> points, RopeAttachment attachment,
@@ -93,7 +94,8 @@ public final class RopeSeamFrame {
             return;
         }
 
-        if (reseat(foldOf(level), strand.getPoints(), attachment, anchor) && strand.isActive() && system != null) {
+        WorldFold fold = WorldLoopAttachments.wrappedTransformerOfReader(level);
+        if (reseat(fold, strand.getPoints(), attachment, anchor) && strand.isActive() && system != null) {
             system.removeObject(strand);
             system.addObject(strand);
         }
@@ -154,7 +156,7 @@ public final class RopeSeamFrame {
 
     private static Vec3 seat(RopeStrandHolderBehavior owner, RopeStrandHolderBehavior target, Vec3 point) {
         Level level = owner.blockEntity.getLevel();
-        WorldFold fold = foldOf(level);
+        WorldFold fold = WorldLoopAttachments.wrappedTransformerOfReader(level);
         if (fold == null) {
             return point;
         }
@@ -165,10 +167,6 @@ public final class RopeSeamFrame {
         boolean targetOnSubLevel = !ownerOnSubLevel && Sable.HELPER.getContaining(level, targetLocal) != null;
         Vec3 anchor = Sable.HELPER.projectOutOfSubLevel(level, targetOnSubLevel ? targetLocal : ownerLocal);
         return fold.nearestCopy(anchor, point);
-    }
-
-    static @Nullable WorldFold foldOf(@Nullable Level level) {
-        return level == null ? null : WorldLoopAttachments.wrappedTransformerOfReader(level);
     }
 
     private RopeSeamFrame() {
