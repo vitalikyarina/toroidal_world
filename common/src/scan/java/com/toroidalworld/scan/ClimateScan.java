@@ -52,7 +52,7 @@ class ClimateScan {
 
     private static final double MAX_SPREAD_DRIFT = 0.10;
 
-    private static final Path REPORTS = Path.of(System.getProperty("toroidal.scan.reports", "build/reports/scan"));
+    private static final Path REPORTS = Path.of(System.getProperty("toroidal.reports", "build/reports")).resolve("scan");
 
     private static final Path REPORT = REPORTS.resolve("climate-scan.txt");
 
