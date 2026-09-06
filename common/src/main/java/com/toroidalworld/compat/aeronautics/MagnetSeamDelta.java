@@ -3,6 +3,7 @@ package com.toroidalworld.compat.aeronautics;
 import org.joml.Vector3d;
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.SeamDelta;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -11,7 +12,6 @@ import dev.simulated_team.simulated.content.blocks.redstone_magnet.SimMagnet;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.phys.Vec3;
 
 public final class MagnetSeamDelta {
     public static Vector3d fold(SimMagnet magnet, Vector3d relative) {
@@ -24,9 +24,7 @@ public final class MagnetSeamDelta {
             return relative;
         }
 
-        Vec3 raw = new Vec3(relative.x, relative.y, relative.z);
-        Vec3 folded = SeamDelta.fold(fold, raw);
-        return folded == raw ? relative : relative.set(folded.x, folded.y, folded.z);
+        return JomlVectors.write(SeamDelta.fold(fold, JomlVectors.read(relative)), relative);
     }
 
     private static @Nullable Level levelOf(SimMagnet magnet) {

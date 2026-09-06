@@ -4,6 +4,7 @@ import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -32,7 +33,7 @@ public final class SableSeamDistance {
             return original.call(from, to);
         }
 
-        Vec3 delta = fold.foldDelta(new Vec3(from.x(), from.y(), from.z()), new Vec3(to.x(), to.y(), to.z()));
+        Vec3 delta = fold.foldDelta(JomlVectors.read(from), JomlVectors.read(to));
         return Math.max(Math.abs(delta.x), Math.max(Math.abs(delta.y), Math.abs(delta.z)));
     }
 

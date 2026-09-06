@@ -1,5 +1,6 @@
 package com.toroidalworld.compat.sable;
 
+import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 
 import dev.ryanhcode.sable.companion.math.BoundingBox3d;
@@ -10,10 +11,8 @@ import net.minecraft.world.phys.Vec3;
 
 public final class SableSeamQuery {
     public static boolean intersects(WorldFold fold, BoundingBox3dc subLevelBox, BoundingBox3dc query) {
-        Vec3 queryCentre = new Vec3(
-                (query.minX() + query.maxX()) / 2.0,
-                (query.minY() + query.maxY()) / 2.0,
-                (query.minZ() + query.maxZ()) / 2.0);
+        Vec3 queryCentre = JomlVectors.centre(query.minX(), query.minY(), query.minZ(),
+                query.maxX(), query.maxY(), query.maxZ());
         AABB subLevelAabb = new AABB(subLevelBox.minX(), subLevelBox.minY(), subLevelBox.minZ(),
                 subLevelBox.maxX(), subLevelBox.maxY(), subLevelBox.maxZ());
         AABB nearest = fold.foldBox(queryCentre, subLevelAabb).value();

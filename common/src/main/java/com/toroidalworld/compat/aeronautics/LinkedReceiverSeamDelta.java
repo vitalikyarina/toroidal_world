@@ -5,6 +5,7 @@ import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -24,10 +25,8 @@ public final class LinkedReceiverSeamDelta {
     }
 
     static Vector3d fold(WorldFold fold, Vector3d target, Vector3dc current) {
-        Vec3 folded = fold.foldDelta(
-                new Vec3(current.x(), current.y(), current.z()),
-                new Vec3(target.x, target.y, target.z));
-        return target.set(folded.x, folded.y, folded.z);
+        Vec3 folded = fold.foldDelta(JomlVectors.read(current), JomlVectors.read(target));
+        return JomlVectors.write(folded, target);
     }
 
     private static @Nullable WorldFold foldOf(@Nullable Level level) {

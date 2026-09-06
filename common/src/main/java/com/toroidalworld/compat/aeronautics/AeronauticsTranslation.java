@@ -9,6 +9,7 @@ import com.toroidalworld.compat.aeronautics.mixin.MultiMiningSyncAccessor;
 import com.toroidalworld.compat.aeronautics.mixin.PhysicsStaffBeamPacketAccessor;
 import com.toroidalworld.compat.create.SyncedTagFold;
 import com.toroidalworld.core.FoldedCopies;
+import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.net.PacketTranslator;
 import com.toroidalworld.net.SpawnBufferFold;
 import com.toroidalworld.net.TagPositions;
@@ -148,8 +149,8 @@ public final class AeronauticsTranslation {
     }
 
     private static Vector3d seat(TranslationContext context, Vector3d point) {
-        Vec3 seated = context.nearestCopy(new Vec3(point.x, point.y, point.z));
-        return seated.x == point.x && seated.z == point.z ? point : new Vector3d(seated.x, seated.y, seated.z);
+        Vec3 raw = JomlVectors.read(point);
+        return JomlVectors.seated(point, raw, context.nearestCopy(raw));
     }
 
     private static AABB seat(TranslationContext context, AABB bounds) {

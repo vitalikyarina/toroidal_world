@@ -9,6 +9,7 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -51,14 +52,7 @@ public final class RopeSeamFrame {
         }
 
         Vector3d ownEnd = ownEndOf(points, attachment);
-        Vec3 anchor = new Vec3(ownEnd.x, ownEnd.y, ownEnd.z);
-        Vec3 raw = new Vec3(point.x, point.y, point.z);
-        Vec3 seated = fold.nearestCopy(anchor, raw);
-        if (seated.x == raw.x && seated.z == raw.z) {
-            return point;
-        }
-
-        return new Vector3d(seated.x, seated.y, seated.z);
+        return JomlVectors.seat(fold, JomlVectors.read(ownEnd), point);
     }
 
     public static void onGroupShifted(ServerLevel level, List<PhysicsPipelineBody> group, Vector3dc lap) {
@@ -107,9 +101,9 @@ public final class RopeSeamFrame {
         }
 
         Vector3d ownEnd = ownEndOf(points, attachment);
-        Vec3 raw = new Vec3(ownEnd.x, ownEnd.y, ownEnd.z);
+        Vec3 raw = JomlVectors.read(ownEnd);
         Vec3 seated = fold.nearestCopy(anchor, raw);
-        if (seated.x == raw.x && seated.z == raw.z) {
+        if (seated == raw) {
             return false;
         }
 
@@ -140,7 +134,7 @@ public final class RopeSeamFrame {
 
         Vector3d world = server.logicalPose()
                 .transformPosition(new Vector3d(centre.x, centre.y, centre.z), new Vector3d());
-        return new Vec3(world.x, world.y, world.z);
+        return JomlVectors.read(world);
     }
 
     static @Nullable RopeAttachment shiftedAttachmentOf(Iterable<RopeAttachment> attachments, Set<UUID> shifted) {

@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -31,10 +32,8 @@ public abstract class PhysicsChunkTicketInhabitedMixin {
             return original.call(level, inhabits);
         }
 
-        Vec3 centre = new Vec3(
-                (bounds.minX() + bounds.maxX()) / 2.0,
-                (bounds.minY() + bounds.maxY()) / 2.0,
-                (bounds.minZ() + bounds.maxZ()) / 2.0);
+        Vec3 centre = JomlVectors.centre(bounds.minX(), bounds.minY(), bounds.minZ(),
+                bounds.maxX(), bounds.maxY(), bounds.maxZ());
         Predicate<ServerPlayer> inhabitsAcrossSeam = player -> {
             Vec3 position = fold.nearestCopy(centre, player.getBoundingBox().getCenter());
             return bounds.contains(position.x, position.y, position.z);

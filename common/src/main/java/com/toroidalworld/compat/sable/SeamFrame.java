@@ -7,6 +7,7 @@ import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.ForeignFrames;
+import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -88,7 +89,7 @@ public final class SeamFrame {
             return NO_SHIFT;
         }
 
-        Vec3 raw = new Vec3(posePosition.x(), posePosition.y(), posePosition.z());
+        Vec3 raw = JomlVectors.read(posePosition);
         Vec3 nearest = binding.fold.nearestCopy(binding.anchor(), raw);
         double shiftX = nearest.x - raw.x;
         double shiftZ = nearest.z - raw.z;

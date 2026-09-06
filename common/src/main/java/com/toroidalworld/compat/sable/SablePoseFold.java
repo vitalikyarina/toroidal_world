@@ -7,6 +7,7 @@ import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.compat.sable.mixin.SubLevelAccessor;
+import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -49,7 +50,7 @@ public final class SablePoseFold {
         }
 
         centroid.div(counted);
-        Vec3 centre = new Vec3(centroid.x, centroid.y, centroid.z);
+        Vec3 centre = JomlVectors.read(centroid);
         boolean centroidOverBounds = fold.isOver(centre);
         if (!centroidOverBounds) {
             return;

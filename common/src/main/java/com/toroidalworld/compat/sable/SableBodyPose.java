@@ -4,6 +4,8 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.JomlVectors;
+
 import dev.ryanhcode.sable.api.physics.PhysicsPipelineBody;
 import dev.ryanhcode.sable.api.physics.object.box.BoxPhysicsObject;
 import dev.ryanhcode.sable.companion.math.Pose3dc;
@@ -26,8 +28,7 @@ final class SableBodyPose {
             return null;
         }
 
-        Vector3d world = pose.transformPosition(anchor, new Vector3d());
-        return new Vec3(world.x, world.y, world.z);
+        return JomlVectors.read(pose.transformPosition(anchor, new Vector3d()));
     }
 
     private SableBodyPose() {

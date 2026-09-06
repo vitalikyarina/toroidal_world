@@ -2,6 +2,7 @@ package com.toroidalworld.compat.aeronautics;
 
 import org.joml.Vector3d;
 import org.jspecify.annotations.Nullable;
+import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -37,7 +38,7 @@ public final class MagnetSeamFrame {
             return average;
         }
 
-        return average.set(midpoint.x, midpoint.y, midpoint.z);
+        return JomlVectors.write(midpoint, average);
     }
 
     public static Object seatNearbyMagnet(BlockEntity self, Object nearby) {
@@ -56,13 +57,7 @@ public final class MagnetSeamFrame {
             return nearby;
         }
 
-        Vec3 raw = new Vec3(position.x, position.y, position.z);
-        Vec3 seated = fold.nearestCopy(anchor, raw);
-        if (seated.x == raw.x && seated.z == raw.z) {
-            return nearby;
-        }
-
-        return new Vector3d(seated.x, seated.y, seated.z);
+        return JomlVectors.seat(fold, anchor, position);
     }
 
     private static Vec3 projectedTip(DockingConnectorBlockEntity dock) {

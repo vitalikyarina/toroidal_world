@@ -6,6 +6,7 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 
 import dev.ryanhcode.sable.api.physics.PhysicsPipelineBody;
@@ -123,9 +124,9 @@ public final class SableMotorGoal {
             Vector3d goal = this.staticOrientation
                     .transform(new Vector3d(this.targets[0], this.targets[1], this.targets[2]))
                     .add(this.staticAnchor);
-            Vec3 raw = new Vec3(goal.x, goal.y, goal.z);
+            Vec3 raw = JomlVectors.read(goal);
             Vec3 seated = this.fold.nearestCopy(anchor, raw);
-            if (seated.x == raw.x && seated.z == raw.z) {
+            if (seated == raw) {
                 return null;
             }
 

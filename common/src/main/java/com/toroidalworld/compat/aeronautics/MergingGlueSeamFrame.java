@@ -1,6 +1,7 @@
 package com.toroidalworld.compat.aeronautics;
 
 import com.toroidalworld.compat.sable.SeamFrame;
+import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.storage.WorldLoopAttachments;
 
@@ -28,8 +29,7 @@ public final class MergingGlueSeamFrame {
     }
 
     private static Vec3 positionOf(SubLevel subLevel) {
-        var position = subLevel.logicalPose().position();
-        return new Vec3(position.x(), position.y(), position.z());
+        return JomlVectors.read(subLevel.logicalPose().position());
     }
 
     private MergingGlueSeamFrame() {
