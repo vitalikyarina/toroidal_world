@@ -11,15 +11,19 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.toroidalworld.compat.create.CarriageEntityFrame;
+import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.SeamTransform;
 import com.toroidalworld.player.SeamSnap;
 
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -38,30 +42,24 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
     @Shadow
     public WeakReference<?> entity;
 
-    // The two reads the chunk lookahead is built from, and the one that is written onto the entity. They are told apart
-    // by ordinal because only the last of them moves the carriage, and moving it is what the riders have to follow.
-    @ModifyExpressionValue(method = "alignEntity",
-            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
-                    target = "Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;positionAnchor:Lnet/minecraft/world/phys/Vec3;",
-                    ordinal = 0))
-    private Vec3 toroidal$anchorForLookahead(Vec3 anchor) {
-        return toroidal$anchorInLocalFrame(anchor);
+    @Unique
+    private @Nullable ResourceKey<Level> toroidal$dimension;
+
+    @WrapOperation(method = "read",
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = CreateInvokeTargets.CARRIAGE_POSITION_ANCHOR))
+    private void toroidal$storeLoadedAnchorInWorldFrame(Carriage.DimensionalCarriageEntity dce, Vec3 anchor,
+            Operation<Void> original) {
+        original.call(dce,
+                anchor == null ? null : CreateSeamFold.canonicalOnServer(this.toroidal$dimension, anchor));
     }
 
+    // Ordinal 2 alone: the two earlier reads build the chunk lookahead, this one moves the carriage, and the riders
+    // have to follow it.
     @ModifyExpressionValue(method = "alignEntity",
-            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
-                    target = "Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;positionAnchor:Lnet/minecraft/world/phys/Vec3;",
-                    ordinal = 1))
-    private Vec3 toroidal$anchorForLookaheadStep(Vec3 anchor) {
-        return toroidal$anchorInLocalFrame(anchor);
-    }
-
-    @ModifyExpressionValue(method = "alignEntity",
-            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
-                    target = "Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;positionAnchor:Lnet/minecraft/world/phys/Vec3;",
+            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = CreateInvokeTargets.CARRIAGE_POSITION_ANCHOR,
                     ordinal = 2))
     private Vec3 toroidal$anchorForWrite(Vec3 anchor) {
-        Vec3 written = toroidal$anchorInLocalFrame(anchor);
+        Vec3 written = toroidal$anchorInClientFrame(anchor);
         Entity carriageEntity = toroidal$entity();
         if (carriageEntity == null || carriageEntity.level().isClientSide()) {
             return written;
@@ -82,33 +80,17 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
         return CreateSeamFold.nearestCopy(carriageEntity.level(), leading, trailing);
     }
 
-    @ModifyExpressionValue(method = "createEntity",
-            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
-                    target = "Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;positionAnchor:Lnet/minecraft/world/phys/Vec3;"))
-    private Vec3 toroidal$anchorIntoWorldFrameOnCreate(Vec3 anchor, Level level, boolean loadPassengers) {
-        return anchor != null && level instanceof ServerLevel serverLevel
-                ? CreateSeamFold.canonical(serverLevel, anchor)
-                : anchor;
-    }
-
     @ModifyExpressionValue(method = "alignEntity",
             at = @At(value = "INVOKE",
                     target = "Lcom/simibubi/create/content/trains/entity/CarriageContraptionEntity;position()Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$entityPositionInAnchorFrame(Vec3 position) {
         Entity carriageEntity = toroidal$entity();
-        if (carriageEntity == null) {
-            return position;
-        }
-
         Vec3 anchor = this.positionAnchor;
-        if (anchor == null) {
+        if (carriageEntity == null || anchor == null) {
             return position;
         }
 
-        Level level = carriageEntity.level();
-        Vec3 worldFrameAnchor =
-                level instanceof ServerLevel serverLevel ? CreateSeamFold.canonical(serverLevel, anchor) : anchor;
-        return CreateSeamFold.nearestCopy(level, worldFrameAnchor, position);
+        return CreateSeamFold.nearestCopy(carriageEntity.level(), anchor, position);
     }
 
     @ModifyReturnValue(method = "leadingAnchor", at = @At("RETURN"))
@@ -144,6 +126,16 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
         return carriageEntity == null ? null : carriageEntity.level();
     }
 
+    @Override
+    public @Nullable ResourceKey<Level> toroidal$carriageDimension() {
+        return this.toroidal$dimension;
+    }
+
+    @Override
+    public void toroidal$bindCarriageDimension(ResourceKey<Level> dimension) {
+        this.toroidal$dimension = dimension;
+    }
+
     @Unique
     private Vec3 toroidal$inCutoffFrame(Vec3 anchor, Vec3 target) {
         return CreateSeamFold.nearestCopy(toroidal$carriageLevel(),
@@ -174,19 +166,6 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
                 SeamSnap.withPassengers(aboard, lap);
             }
         }
-    }
-
-    @Unique
-    private @Nullable Vec3 toroidal$anchorInLocalFrame(@Nullable Vec3 anchor) {
-        Entity carriageEntity = toroidal$entity();
-        if (anchor == null || carriageEntity == null) {
-            return anchor;
-        }
-
-        Level level = carriageEntity.level();
-        return level instanceof ServerLevel serverLevel
-                ? CreateSeamFold.canonical(serverLevel, anchor)
-                : toroidal$anchorInClientFrame(anchor);
     }
 
     @Unique

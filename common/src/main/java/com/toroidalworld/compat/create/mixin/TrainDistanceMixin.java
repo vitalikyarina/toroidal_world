@@ -7,7 +7,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.Train;
+import com.toroidalworld.compat.create.CarriageEntityFrame;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.world.level.Level;
@@ -25,5 +27,12 @@ public class TrainDistanceMixin {
     private double toroidal$rankAnchorTheShortWayRound(Vec3 anchor, Vec3 location, Operation<Double> original,
             @Local(argsOnly = true) Level level) {
         return original.call(CreateSeamFold.nearestCopy(level, location, anchor), location);
+    }
+
+    @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = VEC3_DISTANCE_TO_SQR))
+    private double toroidal$spanCarriagesTheShortWayRound(Vec3 leading, Vec3 trailing, Operation<Double> original,
+            @Local(ordinal = 0) Carriage.DimensionalCarriageEntity dimensional) {
+        return original.call(leading, CreateSeamFold.nearestCopy(
+                ((CarriageEntityFrame) dimensional).toroidal$carriageDimension(), leading, trailing));
     }
 }

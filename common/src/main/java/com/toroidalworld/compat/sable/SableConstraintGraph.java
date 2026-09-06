@@ -41,6 +41,12 @@ public final class SableConstraintGraph {
         }
     }
 
+    // testing_mod: the sub-level joint checks read the edge count before and after a constraint, and nothing in this
+    // mod calls it.
+    public int size() {
+        return this.edges.size();
+    }
+
     public boolean isEmpty() {
         return this.edges.isEmpty();
     }

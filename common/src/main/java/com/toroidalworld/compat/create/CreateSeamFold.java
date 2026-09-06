@@ -180,6 +180,17 @@ public final class CreateSeamFold {
         return canonical(WorldLoopAttachments.wrappedTransformerOf(level), position);
     }
 
+    // On the client the same write is the frame the viewer stands in: canonicalising it there jumps the carriage a
+    // world width at the seam.
+    public static Vec3 canonicalOnServer(@Nullable ResourceKey<Level> dimension, Vec3 position) {
+        MinecraftServer server = CurrentServer.get();
+        if (server == null || !server.isSameThread()) {
+            return position;
+        }
+
+        return canonical(transformerOf(null, dimension), position);
+    }
+
     static Vec3 canonical(@Nullable WorldFold transformer, Vec3 position) {
         return transformer == null ? position : transformer.fold(position);
     }

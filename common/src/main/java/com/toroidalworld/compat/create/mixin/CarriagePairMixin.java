@@ -2,9 +2,12 @@ package com.toroidalworld.compat.create.mixin;
 
 import java.util.Optional;
 
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
@@ -14,6 +17,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.TravellingPoint;
 import com.toroidalworld.compat.create.CarriageEntityFrame;
+import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.core.BlockPos;
@@ -25,6 +29,23 @@ import net.minecraft.world.phys.Vec3;
 public abstract class CarriagePairMixin {
     @Shadow
     public abstract TravellingPoint getLeadingPoint();
+
+    @Inject(method = "getDimensional(Lnet/minecraft/resources/ResourceKey;)"
+            + "Lcom/simibubi/create/content/trains/entity/Carriage$DimensionalCarriageEntity;",
+            at = @At("RETURN"))
+    private void toroidal$bindDimensionToCarriageEntity(ResourceKey<Level> dimension,
+            CallbackInfoReturnable<Carriage.DimensionalCarriageEntity> cir) {
+        ((CarriageEntityFrame) cir.getReturnValue()).toroidal$bindCarriageDimension(dimension);
+    }
+
+    @WrapOperation(method = "updateContraptionAnchors",
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = CreateInvokeTargets.CARRIAGE_POSITION_ANCHOR))
+    private void toroidal$storeAnchorInWorldFrame(Carriage.DimensionalCarriageEntity dce, Vec3 anchor,
+            Operation<Void> original) {
+        original.call(dce, anchor == null
+                ? null
+                : CreateSeamFold.canonicalOnServer(((CarriageEntityFrame) dce).toroidal$carriageDimension(), anchor));
+    }
 
     @WrapOperation(method = "getAnchorDiff",
             at = @At(value = "INVOKE",
