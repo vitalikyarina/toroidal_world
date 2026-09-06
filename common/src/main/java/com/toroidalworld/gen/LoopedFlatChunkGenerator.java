@@ -18,21 +18,29 @@ public class LoopedFlatChunkGenerator extends FlatLevelSource implements ShapedC
     public static final MapCodec<LoopedFlatChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                     FlatLevelGeneratorSettings.CODEC.fieldOf(SETTINGS_KEY).forGetter(LoopedFlatChunkGenerator::settings),
-                    SHAPE_CODEC.fieldOf(WRAPPING_KEY).forGetter(LoopedFlatChunkGenerator::shape)
+                    SHAPE_CODEC.fieldOf(WRAPPING_KEY).forGetter(LoopedFlatChunkGenerator::shape),
+                    CLIMATE_COMPRESSION_CODEC.forGetter(LoopedFlatChunkGenerator::climateCompression)
             ).apply(instance, instance.stable(LoopedFlatChunkGenerator::new)));
 
     private final FlatShape shape;
+    private final boolean climateCompression;
     private final WorldFold transformer;
 
-    public LoopedFlatChunkGenerator(FlatLevelGeneratorSettings settings, FlatShape shape) {
+    public LoopedFlatChunkGenerator(FlatLevelGeneratorSettings settings, FlatShape shape, boolean climateCompression) {
         super(settings);
         this.shape = shape;
-        this.transformer = WorldFolds.of(shape);
+        this.climateCompression = climateCompression;
+        this.transformer = WorldFolds.of(shape, climateCompression);
     }
 
     @Override
     public FlatShape shape() {
         return this.shape;
+    }
+
+    @Override
+    public boolean climateCompression() {
+        return this.climateCompression;
     }
 
     @Override

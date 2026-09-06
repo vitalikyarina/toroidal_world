@@ -35,6 +35,8 @@
   "gui.toroidal_world.toroidal_settings.end_effective": "末地：%s 区块 = %s 方块",
   "gui.toroidal_world.toroidal_settings.too_small": "太小——至少 %s 区块。",
   "gui.toroidal_world.toroidal_settings.too_large": "太大——至多 %s 区块。",
+  "gui.toroidal_world.toroidal_settings.climate_compression": "紧凑生物群系",
+  "gui.toroidal_world.toroidal_settings.climate_hint": "缩小生物群系，让所有气候都能装进你的世界，无论它多小。关闭后，生物群系保持正常大小，小世界可能全是森林或全是沙漠。",
 
   "gui.toroidal_world.cylinder_settings.title": "圆柱面世界设置",
   "gui.toroidal_world.cylinder_settings.axis": "循环轴",

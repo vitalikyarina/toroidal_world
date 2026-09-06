@@ -70,13 +70,16 @@ class ClimateScaleCompressionTest {
     }
 
     private static double actual(Field field, WorldFold fold, double verticalShare) {
-        return ClimateScaleCompression.factor(fold.blockDomain(Direction.Axis.X),
-                fold.blockDomain(Direction.Axis.Z), field.amplitudes(),
+        return ClimateScaleCompression.factor(fold, field.amplitudes(),
                 Math.pow(2.0, field.firstOctave()), XZ_SCALE, verticalShare);
     }
 
     private static WorldFold square(int chunkWidth) {
         return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)));
+    }
+
+    private static WorldFold uncompressedSquare(int chunkWidth) {
+        return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)), false);
     }
 
     private static void assertFactor(Field field, int chunkWidth) {
@@ -90,6 +93,17 @@ class ClimateScaleCompressionTest {
         for (Field field : List.of(TEMPERATURE, TEMPERATURE_LARGE, VEGETATION, CONTINENTALNESS, EROSION)) {
             for (int chunkWidth : new int[] {32, 64, 128, 256, 512}) {
                 assertFactor(field, chunkWidth);
+            }
+        }
+    }
+
+    @Test
+    void aTorusThatDeclinedCompressionIsMultipliedByExactlyOneOnEveryFieldAndPreset() {
+        for (Field field : List.of(TEMPERATURE, TEMPERATURE_LARGE, VEGETATION, CONTINENTALNESS, EROSION,
+                TEMPERATURE_NETHER)) {
+            for (int chunkWidth : new int[] {16, 32, 64, 128, 256, 512}) {
+                assertEquals(1.0, actual(field, uncompressedSquare(chunkWidth), HORIZONTAL), 0.0,
+                        field.name() + " uncompressed on " + chunkWidth * 16 + " blocks");
             }
         }
     }

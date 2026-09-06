@@ -4,7 +4,6 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import net.minecraft.core.Direction;
 import net.minecraft.world.level.levelgen.synth.ImprovedNoise;
 import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 
@@ -23,9 +22,8 @@ public final class PeriodicOctaveSampler {
             double yFudge) {
         double declaredScale = generation.horizontalScale();
         WorldFold transformer = generation.transformer();
-        double baseScale = declaredScale * ClimateScaleCompression.factor(
-                transformer.blockDomain(Direction.Axis.X), transformer.blockDomain(Direction.Axis.Z),
-                amplitudes, lowestFreqInputFactor, declaredScale, generation.verticalShare());
+        double baseScale = declaredScale * ClimateScaleCompression.factor(transformer, amplitudes,
+                lowestFreqInputFactor, declaredScale, generation.verticalShare());
         boolean yCarriesWorldAxis = generation.slotAxes().y().carriesWorldAxis();
         double value = 0.0;
         double factor = lowestFreqInputFactor;

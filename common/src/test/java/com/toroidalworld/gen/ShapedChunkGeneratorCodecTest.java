@@ -40,6 +40,10 @@ class ShapedChunkGeneratorCodecTest {
     private static final HolderLookup.Provider WORLDGEN = VanillaRegistries.createLookup();
 
     private static final String FROZEN_ON_DISK_KEY = "wrapping";
+    private static final String CLIMATE_COMPRESSION_KEY = "climate_compression";
+
+    private static final boolean COMPRESSED = true;
+    private static final boolean UNCOMPRESSED = false;
 
     private static final String TORUS_WRAPPING =
             "{\"x\":{\"min_chunk\":-16,\"max_chunk\":16},\"z\":{\"min_chunk\":-16,\"max_chunk\":16}}";
@@ -173,18 +177,69 @@ class ShapedChunkGeneratorCodecTest {
         assertEquals(torus, LoopedFlatChunkGenerator.CODEC.codec().parse(ops, encoded).getOrThrow().shape());
     }
 
+    @Test
+    void aTorusThatCompressesItsClimateWritesTheLayoutOfASaveMadeBeforeTheChoiceExisted() {
+        RegistryOps<JsonElement> ops = WORLDGEN.createSerializationContext(JsonOps.INSTANCE);
+
+        JsonElement encoded = LoopedChunkGenerator.CODEC.codec()
+                .encodeStart(ops, noiseGenerator(FlatShape.torus(SQUARE), COMPRESSED)).getOrThrow();
+
+        assertFalse(encoded.getAsJsonObject().has(CLIMATE_COMPRESSION_KEY), encoded.toString());
+        assertTrue(LoopedChunkGenerator.CODEC.codec().parse(ops, encoded).getOrThrow().climateCompression());
+    }
+
+    @Test
+    void aTorusThatDeclinedCompressionWritesTheChoiceAndReadsItBack() {
+        RegistryOps<JsonElement> ops = WORLDGEN.createSerializationContext(JsonOps.INSTANCE);
+
+        JsonElement encoded = LoopedChunkGenerator.CODEC.codec()
+                .encodeStart(ops, noiseGenerator(FlatShape.torus(SQUARE), UNCOMPRESSED)).getOrThrow();
+
+        assertFalse(encoded.getAsJsonObject().get(CLIMATE_COMPRESSION_KEY).getAsBoolean(), encoded.toString());
+        assertFalse(LoopedChunkGenerator.CODEC.codec().parse(ops, encoded).getOrThrow().climateCompression());
+    }
+
+    @Test
+    void aWorldFileWithoutTheChoiceLoadsCompressed() {
+        RegistryOps<JsonElement> ops = WORLDGEN.createSerializationContext(JsonOps.INSTANCE);
+        JsonElement encoded = LoopedChunkGenerator.CODEC.codec()
+                .encodeStart(ops, noiseGenerator(FlatShape.torus(SQUARE), UNCOMPRESSED)).getOrThrow();
+        encoded.getAsJsonObject().remove(CLIMATE_COMPRESSION_KEY);
+
+        assertTrue(LoopedChunkGenerator.CODEC.codec().parse(ops, encoded).getOrThrow().climateCompression());
+    }
+
+    @Test
+    void aSuperflatTorusCarriesTheChoiceTheSameWay() {
+        RegistryOps<JsonElement> ops = WORLDGEN.createSerializationContext(JsonOps.INSTANCE);
+
+        JsonElement encoded = LoopedFlatChunkGenerator.CODEC.codec()
+                .encodeStart(ops, flatGenerator(FlatShape.torus(SQUARE), UNCOMPRESSED)).getOrThrow();
+
+        assertFalse(encoded.getAsJsonObject().get(CLIMATE_COMPRESSION_KEY).getAsBoolean(), encoded.toString());
+        assertFalse(LoopedFlatChunkGenerator.CODEC.codec().parse(ops, encoded).getOrThrow().climateCompression());
+    }
+
     private static LoopedChunkGenerator noiseGenerator(FlatShape shape) {
+        return noiseGenerator(shape, WorldFolds.CLIMATE_COMPRESSION_DEFAULT);
+    }
+
+    private static LoopedChunkGenerator noiseGenerator(FlatShape shape, boolean climateCompression) {
         return new LoopedChunkGenerator(
                 new FixedBiomeSource(WORLDGEN.lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS)),
                 WORLDGEN.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(NoiseGeneratorSettings.OVERWORLD),
-                shape);
+                shape, climateCompression);
     }
 
     private static LoopedFlatChunkGenerator flatGenerator(FlatShape shape) {
+        return flatGenerator(shape, WorldFolds.CLIMATE_COMPRESSION_DEFAULT);
+    }
+
+    private static LoopedFlatChunkGenerator flatGenerator(FlatShape shape, boolean climateCompression) {
         return new LoopedFlatChunkGenerator(new FlatLevelGeneratorSettings(
                 Optional.empty(),
                 WORLDGEN.lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS),
-                List.of()), shape);
+                List.of()), shape, climateCompression);
     }
 
     private static String readError(String json) {

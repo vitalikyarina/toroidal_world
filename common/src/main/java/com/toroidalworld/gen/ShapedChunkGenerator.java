@@ -8,6 +8,7 @@ import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
@@ -15,12 +16,18 @@ import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 public interface ShapedChunkGenerator {
     String SETTINGS_KEY = "settings";
     String WRAPPING_KEY = "wrapping";
+    String CLIMATE_COMPRESSION_KEY = "climate_compression";
 
     Codec<FlatShape> SHAPE_CODEC = FlatShape.CODEC
             .validate(WorldFolds::verifyFoldable)
             .validate(WorldFolds::verifyGeneratable);
 
+    MapCodec<Boolean> CLIMATE_COMPRESSION_CODEC =
+            Codec.BOOL.optionalFieldOf(CLIMATE_COMPRESSION_KEY, WorldFolds.CLIMATE_COMPRESSION_DEFAULT);
+
     FlatShape shape();
+
+    boolean climateCompression();
 
     WorldFold transformer();
 
@@ -47,6 +54,16 @@ public interface ShapedChunkGenerator {
         }
 
         return generator instanceof ShapeStamp stamp ? wrapped(stamp.toroidal$stampedTransformer()) : null;
+    }
+
+    static boolean climateCompressionOf(ChunkGenerator generator) {
+        if (generator instanceof ShapedChunkGenerator shaped) {
+            return shaped.climateCompression();
+        }
+
+        return generator instanceof ShapeStamp stamp
+                ? stamp.toroidal$stampedClimateCompression()
+                : WorldFolds.CLIMATE_COMPRESSION_DEFAULT;
     }
 
     private static @Nullable WorldFold wrapped(@Nullable WorldFold transformer) {

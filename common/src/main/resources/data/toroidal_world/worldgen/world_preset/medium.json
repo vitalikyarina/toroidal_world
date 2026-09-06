@@ -18,7 +18,8 @@
             "min_chunk": -64,
             "max_chunk": 64
           }
-        }
+        },
+        "climate_compression": false
       }
     },
     "minecraft:the_nether": {
@@ -39,7 +40,8 @@
             "min_chunk": -8,
             "max_chunk": 8
           }
-        }
+        },
+        "climate_compression": false
       }
     },
     "minecraft:the_end": {
@@ -59,7 +61,8 @@
             "min_chunk": -192,
             "max_chunk": 192
           }
-        }
+        },
+        "climate_compression": false
       }
     }
   }

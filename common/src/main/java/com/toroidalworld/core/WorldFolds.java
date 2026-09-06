@@ -13,12 +13,18 @@ public final class WorldFolds {
     private static final String COUPLED_AXES = "its axes do not decompose";
     private static final String REVERSED_LOCAL_INDICES = "its seam reverses the local indices inside a chunk";
 
+    public static final boolean CLIMATE_COMPRESSION_DEFAULT = true;
+
     public static final WorldFold NOOP = of(FlatShape.rectangle());
 
     public static WorldFold of(FlatShape shape) {
+        return of(shape, CLIMATE_COMPRESSION_DEFAULT);
+    }
+
+    public static WorldFold of(FlatShape shape, boolean climateCompression) {
         verifyFoldable(shape).getOrThrow(IllegalArgumentException::new);
 
-        return new WorldLoopTransformer(shape.bounds());
+        return new WorldLoopTransformer(shape.bounds(), climateCompression);
     }
 
     public static DataResult<FlatShape> verifyFoldable(FlatShape shape) {

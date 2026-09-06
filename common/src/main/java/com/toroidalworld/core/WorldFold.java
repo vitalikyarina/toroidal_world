@@ -32,6 +32,8 @@ public interface WorldFold {
 
     boolean preservesLocalIndices();
 
+    boolean compressesClimate();
+
     WrapDomain blockDomain(Direction.Axis axis);
 
     WrapDomain chunkDomain(Direction.Axis axis);
