@@ -7,7 +7,10 @@ import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.Share;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.toroidalworld.compat.aeronautics.MagnetSectionKeys;
+import com.toroidalworld.core.WorldFold;
 
 import dev.simulated_team.simulated.content.blocks.redstone_magnet.MagnetMap;
 import dev.simulated_team.simulated.util.SimMovementContext;
@@ -18,6 +21,8 @@ import net.minecraft.world.level.LevelAccessor;
 
 @Mixin(value = MagnetMap.class, remap = false)
 public class MagnetMapMixin {
+    private static final String SEARCH_FOLD = "toroidal$searchFold";
+
     @WrapMethod(method = "addMagnet")
     private void toroidal$addAtPhysicalSection(LevelAccessor level, SectionPos sectionPos, BlockPos pos,
             Operation<Void> original) {
@@ -35,7 +40,7 @@ public class MagnetMapMixin {
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/core/SectionPos;of(III)Lnet/minecraft/core/SectionPos;"))
     private SectionPos toroidal$buildPhysicalSection(int x, int y, int z, Operation<SectionPos> original,
-            @Local(argsOnly = true) SimMovementContext context) {
-        return MagnetSectionKeys.physical(context.level(), original.call(x, y, z));
+            @Local(argsOnly = true) SimMovementContext context, @Share(SEARCH_FOLD) LocalRef<WorldFold> fold) {
+        return MagnetSectionKeys.physical(context.level(), fold, original.call(x, y, z));
     }
 }
