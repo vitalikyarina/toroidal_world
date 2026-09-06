@@ -1,7 +1,10 @@
 package com.toroidalworld.compat.journeymap.mixin;
 
 import java.awt.geom.Point2D;
+import java.io.File;
+import java.util.Collection;
 
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -10,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
@@ -17,8 +22,14 @@ import com.toroidalworld.compat.journeymap.JourneyMapSeamPass;
 
 import journeymap.api.v2.client.util.UIState;
 import journeymap.api.v2.client.display.Context;
+import journeymap.client.model.map.MapType;
+import journeymap.client.model.region.RegionCoord;
+import journeymap.client.model.region.RegionImageCache;
+import journeymap.client.model.region.RegionImageSet;
 import journeymap.client.render.JMRenderTypes;
 import journeymap.client.render.draw.DrawUtil;
+import journeymap.client.render.map.RegionTile;
+import journeymap.client.render.map.TileGrid;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -41,6 +52,13 @@ public abstract class MapRendererMixin implements JourneyMapSeamPass {
     protected int zoom;
 
     @Shadow(remap = false)
+    private volatile File worldDir;
+
+    @Shadow(remap = false)
+    @Final
+    TileGrid<RegionCoord, RegionTile> regions;
+
+    @Shadow(remap = false)
     public abstract void clear();
 
     @Shadow(remap = false)
@@ -59,22 +77,48 @@ public abstract class MapRendererMixin implements JourneyMapSeamPass {
     @Unique
     private ResourceKey<Level> toroidal$lastLevelDimension;
 
-    // JourneyMap never evicts tiles on a dimension change, and one render with the new state poisons the region-image cache.
+    @Unique
+    private File toroidal$lastWorldDir;
+
     @Inject(method = "center(Ljava/io/File;Ljourneymap/client/model/map/MapType;DDI)Z", at = @At("HEAD"))
-    private void toroidal$dropTilesOnDimensionChange(CallbackInfoReturnable<Boolean> cir) {
+    private void toroidal$dropTilesOnWorldChange(File worldDir, MapType mapType, double blockX, double blockZ,
+            int zoom, CallbackInfoReturnable<Boolean> cir) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
             return;
         }
 
         ResourceKey<Level> dimension = level.dimension();
-        if (toroidal$lastLevelDimension != null && toroidal$lastLevelDimension != dimension) {
+        String reason = JourneyMapFold.staleGridReason(toroidal$lastLevelDimension, dimension,
+                toroidal$lastWorldDir, worldDir);
+        if (reason != null) {
+            boolean byWorld = JourneyMapFold.WORLD_CHANGED.equals(reason);
+            JourneyMapFold.gridDropped(reason,
+                    byWorld ? toroidal$lastWorldDir.getName() : toroidal$lastLevelDimension.identifier().toString(),
+                    byWorld ? worldDir.getName() : dimension.identifier().toString(),
+                    this.regions.size());
             this.clear();
-            JourneyMapFold.gridDropped(toroidal$lastLevelDimension.identifier().toString(),
-                    dimension.identifier().toString());
         }
 
         toroidal$lastLevelDimension = dimension;
+        if (worldDir != null) {
+            toroidal$lastWorldDir = worldDir;
+        }
+    }
+
+    @WrapOperation(
+            method = "loadInMemoryRegions",
+            at = @At(value = "INVOKE",
+                    target = "Ljourneymap/client/model/region/RegionImageCache;getRegionImageSets()Ljava/util/Collection;"))
+    private Collection<RegionImageSet> toroidal$onlyThisWorldsRegions(RegionImageCache cache,
+            Operation<Collection<RegionImageSet>> original) {
+        Collection<RegionImageSet> sets = original.call(cache);
+        File dir = this.worldDir;
+        if (dir == null) {
+            return sets;
+        }
+
+        return sets.stream().filter(set -> dir.equals(set.getRegionCoord().worldDir)).toList();
     }
 
     @ModifyVariable(
