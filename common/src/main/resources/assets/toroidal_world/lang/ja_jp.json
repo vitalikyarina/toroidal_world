@@ -37,7 +37,6 @@
   "gui.toroidal_world.toroidal_settings.too_large": "大きすぎます — 最大 %s チャンクです。",
   "gui.toroidal_world.toroidal_settings.section.additional": "追加オプション",
   "gui.toroidal_world.toroidal_settings.climate_compression": "コンパクトなバイオーム",
-  "gui.toroidal_world.toroidal_settings.climate_mode.off": "オフ",
   "gui.toroidal_world.toroidal_settings.climate_mode.off.hint": "バイオームは通常の大きさのままなので、小さなワールドは森だけ、砂漠だけになることがあります。",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto": "自動",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto.hint": "気候ひとそろいがちょうど一周に収まるぶんだけバイオームを縮めます。すでに十分広いワールドでは何も変わりません。",

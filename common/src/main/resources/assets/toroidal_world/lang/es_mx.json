@@ -37,7 +37,6 @@
   "gui.toroidal_world.toroidal_settings.too_large": "Demasiado grande — como máximo %s chunks.",
   "gui.toroidal_world.toroidal_settings.section.additional": "Opciones adicionales",
   "gui.toroidal_world.toroidal_settings.climate_compression": "Biomas compactos",
-  "gui.toroidal_world.toroidal_settings.climate_mode.off": "Apagado",
   "gui.toroidal_world.toroidal_settings.climate_mode.off.hint": "Los biomas conservan su tamaño habitual, así que un mundo pequeño puede ser todo bosque o todo desierto.",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto": "Automático",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto.hint": "Reduce los biomas justo lo necesario para que un clima completo quepa en una vuelta; en un mundo ya bastante ancho no cambia nada.",

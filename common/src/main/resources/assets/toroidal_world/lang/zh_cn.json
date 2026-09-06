@@ -37,7 +37,6 @@
   "gui.toroidal_world.toroidal_settings.too_large": "太大——至多 %s 区块。",
   "gui.toroidal_world.toroidal_settings.section.additional": "附加选项",
   "gui.toroidal_world.toroidal_settings.climate_compression": "紧凑生物群系",
-  "gui.toroidal_world.toroidal_settings.climate_mode.off": "关闭",
   "gui.toroidal_world.toroidal_settings.climate_mode.off.hint": "生物群系保持正常大小，小世界可能全是森林或全是沙漠。",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto": "自动",
   "gui.toroidal_world.toroidal_settings.climate_mode.auto.hint": "只把生物群系缩小到一整套气候正好装进一圈的程度；世界本就够大时不作改变。",
