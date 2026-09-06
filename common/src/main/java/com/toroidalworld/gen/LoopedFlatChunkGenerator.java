@@ -2,6 +2,7 @@ package com.toroidalworld.gen;
 
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -19,18 +20,19 @@ public class LoopedFlatChunkGenerator extends FlatLevelSource implements ShapedC
             instance -> instance.group(
                     FlatLevelGeneratorSettings.CODEC.fieldOf(SETTINGS_KEY).forGetter(LoopedFlatChunkGenerator::settings),
                     SHAPE_CODEC.fieldOf(WRAPPING_KEY).forGetter(LoopedFlatChunkGenerator::shape),
-                    CLIMATE_COMPRESSION_CODEC.forGetter(LoopedFlatChunkGenerator::climateCompression)
+                    CLIMATE_SCALE_CODEC.forGetter(LoopedFlatChunkGenerator::climateScale)
             ).apply(instance, instance.stable(LoopedFlatChunkGenerator::new)));
 
     private final FlatShape shape;
-    private final boolean climateCompression;
+    private final ClimateScale climateScale;
     private final WorldFold transformer;
 
-    public LoopedFlatChunkGenerator(FlatLevelGeneratorSettings settings, FlatShape shape, boolean climateCompression) {
+    public LoopedFlatChunkGenerator(FlatLevelGeneratorSettings settings, FlatShape shape,
+            ClimateScale climateScale) {
         super(settings);
         this.shape = shape;
-        this.climateCompression = climateCompression;
-        this.transformer = WorldFolds.of(shape, climateCompression);
+        this.climateScale = climateScale;
+        this.transformer = WorldFolds.of(shape, climateScale);
     }
 
     @Override
@@ -39,8 +41,8 @@ public class LoopedFlatChunkGenerator extends FlatLevelSource implements ShapedC
     }
 
     @Override
-    public boolean climateCompression() {
-        return this.climateCompression;
+    public ClimateScale climateScale() {
+        return this.climateScale;
     }
 
     @Override

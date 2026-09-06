@@ -4,6 +4,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
+import com.toroidalworld.accessors.ClimateFieldMark;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.noise.NoiseConstants;
@@ -14,7 +15,7 @@ import net.minecraft.world.level.levelgen.synth.NormalNoise;
 import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 
 @Mixin(NormalNoise.class)
-public class NormalNoiseMixin {
+public class NormalNoiseMixin implements ClimateFieldMark {
     @Shadow
     @Final
     private PerlinNoise first;
@@ -26,6 +27,12 @@ public class NormalNoiseMixin {
     @Shadow
     @Final
     private double valueFactor;
+
+    @Override
+    public void toroidal$markClimateField() {
+        ((ClimateFieldMark) (Object) this.first).toroidal$markClimateField();
+        ((ClimateFieldMark) (Object) this.second).toroidal$markClimateField();
+    }
 
     @WrapMethod(method = "getValue(DDD)D")
     private double toroidal$periodicValue(double x, double y, double z, Operation<Double> original) {

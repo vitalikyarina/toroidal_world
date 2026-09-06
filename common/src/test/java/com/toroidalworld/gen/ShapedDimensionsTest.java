@@ -44,7 +44,7 @@ class ShapedDimensionsTest {
     void strippingASuperflatShapeHandsBackThePlainFlatSourceOnItsOwnSettings() {
         FlatLevelGeneratorSettings settings = flatSettings();
         WorldDimensions stripped = ShapedDimensions.stripShapes(overworldOf(new LoopedFlatChunkGenerator(
-                settings, TORUS, WorldFolds.CLIMATE_COMPRESSION_DEFAULT)));
+                settings, TORUS, WorldFolds.CLIMATE_SCALE_DEFAULT)));
 
         ChunkGenerator generator = overworldGeneratorOf(stripped);
         assertNull(ShapedDimensions.shapeOf(stripped, LevelStem.OVERWORLD));
@@ -57,7 +57,7 @@ class ShapedDimensionsTest {
         BiomeSource biomes = plainsBiomeSource();
         Holder<NoiseGeneratorSettings> settings = overworldNoiseSettings();
         WorldDimensions stripped = ShapedDimensions.stripShapes(overworldOf(new LoopedChunkGenerator(
-                biomes, settings, TORUS, WorldFolds.CLIMATE_COMPRESSION_DEFAULT)));
+                biomes, settings, TORUS, WorldFolds.CLIMATE_SCALE_DEFAULT)));
 
         ChunkGenerator generator = overworldGeneratorOf(stripped);
         assertNull(ShapedDimensions.shapeOf(stripped, LevelStem.OVERWORLD));
@@ -70,7 +70,7 @@ class ShapedDimensionsTest {
     void reShapingASuperflatWorldRebuildsFromTheFlatSettingsRatherThanTheOldShape() {
         FlatLevelGeneratorSettings settings = flatSettings();
         WorldDimensions reshaped = ShapedDimensions.withShape(
-                overworldOf(new LoopedFlatChunkGenerator(settings, TORUS, WorldFolds.CLIMATE_COMPRESSION_DEFAULT)),
+                overworldOf(new LoopedFlatChunkGenerator(settings, TORUS, WorldFolds.CLIMATE_SCALE_DEFAULT)),
                 LevelStem.OVERWORLD, CYLINDER);
 
         assertEquals(CYLINDER, ShapedDimensions.shapeOf(reshaped, LevelStem.OVERWORLD));

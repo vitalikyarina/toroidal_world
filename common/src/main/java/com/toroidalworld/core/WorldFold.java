@@ -2,6 +2,7 @@ package com.toroidalworld.core;
 
 import java.util.List;
 
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.options.WorldLoopBounds;
 
 import net.minecraft.core.BlockPos;
@@ -32,7 +33,7 @@ public interface WorldFold {
 
     boolean preservesLocalIndices();
 
-    boolean compressesClimate();
+    ClimateScale climateScale();
 
     WrapDomain blockDomain(Direction.Axis axis);
 

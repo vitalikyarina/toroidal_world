@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.SharedConstants;
@@ -59,7 +60,7 @@ class BakeStampTest {
     private static final int STORED_END_CHUNK_WIDTH = 192;
     private static final int DATAPACK_DECLARED_CHUNK_WIDTH = 128;
 
-    private static final boolean UNCOMPRESSED = false;
+    private static final ClimateScale UNCOMPRESSED = ClimateScale.OFF;
 
     private static final ResourceKey<LevelStem> FOREIGN = stemKey("foreign");
     private static final ResourceKey<LevelStem> SIBLING = stemKey("sibling");
@@ -322,7 +323,7 @@ class BakeStampTest {
                 Map.of(FOREIGN, stem(SAME_SCALE, foreignGenerator())));
 
         assertNotNull(shapeOf(baked, FOREIGN), "the foreign stem carries no fold, so this run says nothing");
-        assertFalse(ShapedChunkGenerator.climateCompressionOf(generatorOf(baked, FOREIGN)));
+        assertEquals(ClimateScale.OFF, ShapedChunkGenerator.climateScaleOf(generatorOf(baked, FOREIGN)));
     }
 
     @Test
@@ -335,7 +336,7 @@ class BakeStampTest {
 
         LoopedChunkGenerator restored = assertInstanceOf(LoopedChunkGenerator.class,
                 generatorOf(baked, LevelStem.OVERWORLD));
-        assertFalse(restored.climateCompression());
+        assertEquals(ClimateScale.OFF, restored.climateScale());
     }
 
     private static Map<ResourceKey<LevelStem>, LevelStem> storedToroidalWorld() {

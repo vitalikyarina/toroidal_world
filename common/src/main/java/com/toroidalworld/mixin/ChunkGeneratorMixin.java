@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.Unique;
 import com.toroidalworld.accessors.ShapeStamp;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -20,7 +21,7 @@ public class ChunkGeneratorMixin implements ShapeStamp {
     private volatile @Nullable WorldFold toroidal$stampedTransformer;
 
     @Unique
-    private volatile boolean toroidal$stampedClimateCompression = WorldFolds.CLIMATE_COMPRESSION_DEFAULT;
+    private volatile ClimateScale toroidal$stampedClimateScale = WorldFolds.CLIMATE_SCALE_DEFAULT;
 
     @Override
     public @Nullable FlatShape toroidal$stampedShape() {
@@ -33,21 +34,21 @@ public class ChunkGeneratorMixin implements ShapeStamp {
     }
 
     @Override
-    public boolean toroidal$stampedClimateCompression() {
-        return this.toroidal$stampedClimateCompression;
+    public ClimateScale toroidal$stampedClimateScale() {
+        return this.toroidal$stampedClimateScale;
     }
 
     @Override
-    public void toroidal$stamp(FlatShape shape, boolean climateCompression) {
+    public void toroidal$stamp(FlatShape shape, ClimateScale climateScale) {
         this.toroidal$stampedShape = shape;
-        this.toroidal$stampedClimateCompression = climateCompression;
-        this.toroidal$stampedTransformer = WorldFolds.of(shape, climateCompression);
+        this.toroidal$stampedClimateScale = climateScale;
+        this.toroidal$stampedTransformer = WorldFolds.of(shape, climateScale);
     }
 
     @Override
     public void toroidal$clearStamp() {
         this.toroidal$stampedShape = null;
-        this.toroidal$stampedClimateCompression = WorldFolds.CLIMATE_COMPRESSION_DEFAULT;
+        this.toroidal$stampedClimateScale = WorldFolds.CLIMATE_SCALE_DEFAULT;
         this.toroidal$stampedTransformer = null;
     }
 }

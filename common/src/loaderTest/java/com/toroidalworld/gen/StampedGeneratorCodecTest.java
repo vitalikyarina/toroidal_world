@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import com.toroidalworld.ToroidalWorld;
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.serialization.DataResult;
 
@@ -30,10 +31,10 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 @Timeout(60)
 class StampedGeneratorCodecTest {
     private static final String SHAPE_KEY = ToroidalWorld.MODID + ":" + ShapedChunkGenerator.WRAPPING_KEY;
-    private static final String CLIMATE_COMPRESSION_KEY =
-            ToroidalWorld.MODID + ":" + ShapedChunkGenerator.CLIMATE_COMPRESSION_KEY;
+    private static final String CLIMATE_SCALE_KEY =
+            ToroidalWorld.MODID + ":" + ShapedChunkGenerator.CLIMATE_SCALE_KEY;
 
-    private static final boolean UNCOMPRESSED = false;
+    private static final ClimateScale UNCOMPRESSED = ClimateScale.OFF;
 
     private static final int STAMPED_CHUNK_WIDTH = 64;
 
@@ -54,11 +55,11 @@ class StampedGeneratorCodecTest {
         CompoundTag encoded = encode(stamped(noiseGenerator(worldgen), shape));
 
         assertTrue(encoded.contains(SHAPE_KEY), "the stamped shape never reached the encoded generator");
-        assertFalse(encoded.contains(CLIMATE_COMPRESSION_KEY), "a compressed stamp wrote the choice it need not");
+        assertFalse(encoded.contains(CLIMATE_SCALE_KEY), "a compressed stamp wrote the choice it need not");
 
         ChunkGenerator decoded = decode(encoded).getOrThrow();
         assertEquals(shape, ShapedChunkGenerator.wrappedShapeOf(decoded));
-        assertTrue(ShapedChunkGenerator.climateCompressionOf(decoded));
+        assertEquals(ClimateScale.AUTO, ShapedChunkGenerator.climateScaleOf(decoded));
     }
 
     @Test
@@ -66,11 +67,11 @@ class StampedGeneratorCodecTest {
         FlatShape shape = squareTorus(STAMPED_CHUNK_WIDTH);
         CompoundTag encoded = encode(stamped(noiseGenerator(worldgen), shape, UNCOMPRESSED));
 
-        assertTrue(encoded.contains(CLIMATE_COMPRESSION_KEY), "the stamped choice never reached the encoded generator");
+        assertTrue(encoded.contains(CLIMATE_SCALE_KEY), "the stamped choice never reached the encoded generator");
 
         ChunkGenerator decoded = decode(encoded).getOrThrow();
         assertEquals(shape, ShapedChunkGenerator.wrappedShapeOf(decoded));
-        assertFalse(ShapedChunkGenerator.climateCompressionOf(decoded));
+        assertEquals(ClimateScale.OFF, ShapedChunkGenerator.climateScaleOf(decoded));
     }
 
     @Test

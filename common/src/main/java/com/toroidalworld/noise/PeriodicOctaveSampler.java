@@ -13,6 +13,7 @@ public final class PeriodicOctaveSampler {
     public static double sample(
             Context generation,
             ClimateCompressionCache compression,
+            boolean climateField,
             ImprovedNoise[] noiseLevels,
             DoubleList amplitudes,
             double lowestFreqInputFactor,
@@ -25,8 +26,8 @@ public final class PeriodicOctaveSampler {
             boolean useNoiseOrigin) {
         double declaredScale = generation.horizontalScale();
         WorldFold transformer = generation.transformer();
-        double baseScale = declaredScale * ClimateScaleCompression.resolve(compression, transformer, amplitudes,
-                lowestFreqInputFactor, declaredScale, generation.verticalShare());
+        double baseScale = declaredScale * ClimateScaleCompression.resolve(compression, transformer, climateField,
+                amplitudes, lowestFreqInputFactor, declaredScale, generation.verticalShare());
         boolean yCarriesWorldAxis = generation.slotAxes().y().carriesWorldAxis();
         double value = 0.0;
         double factor = lowestFreqInputFactor;

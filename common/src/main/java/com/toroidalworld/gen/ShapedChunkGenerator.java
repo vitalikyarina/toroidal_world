@@ -6,6 +6,7 @@ import com.toroidalworld.accessors.ShapeStamp;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -16,18 +17,18 @@ import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 public interface ShapedChunkGenerator {
     String SETTINGS_KEY = "settings";
     String WRAPPING_KEY = "wrapping";
-    String CLIMATE_COMPRESSION_KEY = "climate_compression";
+    String CLIMATE_SCALE_KEY = "climate_compression";
 
     Codec<FlatShape> SHAPE_CODEC = FlatShape.CODEC
             .validate(WorldFolds::verifyFoldable)
             .validate(WorldFolds::verifyGeneratable);
 
-    MapCodec<Boolean> CLIMATE_COMPRESSION_CODEC =
-            Codec.BOOL.optionalFieldOf(CLIMATE_COMPRESSION_KEY, WorldFolds.CLIMATE_COMPRESSION_DEFAULT);
+    MapCodec<ClimateScale> CLIMATE_SCALE_CODEC =
+            ClimateScale.CODEC.optionalFieldOf(CLIMATE_SCALE_KEY, WorldFolds.CLIMATE_SCALE_DEFAULT);
 
     FlatShape shape();
 
-    boolean climateCompression();
+    ClimateScale climateScale();
 
     WorldFold transformer();
 
@@ -56,14 +57,14 @@ public interface ShapedChunkGenerator {
         return generator instanceof ShapeStamp stamp ? wrapped(stamp.toroidal$stampedTransformer()) : null;
     }
 
-    static boolean climateCompressionOf(ChunkGenerator generator) {
+    static ClimateScale climateScaleOf(ChunkGenerator generator) {
         if (generator instanceof ShapedChunkGenerator shaped) {
-            return shaped.climateCompression();
+            return shaped.climateScale();
         }
 
         return generator instanceof ShapeStamp stamp
-                ? stamp.toroidal$stampedClimateCompression()
-                : WorldFolds.CLIMATE_COMPRESSION_DEFAULT;
+                ? stamp.toroidal$stampedClimateScale()
+                : WorldFolds.CLIMATE_SCALE_DEFAULT;
     }
 
     private static @Nullable WorldFold wrapped(@Nullable WorldFold transformer) {

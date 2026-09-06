@@ -16,6 +16,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
 import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopSizes;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
@@ -40,10 +41,11 @@ class ShapedChunkGeneratorCodecTest {
     private static final HolderLookup.Provider WORLDGEN = VanillaRegistries.createLookup();
 
     private static final String FROZEN_ON_DISK_KEY = "wrapping";
-    private static final String CLIMATE_COMPRESSION_KEY = "climate_compression";
+    private static final String CLIMATE_SCALE_KEY = "climate_compression";
+    private static final String MODE_KEY = "mode";
+    private static final String FACTOR_KEY = "factor";
 
-    private static final boolean COMPRESSED = true;
-    private static final boolean UNCOMPRESSED = false;
+    private static final int CUSTOM_FACTOR = 6;
 
     private static final String TORUS_WRAPPING =
             "{\"x\":{\"min_chunk\":-16,\"max_chunk\":16},\"z\":{\"min_chunk\":-16,\"max_chunk\":16}}";
@@ -182,10 +184,11 @@ class ShapedChunkGeneratorCodecTest {
         RegistryOps<JsonElement> ops = WORLDGEN.createSerializationContext(JsonOps.INSTANCE);
 
         JsonElement encoded = LoopedChunkGenerator.CODEC.codec()
-                .encodeStart(ops, noiseGenerator(FlatShape.torus(SQUARE), COMPRESSED)).getOrThrow();
+                .encodeStart(ops, noiseGenerator(FlatShape.torus(SQUARE), ClimateScale.AUTO)).getOrThrow();
 
-        assertFalse(encoded.getAsJsonObject().has(CLIMATE_COMPRESSION_KEY), encoded.toString());
-        assertTrue(LoopedChunkGenerator.CODEC.codec().parse(ops, encoded).getOrThrow().climateCompression());
+        assertFalse(encoded.getAsJsonObject().has(CLIMATE_SCALE_KEY), encoded.toString());
+        assertEquals(ClimateScale.AUTO,
+                LoopedChunkGenerator.CODEC.codec().parse(ops, encoded).getOrThrow().climateScale());
     }
 
     @Test
@@ -193,20 +196,22 @@ class ShapedChunkGeneratorCodecTest {
         RegistryOps<JsonElement> ops = WORLDGEN.createSerializationContext(JsonOps.INSTANCE);
 
         JsonElement encoded = LoopedChunkGenerator.CODEC.codec()
-                .encodeStart(ops, noiseGenerator(FlatShape.torus(SQUARE), UNCOMPRESSED)).getOrThrow();
+                .encodeStart(ops, noiseGenerator(FlatShape.torus(SQUARE), ClimateScale.OFF)).getOrThrow();
 
-        assertFalse(encoded.getAsJsonObject().get(CLIMATE_COMPRESSION_KEY).getAsBoolean(), encoded.toString());
-        assertFalse(LoopedChunkGenerator.CODEC.codec().parse(ops, encoded).getOrThrow().climateCompression());
+        assertFalse(encoded.getAsJsonObject().get(CLIMATE_SCALE_KEY).getAsBoolean(), encoded.toString());
+        assertEquals(ClimateScale.OFF,
+                LoopedChunkGenerator.CODEC.codec().parse(ops, encoded).getOrThrow().climateScale());
     }
 
     @Test
     void aWorldFileWithoutTheChoiceLoadsCompressed() {
         RegistryOps<JsonElement> ops = WORLDGEN.createSerializationContext(JsonOps.INSTANCE);
         JsonElement encoded = LoopedChunkGenerator.CODEC.codec()
-                .encodeStart(ops, noiseGenerator(FlatShape.torus(SQUARE), UNCOMPRESSED)).getOrThrow();
-        encoded.getAsJsonObject().remove(CLIMATE_COMPRESSION_KEY);
+                .encodeStart(ops, noiseGenerator(FlatShape.torus(SQUARE), ClimateScale.OFF)).getOrThrow();
+        encoded.getAsJsonObject().remove(CLIMATE_SCALE_KEY);
 
-        assertTrue(LoopedChunkGenerator.CODEC.codec().parse(ops, encoded).getOrThrow().climateCompression());
+        assertEquals(ClimateScale.AUTO,
+                LoopedChunkGenerator.CODEC.codec().parse(ops, encoded).getOrThrow().climateScale());
     }
 
     @Test
@@ -214,32 +219,33 @@ class ShapedChunkGeneratorCodecTest {
         RegistryOps<JsonElement> ops = WORLDGEN.createSerializationContext(JsonOps.INSTANCE);
 
         JsonElement encoded = LoopedFlatChunkGenerator.CODEC.codec()
-                .encodeStart(ops, flatGenerator(FlatShape.torus(SQUARE), UNCOMPRESSED)).getOrThrow();
+                .encodeStart(ops, flatGenerator(FlatShape.torus(SQUARE), ClimateScale.OFF)).getOrThrow();
 
-        assertFalse(encoded.getAsJsonObject().get(CLIMATE_COMPRESSION_KEY).getAsBoolean(), encoded.toString());
-        assertFalse(LoopedFlatChunkGenerator.CODEC.codec().parse(ops, encoded).getOrThrow().climateCompression());
+        assertFalse(encoded.getAsJsonObject().get(CLIMATE_SCALE_KEY).getAsBoolean(), encoded.toString());
+        assertEquals(ClimateScale.OFF,
+                LoopedFlatChunkGenerator.CODEC.codec().parse(ops, encoded).getOrThrow().climateScale());
     }
 
     private static LoopedChunkGenerator noiseGenerator(FlatShape shape) {
-        return noiseGenerator(shape, WorldFolds.CLIMATE_COMPRESSION_DEFAULT);
+        return noiseGenerator(shape, WorldFolds.CLIMATE_SCALE_DEFAULT);
     }
 
-    private static LoopedChunkGenerator noiseGenerator(FlatShape shape, boolean climateCompression) {
+    private static LoopedChunkGenerator noiseGenerator(FlatShape shape, ClimateScale climateScale) {
         return new LoopedChunkGenerator(
                 new FixedBiomeSource(WORLDGEN.lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS)),
                 WORLDGEN.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(NoiseGeneratorSettings.OVERWORLD),
-                shape, climateCompression);
+                shape, climateScale);
     }
 
     private static LoopedFlatChunkGenerator flatGenerator(FlatShape shape) {
-        return flatGenerator(shape, WorldFolds.CLIMATE_COMPRESSION_DEFAULT);
+        return flatGenerator(shape, WorldFolds.CLIMATE_SCALE_DEFAULT);
     }
 
-    private static LoopedFlatChunkGenerator flatGenerator(FlatShape shape, boolean climateCompression) {
+    private static LoopedFlatChunkGenerator flatGenerator(FlatShape shape, ClimateScale climateScale) {
         return new LoopedFlatChunkGenerator(new FlatLevelGeneratorSettings(
                 Optional.empty(),
                 WORLDGEN.lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS),
-                List.of()), shape, climateCompression);
+                List.of()), shape, climateScale);
     }
 
     private static String readError(String json) {

@@ -13,6 +13,7 @@ import org.jspecify.annotations.Nullable;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -40,23 +41,23 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
                     BiomeSource.CODEC.fieldOf(BIOME_SOURCE_KEY).forGetter(ChunkGenerator::getBiomeSource),
                     NoiseGeneratorSettings.CODEC.fieldOf(SETTINGS_KEY).forGetter(NoiseBasedChunkGenerator::generatorSettings),
                     SHAPE_CODEC.fieldOf(WRAPPING_KEY).forGetter(LoopedChunkGenerator::shape),
-                    CLIMATE_COMPRESSION_CODEC.forGetter(LoopedChunkGenerator::climateCompression)
+                    CLIMATE_SCALE_CODEC.forGetter(LoopedChunkGenerator::climateScale)
             ).apply(instance, instance.stable(LoopedChunkGenerator::new)));
 
     private static final int BASE_HEIGHT_CACHE_CAP = 1 << 18;
 
     private final FlatShape shape;
-    private final boolean climateCompression;
+    private final ClimateScale climateScale;
     private final WorldFold transformer;
 
     private final List<Map<Long, Integer>> baseHeightCache;
 
     public LoopedChunkGenerator(BiomeSource biomeSource, Holder<NoiseGeneratorSettings> settings, FlatShape shape,
-            boolean climateCompression) {
+            ClimateScale climateScale) {
         super(biomeSource, settings);
         this.shape = shape;
-        this.climateCompression = climateCompression;
-        this.transformer = WorldFolds.of(shape, climateCompression);
+        this.climateScale = climateScale;
+        this.transformer = WorldFolds.of(shape, climateScale);
 
         List<Map<Long, Integer>> caches = new ArrayList<>();
         for (int i = 0; i < Heightmap.Types.values().length; i++) {
@@ -71,8 +72,8 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
     }
 
     @Override
-    public boolean climateCompression() {
-        return this.climateCompression;
+    public ClimateScale climateScale() {
+        return this.climateScale;
     }
 
     @Override
