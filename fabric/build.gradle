@@ -129,6 +129,9 @@ tasks.named('jar', Jar) {
 // mixins this jar ships are exercised by the loader that applies them.
 sourceSets.test.java.srcDir '../common/src/loaderTest/java'
 
+// The scans are measurements over the same folded router, run by the scan tool rather than by the gate.
+sourceSets.test.java.srcDir '../common/src/scan/java'
+
 dependencies {
     testImplementation "net.fabricmc:fabric-loader-junit:${fabric_loader_version}"
     testImplementation platform("org.junit:junit-bom:${junit_version}")
@@ -138,9 +141,19 @@ dependencies {
 
 test {
     useJUnitPlatform()
-    // A --tests pattern that names nothing in this module is a zero-test run, not a failed one.
-    filter { failOnNoMatchingTests = false }
+    filter {
+        // A --tests pattern that names nothing in this module is a zero-test run, not a failed one.
+        failOnNoMatchingTests = false
+        // The scans are measurements, not the gate: test leaves them out, -Pscans runs nothing else.
+        if (project.hasProperty('scans')) {
+            includeTestsMatching 'com.toroidalworld.scan.*'
+        } else {
+            excludeTestsMatching 'com.toroidalworld.scan.*'
+        }
+    }
     systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
+    // The test JVM's working directory is kept under build/, so the scans are told where the module's reports go.
+    systemProperty 'toroidal.scan.reports', layout.buildDirectory.dir('reports/scan').get().asFile.absolutePath
     // The vanilla log4j config writes logs/latest.log into the working directory — kept under build/, as FML does.
     workingDir = layout.buildDirectory.dir('test-run').get().asFile
     doFirst { workingDir.mkdirs() }
