@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.accessors.ShapeStamp;
 import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.options.ClimateScale;
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
@@ -17,11 +18,11 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 
 public final class StampedGeneratorCodec {
     static final String SHAPE_KEY = ToroidalWorld.MODID + ":" + ShapedChunkGenerator.WRAPPING_KEY;
-    static final String CLIMATE_COMPRESSION_KEY =
-            ToroidalWorld.MODID + ":" + ShapedChunkGenerator.CLIMATE_COMPRESSION_KEY;
+    static final String CLIMATE_SCALE_KEY =
+            ToroidalWorld.MODID + ":" + ShapedChunkGenerator.CLIMATE_SCALE_KEY;
 
-    private static final MapCodec<Boolean> CLIMATE_COMPRESSION_CODEC =
-            Codec.BOOL.optionalFieldOf(CLIMATE_COMPRESSION_KEY, WorldFolds.CLIMATE_COMPRESSION_DEFAULT);
+    private static final MapCodec<ClimateScale> CLIMATE_SCALE_CODEC =
+            ClimateScale.CODEC.optionalFieldOf(CLIMATE_SCALE_KEY, WorldFolds.CLIMATE_SCALE_DEFAULT);
 
     public static Codec<ChunkGenerator> over(Codec<ChunkGenerator> dispatch) {
         return new StampCarrying(dispatch);
@@ -53,10 +54,10 @@ public final class StampedGeneratorCodec {
             }
 
             FlatShape shape = stamp.toroidal$stampedShape();
-            boolean climateCompression = stamp.toroidal$stampedClimateCompression();
+            ClimateScale climateScale = stamp.toroidal$stampedClimateScale();
             return encoded.flatMap(map -> ShapedChunkGenerator.SHAPE_CODEC.encodeStart(ops, shape)
                     .flatMap(value -> ops.mergeToMap(map, ops.createString(SHAPE_KEY), value)))
-                    .flatMap(map -> CLIMATE_COMPRESSION_CODEC.encode(climateCompression, ops, ops.mapBuilder())
+                    .flatMap(map -> CLIMATE_SCALE_CODEC.encode(climateScale, ops, ops.mapBuilder())
                             .build(map));
         }
 
@@ -75,8 +76,8 @@ public final class StampedGeneratorCodec {
             }
 
             return ShapedChunkGenerator.SHAPE_CODEC.parse(ops, carried)
-                    .flatMap(shape -> CLIMATE_COMPRESSION_CODEC.decode(ops, map).map(climateCompression -> {
-                        stamp.toroidal$stamp(shape, climateCompression);
+                    .flatMap(shape -> CLIMATE_SCALE_CODEC.decode(ops, map).map(climateScale -> {
+                        stamp.toroidal$stamp(shape, climateScale);
                         return decoded;
                     }));
         }

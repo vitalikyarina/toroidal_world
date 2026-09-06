@@ -64,7 +64,7 @@ class ShapedStemSeedOverrideTest {
         NoiseBasedChunkGenerator noise = (NoiseBasedChunkGenerator) noiseGenerator(worldgen);
         LevelStem declared = declaredStem(
                 new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), SHAPE,
-                        WorldFolds.CLIMATE_COMPRESSION_DEFAULT));
+                        WorldFolds.CLIMATE_SCALE_DEFAULT));
 
         WorldDimensions stripped = ShapedDimensions.stripShapes(selected(Map.of(LevelStem.OVERWORLD, declared)));
 

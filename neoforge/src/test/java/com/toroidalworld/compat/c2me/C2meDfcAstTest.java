@@ -54,6 +54,8 @@ class C2meDfcAstTest {
 
     private static final double FLAT_Y_SCALE = 0.0;
 
+    private static final boolean CLIMATE_FIELD = true;
+
     private static final int GRID_SAMPLES = 16;
 
     @Test
@@ -151,7 +153,7 @@ class C2meDfcAstTest {
     }
 
     private static void assertCorrectionIsLive(WorldFold fold) {
-        double compression = ClimateScaleCompression.factor(fold, CLIMATE_AMPLITUDES,
+        double compression = ClimateScaleCompression.factor(fold, CLIMATE_FIELD, CLIMATE_AMPLITUDES,
                 Math.pow(2.0, CLIMATE_FIRST_OCTAVE), CLIMATE_XZ_SCALE, FLAT_Y_SCALE / CLIMATE_XZ_SCALE);
 
         assertTrue(compression > 1.0,
