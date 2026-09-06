@@ -13,6 +13,7 @@ import com.simibubi.create.content.logistics.redstoneRequester.RedstoneRequester
 import com.simibubi.create.content.logistics.stockTicker.LogisticalStockResponsePacket;
 import com.simibubi.create.content.schematics.cannon.SchematicannonBlockEntity;
 import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
+import com.simibubi.create.infrastructure.command.HighlightPacket;
 import com.toroidalworld.core.FoldedCopies;
 import com.toroidalworld.net.PacketTranslator;
 import com.toroidalworld.net.TagPositions;
@@ -113,6 +114,11 @@ public final class CreateTranslation {
                             ? payload
                             : new LogisticalStockResponsePacket(payload.lastPacket(), ticker, payload.items());
                 });
+
+        PacketTranslator.registerClientboundPayloadRewriter(HighlightPacket.class, (payload, context) -> {
+            BlockPos outlined = seat(context, payload.pos());
+            return outlined == payload.pos() ? payload : new HighlightPacket(outlined);
+        });
     }
 
     private static BlockPos seat(TranslationContext context, BlockPos pos) {
