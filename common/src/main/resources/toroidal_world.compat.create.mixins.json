@@ -101,6 +101,7 @@
     "AbstractContraptionEntityClientMixin",
     "BeltConnectorHandlerMixin",
     "BlockEntityDataPacketMixin",
+    "CarriageContraptionEntityRendererMixin",
     "CarriageSyncDataMixin",
     "ClickToLinkBlockItemClientMixin",
     "FTBChunksTrainMapMixin",
