@@ -29,33 +29,24 @@ public final class OctaveVarianceCorrection {
     };
 
     private static final double[] FLAT_CORRECTION = {
-            0.130, 0.194, 0.258, 0.319, 0.371, 0.435, 0.488, 0.578, 0.654, 0.727, 0.765, 0.815, 0.843, 0.876, 0.888
+            0.138, 0.207, 0.275, 0.339, 0.395, 0.462, 0.519, 0.615, 0.696, 0.774, 0.814, 0.867, 0.897, 0.932, 0.945
     };
 
-    // The DC component: vanilla's window mean wanders seed to seed (mean-spread 0.271 at f=0.125 down to 0.132 at
-    // 1.4375), while the damped fold's contribution to the world mean collapses to k·0.054 — without restoration
-    // every toroidal world parks at the spline's coast band (measured in-game as all-coast worlds). The gain scales a
-    // fixed-lattice-point sample of the same octave (pointwise spread 0.2763), sized so the combined mean spread
-    // lands on vanilla's: a(f) = sqrt(vanillaMeanSpread² − (k·foldMeanSpread)²) / anchorSpread.
     private static final double[] ANCHOR_GAIN = {
-            0.979, 0.959, 0.934, 0.948, 0.898, 0.872, 0.846, 0.795, 0.746, 0.687, 0.602, 0.551, 0.498, 0.481, 0.445
+            0.994, 0.972, 0.944, 0.956, 0.902, 0.871, 0.840, 0.779, 0.717, 0.643, 0.542, 0.471, 0.397, 0.364, 0.309
     };
 
-    // The liveness grid: measured vanilla-over-floored rms ratio for an octave sampled across ν vertical cells per
-    // world height (rows = cells per lap, columns = LIVENESS_VERTICAL_CELLS). Real vertical variation restores the
-    // spread on both sides of the comparison, so the deficit shrinks as ν grows; the correction applies the row-wise
-    // ratio against the ν=0 column as a relief on top of the finer flat table.
     private static final double[] LIVENESS_CELLS_PER_LAP = {0.125, 0.25, 0.5, 0.75, 1.0, 1.25};
 
     private static final double[] LIVENESS_VERTICAL_CELLS = {0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0};
 
     private static final double[][] LIVENESS = {
-            {0.129, 0.229, 0.393, 0.604, 0.813, 0.901, 0.942, 0.928},
-            {0.264, 0.328, 0.446, 0.668, 0.829, 0.911, 0.944, 0.939},
-            {0.484, 0.508, 0.586, 0.726, 0.839, 0.927, 0.960, 0.951},
-            {0.655, 0.698, 0.730, 0.833, 0.910, 0.942, 0.974, 0.969},
-            {0.755, 0.792, 0.825, 0.876, 0.934, 0.979, 0.988, 0.985},
-            {0.824, 0.860, 0.883, 0.927, 0.957, 0.974, 0.990, 0.980}};
+            {0.140, 0.246, 0.417, 0.617, 0.819, 0.903, 0.943, 0.936},
+            {0.278, 0.346, 0.464, 0.686, 0.834, 0.911, 0.944, 0.943},
+            {0.513, 0.542, 0.608, 0.743, 0.845, 0.931, 0.956, 0.961},
+            {0.695, 0.746, 0.757, 0.858, 0.919, 0.947, 0.977, 0.973},
+            {0.788, 0.838, 0.855, 0.899, 0.929, 0.978, 0.994, 0.992},
+            {0.890, 0.910, 0.915, 0.943, 0.967, 0.975, 0.993, 0.990}};
 
     // The bound below which round(f) would fall under 2 — the regime where the sampler floors the period and the
     // extra lattice structure over-delivers amplitude.

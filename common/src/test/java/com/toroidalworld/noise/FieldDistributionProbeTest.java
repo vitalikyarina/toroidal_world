@@ -24,7 +24,6 @@ import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.levelgen.synth.ImprovedNoise;
 import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 
 // Measurement harness and regression gate of the floating-terrain fix: compares the value distribution of the
@@ -111,7 +110,6 @@ class FieldDistributionProbeTest {
         }
 
         // x/z already carry the caller's horizontal scale (and warp), exactly like vanilla NormalNoise.getValue input.
-        @SuppressWarnings("deprecation")
         double vanillaValue(double x, double z) {
             return (vanillaLayer(0, x, z) + vanillaLayer(1, x * DETUNE, z * DETUNE)) * this.valueFactor;
         }
@@ -246,11 +244,14 @@ class FieldDistributionProbeTest {
         appendOctaveTable(report, EROSION);
         report.append('\n');
 
-        appendDegenerateCalibration(report);
-        appendMeanSpreadCalibration(report);
+        appendDegenerateCalibration(report, LapFloor.FOUR_CELLS, false);
+        appendDegenerateCalibration(report, LapFloor.TWO_CELLS, true);
+        appendMeanSpreadCalibration(report, LapFloor.FOUR_CELLS);
+        appendMeanSpreadCalibration(report, LapFloor.TWO_CELLS);
         appendRectangularCalibration(report);
         appendCylinderCalibration(report);
-        appendVerticalCalibration(report);
+        appendVerticalCalibration(report, LapFloor.FOUR_CELLS, false);
+        appendVerticalCalibration(report, LapFloor.TWO_CELLS, true);
         appendBlendedFoldCalibration(report);
         appendExtremeStatistics(report);
 
@@ -337,19 +338,23 @@ class FieldDistributionProbeTest {
     // per-realization std has a wide spread, and matching mean std leaves the ensemble variance (the actual field
     // distribution) well above vanilla's; sqrt of the variance ratio is the attenuation that matches it exactly.
     @SuppressWarnings("deprecation")
-    private void appendDegenerateCalibration(StringBuilder report) {
+    private void appendDegenerateCalibration(StringBuilder report, LapFloor floor, boolean gates) {
         double[] fractions = {0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.625, 0.75, 0.875, 1.0, 1.125, 1.25,
                 1.375, 1.4375, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0, 4.0, 6.0, 8.0};
         int seeds = 2048;
         int grid = 32;
         java.util.Random windows = new java.util.Random(0x0153E);
-        report.append("degenerate-octave calibration (single octave, 512-block lap, ")
+        report.append("degenerate-octave calibration, floor ").append(floor.period)
+                .append(" cells (single octave, 512-block lap, ")
                 .append(seeds).append(" seeds x ").append(grid).append("x").append(grid).append(" grid):\n");
         for (double fraction : fractions) {
             double scale = fraction / WORLD_BLOCKS;
             double vanillaSum = 0.0;
             double wrappedSum = 0.0;
             double correctedSum = 0.0;
+            double vanillaStepSum = 0.0;
+            double wrappedStepSum = 0.0;
+            double correctedStepSum = 0.0;
             for (int s = 0; s < seeds; s++) {
                 Octave octave = Octave.of(mix(0xCA11B7A7EL + s * 7919L));
                 double windowX = windows.nextDouble() * 1.0E6;
@@ -365,25 +370,53 @@ class FieldDistributionProbeTest {
                         vanillaGrid[k] = octave.vanilla().noise(PerlinNoise.wrap((windowX + x) * scale), 0.0,
                                 PerlinNoise.wrap((windowZ + z) * scale), 0.0, 0.0);
                         wrappedGrid[k] = sample(octave.permutations(), octave.xo(), octave.yo(),
-                                octave.zo(), WORLD, scale, x - 256.0, 0.0, z - 256.0, 0.0, 0.0, -1.0);
+                                octave.zo(), WORLD, scale, x - 256.0, 0.0, z - 256.0, 0.0, 0.0, -1.0, floor);
                         correctedGrid[k] = sample(octave.permutations(), octave.xo(),
-                                octave.yo(), octave.zo(), WORLD, scale, x - 256.0, 0.0, z - 256.0, 0.0, 0.0, 0.0);
+                                octave.yo(), octave.zo(), WORLD, scale, x - 256.0, 0.0, z - 256.0, 0.0, 0.0, 0.0,
+                                floor);
                         k++;
                     }
                 }
                 vanillaSum += variance(vanillaGrid);
                 wrappedSum += variance(wrappedGrid);
                 correctedSum += variance(correctedGrid);
+                vanillaStepSum += maxStep(vanillaGrid, grid);
+                wrappedStepSum += maxStep(wrappedGrid, grid);
+                correctedStepSum += maxStep(correctedGrid, grid);
             }
             double uncorrectedRatio = Math.sqrt(vanillaSum / wrappedSum);
             double correctedRatio = Math.sqrt(vanillaSum / correctedSum);
-            this.octaveGateRows.add(new double[] {fraction, uncorrectedRatio, correctedRatio});
+            if (gates) {
+                this.octaveGateRows.add(new double[] {fraction, uncorrectedRatio, correctedRatio});
+            }
+
             report.append(String.format(
                     "  f=%.3f cells/lap: vanilla rms std %.4f, floored rms std %.4f, ratio k=%.3f, corrected %.3f%n",
                     fraction, Math.sqrt(vanillaSum / seeds), Math.sqrt(wrappedSum / seeds),
                     uncorrectedRatio, correctedRatio));
+            report.append(String.format(
+                    "      largest step over the lap: vanilla %.4f, floored %.4f, corrected %.4f,"
+                            + " corrected/vanilla %.3f%n",
+                    vanillaStepSum / seeds, wrappedStepSum / seeds, correctedStepSum / seeds,
+                    correctedStepSum / vanillaStepSum));
         }
         report.append('\n');
+    }
+
+    private static double maxStep(double[] values, int grid) {
+        double largest = 0.0;
+        for (int i = 0; i < grid; i++) {
+            for (int j = 0; j < grid; j++) {
+                double here = values[i * grid + j];
+                if (i + 1 < grid) {
+                    largest = Math.max(largest, Math.abs(values[(i + 1) * grid + j] - here));
+                }
+                if (j + 1 < grid) {
+                    largest = Math.max(largest, Math.abs(values[i * grid + j + 1] - here));
+                }
+            }
+        }
+        return largest;
     }
 
     // The production flat table extended with the regime bound: from f=1.5 the quantized period leaves period-1 and
@@ -528,14 +561,15 @@ class FieldDistributionProbeTest {
     // reproduce the k1d table; if a live Y restores the variance the way a live horizontal axis does (see the
     // rectangular section), the 2D correction must NOT apply to vertically-sampled noises as-is.
     @SuppressWarnings("deprecation")
-    private void appendVerticalCalibration(StringBuilder report) {
+    private void appendVerticalCalibration(StringBuilder report, LapFloor floor, boolean gates) {
         double[] fractions = {0.125, 0.25, 0.5, 0.75, 1.0, 1.25};
         double[] verticalCells = {0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0};
         int seeds = 512;
         int gridXZ = 16;
         int gridY = 8;
         java.util.Random windows = new java.util.Random(0x0153E);
-        report.append("vertical-liveness calibration (512-block square lap, ").append(seeds)
+        report.append("vertical-liveness calibration, floor ").append(floor.period)
+                .append(" cells (512-block square lap, ").append(seeds)
                 .append(" seeds x ").append(gridXZ).append("x").append(gridXZ).append("x").append(gridY)
                 .append(" grid, nu = vertical cells in window):\n");
         for (double fraction : fractions) {
@@ -568,10 +602,10 @@ class FieldDistributionProbeTest {
                                         PerlinNoise.wrap(y), PerlinNoise.wrap((windowZ + z) * scale), 0.0, 0.0);
                                 wrappedGrid[k] = sample(octave.permutations(), octave.xo(),
                                         octave.yo(), octave.zo(), WORLD, scale, x - 256.0, y, z - 256.0, 0.0, 0.0,
-                                        -1.0);
+                                        -1.0, floor);
                                 correctedGrid[k] = sample(octave.permutations(), octave.xo(),
                                         octave.yo(), octave.zo(), WORLD, scale, x - 256.0, y, z - 256.0, 0.0, 0.0,
-                                        verticalShare);
+                                        verticalShare, floor);
                                 k++;
                             }
                         }
@@ -581,7 +615,9 @@ class FieldDistributionProbeTest {
                     correctedSum += variance(correctedGrid);
                 }
                 double correctedRatio = Math.sqrt(vanillaSum / correctedSum);
-                this.livenessGateRatios.add(correctedRatio);
+                if (gates) {
+                    this.livenessGateRatios.add(correctedRatio);
+                }
                 line.append(String.format("  nu=%.2f k=%.3f c=%.3f", nu, Math.sqrt(vanillaSum / wrappedSum),
                         correctedRatio));
             }
@@ -745,13 +781,14 @@ class FieldDistributionProbeTest {
     // sample per octave frequency; the anchor gain a(f) that restores the vanilla mean spread follows as
     // sqrt(vanillaMeanStd² − (k·foldMeanStd)²) / anchorStd.
     @SuppressWarnings("deprecation")
-    private void appendMeanSpreadCalibration(StringBuilder report) {
+    private void appendMeanSpreadCalibration(StringBuilder report, LapFloor floor) {
         double[] fractions = {0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.625, 0.75, 0.875, 1.0, 1.125, 1.25,
                 1.375, 1.4375, 1.5, 2.0};
         int seeds = 2048;
         int grid = 32;
         java.util.Random windows = new java.util.Random(0x0153E);
-        report.append("mean-spread calibration (std across ").append(seeds)
+        report.append("mean-spread calibration, floor ").append(floor.period)
+                .append(" cells (std across ").append(seeds)
                 .append(" seeds of window/world mean, ").append(grid).append("x").append(grid).append(" grid):\n");
         for (double fraction : fractions) {
             double scale = fraction / WORLD_BLOCKS;
@@ -771,13 +808,13 @@ class FieldDistributionProbeTest {
                         vanillaSum += octave.vanilla().noise(PerlinNoise.wrap((windowX + x) * scale), 0.0,
                                 PerlinNoise.wrap((windowZ + z) * scale), 0.0, 0.0);
                         foldSum += sample(octave.permutations(), octave.xo(), octave.yo(),
-                                octave.zo(), WORLD, scale, x - 256.0, 0.0, z - 256.0, 0.0, 0.0, -1.0);
+                                octave.zo(), WORLD, scale, x - 256.0, 0.0, z - 256.0, 0.0, 0.0, -1.0, floor);
                     }
                 }
                 vanillaMeans[s] = vanillaSum / (grid * grid);
                 foldMeans[s] = foldSum / (grid * grid);
                 anchors[s] = sample(octave.permutations(), octave.xo(), octave.yo(),
-                        octave.zo(), WORLD, scale, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0);
+                        octave.zo(), WORLD, scale, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, floor);
             }
             report.append(String.format(
                     "  f=%.3f cells/lap: vanilla mean-spread %.4f, fold mean-spread %.4f, anchor spread %.4f%n",
