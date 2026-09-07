@@ -55,8 +55,9 @@ public final class CompactBiomesControl implements WorldOptionControl {
 
     @Override
     public void addWidgets(Font font, LinearLayout contents) {
-        contents.addChild(CycleButton.builder(CompactBiomesControl::modeLabel, this.climateScale.mode())
+        contents.addChild(CycleButton.builder(CompactBiomesControl::modeLabel)
                 .withValues(ClimateScale.Mode.values())
+                .withInitialValue(this.climateScale.mode())
                 .withTooltip(mode -> Tooltip.create(modeHint(mode)))
                 .create(0, 0, LoopSizeControls.FIELD_WIDTH, LoopSizeControls.FIELD_HEIGHT, LABEL,
                         (button, mode) -> this.chooseMode(mode)));
