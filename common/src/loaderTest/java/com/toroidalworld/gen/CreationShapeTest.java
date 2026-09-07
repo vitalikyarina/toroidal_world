@@ -96,7 +96,7 @@ class CreationShapeTest {
         assertNotNull(ShapedDimensions.shapeOf(shaped, LevelStem.NETHER), "the nether was never reached");
         for (ResourceKey<LevelStem> key : List.of(LevelStem.OVERWORLD, LevelStem.NETHER, LevelStem.END)) {
             assertEquals(TorusSettings.DEFAULT.climateCompression(),
-                    ShapedDimensions.climateCompressionOf(shaped, key), key.identifier().toString());
+                    ShapedDimensions.climateCompressionOf(shaped, key), key.location().toString());
         }
         TorusSettings read = TorusDimensions.read(shaped);
         assertNotNull(read, "the shaped world does not read back as a torus");

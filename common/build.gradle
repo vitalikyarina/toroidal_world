@@ -157,6 +157,7 @@ neoForge.addModdingDependenciesTo(sourceSets.test)
 sourceSets.test.java.srcDir 'src/testFixtures/java'
 
 dependencies {
+    testCompileOnly "org.jspecify:jspecify:${jspecify_version}"
     testCompileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     testCompileOnly files(aeronauticsModJars).asFileTree.matching { include '*.jar' }
     // The rope seam test builds Simulated's own RopeAttachment records, so the nested jars ride the test runtime too.
