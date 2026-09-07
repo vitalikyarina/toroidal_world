@@ -73,7 +73,7 @@ public final class TerrainCeiling {
         DensityFunction headroom = DensityFunctions.mul(DensityFunctions.constant(lift),
                 DensityFunctions.max(spline, DensityFunctions.zero()));
         return DensityFunctions.add(
-                DensityFunctions.add(DensityFunctions.flatCache(source.preliminarySurfaceLevel()),
+                DensityFunctions.add(DensityFunctions.flatCache(source.initialDensityWithoutJaggedness()),
                         DensityFunctions.constant(BASE_BLOCKS)),
                 headroom);
     }
@@ -106,7 +106,7 @@ public final class TerrainCeiling {
                 source.erosion(),
                 source.depth(),
                 source.ridges(),
-                source.preliminarySurfaceLevel(),
+                source.initialDensityWithoutJaggedness(),
                 finalDensity,
                 source.veinToggle(),
                 source.veinRidged(),
@@ -137,13 +137,11 @@ public final class TerrainCeiling {
                 continue;
             }
 
-            node.mapChildren(child -> {
+            for (DensityFunction child : DensityFunctionChildren.of(node)) {
                 if (seen.add(child)) {
                     pending.add(child);
                 }
-
-                return child;
-            });
+            }
         }
 
         return null;
@@ -160,8 +158,8 @@ public final class TerrainCeiling {
 
         ResourceKey<DensityFunction> key = holder.unwrapKey().orElse(null);
         return key != null
-                && key.identifier().getNamespace().equals(VANILLA_NAMESPACE)
-                && JAGGEDNESS_PATHS.contains(key.identifier().getPath());
+                && key.location().getNamespace().equals(VANILLA_NAMESPACE)
+                && JAGGEDNESS_PATHS.contains(key.location().getPath());
     }
 
     private TerrainCeiling() {

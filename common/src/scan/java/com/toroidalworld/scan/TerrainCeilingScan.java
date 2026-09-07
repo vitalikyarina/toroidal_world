@@ -212,7 +212,7 @@ class TerrainCeilingScan {
             NoiseRouter router = randomState.router();
             DensityFunction ceiling = router.barrierNoise();
             DensityFunction density = router.finalDensity();
-            DensityFunction surface = router.preliminarySurfaceLevel();
+            DensityFunction surface = router.initialDensityWithoutJaggedness();
             GenerationTransformerContext.runWithTransformer(fold, () -> {
                 for (int ix = 0; ix < GRID; ix++) {
                     for (int iz = 0; iz < GRID; iz++) {
@@ -249,7 +249,7 @@ class TerrainCeilingScan {
                 source.erosion(),
                 source.depth(),
                 source.ridges(),
-                source.preliminarySurfaceLevel(),
+                source.initialDensityWithoutJaggedness(),
                 source.finalDensity(),
                 source.veinToggle(),
                 source.veinRidged(),

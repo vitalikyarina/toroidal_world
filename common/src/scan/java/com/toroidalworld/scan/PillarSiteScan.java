@@ -73,7 +73,7 @@ class PillarSiteScan {
         RandomState probeState = randomState(withCeilingParked(vanilla, rawCeiling), fold, SEED);
         RandomState cutState = randomState(TerrainCeiling.withCeiling(vanilla), fold, SEED);
         DensityFunction ceiling = probeState.router().barrierNoise();
-        DensityFunction surface = probeState.router().preliminarySurfaceLevel();
+        DensityFunction surface = probeState.router().initialDensityWithoutJaggedness();
 
         List<String> report = new ArrayList<>();
         report.add("Pillar site — seed " + SEED + ", " + TYPE + ", lap " + WIDTH_BLOCKS + " blocks");

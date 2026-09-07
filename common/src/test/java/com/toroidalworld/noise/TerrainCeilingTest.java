@@ -12,7 +12,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunctions;
@@ -52,7 +52,7 @@ class TerrainCeilingTest {
         MappedRegistry<DensityFunction> functions =
                 new MappedRegistry<>(Registries.DENSITY_FUNCTION, Lifecycle.stable());
         Holder.Reference<DensityFunction> spline = functions.register(
-                ResourceKey.create(Registries.DENSITY_FUNCTION, Identifier.withDefaultNamespace(path)),
+                ResourceKey.create(Registries.DENSITY_FUNCTION, ResourceLocation.withDefaultNamespace(path)),
                 DensityFunctions.constant(splineValue),
                 RegistrationInfo.BUILT_IN);
         functions.freeze();
