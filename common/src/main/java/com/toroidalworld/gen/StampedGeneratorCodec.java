@@ -16,11 +16,12 @@ import com.mojang.serialization.MapLike;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 
 public final class StampedGeneratorCodec {
-    static final String SHAPE_KEY = ToroidalWorld.MODID + ":" + ShapedChunkGenerator.WRAPPING_KEY;
+    private static final String KEY_PREFIX = ToroidalWorld.MODID + ":";
 
-    private static final MapCodec<GenerationOptions> GENERATION_OPTIONS_CODEC = GenerationOptions.mapCodec(
-            ToroidalWorld.MODID + ":" + GenerationOptions.CLIMATE_SCALE_KEY,
-            ToroidalWorld.MODID + ":" + GenerationOptions.GUARANTEED_LAND_KEY);
+    static final String SHAPE_KEY = KEY_PREFIX + ShapedChunkGenerator.WRAPPING_KEY;
+
+    private static final MapCodec<GenerationOptions> GENERATION_OPTIONS_CODEC =
+            GenerationOptions.mapCodec(KEY_PREFIX);
 
     public static Codec<ChunkGenerator> over(Codec<ChunkGenerator> dispatch) {
         return new StampCarrying(dispatch);

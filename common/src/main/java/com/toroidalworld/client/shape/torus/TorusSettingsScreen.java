@@ -1,24 +1,20 @@
 package com.toroidalworld.client.shape.torus;
 
-import java.util.Locale;
-import java.util.OptionalDouble;
+import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.client.screen.DigitsEditBox;
 import com.toroidalworld.client.shape.LoopSizeControls;
-import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.client.options.WorldOptionContext;
+import com.toroidalworld.client.options.WorldOptionControl;
+import com.toroidalworld.client.options.WorldOptionControls;
 import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.CycleButton;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
-import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.layouts.CommonLayouts;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.layouts.LayoutSettings;
 import net.minecraft.client.gui.layouts.LinearLayout;
@@ -28,43 +24,20 @@ import net.minecraft.network.chat.Component;
 
 public class TorusSettingsScreen extends Screen {
     private static final Component TITLE = Component.translatable("gui.toroidal_world.toroidal_settings.title");
-    private static final Component CLIMATE_LABEL =
-            Component.translatable("gui.toroidal_world.toroidal_settings.climate_compression");
     private static final Component ADDITIONAL_SECTION =
             Component.translatable("gui.toroidal_world.toroidal_settings.section.additional")
                     .withStyle(ChatFormatting.BOLD);
-    private static final Component CLIMATE_KEEPS =
-            Component.translatable("gui.toroidal_world.toroidal_settings.climate_keeps");
-    private static final Component GUARANTEED_LAND_LABEL =
-            Component.translatable("gui.toroidal_world.toroidal_settings.guaranteed_land");
-    private static final Component GUARANTEED_LAND_HINT =
-            Component.translatable("gui.toroidal_world.toroidal_settings.guaranteed_land_hint");
-    private static final Component CLIMATE_FACTOR_HINT =
-            Component.translatable("gui.toroidal_world.toroidal_settings.climate_factor_hint");
 
-    private static final String CLIMATE_MODE_KEY_PREFIX = "gui.toroidal_world.toroidal_settings.climate_mode.";
-    private static final String CLIMATE_MODE_HINT_SUFFIX = ".hint";
-    private static final Component FACTOR_LABEL =
-            Component.translatable("gui.toroidal_world.toroidal_settings.climate_factor");
-
-    private static final int FACTOR_MAX_LENGTH = 5;
-    private static final String UNKNOWN_FACTOR = "—";
-    private static final String FRACTIONAL_FACTOR_FORMAT = "%.2f";
     private static final int FOOTER_SPACING = 8;
     private static final int CONTENTS_SPACING = 8;
 
     private final Screen parent;
     private final OnDone onDone;
     private final LoopSizeControls controls;
+    private final GenerationOptions generationOptions;
+    private final List<WorldOptionControl> optionControls;
 
     private HeaderAndFooterLayout layout;
-
-    private final GenerationOptions generationOptions;
-    private ClimateScale climateScale;
-    private boolean guaranteedLand;
-    private String factorText;
-    private @Nullable Integer effectiveFactor;
-    private EditBox factorEdit;
     private Button doneButton;
 
     public TorusSettingsScreen(Screen parent, WorldLoopBounds current, int currentNetherScale,
@@ -73,12 +46,9 @@ public class TorusSettingsScreen extends Screen {
         this.parent = parent;
         this.onDone = onDone;
         this.generationOptions = currentOptions;
-        this.climateScale = currentOptions.climateScale();
-        this.guaranteedLand = currentOptions.guaranteedLand();
-        this.factorText = String.valueOf(this.climateScale.factor());
-        this.effectiveFactor = this.climateScale.factor();
         this.controls = new LoopSizeControls(current.chunkWidth(), currentNetherScale, currentEnd.chunkWidth(),
                 this::onControlsChanged);
+        this.optionControls = WorldOptionControls.createAll(new ScreenContext());
     }
 
     @Override
@@ -93,19 +63,9 @@ public class TorusSettingsScreen extends Screen {
         contents.addChild(new StringWidget(ADDITIONAL_SECTION, this.font),
                 LayoutSettings::alignHorizontallyCenter);
 
-        contents.addChild(CycleButton.builder(TorusSettingsScreen::modeLabel)
-                .withValues(ClimateScale.Mode.values())
-                .withInitialValue(this.climateScale.mode())
-                .withTooltip(mode -> Tooltip.create(modeHint(mode)))
-                .create(0, 0, LoopSizeControls.FIELD_WIDTH, LoopSizeControls.FIELD_HEIGHT, CLIMATE_LABEL,
-                        (button, mode) -> this.chooseMode(mode)));
-
-        contents.addChild(CommonLayouts.labeledElement(this.font, this.factorField(), FACTOR_LABEL));
-
-        contents.addChild(CycleButton.onOffBuilder(this.guaranteedLand)
-                .withTooltip(chosen -> Tooltip.create(GUARANTEED_LAND_HINT))
-                .create(0, 0, LoopSizeControls.FIELD_WIDTH, LoopSizeControls.FIELD_HEIGHT, GUARANTEED_LAND_LABEL,
-                        (button, chosen) -> this.guaranteedLand = chosen));
+        for (WorldOptionControl control : this.optionControls) {
+            control.addWidgets(this.font, contents);
+        }
 
         LinearLayout footer = this.layout.addToFooter(LinearLayout.horizontal().spacing(FOOTER_SPACING));
         this.doneButton = footer.addChild(Button.builder(CommonComponents.GUI_DONE, button -> this.commit()).build());
@@ -126,57 +86,16 @@ public class TorusSettingsScreen extends Screen {
         Minecraft.getInstance().setScreen(this.parent);
     }
 
-    private EditBox factorField() {
-        boolean custom = this.climateScale.mode() == ClimateScale.Mode.CUSTOM;
-        this.factorEdit = new DigitsEditBox(this.font, LoopSizeControls.FIELD_WIDTH,
-                LoopSizeControls.FIELD_HEIGHT, FACTOR_LABEL);
-        this.factorEdit.setMaxLength(FACTOR_MAX_LENGTH);
-        this.factorEdit.setTooltip(Tooltip.create(CLIMATE_FACTOR_HINT));
-        this.factorEdit.setEditable(custom);
-        this.factorEdit.setValue(custom ? this.factorText : previewedFactor());
-        if (custom) {
-            this.factorEdit.setResponder(value -> {
-                this.factorText = value;
-                this.effectiveFactor = parseFactor(value);
-                this.refreshDoneButton();
-            });
-        }
-
-        return this.factorEdit;
-    }
-
-    private String previewedFactor() {
-        Integer chunkWidth = this.controls.effectiveSize();
-        if (chunkWidth == null) {
-            return UNKNOWN_FACTOR;
-        }
-
-        OptionalDouble factor = ClimateFactorPreview.temperatureFactor(this.parent,
-                this.generationOptions.withClimateScale(this.climateScale), chunkWidth);
-        return factor.isPresent() ? display(factor.getAsDouble()) : UNKNOWN_FACTOR;
-    }
-
-    private static String display(double factor) {
-        return factor == Math.rint(factor)
-                ? Integer.toString((int) factor)
-                : String.format(Locale.ROOT, FRACTIONAL_FACTOR_FORMAT, factor);
-    }
-
     private void onControlsChanged() {
         this.refreshDoneButton();
-        if (this.climateScale.mode() != ClimateScale.Mode.CUSTOM) {
-            this.factorEdit.setValue(previewedFactor());
+        for (WorldOptionControl control : this.optionControls) {
+            control.onSharedStateChanged();
         }
-    }
-
-    private void chooseMode(ClimateScale.Mode mode) {
-        this.climateScale = this.climateScale.withMode(mode);
-        this.rebuildWidgets();
     }
 
     private boolean isComplete() {
         return this.controls.isComplete()
-                && (this.climateScale.mode() != ClimateScale.Mode.CUSTOM || this.effectiveFactor != null);
+                && this.optionControls.stream().allMatch(WorldOptionControl::isComplete);
     }
 
     private void refreshDoneButton() {
@@ -188,35 +107,40 @@ public class TorusSettingsScreen extends Screen {
             return;
         }
 
-        ClimateScale chosenClimateScale = this.climateScale.mode() == ClimateScale.Mode.CUSTOM
-                ? ClimateScale.custom(this.effectiveFactor)
-                : this.climateScale;
+        GenerationOptions chosen = this.generationOptions;
+        for (WorldOptionControl control : this.optionControls) {
+            chosen = control.commit(chosen);
+        }
+
         this.onDone.accept(WorldLoopBounds.ofWidth(this.controls.effectiveSize()), this.controls.netherScale(),
-                WorldLoopBounds.ofWidth(this.controls.effectiveEndSize()),
-                this.generationOptions.withClimateScale(chosenClimateScale).withGuaranteedLand(this.guaranteedLand));
+                WorldLoopBounds.ofWidth(this.controls.effectiveEndSize()), chosen);
         this.onClose();
     }
 
-    private static Component modeLabel(ClimateScale.Mode mode) {
-        return mode == ClimateScale.Mode.OFF
-                ? CommonComponents.OPTION_OFF
-                : Component.translatable(CLIMATE_MODE_KEY_PREFIX + mode.getSerializedName());
-    }
+    private final class ScreenContext implements WorldOptionContext {
+        @Override
+        public Screen parent() {
+            return TorusSettingsScreen.this.parent;
+        }
 
-    private static Component modeHint(ClimateScale.Mode mode) {
-        Component hint = Component.translatable(
-                CLIMATE_MODE_KEY_PREFIX + mode.getSerializedName() + CLIMATE_MODE_HINT_SUFFIX);
-        return mode == ClimateScale.Mode.OFF
-                ? hint
-                : hint.copy().append(CommonComponents.NEW_LINE).append(CLIMATE_KEEPS);
-    }
+        @Override
+        public @Nullable Integer loopChunkWidth() {
+            return TorusSettingsScreen.this.controls.effectiveSize();
+        }
 
-    private static @Nullable Integer parseFactor(String value) {
-        try {
-            int factor = Integer.parseInt(value);
-            return factor >= ClimateScale.CUSTOM_MIN && factor <= ClimateScale.CUSTOM_MAX ? factor : null;
-        } catch (NumberFormatException ignored) {
-            return null;
+        @Override
+        public GenerationOptions options() {
+            return TorusSettingsScreen.this.generationOptions;
+        }
+
+        @Override
+        public void onChanged() {
+            TorusSettingsScreen.this.refreshDoneButton();
+        }
+
+        @Override
+        public void rebuild() {
+            TorusSettingsScreen.this.rebuildWidgets();
         }
     }
 

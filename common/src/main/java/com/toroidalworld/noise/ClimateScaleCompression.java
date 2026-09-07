@@ -3,7 +3,8 @@ package com.toroidalworld.noise;
 import com.toroidalworld.accessors.ClimateCompressionCache;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
-import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.shape.torus.ClimateScale;
+import com.toroidalworld.shape.torus.CompactBiomes;
 
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.core.Direction;
@@ -37,7 +38,7 @@ public final class ClimateScaleCompression {
 
     public static double factor(WorldFold fold, boolean climateField, DoubleList amplitudes,
             double lowestFreqInputFactor, double baseScale, double verticalShare) {
-        ClimateScale scale = fold.generationOptions().climateScale();
+        ClimateScale scale = fold.generationOptions().get(CompactBiomes.OPTION);
         if (scale.mode() == ClimateScale.Mode.OFF || verticalShare != HORIZONTAL_SHARE) {
             return NO_COMPRESSION;
         }

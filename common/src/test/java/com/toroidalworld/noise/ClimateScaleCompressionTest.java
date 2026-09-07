@@ -10,7 +10,8 @@ import org.junit.jupiter.api.Test;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.noise.ClimateCompressionCacheFixture.Storing;
-import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.shape.torus.ClimateScale;
+import com.toroidalworld.shape.torus.CompactBiomes;
 import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.FlatShape;
@@ -96,17 +97,17 @@ class ClimateScaleCompressionTest {
 
     private static WorldFold uncompressedSquare(int chunkWidth) {
         return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)),
-                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.OFF));
+                GenerationOptions.DEFAULT.with(CompactBiomes.OPTION, ClimateScale.OFF));
     }
 
     private static WorldFold strongSquare(int chunkWidth) {
         return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)),
-                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.STRONG));
+                GenerationOptions.DEFAULT.with(CompactBiomes.OPTION, ClimateScale.STRONG));
     }
 
     private static WorldFold customSquare(int chunkWidth, int factor) {
         return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)),
-                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.custom(factor)));
+                GenerationOptions.DEFAULT.with(CompactBiomes.OPTION, ClimateScale.custom(factor)));
     }
 
     private static void assertFactor(Field field, int chunkWidth) {
@@ -294,7 +295,7 @@ class ClimateScaleCompressionTest {
         assertEquals(1.0, actual(TEMPERATURE, customSquare(32, 8), 0.5), 0.0, "custom, declared vertical share");
 
         WorldFold cylinder = WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, 32)),
-                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.STRONG));
+                GenerationOptions.DEFAULT.with(CompactBiomes.OPTION, ClimateScale.STRONG));
         assertEquals(1.0, actual(TEMPERATURE, cylinder, HORIZONTAL), 0.0, "strong on a cylinder");
     }
 

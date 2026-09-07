@@ -1,5 +1,6 @@
 package com.toroidalworld.gen;
 
+import com.toroidalworld.options.WorldOptionSetup;
 import static com.toroidalworld.gen.BakeStampFixture.foreignGenerator;
 import static com.toroidalworld.gen.BakeStampFixture.noiseGenerator;
 import static com.toroidalworld.gen.BakeStampFixture.noiseSubclassGenerator;
@@ -28,6 +29,7 @@ class UnshapedOverworldReportTest {
     static void bootstrapVanilla() {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        WorldOptionSetup.registerAll(false);
         worldgen = VanillaRegistries.createLookup();
     }
 
