@@ -13,6 +13,7 @@ import org.jspecify.annotations.Nullable;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -39,20 +40,24 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
             instance -> instance.group(
                     BiomeSource.CODEC.fieldOf(BIOME_SOURCE_KEY).forGetter(ChunkGenerator::getBiomeSource),
                     NoiseGeneratorSettings.CODEC.fieldOf(SETTINGS_KEY).forGetter(NoiseBasedChunkGenerator::generatorSettings),
-                    SHAPE_CODEC.fieldOf(WRAPPING_KEY).forGetter(LoopedChunkGenerator::shape)
+                    SHAPE_CODEC.fieldOf(WRAPPING_KEY).forGetter(LoopedChunkGenerator::shape),
+                    GENERATION_OPTIONS_CODEC.forGetter(LoopedChunkGenerator::generationOptions)
             ).apply(instance, instance.stable(LoopedChunkGenerator::new)));
 
     private static final int BASE_HEIGHT_CACHE_CAP = 1 << 18;
 
     private final FlatShape shape;
+    private final GenerationOptions generationOptions;
     private final WorldFold transformer;
 
     private final List<Map<Long, Integer>> baseHeightCache;
 
-    public LoopedChunkGenerator(BiomeSource biomeSource, Holder<NoiseGeneratorSettings> settings, FlatShape shape) {
+    public LoopedChunkGenerator(BiomeSource biomeSource, Holder<NoiseGeneratorSettings> settings, FlatShape shape,
+            GenerationOptions generationOptions) {
         super(biomeSource, settings);
         this.shape = shape;
-        this.transformer = WorldFolds.of(shape);
+        this.generationOptions = generationOptions;
+        this.transformer = WorldFolds.of(shape, generationOptions);
 
         List<Map<Long, Integer>> caches = new ArrayList<>();
         for (int i = 0; i < Heightmap.Types.values().length; i++) {
@@ -64,6 +69,11 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
     @Override
     public FlatShape shape() {
         return this.shape;
+    }
+
+    @Override
+    public GenerationOptions generationOptions() {
+        return this.generationOptions;
     }
 
     @Override

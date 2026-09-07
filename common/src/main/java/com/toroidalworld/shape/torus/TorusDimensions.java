@@ -3,6 +3,7 @@ package com.toroidalworld.shape.torus;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.gen.ShapedDimensions;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.NetherScales;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.FlatShape;
@@ -14,15 +15,17 @@ import net.minecraft.world.level.levelgen.WorldDimensions;
 public final class TorusDimensions {
 
     public static WorldDimensions apply(WorldDimensions dimensions, TorusSettings settings) {
-        WorldDimensions withTorusOverworld =
-                ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD, FlatShape.torus(settings.overworld()));
+        GenerationOptions generationOptions = settings.generationOptions();
+        WorldDimensions withTorusOverworld = ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD,
+                FlatShape.torus(settings.overworld()), generationOptions);
         if (withTorusOverworld == dimensions) {
             return dimensions;
         }
 
-        WorldDimensions withTorusNether =
-                ShapedDimensions.withShape(withTorusOverworld, LevelStem.NETHER, FlatShape.torus(netherWrapping(settings)));
-        return ShapedDimensions.withShape(withTorusNether, LevelStem.END, FlatShape.torus(settings.end()));
+        WorldDimensions withTorusNether = ShapedDimensions.withShape(withTorusOverworld, LevelStem.NETHER,
+                FlatShape.torus(netherWrapping(settings)), generationOptions);
+        return ShapedDimensions.withShape(withTorusNether, LevelStem.END, FlatShape.torus(settings.end()),
+                generationOptions);
     }
 
     public static @Nullable TorusSettings read(WorldDimensions dimensions) {
@@ -35,7 +38,8 @@ public final class TorusDimensions {
         return new TorusSettings(
                 overworld,
                 NetherScales.normalize(readNetherScale(dimensions, overworldChunkWidth), overworldChunkWidth),
-                readEndWrapping(dimensions));
+                readEndWrapping(dimensions),
+                ShapedDimensions.generationOptionsOf(dimensions, LevelStem.OVERWORLD));
     }
 
     private static @Nullable WorldLoopBounds torusBoundsOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {

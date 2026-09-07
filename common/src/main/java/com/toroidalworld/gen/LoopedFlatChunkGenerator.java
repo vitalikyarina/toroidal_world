@@ -2,6 +2,7 @@ package com.toroidalworld.gen;
 
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -18,21 +19,30 @@ public class LoopedFlatChunkGenerator extends FlatLevelSource implements ShapedC
     public static final MapCodec<LoopedFlatChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                     FlatLevelGeneratorSettings.CODEC.fieldOf(SETTINGS_KEY).forGetter(LoopedFlatChunkGenerator::settings),
-                    SHAPE_CODEC.fieldOf(WRAPPING_KEY).forGetter(LoopedFlatChunkGenerator::shape)
+                    SHAPE_CODEC.fieldOf(WRAPPING_KEY).forGetter(LoopedFlatChunkGenerator::shape),
+                    GENERATION_OPTIONS_CODEC.forGetter(LoopedFlatChunkGenerator::generationOptions)
             ).apply(instance, instance.stable(LoopedFlatChunkGenerator::new)));
 
     private final FlatShape shape;
+    private final GenerationOptions generationOptions;
     private final WorldFold transformer;
 
-    public LoopedFlatChunkGenerator(FlatLevelGeneratorSettings settings, FlatShape shape) {
+    public LoopedFlatChunkGenerator(FlatLevelGeneratorSettings settings, FlatShape shape,
+            GenerationOptions generationOptions) {
         super(settings);
         this.shape = shape;
-        this.transformer = WorldFolds.of(shape);
+        this.generationOptions = generationOptions;
+        this.transformer = WorldFolds.of(shape, generationOptions);
     }
 
     @Override
     public FlatShape shape() {
         return this.shape;
+    }
+
+    @Override
+    public GenerationOptions generationOptions() {
+        return this.generationOptions;
     }
 
     @Override

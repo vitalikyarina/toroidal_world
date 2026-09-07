@@ -11,6 +11,7 @@ import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.player.ClientPosition;
 import com.toroidalworld.player.SeamTravel;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -54,11 +55,20 @@ public final class WorldLoopAttachments {
             return noiseTransformerOf(level);
         }
 
-        if (reader instanceof ServerLevelAccessor accessor) {
-            return noiseTransformerOf(accessor.getLevel());
+        ServerLevel level = serverLevelOf(reader);
+        return level != null ? noiseTransformerOf(level) : null;
+    }
+
+    public static @Nullable ServerLevel serverLevelOf(LevelReader reader) {
+        if (reader instanceof ServerLevel level) {
+            return level;
         }
 
-        return null;
+        if (reader instanceof Level level && level.isClientSide()) {
+            return null;
+        }
+
+        return reader instanceof ServerLevelAccessor accessor ? accessor.getLevel() : null;
     }
 
     public static SeamTravel travelOf(ServerPlayer player) {

@@ -133,10 +133,31 @@ dependencies {
 // each loader's own JUnit launcher.
 sourceSets.test.java.srcDir '../common/src/loaderTest/java'
 
+// The scans are measurements over the same folded router, run by the scan tool rather than by the gate.
+sourceSets.test.java.srcDir '../common/src/scan/java'
+
 test {
     useJUnitPlatform()
-    // A --tests pattern that names nothing in this module is a zero-test run, not a failed one.
-    filter { failOnNoMatchingTests = false }
+    filter {
+        // A --tests pattern that names nothing in this module is a zero-test run, not a failed one.
+        failOnNoMatchingTests = false
+        // The scans are measurements, not the gate: test leaves them out, -Pscans runs nothing else.
+        if (project.hasProperty('scans')) {
+            includeTestsMatching 'com.toroidalworld.scan.*'
+        } else {
+            excludeTestsMatching 'com.toroidalworld.scan.*'
+        }
+    }
+    if (project.hasProperty('scans')) {
+        // Only scan classes are in this run, so concurrency here can never reach a gate test.
+        systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
+        systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+        systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'fixed'
+        systemProperty 'junit.jupiter.execution.parallel.config.fixed.parallelism', '4'
+        maxHeapSize = '4g'
+    }
+    // The test JVM's working directory is FML's own, so a test that writes a report is told where the module's go.
+    systemProperty 'toroidal.reports', layout.buildDirectory.dir('reports').get().asFile.absolutePath
     // The math this jar ships is tested in common; the loader suite alone would let a red common through.
     dependsOn(':common:test')
 }

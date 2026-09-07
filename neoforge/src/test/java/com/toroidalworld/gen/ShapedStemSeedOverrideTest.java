@@ -12,6 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import com.toroidalworld.options.GenerationOptions;
+import com.toroidalworld.options.WorldOptionSetup;
+
 import java.util.Map;
 import java.util.OptionalLong;
 
@@ -45,6 +48,7 @@ class ShapedStemSeedOverrideTest {
     static void bootstrapVanilla() {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        WorldOptionSetup.registerAll(false);
         worldgen = VanillaRegistries.createLookup();
     }
 
@@ -62,7 +66,8 @@ class ShapedStemSeedOverrideTest {
     void stripShapesKeepsTheSeedOverride() {
         NoiseBasedChunkGenerator noise = (NoiseBasedChunkGenerator) noiseGenerator(worldgen);
         LevelStem declared = declaredStem(
-                new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), SHAPE));
+                new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), SHAPE,
+                        GenerationOptions.DEFAULT));
 
         WorldDimensions stripped = ShapedDimensions.stripShapes(selected(Map.of(LevelStem.OVERWORLD, declared)));
 

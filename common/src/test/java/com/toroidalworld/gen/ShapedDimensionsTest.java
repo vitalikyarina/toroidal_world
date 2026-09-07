@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.shape.FlatShape;
@@ -43,7 +44,7 @@ class ShapedDimensionsTest {
     void strippingASuperflatShapeHandsBackThePlainFlatSourceOnItsOwnSettings() {
         FlatLevelGeneratorSettings settings = flatSettings();
         WorldDimensions stripped = ShapedDimensions.stripShapes(overworldOf(new LoopedFlatChunkGenerator(
-                settings, TORUS)));
+                settings, TORUS, GenerationOptions.DEFAULT)));
 
         ChunkGenerator generator = overworldGeneratorOf(stripped);
         assertNull(ShapedDimensions.shapeOf(stripped, LevelStem.OVERWORLD));
@@ -56,7 +57,7 @@ class ShapedDimensionsTest {
         BiomeSource biomes = plainsBiomeSource();
         Holder<NoiseGeneratorSettings> settings = overworldNoiseSettings();
         WorldDimensions stripped = ShapedDimensions.stripShapes(overworldOf(new LoopedChunkGenerator(
-                biomes, settings, TORUS)));
+                biomes, settings, TORUS, GenerationOptions.DEFAULT)));
 
         ChunkGenerator generator = overworldGeneratorOf(stripped);
         assertNull(ShapedDimensions.shapeOf(stripped, LevelStem.OVERWORLD));
@@ -69,7 +70,8 @@ class ShapedDimensionsTest {
     void reShapingASuperflatWorldRebuildsFromTheFlatSettingsRatherThanTheOldShape() {
         FlatLevelGeneratorSettings settings = flatSettings();
         WorldDimensions reshaped = ShapedDimensions.withShape(
-                overworldOf(new LoopedFlatChunkGenerator(settings, TORUS)), LevelStem.OVERWORLD, CYLINDER);
+                overworldOf(new LoopedFlatChunkGenerator(settings, TORUS, GenerationOptions.DEFAULT)),
+                LevelStem.OVERWORLD, CYLINDER);
 
         assertEquals(CYLINDER, ShapedDimensions.shapeOf(reshaped, LevelStem.OVERWORLD));
         assertSame(settings, ((LoopedFlatChunkGenerator) overworldGeneratorOf(reshaped)).settings());

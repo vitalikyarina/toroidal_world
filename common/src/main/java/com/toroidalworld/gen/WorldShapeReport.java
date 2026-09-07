@@ -6,7 +6,6 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.ToroidalWorld;
-import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.gen.DatapackStemOverrides.StemOverride;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopSizes;

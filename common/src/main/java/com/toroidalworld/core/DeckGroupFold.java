@@ -3,6 +3,7 @@ package com.toroidalworld.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.shape.FlatShape;
@@ -28,10 +29,18 @@ public final class DeckGroupFold implements WorldFold {
 
     private final boolean wrapped;
 
+    private final GenerationOptions generationOptions;
+
     public DeckGroupFold(FlatShape shape) {
+        this(shape, GenerationOptions.DEFAULT);
+    }
+
+    public DeckGroupFold(FlatShape shape, GenerationOptions generationOptions) {
         this.shape = shape;
-        this.wrapped = shape.bounds().x() instanceof AxisBounds.Looped
-                || shape.bounds().z() instanceof AxisBounds.Looped;
+        boolean xLooped = shape.bounds().x() instanceof AxisBounds.Looped;
+        boolean zLooped = shape.bounds().z() instanceof AxisBounds.Looped;
+        this.wrapped = xLooped || zLooped;
+        this.generationOptions = xLooped && zLooped ? generationOptions : GenerationOptions.NONE;
         this.chunks = new Lattice(shape, 1);
         this.blocks = new Lattice(shape, CoordinateConstants.CHUNK_WIDTH);
     }
@@ -58,6 +67,11 @@ public final class DeckGroupFold implements WorldFold {
     @Override
     public boolean preservesLocalIndices() {
         return this.shape.preservesLocalIndices();
+    }
+
+    @Override
+    public GenerationOptions generationOptions() {
+        return this.generationOptions;
     }
 
     @Override

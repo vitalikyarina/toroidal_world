@@ -2,6 +2,7 @@ package com.toroidalworld.core;
 
 import java.util.List;
 
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
 
 import net.minecraft.core.BlockPos;
@@ -31,6 +32,8 @@ public interface WorldFold {
     boolean decomposesPerAxis();
 
     boolean preservesLocalIndices();
+
+    GenerationOptions generationOptions();
 
     WrapDomain blockDomain(Direction.Axis axis);
 

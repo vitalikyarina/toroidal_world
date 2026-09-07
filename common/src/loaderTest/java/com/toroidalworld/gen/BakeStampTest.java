@@ -26,6 +26,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import com.toroidalworld.shape.torus.ClimateScale;
+import com.toroidalworld.shape.torus.CompactBiomes;
+import com.toroidalworld.options.GenerationOptions;
+import com.toroidalworld.options.WorldOptionSetup;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.SharedConstants;
@@ -58,6 +62,9 @@ class BakeStampTest {
     private static final int STORED_END_CHUNK_WIDTH = 192;
     private static final int DATAPACK_DECLARED_CHUNK_WIDTH = 128;
 
+    private static final GenerationOptions UNCOMPRESSED =
+            GenerationOptions.DEFAULT.with(CompactBiomes.OPTION, ClimateScale.OFF);
+
     private static final ResourceKey<LevelStem> FOREIGN = stemKey("foreign");
     private static final ResourceKey<LevelStem> SIBLING = stemKey("sibling");
 
@@ -67,6 +74,7 @@ class BakeStampTest {
     static void bootstrapVanilla() {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        WorldOptionSetup.registerAll(false);
         worldgen = VanillaRegistries.createLookup();
     }
 
@@ -308,6 +316,32 @@ class BakeStampTest {
         FlatShape shape = shapeOf(baked, LevelStem.OVERWORLD);
         assertNotNull(shape, "the datapack overworld carries no fold");
         assertEquals(STORED_OVERWORLD_CHUNK_WIDTH, chunkWidth(shape, Direction.Axis.X));
+    }
+
+    @Test
+    void aForeignStemTakesTheOverworldsChoiceAgainstCompression() {
+        ChunkGenerator overworld = stamped(noiseSubclassGenerator(worldgen), squareTorus(OVERWORLD_CHUNK_WIDTH),
+                UNCOMPRESSED);
+        Registry<LevelStem> baked = bake(
+                Map.of(LevelStem.OVERWORLD, stem(SAME_SCALE, overworld)),
+                Map.of(FOREIGN, stem(SAME_SCALE, foreignGenerator())));
+
+        assertNotNull(shapeOf(baked, FOREIGN), "the foreign stem carries no fold, so this run says nothing");
+        assertEquals(ClimateScale.OFF,
+                ShapedChunkGenerator.generationOptionsOf(generatorOf(baked, FOREIGN)).get(CompactBiomes.OPTION));
+    }
+
+    @Test
+    void aDatapackOverworldTakesTheChoiceAStoredOverworldCarries() {
+        ChunkGenerator stored = stamped(noiseSubclassGenerator(worldgen),
+                squareTorus(STORED_OVERWORLD_CHUNK_WIDTH), UNCOMPRESSED);
+        Registry<LevelStem> baked = bake(
+                Map.of(LevelStem.OVERWORLD, stem(SAME_SCALE, stored)),
+                Map.of(LevelStem.OVERWORLD, stem(SAME_SCALE, noiseGenerator(worldgen))));
+
+        LoopedChunkGenerator restored = assertInstanceOf(LoopedChunkGenerator.class,
+                generatorOf(baked, LevelStem.OVERWORLD));
+        assertEquals(ClimateScale.OFF, restored.generationOptions().get(CompactBiomes.OPTION));
     }
 
     private static Map<ResourceKey<LevelStem>, LevelStem> storedToroidalWorld() {

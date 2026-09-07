@@ -13,6 +13,7 @@ import com.mojang.serialization.MapCodec;
 import com.toroidalworld.accessors.ShapeStamp;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.shape.FlatShape;
 
@@ -81,7 +82,11 @@ final class BakeStampFixture {
     }
 
     static ChunkGenerator stamped(ChunkGenerator generator, FlatShape shape) {
-        ((ShapeStamp) generator).toroidal$stamp(shape);
+        return stamped(generator, shape, GenerationOptions.DEFAULT);
+    }
+
+    static ChunkGenerator stamped(ChunkGenerator generator, FlatShape shape, GenerationOptions generationOptions) {
+        ((ShapeStamp) generator).toroidal$stamp(shape, generationOptions);
         return generator;
     }
 
@@ -231,6 +236,11 @@ final class BakeStampFixture {
         @Override
         public FlatShape shape() {
             return this.shape;
+        }
+
+        @Override
+        public GenerationOptions generationOptions() {
+            return GenerationOptions.DEFAULT;
         }
 
         @Override

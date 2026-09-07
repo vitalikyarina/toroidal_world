@@ -4,6 +4,8 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
+import com.toroidalworld.accessors.ClimateCompressionCache;
+import com.toroidalworld.accessors.ClimateFieldMark;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.noise.PeriodicOctaveSampler;
@@ -44,7 +46,8 @@ public class PerlinNoiseMixin {
         }
 
         // The zeros are what C2ME's loop passes every octave, kept so the two walks differ in nothing but the fold.
-        return PeriodicOctaveSampler.sample(generation, this.noiseLevels, this.amplitudes,
+        return PeriodicOctaveSampler.sample(generation, (ClimateCompressionCache) (Object) this,
+                ((ClimateFieldMark) (Object) this).toroidal$climateField(), this.noiseLevels, this.amplitudes,
                 this.lowestFreqInputFactor, this.lowestFreqValueFactor, x, y, z, 0.0, 0.0);
     }
 }

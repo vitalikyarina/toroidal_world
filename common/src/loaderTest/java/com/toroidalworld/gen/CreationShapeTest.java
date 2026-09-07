@@ -14,12 +14,15 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import com.toroidalworld.shape.torus.CompactBiomes;
+import com.toroidalworld.options.WorldOptionSetup;
 import com.toroidalworld.shape.FlatShape;
 import com.toroidalworld.shape.torus.TorusDimensions;
 import com.toroidalworld.shape.torus.TorusSettings;
@@ -28,6 +31,7 @@ import net.minecraft.SharedConstants;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.server.Bootstrap;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.WorldDimensions;
@@ -45,6 +49,7 @@ class CreationShapeTest {
     static void bootstrapVanilla() {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        WorldOptionSetup.registerAll(false);
         worldgen = VanillaRegistries.createLookup();
     }
 
@@ -84,6 +89,21 @@ class CreationShapeTest {
         assertNotNull(ShapedDimensions.shapeOf(shaped, LevelStem.OVERWORLD), "the overworld carries no shape");
         assertNotNull(ShapedDimensions.shapeOf(shaped, LevelStem.NETHER), "the nether was never reached");
         assertNotNull(ShapedDimensions.shapeOf(shaped, LevelStem.END), "the End was never reached");
+    }
+
+    @Test
+    void aTorusCarriesItsClimateChoiceIntoEveryStemAndReadsItBack() {
+        WorldDimensions shaped = TorusDimensions.apply(vanillaThree(noiseSubclassGenerator(worldgen)),
+                TorusSettings.DEFAULT);
+
+        assertNotNull(ShapedDimensions.shapeOf(shaped, LevelStem.NETHER), "the nether was never reached");
+        for (ResourceKey<LevelStem> key : List.of(LevelStem.OVERWORLD, LevelStem.NETHER, LevelStem.END)) {
+            assertEquals(TorusSettings.DEFAULT.generationOptions().get(CompactBiomes.OPTION),
+                    ShapedDimensions.generationOptionsOf(shaped, key).get(CompactBiomes.OPTION), key.identifier().toString());
+        }
+        TorusSettings read = TorusDimensions.read(shaped);
+        assertNotNull(read, "the shaped world does not read back as a torus");
+        assertEquals(TorusSettings.DEFAULT.generationOptions().get(CompactBiomes.OPTION), read.generationOptions().get(CompactBiomes.OPTION));
     }
 
     @Test

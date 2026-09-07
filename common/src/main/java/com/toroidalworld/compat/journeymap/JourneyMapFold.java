@@ -1,5 +1,8 @@
 package com.toroidalworld.compat.journeymap;
 
+import java.io.File;
+
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import com.toroidalworld.api.ToroidalShape;
@@ -23,6 +26,9 @@ public final class JourneyMapFold {
 
     private static final int MAX_TILE_BLITS = 16_384;
     private static final double VIEWPORT_COVER = 0.75;
+
+    public static final String WORLD_CHANGED = "world";
+    public static final String DIMENSION_CHANGED = "dimension";
 
     private static ToroidalShape shape() {
         ClientLevel level = Minecraft.getInstance().level;
@@ -140,8 +146,22 @@ public final class JourneyMapFold {
         return periodPixels <= 0.0 ? 0 : (int) Math.ceil(viewportPixels * VIEWPORT_COVER / periodPixels);
     }
 
-    public static void gridDropped(String fromDimension, String toDimension) {
-        LOGGER.info("[jm-compat] grid_dropped from={} to={}", fromDimension, toDimension);
+    public static <D> @Nullable String staleGridReason(@Nullable D lastDimension, @Nullable D dimension,
+            @Nullable File lastWorldDir, @Nullable File worldDir) {
+        if (lastWorldDir != null && worldDir != null && !lastWorldDir.equals(worldDir)) {
+            return WORLD_CHANGED;
+        }
+
+        if (lastDimension != null && !lastDimension.equals(dimension)) {
+            return DIMENSION_CHANGED;
+        }
+
+        return null;
+    }
+
+    public static void gridDropped(String reason, String from, String to, int tilesDropped) {
+        LOGGER.info("[jm-compat] grid_dropped reason={} from={} to={} tiles_dropped={}",
+                reason, from.replace(' ', '_'), to.replace(' ', '_'), tilesDropped);
     }
 
     public static int minGridSize() {

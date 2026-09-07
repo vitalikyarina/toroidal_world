@@ -6,8 +6,10 @@ import com.toroidalworld.accessors.ShapeStamp;
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
@@ -15,12 +17,17 @@ import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 public interface ShapedChunkGenerator {
     String SETTINGS_KEY = "settings";
     String WRAPPING_KEY = "wrapping";
+    String NO_KEY_PREFIX = "";
 
     Codec<FlatShape> SHAPE_CODEC = FlatShape.CODEC
             .validate(WorldFolds::verifyFoldable)
             .validate(WorldFolds::verifyGeneratable);
 
+    MapCodec<GenerationOptions> GENERATION_OPTIONS_CODEC = GenerationOptions.mapCodec(NO_KEY_PREFIX);
+
     FlatShape shape();
+
+    GenerationOptions generationOptions();
 
     WorldFold transformer();
 
@@ -47,6 +54,16 @@ public interface ShapedChunkGenerator {
         }
 
         return generator instanceof ShapeStamp stamp ? wrapped(stamp.toroidal$stampedTransformer()) : null;
+    }
+
+    static GenerationOptions generationOptionsOf(ChunkGenerator generator) {
+        if (generator instanceof ShapedChunkGenerator shaped) {
+            return shaped.generationOptions();
+        }
+
+        return generator instanceof ShapeStamp stamp
+                ? stamp.toroidal$stampedGenerationOptions()
+                : GenerationOptions.DEFAULT;
     }
 
     private static @Nullable WorldFold wrapped(@Nullable WorldFold transformer) {

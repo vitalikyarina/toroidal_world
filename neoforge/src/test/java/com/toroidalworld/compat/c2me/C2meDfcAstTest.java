@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.ClimateScaleCompression;
 import com.toroidalworld.noise.ContextScaledNoise;
+import com.toroidalworld.noise.DomainWarp;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
 import com.ishland.c2me.opts.dfc.common.ast.McToAst;
@@ -53,6 +54,8 @@ class C2meDfcAstTest {
 
     private static final double FLAT_Y_SCALE = 0.0;
 
+    private static final boolean CLIMATE_FIELD = true;
+
     private static final int GRID_SAMPLES = 16;
 
     @Test
@@ -61,7 +64,7 @@ class C2meDfcAstTest {
     }
 
     @Test
-    void shiftedNoiseDropsTheHorizontalShiftAndKeepsShiftY() {
+    void shiftedNoiseCarriesEveryShift() {
         assertFoldMatchesVanilla(withShiftY(withLiveNoise(DensityFunctions.shiftedNoise2d(
                 DensityFunctions.constant(SHIFT_X), DensityFunctions.constant(SHIFT_Z), XZ_SCALE, NOISE_DATA))));
     }
@@ -150,9 +153,8 @@ class C2meDfcAstTest {
     }
 
     private static void assertCorrectionIsLive(WorldFold fold) {
-        double compression = ClimateScaleCompression.factor(fold.blockDomain(Direction.Axis.X),
-                fold.blockDomain(Direction.Axis.Z), CLIMATE_AMPLITUDES, Math.pow(2.0, CLIMATE_FIRST_OCTAVE),
-                CLIMATE_XZ_SCALE, FLAT_Y_SCALE / CLIMATE_XZ_SCALE);
+        double compression = ClimateScaleCompression.factor(fold, CLIMATE_FIELD, CLIMATE_AMPLITUDES,
+                Math.pow(2.0, CLIMATE_FIRST_OCTAVE), CLIMATE_XZ_SCALE, FLAT_Y_SCALE / CLIMATE_XZ_SCALE);
 
         assertTrue(compression > 1.0,
                 "the climate fixture sits outside the compressed regime in " + fold + ", so the case proves nothing");
@@ -213,6 +215,8 @@ class C2meDfcAstTest {
             };
             case MulNode mul -> evaluate(mul.left, x, y, z) * evaluate(mul.right, x, y, z);
             case AddNode add -> evaluate(add.left, x, y, z) + evaluate(add.right, x, y, z);
+            case C2meWarpedAxisNode warped -> DomainWarp.apply(warped.domain,
+                    warped.axis == CoordinateNode.Axis.X ? x : z, evaluate(warped.shift, x, y, z), warped.xzScale);
             default -> throw new IllegalStateException("no interpreter for " + node.getClass().getName());
         };
     }
