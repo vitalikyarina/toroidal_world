@@ -84,8 +84,9 @@ public class TorusSettingsScreen extends Screen {
         contents.addChild(new StringWidget(ADDITIONAL_SECTION, this.font),
                 LayoutSettings::alignHorizontallyCenter);
 
-        contents.addChild(CycleButton.builder(TorusSettingsScreen::modeLabel, this.climateScale.mode())
+        contents.addChild(CycleButton.builder(TorusSettingsScreen::modeLabel)
                 .withValues(ClimateScale.Mode.values())
+                .withInitialValue(this.climateScale.mode())
                 .withTooltip(mode -> Tooltip.create(modeHint(mode)))
                 .create(0, 0, LoopSizeControls.FIELD_WIDTH, LoopSizeControls.FIELD_HEIGHT, CLIMATE_LABEL,
                         (button, mode) -> this.chooseMode(mode)));

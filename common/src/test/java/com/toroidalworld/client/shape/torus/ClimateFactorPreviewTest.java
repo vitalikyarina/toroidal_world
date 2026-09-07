@@ -38,7 +38,7 @@ class ClimateFactorPreviewTest {
 
     private static ResourceKey<NormalNoise.NoiseParameters> foundIn(ResourceKey<NoiseGeneratorSettings> settings) {
         NoiseHolder found = ClimateFactorPreview.climateNoiseOf(temperatureOf(settings));
-        assertNotNull(found, settings.identifier() + ": the router carries no climate noise to find");
+        assertNotNull(found, settings.location() + ": the router carries no climate noise to find");
         return found.noiseData().unwrapKey().orElseThrow();
     }
 
@@ -46,20 +46,20 @@ class ClimateFactorPreviewTest {
     void theRoutersOwnTemperatureIsFoundPastTheShiftNoisesThatPrecedeIt() {
         for (ResourceKey<NoiseGeneratorSettings> settings : List.of(
                 NoiseGeneratorSettings.OVERWORLD, NoiseGeneratorSettings.AMPLIFIED)) {
-            assertEquals(Noises.TEMPERATURE, foundIn(settings), settings.identifier().toString());
+            assertEquals(Noises.TEMPERATURE, foundIn(settings), settings.location().toString());
         }
     }
 
     @Test
     void largeBiomesIsFoundOnItsOwnCoarserLadder() {
         assertEquals(Noises.TEMPERATURE_LARGE, foundIn(NoiseGeneratorSettings.LARGE_BIOMES),
-                NoiseGeneratorSettings.LARGE_BIOMES.identifier().toString());
+                NoiseGeneratorSettings.LARGE_BIOMES.location().toString());
     }
 
     @Test
     void theNethersTemperatureIsFoundToo() {
-        assertEquals(Noises.TEMPERATURE_NETHER, foundIn(NoiseGeneratorSettings.NETHER),
-                NoiseGeneratorSettings.NETHER.identifier().toString());
+        assertEquals(Noises.TEMPERATURE, foundIn(NoiseGeneratorSettings.NETHER),
+                NoiseGeneratorSettings.NETHER.location().toString());
     }
 
     @Test
