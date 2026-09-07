@@ -17,13 +17,13 @@ import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 public interface ShapedChunkGenerator {
     String SETTINGS_KEY = "settings";
     String WRAPPING_KEY = "wrapping";
+    String NO_KEY_PREFIX = "";
 
     Codec<FlatShape> SHAPE_CODEC = FlatShape.CODEC
             .validate(WorldFolds::verifyFoldable)
             .validate(WorldFolds::verifyGeneratable);
 
-    MapCodec<GenerationOptions> GENERATION_OPTIONS_CODEC = GenerationOptions.mapCodec(
-            GenerationOptions.CLIMATE_SCALE_KEY, GenerationOptions.GUARANTEED_LAND_KEY);
+    MapCodec<GenerationOptions> GENERATION_OPTIONS_CODEC = GenerationOptions.mapCodec(NO_KEY_PREFIX);
 
     FlatShape shape();
 

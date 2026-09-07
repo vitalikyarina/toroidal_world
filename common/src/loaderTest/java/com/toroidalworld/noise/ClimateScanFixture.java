@@ -4,9 +4,12 @@ import java.util.List;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.shape.torus.ClimateScale;
+import com.toroidalworld.shape.torus.CompactBiomes;
 import com.toroidalworld.options.GenerationOptions;
+import com.toroidalworld.shape.torus.GuaranteedLand;
 import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.options.WorldOptionSetup;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.SharedConstants;
@@ -54,6 +57,7 @@ public final class ClimateScanFixture {
 
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        WorldOptionSetup.registerAll(false);
         holders = VanillaRegistries.createLookup();
         noises = holders.lookupOrThrow(Registries.NOISE);
     }
@@ -71,17 +75,17 @@ public final class ClimateScanFixture {
 
     public static WorldFold strongTorusOfWidth(int widthBlocks) {
         return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)),
-                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.STRONG));
+                GenerationOptions.DEFAULT.with(CompactBiomes.OPTION, ClimateScale.STRONG));
     }
 
     public static WorldFold guaranteedTorusOfWidth(int widthBlocks) {
         return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)),
-                GenerationOptions.DEFAULT.withGuaranteedLand(true));
+                GenerationOptions.DEFAULT.with(GuaranteedLand.OPTION, true));
     }
 
     public static WorldFold uncompressedTorusOfWidth(int widthBlocks) {
         return WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(widthBlocks / 16)),
-                GenerationOptions.DEFAULT.withClimateScale(ClimateScale.OFF));
+                GenerationOptions.DEFAULT.with(CompactBiomes.OPTION, ClimateScale.OFF));
     }
 
     public static WorldFold cylinderOfWidth(int widthBlocks) {

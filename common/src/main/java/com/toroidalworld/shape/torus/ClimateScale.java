@@ -1,4 +1,4 @@
-package com.toroidalworld.options;
+package com.toroidalworld.shape.torus;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;

@@ -3,6 +3,7 @@ package com.toroidalworld;
 import org.junit.platform.launcher.LauncherSession;
 import org.junit.platform.launcher.LauncherSessionListener;
 
+import com.toroidalworld.options.WorldOptionSetup;
 import com.toroidalworld.platform.LoaderlessPlatform;
 import com.toroidalworld.platform.Platforms;
 
@@ -15,5 +16,6 @@ public final class VanillaBootstrapListener implements LauncherSessionListener {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
         Platforms.set(new LoaderlessPlatform());
+        WorldOptionSetup.registerAll(false);
     }
 }

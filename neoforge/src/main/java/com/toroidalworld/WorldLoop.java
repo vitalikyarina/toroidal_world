@@ -8,6 +8,7 @@ import com.toroidalworld.gen.WorldLoopGenerators;
 import com.toroidalworld.gen.WorldLoopTicketTypes;
 import com.toroidalworld.net.AuxiliaryLightTranslation;
 import com.toroidalworld.net.BlockParticleTranslation;
+import com.toroidalworld.options.WorldOptionSetup;
 import com.toroidalworld.platform.NeoForgePlatform;
 import com.toroidalworld.platform.Platforms;
 import com.toroidalworld.shape.WorldShapeSetup;
@@ -36,6 +37,7 @@ public final class WorldLoop {
 
     public static void init(IEventBus modEventBus, ModContainer modContainer) {
         Platforms.set(new NeoForgePlatform(modContainer));
+        WorldOptionSetup.registerAll();
         WorldShapeSetup.registerAll();
 
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_ID, () -> LoopedChunkGenerator.CODEC);

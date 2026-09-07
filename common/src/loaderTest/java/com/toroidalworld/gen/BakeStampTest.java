@@ -15,7 +15,6 @@ import static com.toroidalworld.gen.BakeStampFixture.stamped;
 import static com.toroidalworld.gen.BakeStampFixture.stem;
 import static com.toroidalworld.gen.BakeStampFixture.stemKey;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -27,8 +26,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
-import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.shape.torus.ClimateScale;
+import com.toroidalworld.shape.torus.CompactBiomes;
 import com.toroidalworld.options.GenerationOptions;
+import com.toroidalworld.options.WorldOptionSetup;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.SharedConstants;
@@ -62,7 +63,7 @@ class BakeStampTest {
     private static final int DATAPACK_DECLARED_CHUNK_WIDTH = 128;
 
     private static final GenerationOptions UNCOMPRESSED =
-            GenerationOptions.DEFAULT.withClimateScale(ClimateScale.OFF);
+            GenerationOptions.DEFAULT.with(CompactBiomes.OPTION, ClimateScale.OFF);
 
     private static final ResourceKey<LevelStem> FOREIGN = stemKey("foreign");
     private static final ResourceKey<LevelStem> SIBLING = stemKey("sibling");
@@ -73,6 +74,7 @@ class BakeStampTest {
     static void bootstrapVanilla() {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        WorldOptionSetup.registerAll(false);
         worldgen = VanillaRegistries.createLookup();
     }
 
@@ -326,7 +328,7 @@ class BakeStampTest {
 
         assertNotNull(shapeOf(baked, FOREIGN), "the foreign stem carries no fold, so this run says nothing");
         assertEquals(ClimateScale.OFF,
-                ShapedChunkGenerator.generationOptionsOf(generatorOf(baked, FOREIGN)).climateScale());
+                ShapedChunkGenerator.generationOptionsOf(generatorOf(baked, FOREIGN)).get(CompactBiomes.OPTION));
     }
 
     @Test
@@ -339,7 +341,7 @@ class BakeStampTest {
 
         LoopedChunkGenerator restored = assertInstanceOf(LoopedChunkGenerator.class,
                 generatorOf(baked, LevelStem.OVERWORLD));
-        assertEquals(ClimateScale.OFF, restored.generationOptions().climateScale());
+        assertEquals(ClimateScale.OFF, restored.generationOptions().get(CompactBiomes.OPTION));
     }
 
     private static Map<ResourceKey<LevelStem>, LevelStem> storedToroidalWorld() {

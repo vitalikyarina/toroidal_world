@@ -14,8 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import com.toroidalworld.ToroidalWorld;
+import com.toroidalworld.shape.torus.ClimateScale;
+import com.toroidalworld.shape.torus.CompactBiomes;
 import com.toroidalworld.options.GenerationOptions;
-import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.options.WorldOptionSetup;
 import com.toroidalworld.shape.FlatShape;
 import com.mojang.serialization.DataResult;
 
@@ -33,10 +35,10 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 class StampedGeneratorCodecTest {
     private static final String SHAPE_KEY = ToroidalWorld.MODID + ":" + ShapedChunkGenerator.WRAPPING_KEY;
     private static final String CLIMATE_SCALE_KEY =
-            ToroidalWorld.MODID + ":" + GenerationOptions.CLIMATE_SCALE_KEY;
+            ToroidalWorld.MODID + ":" + CompactBiomes.KEY;
 
     private static final GenerationOptions UNCOMPRESSED =
-            GenerationOptions.DEFAULT.withClimateScale(ClimateScale.OFF);
+            GenerationOptions.DEFAULT.with(CompactBiomes.OPTION, ClimateScale.OFF);
 
     private static final int STAMPED_CHUNK_WIDTH = 64;
 
@@ -48,6 +50,7 @@ class StampedGeneratorCodecTest {
     static void bootstrapVanilla() {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        WorldOptionSetup.registerAll(false);
         worldgen = VanillaRegistries.createLookup();
     }
 
@@ -61,7 +64,7 @@ class StampedGeneratorCodecTest {
 
         ChunkGenerator decoded = decode(encoded).getOrThrow();
         assertEquals(shape, ShapedChunkGenerator.wrappedShapeOf(decoded));
-        assertEquals(ClimateScale.AUTO, ShapedChunkGenerator.generationOptionsOf(decoded).climateScale());
+        assertEquals(ClimateScale.AUTO, ShapedChunkGenerator.generationOptionsOf(decoded).get(CompactBiomes.OPTION));
     }
 
     @Test
@@ -73,7 +76,7 @@ class StampedGeneratorCodecTest {
 
         ChunkGenerator decoded = decode(encoded).getOrThrow();
         assertEquals(shape, ShapedChunkGenerator.wrappedShapeOf(decoded));
-        assertEquals(ClimateScale.OFF, ShapedChunkGenerator.generationOptionsOf(decoded).climateScale());
+        assertEquals(ClimateScale.OFF, ShapedChunkGenerator.generationOptionsOf(decoded).get(CompactBiomes.OPTION));
     }
 
     @Test

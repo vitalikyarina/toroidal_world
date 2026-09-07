@@ -11,7 +11,6 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
 import com.toroidalworld.options.WorldLoopBounds.AxisBounds;

@@ -6,7 +6,6 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.ShapeStamp;
-import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.gen.DatapackStemOverrides.Outcome;
 import com.toroidalworld.gen.DatapackStemOverrides.StemOverride;
 import com.toroidalworld.options.GenerationOptions;

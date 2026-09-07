@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.options.WorldOptionSetup;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.AbstractCompiledDensityFunction;
 
 import net.minecraft.SharedConstants;
@@ -57,6 +58,7 @@ class C2meFoldedRouterChunkTest {
     static void bootstrapVanilla() {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        WorldOptionSetup.registerAll(false);
         holders = VanillaRegistries.createLookup();
         noises = holders.lookupOrThrow(Registries.NOISE);
         overworld = holders.lookupOrThrow(Registries.NOISE_SETTINGS)

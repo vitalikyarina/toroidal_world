@@ -10,13 +10,14 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.function.IntFunction;
 
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import com.toroidalworld.shape.cylinder.CylinderSettings;
+import com.toroidalworld.shape.torus.TorusSettings;
 
 import net.minecraft.core.Direction;
 
@@ -24,17 +25,11 @@ class WorldLoopPresetsJsonTest {
     private static final String PRESET_RESOURCE_DIR = "/data/toroidal_world/worldgen/world_preset/";
     private static final String LOOPED_GENERATOR_ID = "toroidal_world:toroidal";
     private static final String CYLINDER_PRESET_PREFIX = "cylinder_";
-    private static final String CLIMATE_COMPRESSION_KEY = "climate_compression";
-    private static final String GUARANTEED_LAND_KEY = "guaranteed_land";
-
-    private static final boolean TORUS_CLIMATE_COMPRESSION = false;
-
-    private static final boolean TORUS_GUARANTEED_LAND = false;
 
     @Test
     void everyPresetShipsATorusWorldPresetMatchingItsConfiguration() throws IOException {
         for (WorldLoopPresets preset : WorldLoopPresets.values()) {
-            assertPreset(preset.id(), preset, WorldLoopBounds::ofWidth, TORUS_CLIMATE_COMPRESSION);
+            assertPreset(preset.id(), preset, WorldLoopBounds::ofWidth, true);
         }
     }
 
@@ -43,27 +38,27 @@ class WorldLoopPresetsJsonTest {
         Direction.Axis axis = CylinderSettings.DEFAULT.axis();
         for (WorldLoopPresets preset : WorldLoopPresets.values()) {
             assertPreset(CYLINDER_PRESET_PREFIX + preset.id(), preset, width -> WorldLoopBounds.ofWidth(axis, width),
-                    null);
+                    false);
         }
     }
 
     private static void assertPreset(String presetId, WorldLoopPresets preset, IntFunction<WorldLoopBounds> boundsOfWidth,
-            @Nullable Boolean climateCompression) throws IOException {
+            boolean torus) throws IOException {
         JsonObject dimensions = readPresetJson(presetId).getAsJsonObject("dimensions");
         assertNotNull(dimensions, presetId + ": no dimensions object");
         assertEquals(3, dimensions.size(), presetId + ": expected exactly the three vanilla dimensions");
 
         assertDimension(presetId, dimensions, "minecraft:overworld", "minecraft:overworld",
-                boundsOfWidth.apply(preset.chunkWidth()), climateCompression);
+                boundsOfWidth.apply(preset.chunkWidth()), torus);
         assertDimension(presetId, dimensions, "minecraft:the_nether", "minecraft:nether",
                 boundsOfWidth.apply(NetherScales.netherChunkWidth(preset.chunkWidth(), preset.netherScale())),
-                climateCompression);
+                torus);
         assertDimension(presetId, dimensions, "minecraft:the_end", "minecraft:end",
-                boundsOfWidth.apply(preset.endChunkWidth()), climateCompression);
+                boundsOfWidth.apply(preset.endChunkWidth()), torus);
     }
 
     private static void assertDimension(String presetId, JsonObject dimensions, String dimensionId,
-            String noiseSettingsId, WorldLoopBounds expected, @Nullable Boolean climateCompression) {
+            String noiseSettingsId, WorldLoopBounds expected, boolean torus) {
         String context = presetId + " " + dimensionId;
         JsonObject dimension = dimensions.getAsJsonObject(dimensionId);
         assertNotNull(dimension, context + ": dimension missing");
@@ -77,19 +72,22 @@ class WorldLoopPresetsJsonTest {
                 .getOrThrow(message -> new AssertionError(context + ": wrapping does not parse: " + message));
         assertEquals(expected, wrapping, context + ": wrapping");
 
-        if (climateCompression == null) {
-            assertFalse(generator.has(CLIMATE_COMPRESSION_KEY), context + ": a cylinder states no climate choice");
-            assertFalse(generator.has(GUARANTEED_LAND_KEY), context + ": a cylinder states no land choice");
-            return;
+        for (WorldOption<?> option : WorldOptions.all()) {
+            if (torus) {
+                assertStatedOption(context, generator, option);
+            } else {
+                assertFalse(generator.has(option.key()), context + ": a cylinder states no " + option.key());
+            }
         }
+    }
 
-        assertNotNull(generator.get(CLIMATE_COMPRESSION_KEY), context + ": the climate choice is not stated");
-        assertEquals(climateCompression, generator.get(CLIMATE_COMPRESSION_KEY).getAsBoolean(),
-                context + ": climate compression");
+    private static <V> void assertStatedOption(String context, JsonObject generator, WorldOption<V> option) {
+        JsonElement stated = generator.get(option.key());
+        assertNotNull(stated, context + ": " + option.key() + " is not stated");
 
-        assertNotNull(generator.get(GUARANTEED_LAND_KEY), context + ": the land choice is not stated");
-        assertEquals(TORUS_GUARANTEED_LAND, generator.get(GUARANTEED_LAND_KEY).getAsBoolean(),
-                context + ": guaranteed land");
+        V value = option.codec().parse(JsonOps.INSTANCE, stated)
+                .getOrThrow(message -> new AssertionError(context + ": " + option.key() + " does not parse: " + message));
+        assertEquals(TorusSettings.DEFAULT.generationOptions().get(option), value, context + ": " + option.key());
     }
 
     private static JsonObject readPresetJson(String presetId) throws IOException {
