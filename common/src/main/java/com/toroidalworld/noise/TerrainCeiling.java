@@ -137,13 +137,11 @@ public final class TerrainCeiling {
                 continue;
             }
 
-            node.mapChildren(child -> {
+            for (DensityFunction child : DensityChildren.of(node)) {
                 if (seen.add(child)) {
                     pending.add(child);
                 }
-
-                return child;
-            });
+            }
         }
 
         return null;
