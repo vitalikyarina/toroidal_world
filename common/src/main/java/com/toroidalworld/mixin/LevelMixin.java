@@ -32,7 +32,6 @@ import net.minecraft.util.AbortableIterationConsumer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -175,11 +174,11 @@ public class LevelMixin implements TransformerCache {
 
     @Unique
     private WorldFold toroidal$resolveTransformer() {
-        if (!((Object) this instanceof ServerLevelAccessor accessor)) {
+        ServerLevel level = WorldLoopAttachments.serverLevelOf((Level) (Object) this);
+        if (level == null) {
             return WorldFolds.NOOP;
         }
 
-        ServerLevel level = accessor.getLevel();
         return level == (Object) this
                 ? toroidal$generatorTransformer(level)
                 : WorldLoopAttachments.transformerOf(level);
