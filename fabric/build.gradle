@@ -175,6 +175,7 @@ dependencies {
     // The Xaero jars ride modCompileOnly as the FABRIC flavor: Loom remaps them off intermediary onto this
     // workspace's names AND puts them on remapJar's classpath — without that, GuiMap does not resolve to Screen and
     // the mixin target for its render override never becomes method_25394 in the shipped jar.
+    modCompileOnly "maven.modrinth:journeymap:${journeymap_fabric_version}"
     modCompileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_fabric_version}"
     modCompileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_fabric_version}"
     modCompileOnly "maven.modrinth:sable:${sable_fabric_version}"

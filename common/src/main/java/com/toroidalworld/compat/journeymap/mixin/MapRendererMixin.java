@@ -2,7 +2,7 @@ package com.toroidalworld.compat.journeymap.mixin;
 
 import java.awt.geom.Point2D;
 import java.io.File;
-import java.util.SortedMap;
+import java.util.Collection;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,10 +18,15 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.platform.Window;
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
-import com.toroidalworld.compat.journeymap.RegionWorldHolder;
 
 import journeymap.api.v2.client.display.Context;
 import journeymap.api.v2.client.util.UIState;
+import journeymap.client.model.map.MapType;
+import journeymap.client.model.region.RegionCoord;
+import journeymap.client.model.region.RegionImageCache;
+import journeymap.client.model.region.RegionImageSet;
+import journeymap.client.render.map.RegionTile;
+import journeymap.client.render.map.TileGrid;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -42,10 +47,11 @@ public abstract class MapRendererMixin {
     protected int zoom;
 
     @Shadow(remap = false)
-    private File worldDir;
+    private volatile File worldDir;
 
     @Shadow(remap = false)
-    SortedMap<?, ?> regions;
+    @Final
+    TileGrid<RegionCoord, RegionTile> regions;
 
     @Shadow(remap = false)
     public abstract void clear();
@@ -68,8 +74,8 @@ public abstract class MapRendererMixin {
     private File toroidal$lastWorldDir;
 
     @Inject(method = "center(Ljava/io/File;Ljourneymap/client/model/map/MapType;DDI)Z", at = @At("HEAD"))
-    private void toroidal$dropTilesOnWorldChange(File worldDir, @Coerce Object mapType, double blockX,
-            double blockZ, int zoom, CallbackInfoReturnable<Boolean> cir) {
+    private void toroidal$dropTilesOnWorldChange(File worldDir, MapType mapType, double blockX, double blockZ,
+            int zoom, CallbackInfoReturnable<Boolean> cir) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
             return;
@@ -96,16 +102,16 @@ public abstract class MapRendererMixin {
     @WrapOperation(
             method = "loadInMemoryRegions",
             at = @At(value = "INVOKE",
-                    target = "Ljava/util/SortedMap;putIfAbsent(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"))
-    private Object toroidal$onlyThisWorldsRegions(SortedMap<Object, Object> regions, Object regionCoord, Object tile,
-            Operation<Object> original) {
+                    target = "Ljourneymap/client/model/region/RegionImageCache;getRegionImageSets()Ljava/util/Collection;"))
+    private Collection<RegionImageSet> toroidal$onlyThisWorldsRegions(RegionImageCache cache,
+            Operation<Collection<RegionImageSet>> original) {
+        Collection<RegionImageSet> sets = original.call(cache);
         File dir = this.worldDir;
-        if (dir != null && regionCoord instanceof RegionWorldHolder region
-                && !dir.equals(region.toroidal$regionWorldDir())) {
-            return null;
+        if (dir == null) {
+            return sets;
         }
 
-        return original.call(regions, regionCoord, tile);
+        return sets.stream().filter(set -> dir.equals(set.getRegionCoord().worldDir)).toList();
     }
 
     @ModifyVariable(
