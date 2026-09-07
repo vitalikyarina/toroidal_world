@@ -1,15 +1,29 @@
 package com.toroidalworld.compat.journeymap.mixin;
 
+import java.io.File;
+
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
+import com.toroidalworld.compat.journeymap.RegionWorldHolder;
 
 import net.minecraft.core.Direction;
 
 @Mixin(targets = "journeymap.client.model.region.RegionCoord", remap = false)
-public class RegionCoordMixin {
+public class RegionCoordMixin implements RegionWorldHolder {
+    @Shadow(remap = false)
+    @Final
+    public File worldDir;
+
+    @Override
+    public File toroidal$regionWorldDir() {
+        return this.worldDir;
+    }
+
     @ModifyVariable(method = "fromChunkPos", at = @At("HEAD"), ordinal = 0, argsOnly = true)
     private static int toroidal$foldChunkX(int chunkX) {
         return JourneyMapFold.foldRegionChunk(Direction.Axis.X, chunkX);
