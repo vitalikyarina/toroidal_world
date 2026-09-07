@@ -97,7 +97,10 @@ public final class ClimateScanFixture {
     }
 
     public static RandomState randomState(WorldType type, WorldFold fold, long seed) {
-        NoiseGeneratorSettings settings = settingsOf(type);
+        return randomState(settingsOf(type), fold, seed);
+    }
+
+    public static RandomState randomState(NoiseGeneratorSettings settings, WorldFold fold, long seed) {
         return GenerationTransformerContext.withRouterBuild(fold.isWrapped() ? fold : null,
                 () -> RandomState.create(settings, noises, seed));
     }
