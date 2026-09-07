@@ -11,9 +11,6 @@ import static com.toroidalworld.noise.ClimateScanFixture.settingsOf;
 import static com.toroidalworld.noise.ClimateScanFixture.torusOfWidth;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,15 +74,13 @@ class ClimateScan {
 
     private static final double MAX_SPREAD_DRIFT = 0.10;
 
-    private static final Path REPORTS = Path.of(System.getProperty("toroidal.reports", "build/reports")).resolve("scan");
+    private static final Path REPORT = ScanReports.DIRECTORY.resolve("climate-scan.txt");
 
-    private static final Path REPORT = REPORTS.resolve("climate-scan.txt");
+    private static final Path AXIS_REPORT = ScanReports.DIRECTORY.resolve("climate-cylinder-axis.txt");
 
-    private static final Path AXIS_REPORT = REPORTS.resolve("climate-cylinder-axis.txt");
+    private static final Path LAND_REPORT = ScanReports.DIRECTORY.resolve("land-scan.txt");
 
-    private static final Path LAND_REPORT = REPORTS.resolve("land-scan.txt");
-
-    private static final Path PATCH_REPORT = REPORTS.resolve("land-patch-scan.txt");
+    private static final Path PATCH_REPORT = ScanReports.DIRECTORY.resolve("land-patch-scan.txt");
 
     private record Width(String id, int chunkWidth, int netherScale) {
         int widthBlocks(WorldType type) {
@@ -143,6 +138,10 @@ class ClimateScan {
                 .append("land = area fraction whose final density is solid at the world type's sea level, so the")
                 .append(" surface there stands above the water rather than under it.")
                 .append(System.lineSeparator())
+                .append("That column is a sanity reading over these ").append(SEEDS)
+                .append(" seeds, not a measurement of land: a single seed runs from 0.00 to 0.85, so a mean of")
+                .append(" three lands anywhere. The land measure is the land scan, over ").append(LAND_SEEDS)
+                .append(" seeds.").append(System.lineSeparator())
                 .append("min is the narrowest world the game will create; the nether is the overworld width")
                 .append(" divided by the nether scale that width allows, and carries five biomes in all, so it is")
                 .append(" reported and not gated.").append(System.lineSeparator())
@@ -191,7 +190,7 @@ class ClimateScan {
             }
         }
 
-        write(REPORT, report.toString());
+        ScanReports.write(REPORT, report.toString());
 
         assertTrue(thin.isEmpty(),
                 "the control window itself carries no biome spread, so the scan measures nothing: " + thin);
@@ -246,7 +245,7 @@ class ClimateScan {
             report.append(System.lineSeparator());
         }
 
-        write(LAND_REPORT, report.toString());
+        ScanReports.write(LAND_REPORT, report.toString());
 
         assertTrue(blind.isEmpty(),
                 "no control seed clears the land floor, so the scan measures nothing: " + blind);
@@ -362,7 +361,7 @@ class ClimateScan {
             report.append(System.lineSeparator());
         }
 
-        write(PATCH_REPORT, report.toString());
+        ScanReports.write(PATCH_REPORT, report.toString());
 
         assertTrue(blind.isEmpty(), "no seed of a row carries any land, so the scan measures nothing: " + blind);
         assertTrue(unguarded.isEmpty(),
@@ -541,7 +540,7 @@ class ClimateScan {
             report.append(System.lineSeparator());
         }
 
-        write(AXIS_REPORT, report.toString());
+        ScanReports.write(AXIS_REPORT, report.toString());
 
         assertTrue(off.isEmpty(), "the unbounded axis does not carry vanilla's zone size or spread: " + off);
     }
@@ -662,14 +661,5 @@ class ClimateScan {
         }
 
         return Math.sqrt(sum / values.length);
-    }
-
-    private static void write(Path path, String report) {
-        try {
-            Files.createDirectories(path.getParent());
-            Files.writeString(path, report);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 }

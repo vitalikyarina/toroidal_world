@@ -6,9 +6,6 @@ import static com.toroidalworld.noise.ClimateScanFixture.torusOfWidth;
 import static com.toroidalworld.scan.TerrainCeilingScan.withCeilingParked;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,10 +43,7 @@ class PillarSiteScan {
 
     private static final int LISTED_MASSES = 8;
 
-    private static final Path REPORTS =
-            Path.of(System.getProperty("toroidal.reports", "build/reports")).resolve("scan");
-
-    private static final Path REPORT = REPORTS.resolve("terrain-ceiling-pillar.txt");
+    private static final Path REPORT = ScanReports.DIRECTORY.resolve("terrain-ceiling-pillar.txt");
 
     private record Mass(int blocks, int baseY, int topY) {
     }
@@ -90,7 +84,7 @@ class PillarSiteScan {
             report.addAll(masses("with the ceiling", cutState.router().finalDensity()));
         });
 
-        write(report);
+        ScanReports.write(REPORT, report);
     }
 
     private static List<String> masses(String label, DensityFunction density) {
@@ -189,14 +183,5 @@ class PillarSiteScan {
 
     private static String round(double value) {
         return String.format(Locale.ROOT, "%.2f", value);
-    }
-
-    private static void write(List<String> lines) {
-        try {
-            Files.createDirectories(REPORTS);
-            Files.write(REPORT, lines);
-        } catch (IOException failed) {
-            throw new UncheckedIOException(failed);
-        }
     }
 }

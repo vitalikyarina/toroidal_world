@@ -6,9 +6,6 @@ import static com.toroidalworld.noise.ClimateScanFixture.settingsOf;
 import static com.toroidalworld.noise.ClimateScanFixture.torusOfWidth;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,12 +52,9 @@ class TerrainCeilingScan {
 
     private static final double JAGGED_DRIFT_BLOCKS = 24.0;
 
-    private static final Path REPORTS =
-            Path.of(System.getProperty("toroidal.reports", "build/reports")).resolve("scan");
+    private static final Path REPORT = ScanReports.DIRECTORY.resolve("terrain-ceiling-scan.txt");
 
-    private static final Path REPORT = REPORTS.resolve("terrain-ceiling-scan.txt");
-
-    private static final Path ISLAND_REPORT = REPORTS.resolve("terrain-ceiling-island.txt");
+    private static final Path ISLAND_REPORT = ScanReports.DIRECTORY.resolve("terrain-ceiling-island.txt");
 
     private static final String ISLAND_TYPE = "default";
 
@@ -149,7 +143,7 @@ class TerrainCeilingScan {
             report.add("");
         }
 
-        write(report);
+        ScanReports.write(REPORT, report);
 
         for (Bucket bucket : flatBuckets) {
             assertTrue(bucket.overshootShare() <= OVERSHOOT_SHARE_CEILING,
@@ -295,19 +289,6 @@ class TerrainCeilingScan {
         return String.format(java.util.Locale.ROOT, "%.2f", value);
     }
 
-    private static void write(List<String> lines) {
-        write(REPORT, lines);
-    }
-
-    private static void write(Path report, List<String> lines) {
-        try {
-            Files.createDirectories(REPORTS);
-            Files.write(report, lines);
-        } catch (IOException failed) {
-            throw new UncheckedIOException(failed);
-        }
-    }
-
     @Test
     void theKnownIslandGoesAndNothingBelowTheCeilingMoves() {
         WorldType type = ClimateScanFixture.TYPES.stream()
@@ -400,7 +381,7 @@ class TerrainCeilingScan {
                     + " blocks");
         }
 
-        write(ISLAND_REPORT, report);
+        ScanReports.write(ISLAND_REPORT, report);
         assertTrue(deep >= ISLAND_MIN_CUT_COLUMNS,
                 "the known island did not go: " + deep + " columns lost " + ISLAND_MIN_CUT_BLOCKS
                         + " blocks or more, floor " + ISLAND_MIN_CUT_COLUMNS);
