@@ -6,6 +6,7 @@ import java.util.List;
 import com.toroidalworld.accessors.CoastLiftCache;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
+import com.toroidalworld.shape.torus.GuaranteedLand;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.levelgen.DensityFunction;
@@ -26,7 +27,7 @@ public final class CoastFieldLift {
     private static final int[][] NEIGHBOURS = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
     public static void solve(RandomState randomState, WorldFold fold, int seaLevel) {
-        if (!fold.generationOptions().guaranteedLand()) {
+        if (!fold.generationOptions().get(GuaranteedLand.OPTION)) {
             return;
         }
 

@@ -1,5 +1,6 @@
 package com.toroidalworld.gen;
 
+import com.toroidalworld.options.WorldOptionSetup;
 import static com.toroidalworld.gen.BakeStampFixture.noiseGenerator;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
@@ -34,6 +35,7 @@ class GeneratorCodecExtraKeyTest {
     static void bootstrapVanilla() {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        WorldOptionSetup.registerAll(false);
         worldgen = VanillaRegistries.createLookup();
     }
 

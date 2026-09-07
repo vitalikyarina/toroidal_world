@@ -8,9 +8,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
-import com.toroidalworld.options.ClimateScale;
+import com.toroidalworld.shape.torus.ClimateScale;
+import com.toroidalworld.shape.torus.CompactBiomes;
 import com.toroidalworld.options.GenerationOptions;
 import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.options.WorldOptionSetup;
 import com.toroidalworld.shape.torus.TorusDimensions;
 import com.toroidalworld.shape.torus.TorusSettings;
 
@@ -31,7 +33,7 @@ class WorldDimensionsNbtRoundTripTest {
     private static final int NETHER_SCALE = 8;
     private static final int END_CHUNK_WIDTH = 256;
     private static final GenerationOptions GENERATION_OPTIONS =
-            GenerationOptions.DEFAULT.withClimateScale(ClimateScale.OFF);
+            GenerationOptions.DEFAULT.with(CompactBiomes.OPTION, ClimateScale.OFF);
 
     private static HolderLookup.Provider worldgen;
 
@@ -39,6 +41,7 @@ class WorldDimensionsNbtRoundTripTest {
     static void bootstrapVanilla() {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        WorldOptionSetup.registerAll(false);
         worldgen = VanillaRegistries.createLookup();
     }
 

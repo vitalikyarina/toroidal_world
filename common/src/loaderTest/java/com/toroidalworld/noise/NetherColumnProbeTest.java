@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.options.WorldOptionSetup;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.SharedConstants;
@@ -64,6 +65,7 @@ class NetherColumnProbeTest {
     static void bootstrapVanilla() {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        WorldOptionSetup.registerAll(false);
         holders = VanillaRegistries.createLookup();
         Holder<NoiseGeneratorSettings> settingsHolder =
                 holders.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(NoiseGeneratorSettings.NETHER);

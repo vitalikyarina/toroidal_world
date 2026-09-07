@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 import com.toroidalworld.options.GenerationOptions;
+import com.toroidalworld.options.WorldOptionSetup;
 
 import java.util.Map;
 import java.util.OptionalLong;
@@ -21,7 +22,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
-import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.SharedConstants;
@@ -48,6 +48,7 @@ class ShapedStemSeedOverrideTest {
     static void bootstrapVanilla() {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        WorldOptionSetup.registerAll(false);
         worldgen = VanillaRegistries.createLookup();
     }
 

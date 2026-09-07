@@ -21,6 +21,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import com.toroidalworld.shape.torus.CompactBiomes;
+import com.toroidalworld.options.WorldOptionSetup;
 import com.toroidalworld.shape.FlatShape;
 import com.toroidalworld.shape.torus.TorusDimensions;
 import com.toroidalworld.shape.torus.TorusSettings;
@@ -47,6 +49,7 @@ class CreationShapeTest {
     static void bootstrapVanilla() {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        WorldOptionSetup.registerAll(false);
         worldgen = VanillaRegistries.createLookup();
     }
 
@@ -95,12 +98,12 @@ class CreationShapeTest {
 
         assertNotNull(ShapedDimensions.shapeOf(shaped, LevelStem.NETHER), "the nether was never reached");
         for (ResourceKey<LevelStem> key : List.of(LevelStem.OVERWORLD, LevelStem.NETHER, LevelStem.END)) {
-            assertEquals(TorusSettings.DEFAULT.generationOptions().climateScale(),
-                    ShapedDimensions.generationOptionsOf(shaped, key).climateScale(), key.identifier().toString());
+            assertEquals(TorusSettings.DEFAULT.generationOptions().get(CompactBiomes.OPTION),
+                    ShapedDimensions.generationOptionsOf(shaped, key).get(CompactBiomes.OPTION), key.identifier().toString());
         }
         TorusSettings read = TorusDimensions.read(shaped);
         assertNotNull(read, "the shaped world does not read back as a torus");
-        assertEquals(TorusSettings.DEFAULT.generationOptions().climateScale(), read.generationOptions().climateScale());
+        assertEquals(TorusSettings.DEFAULT.generationOptions().get(CompactBiomes.OPTION), read.generationOptions().get(CompactBiomes.OPTION));
     }
 
     @Test

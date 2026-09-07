@@ -6,6 +6,7 @@ import com.toroidalworld.gen.LoopedFlatChunkGenerator;
 import com.toroidalworld.gen.WorldLoopGenerators;
 import com.toroidalworld.gen.WorldLoopTicketTypes;
 import com.toroidalworld.net.WrappingSettingsPayload;
+import com.toroidalworld.options.WorldOptionSetup;
 import com.toroidalworld.platform.FabricPlatform;
 import com.toroidalworld.platform.Platforms;
 import com.toroidalworld.shape.WorldShapeSetup;
@@ -21,6 +22,7 @@ public class ToroidalWorldFabric implements ModInitializer {
     public void onInitialize() {
         ToroidalWorld.LOGGER.info("Toroidal World initializing");
         Platforms.set(new FabricPlatform());
+        WorldOptionSetup.registerAll();
         WorldShapeSetup.registerAll();
 
         Registry.register(BuiltInRegistries.CHUNK_GENERATOR,

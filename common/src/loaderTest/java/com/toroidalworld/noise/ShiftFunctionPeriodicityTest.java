@@ -16,8 +16,6 @@ import java.util.Random;
 import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.levelgen.DensityFunction;
