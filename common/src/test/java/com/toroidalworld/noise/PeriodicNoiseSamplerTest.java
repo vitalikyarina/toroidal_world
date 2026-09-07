@@ -122,13 +122,13 @@ class PeriodicNoiseSamplerTest {
         void roundsClampsAndPassesUnboundedThrough() {
             WrapDomain evenX = EVEN.blockDomain(Direction.Axis.X);
             LapFloor torus = LapFloor.of(EVEN);
-            assertEquals(LapFloor.FOUR_CELLS, torus);
+            assertEquals(LapFloor.TWO_CELLS, torus);
             assertEquals(256, PeriodicNoiseSampler.period(evenX, 0.25, torus));
             assertEquals(1024, PeriodicNoiseSampler.period(evenX, 1.0, torus));
             assertEquals(102400, PeriodicNoiseSampler.period(evenX, 100.0, torus));
             assertEquals(94, PeriodicNoiseSampler.period(ODD.blockDomain(Direction.Axis.X), 1.17, LapFloor.of(ODD)));
             assertEquals(2, PeriodicNoiseSampler.period(evenX, 2.0 / 1024.0, torus));
-            assertEquals(4, PeriodicNoiseSampler.period(evenX, 1.0 / 2048.0, torus));
+            assertEquals(2, PeriodicNoiseSampler.period(evenX, 1.0 / 2048.0, torus));
             assertEquals(0, PeriodicNoiseSampler.period(X_ONLY.blockDomain(Direction.Axis.Z), 1.0, LapFloor.of(X_ONLY)));
         }
 
@@ -139,7 +139,7 @@ class PeriodicNoiseSamplerTest {
             assertEquals(LapFloor.HELD, cylinder);
             assertEquals(PeriodicNoiseSampler.HELD_PERIOD, PeriodicNoiseSampler.period(ring, 1.0 / 2048.0, cylinder));
             assertEquals(2, PeriodicNoiseSampler.period(ring, 2.0 / 1024.0, cylinder));
-            assertEquals(4, PeriodicNoiseSampler.period(EVEN.blockDomain(Direction.Axis.X), 1.0 / 2048.0,
+            assertEquals(2, PeriodicNoiseSampler.period(EVEN.blockDomain(Direction.Axis.X), 1.0 / 2048.0,
                     LapFloor.of(EVEN)));
         }
     }

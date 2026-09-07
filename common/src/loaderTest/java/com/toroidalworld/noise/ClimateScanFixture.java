@@ -92,6 +92,10 @@ public final class ClimateScanFixture {
         return WorldFolds.of(FlatShape.cylinder(WorldLoopBounds.ofWidth(Direction.Axis.X, widthBlocks / 16)));
     }
 
+    public static NormalNoise.NoiseParameters noiseParameters(ResourceKey<NormalNoise.NoiseParameters> key) {
+        return noises.getOrThrow(key).value();
+    }
+
     public static NoiseGeneratorSettings settingsOf(WorldType type) {
         return holders.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(type.settings()).value();
     }
