@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.ClimateScanFixture;
+import com.toroidalworld.noise.PreliminarySurfaceLevel;
 import com.toroidalworld.noise.ClimateScanFixture.WorldType;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.TerrainCeiling;
@@ -73,7 +74,8 @@ class PillarSiteScan {
         RandomState probeState = randomState(withCeilingParked(vanilla, rawCeiling), fold, SEED);
         RandomState cutState = randomState(TerrainCeiling.withCeiling(vanilla), fold, SEED);
         DensityFunction ceiling = probeState.router().barrierNoise();
-        DensityFunction surface = probeState.router().initialDensityWithoutJaggedness();
+        DensityFunction surface =
+                new PreliminarySurfaceLevel(probeState.router().initialDensityWithoutJaggedness());
 
         List<String> report = new ArrayList<>();
         report.add("Pillar site — seed " + SEED + ", " + TYPE + ", lap " + WIDTH_BLOCKS + " blocks");

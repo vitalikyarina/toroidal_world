@@ -65,7 +65,8 @@ class TerrainCeilingTest {
         DensityFunction finalDensity =
                 DensityFunctions.add(DensityFunctions.constant(BASE_DENSITY), jaggedness);
         return new NoiseRouter(zero, zero, zero, zero, zero, zero, zero, zero, zero, zero,
-                DensityFunctions.constant(SURFACE_Y), finalDensity, zero, zero, zero);
+                DensityFunctions.yClampedGradient(SURFACE_Y, SURFACE_Y + 1, 1.0, 0.0),
+                finalDensity, zero, zero, zero);
     }
 
     private static double undisturbed(double splineValue) {

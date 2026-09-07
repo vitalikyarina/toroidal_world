@@ -73,7 +73,9 @@ public final class TerrainCeiling {
         DensityFunction headroom = DensityFunctions.mul(DensityFunctions.constant(lift),
                 DensityFunctions.max(spline, DensityFunctions.zero()));
         return DensityFunctions.add(
-                DensityFunctions.add(DensityFunctions.flatCache(source.initialDensityWithoutJaggedness()),
+                DensityFunctions.add(
+                        DensityFunctions.flatCache(new PreliminarySurfaceLevel(
+                                source.initialDensityWithoutJaggedness())),
                         DensityFunctions.constant(BASE_BLOCKS)),
                 headroom);
     }

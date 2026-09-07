@@ -21,6 +21,7 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.ClimateScanFixture;
 import com.toroidalworld.noise.ClimateScanFixture.WorldType;
 import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.noise.PreliminarySurfaceLevel;
 import com.toroidalworld.noise.TerrainCeiling;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
@@ -212,7 +213,7 @@ class TerrainCeilingScan {
             NoiseRouter router = randomState.router();
             DensityFunction ceiling = router.barrierNoise();
             DensityFunction density = router.finalDensity();
-            DensityFunction surface = router.initialDensityWithoutJaggedness();
+            DensityFunction surface = new PreliminarySurfaceLevel(router.initialDensityWithoutJaggedness());
             GenerationTransformerContext.runWithTransformer(fold, () -> {
                 for (int ix = 0; ix < GRID; ix++) {
                     for (int iz = 0; iz < GRID; iz++) {
