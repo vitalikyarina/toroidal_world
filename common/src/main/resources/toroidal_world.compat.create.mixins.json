@@ -75,6 +75,7 @@
     "SuperGlueEntityMixin",
     "SuperGlueHandlerMixin",
     "SuperGlueSelectionHelperMixin",
+    "SymmetryMirrorAccessor",
     "SymmetryWandItemMixin",
     "ToolboxDisposeAllPacketMixin",
     "ToolboxEquipPacketMixin",
