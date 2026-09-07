@@ -3,7 +3,9 @@ package com.toroidalworld.scan;
 import static com.toroidalworld.noise.ClimateScanFixture.randomState;
 import static com.toroidalworld.noise.ClimateScanFixture.settingsOf;
 import static com.toroidalworld.noise.ClimateScanFixture.torusOfWidth;
-import static com.toroidalworld.scan.TerrainCeilingScan.withCeilingParked;
+import static com.toroidalworld.scan.SuspendedLand.WIDTH_BLOCKS;
+import static com.toroidalworld.scan.SuspendedLand.at;
+import static com.toroidalworld.scan.SuspendedLand.withCeilingParked;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -16,7 +18,6 @@ import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.noise.ClimateScanFixture;
-import com.toroidalworld.noise.ClimateScanFixture.WorldType;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.TerrainCeiling;
 
@@ -25,16 +26,6 @@ import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
 
 class PillarSiteScan {
-    private static final String TYPE = "default";
-
-    private static final long SEED = 9059185195617760112L;
-
-    private static final int WIDTH_BLOCKS = 512;
-
-    private static final int SITE_X = 6;
-
-    private static final int SITE_Z = -188;
-
     private static final int WINDOW = 48;
 
     private static final int MIN_Y = -64;
@@ -55,45 +46,43 @@ class PillarSiteScan {
 
     @Test
     void whatTheDensityFieldHoldsWhereThePillarStands() {
-        WorldType type = ClimateScanFixture.TYPES.stream()
-                .filter(candidate -> candidate.name().equals(TYPE))
-                .findFirst()
-                .orElseThrow();
+        SuspendedLand.Site site = SuspendedLand.requireSite();
         WorldFold fold = torusOfWidth(WIDTH_BLOCKS);
-        NoiseGeneratorSettings vanilla = settingsOf(type);
+        NoiseGeneratorSettings vanilla = settingsOf(site.type());
         DensityFunction rawCeiling = TerrainCeiling.ceiling(vanilla);
-        assertTrue(rawCeiling != null, "no ceiling for the " + TYPE + " settings");
+        assertTrue(rawCeiling != null, "no ceiling for the " + site.type().name() + " settings");
 
-        RandomState probeState = randomState(withCeilingParked(vanilla, rawCeiling), fold, SEED);
-        RandomState cutState = randomState(TerrainCeiling.withCeiling(vanilla), fold, SEED);
+        RandomState probeState = randomState(withCeilingParked(vanilla, rawCeiling), fold, site.seed());
+        RandomState cutState = randomState(TerrainCeiling.withCeiling(vanilla), fold, site.seed());
         DensityFunction ceiling = probeState.router().barrierNoise();
         DensityFunction surface = probeState.router().preliminarySurfaceLevel();
 
         List<String> report = new ArrayList<>();
-        report.add("Pillar site — seed " + SEED + ", " + TYPE + ", lap " + WIDTH_BLOCKS + " blocks");
+        report.add("Pillar site — " + site.describe());
         report.add("density field only: no carvers, no aquifer, no surface rules, no features");
-        report.add("window " + WINDOW + " blocks around x=" + SITE_X + " z=" + SITE_Z);
+        report.add("window " + WINDOW + " blocks around x=" + site.blockX() + " z=" + site.blockZ());
         report.add("");
 
         GenerationTransformerContext.runWithTransformer(fold, () -> {
-            report.add("at x=" + SITE_X + " z=" + SITE_Z + ": preliminary surface y="
-                    + round(at(surface)) + ", ceiling y=" + round(at(ceiling)));
+            report.add("at x=" + site.blockX() + " z=" + site.blockZ() + ": preliminary surface y="
+                    + round(at(surface, site.blockX(), site.blockZ())) + ", ceiling y="
+                    + round(at(ceiling, site.blockX(), site.blockZ())));
             report.add("");
-            report.addAll(masses("without the ceiling", probeState.router().finalDensity()));
+            report.addAll(masses("without the ceiling", probeState.router().finalDensity(), site));
             report.add("");
-            report.addAll(masses("with the ceiling", cutState.router().finalDensity()));
+            report.addAll(masses("with the ceiling", cutState.router().finalDensity(), site));
         });
 
         ScanReports.write(REPORT, report);
     }
 
-    private static List<String> masses(String label, DensityFunction density) {
+    private static List<String> masses(String label, DensityFunction density, SuspendedLand.Site site) {
         boolean[] solid = new boolean[WINDOW * WINDOW * HEIGHT];
         int solidBlocks = 0;
         for (int dx = 0; dx < WINDOW; dx++) {
             for (int dz = 0; dz < WINDOW; dz++) {
-                int blockX = SITE_X - WINDOW / 2 + dx;
-                int blockZ = SITE_Z - WINDOW / 2 + dz;
+                int blockX = site.blockX() - WINDOW / 2 + dx;
+                int blockZ = site.blockZ() - WINDOW / 2 + dz;
                 for (int y = 0; y < HEIGHT; y++) {
                     if (density.compute(new DensityFunction.SinglePointContext(blockX, MIN_Y + y, blockZ)) > 0.0) {
                         solid[index(dx, dz, y)] = true;
@@ -175,10 +164,6 @@ class PillarSiteScan {
 
     private static int index(int dx, int dz, int dy) {
         return dx + dz * WINDOW + dy * WINDOW * WINDOW;
-    }
-
-    private static double at(DensityFunction function) {
-        return function.compute(new DensityFunction.SinglePointContext(SITE_X, 0, SITE_Z));
     }
 
     private static String round(double value) {
