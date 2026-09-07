@@ -1,9 +1,13 @@
 package com.toroidalworld.scan;
 
-import static com.toroidalworld.noise.ClimateScanFixture.SEED_BASE;
 import static com.toroidalworld.noise.ClimateScanFixture.randomState;
 import static com.toroidalworld.noise.ClimateScanFixture.settingsOf;
 import static com.toroidalworld.noise.ClimateScanFixture.torusOfWidth;
+import static com.toroidalworld.scan.SuspendedLand.TOP_Y;
+import static com.toroidalworld.scan.SuspendedLand.WIDTH_BLOCKS;
+import static com.toroidalworld.scan.SuspendedLand.at;
+import static com.toroidalworld.scan.SuspendedLand.topSolid;
+import static com.toroidalworld.scan.SuspendedLand.withCeilingParked;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -28,21 +32,11 @@ import net.minecraft.world.level.levelgen.RandomState;
 class TerrainCeilingScan {
     private static final List<String> OVERWORLD_TYPES = List.of("default", "large biomes", "amplified");
 
-    private static final int WIDTH_BLOCKS = 512;
-
     private static final int GRID = 64;
 
     private static final int SEEDS = 4;
 
-    private static final long SEED_STEP = 0x9E3779B97F4A7C15L;
-
-    private static final int TOP_Y = 319;
-
-    private static final int FLOOR_Y = 32;
-
     private static final int SEARCH_FLOOR_Y = -64;
-
-    private static final int COARSE_STEP_BLOCKS = 4;
 
     private static final int RAMP_BLOCKS = 16;
 
@@ -55,24 +49,6 @@ class TerrainCeilingScan {
     private static final Path REPORT = ScanReports.DIRECTORY.resolve("terrain-ceiling-scan.txt");
 
     private static final Path ISLAND_REPORT = ScanReports.DIRECTORY.resolve("terrain-ceiling-island.txt");
-
-    private static final String ISLAND_TYPE = "default";
-
-    private static final long ISLAND_SEED = 9059185195617760112L;
-
-    private static final int ISLAND_WIDTH_BLOCKS = 512;
-
-    private static final int ISLAND_X = 18;
-
-    private static final int ISLAND_Z = -184;
-
-    private static final int ISLAND_WINDOW_BLOCKS = 96;
-
-    private static final int ISLAND_STRIDE_BLOCKS = 2;
-
-    private static final int ISLAND_MIN_CUT_COLUMNS = 16;
-
-    private static final int ISLAND_MIN_CUT_BLOCKS = 30;
 
     private static final int GRAZING_BLOCKS = 8;
 
@@ -202,7 +178,7 @@ class TerrainCeilingScan {
         double step = WIDTH_BLOCKS / (double) GRID;
 
         for (int s = 0; s < SEEDS; s++) {
-            RandomState randomState = randomState(probe, fold, SEED_BASE + s * SEED_STEP);
+            RandomState randomState = randomState(probe, fold, SuspendedLand.seed(s));
             NoiseRouter router = randomState.router();
             DensityFunction ceiling = router.barrierNoise();
             DensityFunction density = router.finalDensity();
@@ -229,89 +205,29 @@ class TerrainCeilingScan {
         return columns;
     }
 
-    @SuppressWarnings("deprecation")
-    static NoiseGeneratorSettings withCeilingParked(NoiseGeneratorSettings settings, DensityFunction ceiling) {
-        NoiseRouter source = settings.noiseRouter();
-        NoiseRouter parked = new NoiseRouter(
-                ceiling,
-                source.fluidLevelFloodednessNoise(),
-                source.fluidLevelSpreadNoise(),
-                source.lavaNoise(),
-                source.temperature(),
-                source.vegetation(),
-                source.continents(),
-                source.erosion(),
-                source.depth(),
-                source.ridges(),
-                source.preliminarySurfaceLevel(),
-                source.finalDensity(),
-                source.veinToggle(),
-                source.veinRidged(),
-                source.veinGap());
-        return new NoiseGeneratorSettings(
-                settings.noiseSettings(),
-                settings.defaultBlock(),
-                settings.defaultFluid(),
-                parked,
-                settings.surfaceRule(),
-                settings.spawnTarget(),
-                settings.seaLevel(),
-                settings.disableMobGeneration(),
-                settings.aquifersEnabled(),
-                settings.oreVeinsEnabled(),
-                settings.useLegacyRandomSource());
-    }
-
-    private static int topSolid(DensityFunction density, int blockX, int blockZ, int seaLevel) {
-        int floor = Math.min(FLOOR_Y, seaLevel);
-        for (int y = TOP_Y; y >= floor; y -= COARSE_STEP_BLOCKS) {
-            if (density.compute(new DensityFunction.SinglePointContext(blockX, y, blockZ)) <= 0.0) {
-                continue;
-            }
-
-            for (int refined = Math.min(TOP_Y, y + COARSE_STEP_BLOCKS - 1); refined > y; refined--) {
-                if (density.compute(new DensityFunction.SinglePointContext(blockX, refined, blockZ)) > 0.0) {
-                    return refined;
-                }
-            }
-
-            return y;
-        }
-
-        return Integer.MIN_VALUE;
-    }
-
-    private static double at(DensityFunction function, int blockX, int blockZ) {
-        return function.compute(new DensityFunction.SinglePointContext(blockX, 0, blockZ));
-    }
-
     private static String round(double value) {
         return String.format(java.util.Locale.ROOT, "%.2f", value);
     }
 
     @Test
-    void theKnownIslandGoesAndNothingBelowTheCeilingMoves() {
-        WorldType type = ClimateScanFixture.TYPES.stream()
-                .filter(candidate -> candidate.name().equals(ISLAND_TYPE))
-                .findFirst()
-                .orElseThrow();
-        WorldFold fold = torusOfWidth(ISLAND_WIDTH_BLOCKS);
-        NoiseGeneratorSettings vanilla = settingsOf(type);
+    void theSuspendedIslandGoesAndNothingBelowTheCeilingMoves() {
+        SuspendedLand.Site site = SuspendedLand.requireSite();
+        WorldFold fold = torusOfWidth(WIDTH_BLOCKS);
+        NoiseGeneratorSettings vanilla = settingsOf(site.type());
         DensityFunction rawCeiling = TerrainCeiling.ceiling(vanilla);
-        assertTrue(rawCeiling != null, "no ceiling for the " + ISLAND_TYPE + " settings");
+        assertTrue(rawCeiling != null, "no ceiling for the " + site.type().name() + " settings");
 
-        RandomState probeState = randomState(withCeilingParked(vanilla, rawCeiling), fold, ISLAND_SEED);
-        RandomState cutState = randomState(TerrainCeiling.withCeiling(vanilla), fold, ISLAND_SEED);
+        RandomState probeState = randomState(withCeilingParked(vanilla, rawCeiling), fold, site.seed());
+        RandomState cutState = randomState(TerrainCeiling.withCeiling(vanilla), fold, site.seed());
         DensityFunction ceiling = probeState.router().barrierNoise();
         DensityFunction vanillaDensity = probeState.router().finalDensity();
         DensityFunction cutDensity = cutState.router().finalDensity();
         int seaLevel = vanilla.seaLevel();
 
         List<String> report = new ArrayList<>();
-        report.add("Known floating island — seed " + ISLAND_SEED + ", " + ISLAND_TYPE + ", lap "
-                + ISLAND_WIDTH_BLOCKS + " blocks");
-        report.add("window " + ISLAND_WINDOW_BLOCKS + " blocks around x=" + ISLAND_X + " z=" + ISLAND_Z
-                + ", one column every " + ISLAND_STRIDE_BLOCKS + " blocks");
+        report.add("Suspended island the sweep settled on — " + site.describe());
+        report.add("window " + SuspendedLand.WINDOW_BLOCKS + " blocks around x=" + site.blockX()
+                + " z=" + site.blockZ() + ", one column every " + SuspendedLand.STRIDE_BLOCKS + " blocks");
         report.add("");
 
         int[] counts = new int[3];
@@ -319,11 +235,12 @@ class TerrainCeilingScan {
         List<Double> aboves = new ArrayList<>();
         List<Double> insides = new ArrayList<>();
         GenerationTransformerContext.runWithTransformer(fold, () -> {
-            for (int dx = -ISLAND_WINDOW_BLOCKS / 2; dx <= ISLAND_WINDOW_BLOCKS / 2; dx += ISLAND_STRIDE_BLOCKS) {
-                for (int dz = -ISLAND_WINDOW_BLOCKS / 2; dz <= ISLAND_WINDOW_BLOCKS / 2;
-                        dz += ISLAND_STRIDE_BLOCKS) {
-                    int blockX = ISLAND_X + dx;
-                    int blockZ = ISLAND_Z + dz;
+            for (int dx = -SuspendedLand.WINDOW_BLOCKS / 2; dx <= SuspendedLand.WINDOW_BLOCKS / 2;
+                    dx += SuspendedLand.STRIDE_BLOCKS) {
+                for (int dz = -SuspendedLand.WINDOW_BLOCKS / 2; dz <= SuspendedLand.WINDOW_BLOCKS / 2;
+                        dz += SuspendedLand.STRIDE_BLOCKS) {
+                    int blockX = site.blockX() + dx;
+                    int blockZ = site.blockZ() + dz;
                     int vanillaTop = topSolid(vanillaDensity, blockX, blockZ, seaLevel);
                     int cutTop = topSolid(cutDensity, blockX, blockZ, seaLevel);
                     if (vanillaTop == Integer.MIN_VALUE) {
@@ -356,11 +273,11 @@ class TerrainCeilingScan {
         long grazing = Arrays.stream(above).filter(over -> over <= GRAZING_BLOCKS).count();
         long unmoved = Arrays.stream(sorted).filter(drop -> drop == 0.0).count();
         double[] inside = insides.stream().mapToDouble(Double::doubleValue).sorted().toArray();
-        long deep = Arrays.stream(sorted).filter(drop -> drop >= ISLAND_MIN_CUT_BLOCKS).count();
+        long deep = Arrays.stream(sorted).filter(drop -> drop >= SuspendedLand.SUSPENDED_BLOCKS).count();
         report.add("columns read: " + counts[0]);
         report.add("columns standing below the ceiling, untouched: " + counts[1]);
         report.add("columns standing above the ceiling: " + counts[2]);
-        report.add("of those, cut by at least " + ISLAND_MIN_CUT_BLOCKS + " blocks: " + deep);
+        report.add("of those, cut by at least " + SuspendedLand.SUSPENDED_BLOCKS + " blocks: " + deep);
         report.add("of those, standing no more than " + GRAZING_BLOCKS + " blocks over the ceiling: " + grazing);
         report.add("of those, the ceiling took nothing at all: " + unmoved + " (the penalty did not outweigh them)");
         if (above.length > 0) {
@@ -382,8 +299,8 @@ class TerrainCeilingScan {
         }
 
         ScanReports.write(ISLAND_REPORT, report);
-        assertTrue(deep >= ISLAND_MIN_CUT_COLUMNS,
-                "the known island did not go: " + deep + " columns lost " + ISLAND_MIN_CUT_BLOCKS
-                        + " blocks or more, floor " + ISLAND_MIN_CUT_COLUMNS);
+        assertTrue(deep >= SuspendedLand.SITE_COLUMNS,
+                "the ceiling stopped cutting: " + deep + " columns lost " + SuspendedLand.SUSPENDED_BLOCKS
+                        + " blocks or more, floor " + SuspendedLand.SITE_COLUMNS + " — at " + site.describe());
     }
 }
