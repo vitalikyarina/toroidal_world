@@ -35,10 +35,7 @@ public final class SeamTravel {
         }
     }
 
-    public record Step(Vec3 raw, Vec3 folded, Set<Direction.Axis> closed) {
-        public boolean moved() {
-            return folded.lengthSqr() > 0.0;
-        }
+    public record Step(Vec3 folded, Set<Direction.Axis> closed) {
     }
 
     public static final Codec<SeamTravel> CODEC = Codec.unboundedMap(Level.RESOURCE_KEY_CODEC, Lap.CODEC)
@@ -76,10 +73,9 @@ public final class SeamTravel {
         this.lastPosition = position;
 
         if (fold == null || !fold.decomposesPerAxis() || previousPosition == null || !space.equals(previousSpace)) {
-            return new Step(Vec3.ZERO, Vec3.ZERO, Set.of());
+            return new Step(Vec3.ZERO, Set.of());
         }
 
-        Vec3 raw = position.subtract(previousPosition);
         Vec3 folded = fold.foldDelta(previousPosition, position);
         Set<Direction.Axis> closed = EnumSet.noneOf(Direction.Axis.class);
         Lap after = in(space);
@@ -100,6 +96,6 @@ public final class SeamTravel {
         }
 
         laps.put(space, after);
-        return new Step(raw, folded, closed);
+        return new Step(folded, closed);
     }
 }
