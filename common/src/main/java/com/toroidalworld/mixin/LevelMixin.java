@@ -8,11 +8,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.toroidalworld.accessors.CrumbSweepCache;
 import com.toroidalworld.accessors.RelocatableBlockEntity;
 import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFold.Folded;
 import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.gen.FloatingCrumbs;
 import com.toroidalworld.gen.ShapedChunkGenerator;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.storage.WorldLoopAttachments;
@@ -42,9 +44,12 @@ import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraft.world.phys.AABB;
 
 @Mixin(Level.class)
-public class LevelMixin implements TransformerCache {
+public class LevelMixin implements TransformerCache, CrumbSweepCache {
     @Unique
     private WorldFold toroidal$transformer;
+
+    @Unique
+    private @Nullable Boolean toroidal$sweepsCrumbs;
 
     @WrapOperation(
             method = "getChunk(IILnet/minecraft/world/level/chunk/status/ChunkStatus;Z)Lnet/minecraft/world/level/chunk/ChunkAccess;",
@@ -170,6 +175,16 @@ public class LevelMixin implements TransformerCache {
         }
 
         return this.toroidal$transformer;
+    }
+
+    @Override
+    public boolean toroidal$sweepsCrumbs() {
+        if (this.toroidal$sweepsCrumbs == null) {
+            ServerLevel level = WorldLoopAttachments.serverLevelOf((Level) (Object) this);
+            this.toroidal$sweepsCrumbs = level == (Object) this && FloatingCrumbs.installedOn(level);
+        }
+
+        return this.toroidal$sweepsCrumbs;
     }
 
     @Unique

@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.ClientBoundsHolder;
 import com.toroidalworld.accessors.ClientPositionHolder;
+import com.toroidalworld.accessors.CrumbSweepCache;
 import com.toroidalworld.accessors.SeamTravelHolder;
 import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.core.WorldFold;
@@ -21,6 +22,10 @@ import net.minecraft.world.phys.Vec3;
 public final class WorldLoopAttachments {
     public static WorldFold transformerOf(Level level) {
         return ((TransformerCache) level).toroidal$transformer();
+    }
+
+    public static boolean sweepsCrumbs(Level level) {
+        return ((CrumbSweepCache) level).toroidal$sweepsCrumbs();
     }
 
     public static @Nullable WorldFold wrappedTransformerOf(@Nullable Level level) {
