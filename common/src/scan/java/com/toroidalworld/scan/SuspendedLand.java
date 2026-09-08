@@ -123,7 +123,7 @@ final class SuspendedLand {
                 source.erosion(),
                 source.depth(),
                 source.ridges(),
-                source.preliminarySurfaceLevel(),
+                source.initialDensityWithoutJaggedness(),
                 source.finalDensity(),
                 source.veinToggle(),
                 source.veinRidged(),
