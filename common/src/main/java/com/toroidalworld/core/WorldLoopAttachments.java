@@ -10,6 +10,8 @@ import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.engine.seam.ClientPosition;
 import com.toroidalworld.engine.seam.SeamTravel;
 
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -33,6 +35,11 @@ public final class WorldLoopAttachments {
 
         WorldFold transformer = transformerOf(level);
         return transformer.isWrapped() ? transformer : null;
+    }
+
+    public static @Nullable WorldFold wrappedTransformerOf(
+            @Nullable MinecraftServer server, ResourceKey<Level> dimension) {
+        return server != null ? wrappedTransformerOf(server.getLevel(dimension)) : null;
     }
 
     private static WorldFold clientBoundsTransformerOf(Level level) {
