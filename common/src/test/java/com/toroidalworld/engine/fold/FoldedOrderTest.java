@@ -1,4 +1,4 @@
-package com.toroidalworld.core;
+package com.toroidalworld.engine.fold;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -10,16 +10,20 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
+import com.toroidalworld.core.FlatShape;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
-import com.toroidalworld.engine.fold.FoldedOrder;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 
 class FoldedOrderTest {
-    private static final WorldFold SQUARE = new WorldLoopTransformer(new WorldLoopBounds(-16, 16, -16, 16));
-    private static final WorldFold X_ONLY = new WorldLoopTransformer(
-            new WorldLoopBounds(new AxisBounds.Looped(-16, 16), AxisBounds.Unbounded.INSTANCE));
+    private static final WorldFold SQUARE =
+            WorldFolds.of(FlatShape.torus(new WorldLoopBounds(-16, 16, -16, 16)));
+    private static final WorldFold X_ONLY = WorldFolds.of(FlatShape.cylinder(
+            new WorldLoopBounds(new AxisBounds.Looped(-16, 16), AxisBounds.Unbounded.INSTANCE)));
 
     private static final BlockPos ANCHOR = new BlockPos(250, 64, 250);
 
