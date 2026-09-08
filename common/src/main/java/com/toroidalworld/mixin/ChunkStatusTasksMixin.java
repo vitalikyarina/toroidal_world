@@ -3,11 +3,14 @@ package com.toroidalworld.mixin;
 import java.util.concurrent.CompletableFuture;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.gen.FloatingCrumbs;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.PeriodicityCheck;
 import com.toroidalworld.storage.WorldLoopAttachments;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
@@ -46,5 +49,18 @@ public class ChunkStatusTasksMixin {
 
         return GenerationTransformerContext.withTransformer(transformer,
                 () -> original.call(context, step, chunks, chunk));
+    }
+
+    @ModifyReturnValue(method = "generateCarvers", at = @At("RETURN"))
+    private static CompletableFuture<ChunkAccess> toroidal$sweepFloatingCrumbs(
+            CompletableFuture<ChunkAccess> original,
+            WorldGenContext context,
+            ChunkStep step,
+            StaticCache2D<GenerationChunkHolder> chunks,
+            ChunkAccess chunk) {
+        return original.thenApply(carved -> {
+            FloatingCrumbs.sweep(context.level(), carved);
+            return carved;
+        });
     }
 }
