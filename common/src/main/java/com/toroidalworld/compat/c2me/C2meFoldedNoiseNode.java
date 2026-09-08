@@ -3,7 +3,7 @@ package com.toroidalworld.compat.c2me;
 import java.util.Objects;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.noise.SlotAxes;
+import com.toroidalworld.engine.noise.SlotAxes;
 
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
 import com.ishland.c2me.opts.dfc.common.ast.AstTransformer;

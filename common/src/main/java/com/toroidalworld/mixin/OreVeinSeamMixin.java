@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 

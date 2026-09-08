@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.debug.DebugEntryPosition;

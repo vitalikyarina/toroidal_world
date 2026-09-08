@@ -6,8 +6,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.InjectionTargets;
-import com.toroidalworld.entity.SeamAim;
-import com.toroidalworld.entity.SeamRange;
+import com.toroidalworld.engine.seam.SeamAim;
+import com.toroidalworld.engine.seam.SeamRange;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;

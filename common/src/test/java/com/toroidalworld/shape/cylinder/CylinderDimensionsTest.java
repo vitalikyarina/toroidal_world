@@ -9,9 +9,9 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.gen.ShapedDimensions;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.core.FlatShape;
+import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.engine.gen.ShapedDimensions;
 import com.toroidalworld.shape.torus.TorusDimensions;
 import com.toroidalworld.shape.torus.TorusSettings;
 

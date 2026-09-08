@@ -2,9 +2,9 @@ package com.toroidalworld.compat.xaero;
 
 import org.slf4j.Logger;
 
-import com.toroidalworld.api.ToroidalShape;
-import com.toroidalworld.api.ToroidalWorldClientApi;
-import com.toroidalworld.client.ClientFrame;
+import com.toroidalworld.api.v1.ToroidalShape;
+import com.toroidalworld.api.v1.ToroidalWorldClientApi;
+import com.toroidalworld.client.engine.ClientFrame;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.client.Minecraft;

@@ -12,7 +12,7 @@ import java.util.List;
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.accessors.LevelBindRegistry;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.TicketStorage;

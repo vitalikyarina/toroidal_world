@@ -1,17 +1,17 @@
 package com.toroidalworld.compat.c2me;
 
-import static com.toroidalworld.noise.DensityFunctionFixture.CLIMATE_NOISE_DATA;
-import static com.toroidalworld.noise.DensityFunctionFixture.CLIMATE_XZ_SCALE;
-import static com.toroidalworld.noise.DensityFunctionFixture.SEED;
-import static com.toroidalworld.noise.DensityFunctionFixture.blockIn;
-import static com.toroidalworld.noise.DensityFunctionFixture.blockY;
-import static com.toroidalworld.noise.DensityFunctionFixture.withClimateNoise;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_NOISE_DATA;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_XZ_SCALE;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.SEED;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.blockIn;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.blockY;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.withClimateNoise;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.util.Random;
 
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.noise.GenerationTransformerContext;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.AbstractCompiledDensityFunction;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.BytecodeGen;
 

@@ -4,12 +4,12 @@ import java.util.OptionalDouble;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.FlatShape;
+import com.toroidalworld.core.GenerationOptions;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.noise.ClimateFields;
-import com.toroidalworld.noise.ClimateScaleCompression;
-import com.toroidalworld.options.GenerationOptions;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.engine.noise.ClimateFields;
+import com.toroidalworld.engine.noise.ClimateScaleCompression;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;

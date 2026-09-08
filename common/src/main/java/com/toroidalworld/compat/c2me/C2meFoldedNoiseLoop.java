@@ -3,9 +3,9 @@ package com.toroidalworld.compat.c2me;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.noise.GenerationTransformerContext.Context;
-import com.toroidalworld.noise.SlotAxes;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.noise.GenerationTransformerContext.Context;
+import com.toroidalworld.engine.noise.SlotAxes;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
 

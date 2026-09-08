@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.entity.SeamAim;
+import com.toroidalworld.engine.seam.SeamAim;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;

@@ -15,10 +15,10 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.NavigationShifter;
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.FoldedCopies;
-import com.toroidalworld.core.SeamDelta;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.entity.SeamRange;
+import com.toroidalworld.engine.fold.FoldedCopies;
+import com.toroidalworld.engine.fold.SeamDelta;
+import com.toroidalworld.engine.seam.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 

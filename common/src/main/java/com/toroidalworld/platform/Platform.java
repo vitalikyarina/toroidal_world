@@ -2,7 +2,7 @@ package com.toroidalworld.platform;
 
 import java.util.function.IntFunction;
 
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.core.FlatShape;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;

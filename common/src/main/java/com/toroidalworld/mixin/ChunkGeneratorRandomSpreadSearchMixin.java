@@ -8,9 +8,9 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.InjectionTargets;
+import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.gen.SectorGridAxis;
-import com.toroidalworld.gen.ShapedChunkGenerator;
+import com.toroidalworld.engine.gen.SectorGridAxis;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.datafixers.util.Pair;
