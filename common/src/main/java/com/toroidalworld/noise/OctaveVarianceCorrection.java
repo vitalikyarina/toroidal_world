@@ -2,27 +2,6 @@ package com.toroidalworld.noise;
 
 import com.toroidalworld.core.WrapDomain;
 
-// On a torus an octave whose true cells-per-lap f = width·scale falls under 1.5 is floored to a four-cell lattice
-// (LapFloor.FOUR_CELLS; a single-cell lap collapses to one smoothstep-warped plane, which no amplitude policy
-// can turn back into noise; four cells rather than the minimal two keeps the floored wavelength at 128 blocks on a
-// 512-block world instead of the axis-aligned 256-block lattice that read as square mountains in-game). The floor
-// buys structure at the cost of amplitude: the four-cell fold shows near-full noise where vanilla's window sees only
-// a fraction of a near-constant cell, over-delivering rms up to ×7.7 at the lowest octaves. This damps the floored
-// octaves back onto the vanilla window rms while keeping the closed lap (and so the seam) intact. Damp-only by
-// construction: the four-cell fold's rms (0.2664) exceeds the vanilla window rms at every f < 1.5, so the table
-// never exceeds 1.
-//
-// Everything here is calibrated, not derived (FieldDistributionProbeTest, single real vanilla octaves, 512-block
-// laps): the flat table is sqrt of the mean-variance ratio, vanilla window over the floored fold, per f (2048
-// seeds). A live axis — the second horizontal one (rectangular calibration) or Y (vertical-liveness calibration) —
-// shrinks the deficit, because real variation along it dominates the spread on both sides of the comparison. Hence
-// the correction applies only when BOTH horizontal axes are in the floored regime and the field is vertically flat
-// (the caller declares flatness through GenerationTransformerContext), at the arithmetic-mean f of the two axes.
-// A cylinder never floors: LapFloor.HELD keeps a starved octave constant along the ring, and the strip rms then sits
-// within 2% of vanilla's (the cylinder calibration), so the identity on an unbounded axis is measured, not deferred.
-// Known deferred residuals, measured: exactly one floored axis over-delivers up to ×1.21 (rectangular worlds do not
-// exist yet — calibrate before shipping per-axis sizes), and vertically-live fields with floored octaves
-// over-deliver up to ×1.7 at half a vertical cell per world height (the 3D cave family's slow modulators).
 public final class OctaveVarianceCorrection {
     private static final double[] CELLS_PER_LAP = {
             0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.625, 0.75, 0.875, 1.0, 1.125, 1.25, 1.375, 1.4375
