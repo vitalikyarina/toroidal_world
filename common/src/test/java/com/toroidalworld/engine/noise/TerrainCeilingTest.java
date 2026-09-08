@@ -100,13 +100,11 @@ class TerrainCeilingTest {
                 continue;
             }
 
-            node.mapChildren(child -> {
+            for (DensityFunction child : DensityChildren.of(node)) {
                 if (seen.add(child)) {
                     pending.add(child);
                 }
-
-                return child;
-            });
+            }
         }
 
         return found;
