@@ -138,6 +138,8 @@ test {
     doFirst { workingDir.mkdirs() }
     // The working directory is not the module, so a test that writes a report is told where the module's reports go.
     systemProperty 'toroidal.reports', layout.buildDirectory.dir('reports').get().asFile.absolutePath
+    // The datapack templates under docs/ are not on the classpath, so the test that gates them is given the repo root.
+    systemProperty 'toroidal.repoRoot', rootDir.absolutePath
 }
 
 tasks.withType(JavaCompile).configureEach {
