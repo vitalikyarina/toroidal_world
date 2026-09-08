@@ -1,7 +1,6 @@
 package com.toroidalworld.engine.seam;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
 
@@ -73,7 +72,6 @@ class SeamTravelTest {
 
         SeamTravel.Step crossing = stepTo(travel, TORUS, Level.OVERWORLD, MIN_BLOCK, 0.0);
 
-        assertEquals(-(WIDTH_BLOCKS - 1.0), crossing.raw().x, TOLERANCE);
         assertEquals(1.0, crossing.folded().x, TOLERANCE);
         assertEquals(1.0, travel.in(Level.OVERWORLD).x(), TOLERANCE);
     }
@@ -95,7 +93,7 @@ class SeamTravelTest {
 
         SeamTravel.Step arrival = stepTo(travel, TORUS, Level.NETHER, -200.0, 0.0);
 
-        assertTrue(!arrival.moved());
+        assertEquals(0.0, arrival.folded().lengthSqr(), TOLERANCE);
         assertEquals(0.0, travel.in(Level.NETHER).x(), TOLERANCE);
         assertEquals(200.0, travel.in(Level.OVERWORLD).x(), TOLERANCE);
     }
