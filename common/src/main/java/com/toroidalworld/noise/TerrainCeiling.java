@@ -70,8 +70,10 @@ public final class TerrainCeiling {
             return null;
         }
 
-        DensityFunction headroom = DensityFunctions.mul(DensityFunctions.constant(lift),
-                DensityFunctions.max(spline, DensityFunctions.zero()));
+        DensityFunction nonNegativeSpline = spline.minValue() < 0.0
+                ? DensityFunctions.max(spline, DensityFunctions.zero())
+                : spline;
+        DensityFunction headroom = DensityFunctions.mul(DensityFunctions.constant(lift), nonNegativeSpline);
         return DensityFunctions.add(
                 DensityFunctions.add(DensityFunctions.flatCache(source.preliminarySurfaceLevel()),
                         DensityFunctions.constant(BASE_BLOCKS)),
