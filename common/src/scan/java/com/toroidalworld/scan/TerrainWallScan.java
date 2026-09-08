@@ -1,5 +1,6 @@
 package com.toroidalworld.scan;
 
+import static com.toroidalworld.noise.ClimateScanFixture.SEED_BASE;
 import static com.toroidalworld.noise.ClimateScanFixture.TYPES;
 import static com.toroidalworld.noise.ClimateScanFixture.noiseParameters;
 import static com.toroidalworld.noise.ClimateScanFixture.randomState;
@@ -8,6 +9,7 @@ import static com.toroidalworld.noise.ClimateScanFixture.torusOfWidth;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -24,12 +26,15 @@ import com.toroidalworld.noise.ClimateScanFixture;
 import com.toroidalworld.noise.ClimateScanFixture.WorldType;
 import com.toroidalworld.noise.GenerationTransformerContext;
 import com.toroidalworld.noise.OctaveVarianceCorrection;
+import com.toroidalworld.options.WorldLoopPresets;
 
 import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.NoiseRouter;
+import net.minecraft.world.level.levelgen.NoiseSettings;
 import net.minecraft.world.level.levelgen.Noises;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
@@ -55,9 +60,29 @@ class TerrainWallScan {
 
     private static final int WORST_SITES = 12;
 
+    private static final int NEEDLE_WINDOW_BLOCKS = 48;
+
+    private static final int NEEDLE_SEEDS = 4;
+
+    private static final long NEEDLE_SEED_STEP = 0x9E3779B97F4A7C15L;
+
+    private static final int NEEDLE_DROP_BLOCKS = 16;
+
+    private static final int COARSE_STEP_BLOCKS = 8;
+
+    private static final int NO_COLUMN = Integer.MIN_VALUE;
+
+    private static final int[][] NEEDLE_NEIGHBOURS = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+    private static final String NEEDLE_KIND = "needle";
+
+    private static final String PIT_KIND = "pit";
+
     private static final Path REPORT = ScanReports.DIRECTORY.resolve("terrain-wall-scan.txt");
 
     private static final Path OCTAVE_REPORT = ScanReports.DIRECTORY.resolve("terrain-wall-octaves.txt");
+
+    private static final Path NEEDLE_REPORT = ScanReports.DIRECTORY.resolve("terrain-needle-scan.txt");
 
     private static final double CLIMATE_XZ_SCALE = 0.25;
 
@@ -75,6 +100,33 @@ class TerrainWallScan {
     }
 
     private record Pass(String name, List<Site> blades, int[] bladesPerLevel, List<Field> fields, double landShare) {
+    }
+
+    private record Needles(int needles, int worstDrop, int pits) {
+        Needles plus(Needles other) {
+            return new Needles(this.needles + other.needles, Math.max(this.worstDrop, other.worstDrop),
+                    this.pits + other.pits);
+        }
+    }
+
+    private record NeedleRow(int seedsWithNeedle, int needles, int worstDrop, int pits, Jumps jumps) {
+    }
+
+    private record Spike(String lap, long seed, int blockX, int blockY, int blockZ, String kind, int drop,
+            double continents, double erosion, double ridges, double depth) {
+    }
+
+    private record Jumps(int p50, int p90, int p99, int p999, int max) {
+        static Jumps of(IntArrayList steps) {
+            int[] sorted = steps.toIntArray();
+            Arrays.sort(sorted);
+            return new Jumps(at(sorted, 0.50), at(sorted, 0.90), at(sorted, 0.99), at(sorted, 0.999),
+                    sorted[sorted.length - 1]);
+        }
+
+        private static int at(int[] sorted, double fraction) {
+            return sorted[Math.min(sorted.length - 1, (int) (sorted.length * fraction))];
+        }
     }
 
     @BeforeAll
@@ -136,8 +188,9 @@ class TerrainWallScan {
                 .append(" x compression x 2^firstOctave x 2^octave.").append(System.lineSeparator())
                 .append("compression = ClimateScaleCompression.factor under Compact biomes Auto.")
                 .append(System.lineSeparator())
-                .append("cells = cells the octave carries over one lap; period = the lattice it closes on,")
-                .append(" floored to 4 where the natural period falls under 2.").append(System.lineSeparator())
+                .append("cells = cells the octave carries over one lap; period = the lattice it closes on, marked")
+                .append(" floored where the natural one falls under 2 and LapFloor hands out its own.")
+                .append(System.lineSeparator())
                 .append("damp = OctaveVarianceCorrection.factor, gain = its anchor gain; an octave the floor")
                 .append(" never caught takes damp 1 and gain 0.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
@@ -147,6 +200,257 @@ class TerrainWallScan {
         }
 
         ScanReports.write(OCTAVE_REPORT, report.toString());
+    }
+
+    @Test
+    void countsTheNeedlesEveryPresetLeavesOnItsLap() {
+        WorldType type = TYPES.getFirst();
+        NoiseSettings noiseSettings = settingsOf(type).noiseSettings();
+
+        StringBuilder report = new StringBuilder();
+        report.append("Needle scan - the highest solid block of every column, walked down the real final density,")
+                .append(" no chunk generation.").append(System.lineSeparator())
+                .append("A needle is a column standing at least ").append(NEEDLE_DROP_BLOCKS)
+                .append(" blocks above all four of its neighbours; the blade metric of the wall scan reads the")
+                .append(" generator's ").append(CELL_WIDTH).append("-block corner lattice and cannot see one.")
+                .append(System.lineSeparator())
+                .append("Per preset: ").append(NEEDLE_SEEDS).append(" seeds, one ").append(NEEDLE_WINDOW_BLOCKS)
+                .append("x").append(NEEDLE_WINDOW_BLOCKS).append("-block window in each quadrant of the lap.")
+                .append(System.lineSeparator())
+                .append("The column is walked from the top of the dimension down in ").append(COARSE_STEP_BLOCKS)
+                .append("-block steps and refined to the block, so a solid layer thinner than one step is")
+                .append(" reported only where it is the highest one.").append(System.lineSeparator())
+                .append("pits = the same test downward: columns sitting that far below all four neighbours.")
+                .append(" Reported, not gated - ordinary seabed relief clears the same threshold.")
+                .append(System.lineSeparator())
+                .append("The control binds WorldFolds.NOOP, so it reads the same windows of an unbounded vanilla")
+                .append(" world - the same seed, the same coordinates, no fold.")
+                .append(System.lineSeparator()).append(System.lineSeparator());
+
+        report.append("The gate is the distribution: every adjacent-column height step over the windows, torus")
+                .append(" against control. No percentile up to p999 may run more than one needle (")
+                .append(NEEDLE_DROP_BLOCKS).append(" blocks) past the control's; max is one column and swings")
+                .append(" both ways, so it is printed and not gated. The needle and pit counts under it are")
+                .append(" outliers of the same numbers, reported so a row can be followed to a place.")
+                .append(System.lineSeparator()).append(System.lineSeparator());
+
+        report.append(String.format("    %-8s %-14s %29s %29s%n", "", "", "torus", "control"));
+        report.append(String.format("    %-8s %-14s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s%n",
+                "preset", "blocks", "p50", "p90", "p99", "p999", "max", "p50", "p90", "p99", "p999", "max"));
+
+        List<Spike> sites = new ArrayList<>();
+        List<NeedleRow> torusRows = new ArrayList<>();
+        List<NeedleRow> controlRows = new ArrayList<>();
+        List<String> widened = new ArrayList<>();
+
+        for (WorldLoopPresets preset : WorldLoopPresets.values()) {
+            int widthBlocks = preset.blockWidth();
+            NeedleRow torus = needleRow(type, noiseSettings, widthBlocks, true, preset.id(), sites);
+            NeedleRow control = needleRow(type, noiseSettings, widthBlocks, false, preset.id(), sites);
+            torusRows.add(torus);
+            controlRows.add(control);
+            widened.addAll(overrun(preset.id(), torus.jumps(), control.jumps()));
+
+            report.append(String.format("    %-8s %-14s %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d%n",
+                    preset.id(), widthBlocks + " blocks",
+                    torus.jumps().p50(), torus.jumps().p90(), torus.jumps().p99(), torus.jumps().p999(),
+                    torus.jumps().max(),
+                    control.jumps().p50(), control.jumps().p90(), control.jumps().p99(),
+                    control.jumps().p999(), control.jumps().max()));
+        }
+
+        report.append(System.lineSeparator())
+                .append("Outliers of the same windows, ").append(NEEDLE_SEEDS).append(" seeds per preset:")
+                .append(System.lineSeparator());
+        report.append(String.format("    %-8s %-14s %23s %23s%n", "", "", "torus", "control"));
+        report.append(String.format("    %-8s %-14s %5s %7s %5s %6s %5s %7s %5s %6s%n",
+                "preset", "blocks", "seeds", "needles", "worst", "pits", "seeds", "needles", "worst", "pits"));
+
+        int row = 0;
+        for (WorldLoopPresets preset : WorldLoopPresets.values()) {
+            NeedleRow torus = torusRows.get(row);
+            NeedleRow control = controlRows.get(row++);
+            report.append(String.format("    %-8s %-14s %5d %7d %5d %6d %5d %7d %5d %6d%n",
+                    preset.id(), preset.blockWidth() + " blocks",
+                    torus.seedsWithNeedle(), torus.needles(), torus.worstDrop(), torus.pits(),
+                    control.seedsWithNeedle(), control.needles(), control.worstDrop(), control.pits()));
+        }
+
+        report.append(System.lineSeparator())
+                .append("seeds = seeds carrying at least one needle; needles = the count over every window;")
+                .append(" worst = the largest drop to a neighbour.")
+                .append(System.lineSeparator());
+
+        appendSites(report, sites);
+        ScanReports.write(NEEDLE_REPORT, report.toString());
+
+        assertTrue(widened.isEmpty(), "a folded lap steps higher between neighbours than its control: " + widened);
+    }
+
+    private static List<String> overrun(String presetId, Jumps torus, Jumps control) {
+        List<String> over = new ArrayList<>();
+        int[][] pairs = {
+                {torus.p50(), control.p50()}, {torus.p90(), control.p90()},
+                {torus.p99(), control.p99()}, {torus.p999(), control.p999()}};
+        String[] names = {"p50", "p90", "p99", "p999"};
+
+        for (int i = 0; i < pairs.length; i++) {
+            if (pairs[i][0] - pairs[i][1] > NEEDLE_DROP_BLOCKS) {
+                over.add(presetId + " " + names[i] + ": torus " + pairs[i][0] + " blocks, control "
+                        + pairs[i][1]);
+            }
+        }
+
+        return over;
+    }
+
+    private static void appendSites(StringBuilder report, List<Spike> sites) {
+        appendSites(report, sites, NEEDLE_KIND, "Needles, largest drop first:");
+        appendSites(report, sites, PIT_KIND, "Pits, largest drop first:");
+    }
+
+    private static void appendSites(StringBuilder report, List<Spike> sites, String kind, String title) {
+        List<Spike> ofKind = sites.stream()
+                .filter(spike -> spike.kind().equals(kind))
+                .sorted(Comparator.comparingInt(Spike::drop).reversed())
+                .limit(WORST_SITES)
+                .toList();
+        if (ofKind.isEmpty()) {
+            return;
+        }
+
+        report.append(System.lineSeparator()).append(title).append(System.lineSeparator());
+        report.append(String.format("    %-16s %-18s %5s %10s %9s %9s %9s %22s%n",
+                "lap", "x y z", "drop", "continents", "erosion", "ridges", "depth", "seed"));
+
+        for (Spike spike : ofKind) {
+            report.append(String.format("    %-16s %-18s %5d %10.4f %9.4f %9.4f %9.4f %22d%n",
+                    spike.lap(), spike.blockX() + " " + spike.blockY() + " " + spike.blockZ(),
+                    spike.drop(), spike.continents(), spike.erosion(), spike.ridges(), spike.depth(),
+                    spike.seed()));
+        }
+    }
+
+    private static NeedleRow needleRow(WorldType type, NoiseSettings noiseSettings, int widthBlocks,
+            boolean folded, String presetId, List<Spike> sites) {
+        int seedsWithNeedle = 0;
+        int needles = 0;
+        int worstDrop = 0;
+        int sunkenColumns = 0;
+        IntArrayList steps = new IntArrayList();
+
+        for (int s = 0; s < NEEDLE_SEEDS; s++) {
+            long seed = SEED_BASE + s * NEEDLE_SEED_STEP;
+            WorldFold fold = folded ? torusOfWidth(widthBlocks) : WorldFolds.NOOP;
+            Needles found = quadrants(type, noiseSettings, fold, widthBlocks, seed,
+                    presetId + (folded ? " torus" : " control"), sites, steps);
+            if (found.needles() > 0) {
+                seedsWithNeedle++;
+            }
+
+            needles += found.needles();
+            worstDrop = Math.max(worstDrop, found.worstDrop());
+            sunkenColumns += found.pits();
+        }
+
+        return new NeedleRow(seedsWithNeedle, needles, worstDrop, sunkenColumns, Jumps.of(steps));
+    }
+
+    private static Needles quadrants(WorldType type, NoiseSettings noiseSettings, WorldFold fold,
+            int widthBlocks, long seed, String lap, List<Spike> sites, IntArrayList steps) {
+        NoiseRouter router = randomState(type, fold, seed).router();
+        Needles[] total = {new Needles(0, 0, 0)};
+
+        GenerationTransformerContext.runWithTransformer(fold, () -> {
+            for (int quadrantX = 0; quadrantX < 2; quadrantX++) {
+                for (int quadrantZ = 0; quadrantZ < 2; quadrantZ++) {
+                    total[0] = total[0].plus(window(router, noiseSettings,
+                            quadrantX * widthBlocks / 2, quadrantZ * widthBlocks / 2, lap, seed, sites, steps));
+                }
+            }
+        });
+
+        return total[0];
+    }
+
+    private static Needles window(NoiseRouter router, NoiseSettings noiseSettings, int originX, int originZ,
+            String lap, long seed, List<Spike> sites, IntArrayList steps) {
+        DensityFunction density = router.finalDensity();
+        int span = NEEDLE_WINDOW_BLOCKS + 2;
+        int[] heights = new int[span * span];
+
+        for (int dx = 0; dx < span; dx++) {
+            for (int dz = 0; dz < span; dz++) {
+                heights[dx * span + dz] = surfaceHeight(density, noiseSettings, originX + dx - 1, originZ + dz - 1);
+            }
+        }
+
+        int needles = 0;
+        int worstDrop = 0;
+        int pits = 0;
+
+        for (int dx = 1; dx <= NEEDLE_WINDOW_BLOCKS; dx++) {
+            for (int dz = 1; dz <= NEEDLE_WINDOW_BLOCKS; dz++) {
+                int here = height(heights[dx * span + dz], noiseSettings);
+                steps.add(Math.abs(here - height(heights[(dx + 1) * span + dz], noiseSettings)));
+                steps.add(Math.abs(here - height(heights[dx * span + dz + 1], noiseSettings)));
+                int rise = Integer.MAX_VALUE;
+                int fall = Integer.MAX_VALUE;
+
+                for (int[] step : NEEDLE_NEIGHBOURS) {
+                    int neighbour = height(heights[(dx + step[0]) * span + dz + step[1]], noiseSettings);
+                    rise = Math.min(rise, here - neighbour);
+                    fall = Math.min(fall, neighbour - here);
+                }
+
+                if (rise >= NEEDLE_DROP_BLOCKS) {
+                    needles++;
+                    worstDrop = Math.max(worstDrop, rise);
+                    sites.add(spike(router, lap, seed, originX + dx - 1, here, originZ + dz - 1,
+                            NEEDLE_KIND, rise));
+                }
+
+                if (fall >= NEEDLE_DROP_BLOCKS) {
+                    pits++;
+                    sites.add(spike(router, lap, seed, originX + dx - 1, here, originZ + dz - 1, PIT_KIND, fall));
+                }
+            }
+        }
+
+        return new Needles(needles, worstDrop, pits);
+    }
+
+    private static Spike spike(NoiseRouter router, String lap, long seed, int blockX, int blockY, int blockZ,
+            String kind, int drop) {
+        DensityFunction.SinglePointContext point = new DensityFunction.SinglePointContext(blockX, blockY, blockZ);
+        return new Spike(lap, seed, blockX, blockY, blockZ, kind, drop,
+                router.continents().compute(point), router.erosion().compute(point),
+                router.ridges().compute(point), router.depth().compute(point));
+    }
+
+    private static int height(int found, NoiseSettings noiseSettings) {
+        return found == NO_COLUMN ? noiseSettings.minY() : found;
+    }
+
+    private static int surfaceHeight(DensityFunction density, NoiseSettings noiseSettings, int blockX, int blockZ) {
+        int bottom = noiseSettings.minY();
+        int top = bottom + noiseSettings.height() - 1;
+
+        for (int y = top; y >= bottom; y -= COARSE_STEP_BLOCKS) {
+            if (density.compute(new DensityFunction.SinglePointContext(blockX, y, blockZ)) <= 0.0) {
+                continue;
+            }
+
+            for (int fine = Math.min(top, y + COARSE_STEP_BLOCKS - 1); fine > y; fine--) {
+                if (density.compute(new DensityFunction.SinglePointContext(blockX, fine, blockZ)) > 0.0) {
+                    return fine;
+                }
+            }
+
+            return y;
+        }
+
+        return NO_COLUMN;
     }
 
     private static void appendField(StringBuilder report, ResourceKey<NormalNoise.NoiseParameters> key,
@@ -168,7 +472,7 @@ class TerrainWallScan {
             long natural = Math.round(WIDTH_BLOCKS * scale);
             report.append(String.format("    %-7d %10.3f %9.4f %8s %7.3f %7.3f%n",
                     i, amplitudes.getDouble(i), WIDTH_BLOCKS * scale,
-                    natural < 2L ? natural + " -> 4" : Long.toString(natural),
+                    natural < 2L ? natural + " floored" : Long.toString(natural),
                     OctaveVarianceCorrection.factor(xDomain, zDomain, scale, HORIZONTAL_SHARE),
                     OctaveVarianceCorrection.anchorGain(xDomain, zDomain, scale, HORIZONTAL_SHARE)));
         }
