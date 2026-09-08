@@ -48,27 +48,31 @@ public final class WorldLoopAttachments {
         return transformer.isWrapped() ? transformer : null;
     }
 
-    private static @Nullable Level levelOf(LevelReader reader) {
-        ServerLevel serverLevel = serverLevelOf(reader);
-        if (serverLevel != null) {
-            return serverLevel;
+    private static @Nullable Level levelOf(@Nullable LevelReader reader) {
+        if (reader instanceof Level level) {
+            return level;
         }
 
-        return reader instanceof Level level ? level : null;
+        return reader != null ? serverLevelOf(reader) : null;
     }
 
-    public static WorldFold noiseTransformerOf(Level level) {
+    public static WorldFold transformerOfReader(@Nullable LevelReader reader) {
+        Level level = levelOf(reader);
+        if (level == null) {
+            return WorldFolds.NOOP;
+        }
+
         WorldFold clientBounds = wrappedClientBoundsTransformerOf(level);
         return clientBounds != null ? clientBounds : transformerOf(level);
     }
 
+    public static WorldFold noiseTransformerOf(Level level) {
+        return transformerOfReader(level);
+    }
+
     public static @Nullable WorldFold noiseTransformerOfReader(LevelReader reader) {
         Level level = levelOf(reader);
-        if (level != null) {
-            return noiseTransformerOf(level);
-        }
-
-        return null;
+        return level != null ? transformerOfReader(level) : null;
     }
 
     public static @Nullable ServerLevel serverLevelOf(LevelReader reader) {
