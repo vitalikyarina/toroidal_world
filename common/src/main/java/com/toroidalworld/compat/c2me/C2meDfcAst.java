@@ -26,7 +26,7 @@ public final class C2meDfcAst {
     public static AstNode fold(DensityFunction source, AstNode produced) {
         Fold fold = foldOf(source);
         if (fold == null) {
-            if (produced instanceof GenericShiftedNoiseNode) {
+            if (produced instanceof GenericShiftedNoiseNode && !delegatesToItsInput(source)) {
                 LOGGER.warn("[c2me-compat] dfc_ast noise_not_folded type={}", source.getClass().getName());
             }
 
@@ -67,6 +67,10 @@ public final class C2meDfcAst {
                     GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE, true, false);
             default -> null;
         };
+    }
+
+    private static boolean delegatesToItsInput(DensityFunction source) {
+        return source instanceof DensityFunctions.HolderHolder;
     }
 
     @SuppressWarnings("deprecation")
