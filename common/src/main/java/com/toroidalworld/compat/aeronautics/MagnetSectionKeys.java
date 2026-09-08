@@ -5,7 +5,7 @@ import org.jspecify.annotations.Nullable;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.LevelAccessor;

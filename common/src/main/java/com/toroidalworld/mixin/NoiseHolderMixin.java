@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.ClimateFieldMark;
-import com.toroidalworld.noise.ClimateFields;
+import com.toroidalworld.engine.noise.ClimateFields;
 
 import net.minecraft.core.Holder;
 import net.minecraft.world.level.levelgen.DensityFunction;

@@ -1,11 +1,21 @@
 package com.toroidalworld.scan;
 
-import static com.toroidalworld.noise.ClimateScanFixture.SEED_BASE;
-import static com.toroidalworld.noise.ClimateScanFixture.TYPES;
-import static com.toroidalworld.noise.ClimateScanFixture.noiseParameters;
-import static com.toroidalworld.noise.ClimateScanFixture.randomState;
-import static com.toroidalworld.noise.ClimateScanFixture.settingsOf;
-import static com.toroidalworld.noise.ClimateScanFixture.torusOfWidth;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.core.WrapDomain;
+import com.toroidalworld.engine.noise.ClimateFields;
+import com.toroidalworld.engine.noise.ClimateScaleCompression;
+import com.toroidalworld.engine.noise.ClimateScanFixture;
+import com.toroidalworld.engine.noise.ClimateScanFixture.WorldType;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.noise.OctaveVarianceCorrection;
+import com.toroidalworld.shape.WorldLoopPresets;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.SEED_BASE;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.TYPES;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.noiseParameters;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.randomState;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.settingsOf;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.torusOfWidth;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -17,16 +27,6 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.core.WrapDomain;
-import com.toroidalworld.noise.ClimateFields;
-import com.toroidalworld.noise.ClimateScaleCompression;
-import com.toroidalworld.noise.ClimateScanFixture;
-import com.toroidalworld.noise.ClimateScanFixture.WorldType;
-import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.noise.OctaveVarianceCorrection;
-import com.toroidalworld.options.WorldLoopPresets;
 
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;

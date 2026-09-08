@@ -3,7 +3,7 @@ package com.toroidalworld.compat.aeronautics;
 import com.toroidalworld.compat.sable.SeamFrame;
 import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;

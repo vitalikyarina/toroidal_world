@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import com.toroidalworld.client.ClientFrame;
+import com.toroidalworld.client.engine.ClientFrame;
 
 import dev.simulated_team.simulated.content.items.rope.RopeItem.ClientRopeItemHandler;
 

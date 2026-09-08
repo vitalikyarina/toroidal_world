@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.simibubi.create.content.equipment.zapper.ShootGadgetPacket;
-import com.toroidalworld.client.ClientFrame;
+import com.toroidalworld.client.engine.ClientFrame;
 
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.Vec3;

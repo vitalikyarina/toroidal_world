@@ -10,7 +10,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.logistics.tableCloth.ShoppingListItem.ShoppingList;
 import com.simibubi.create.content.logistics.tableCloth.TableClothOverlayRenderer;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
-import com.toroidalworld.core.FoldedCopies;
+import com.toroidalworld.engine.fold.FoldedCopies;
 
 import net.createmod.catnip.data.IntAttached;
 import net.minecraft.core.BlockPos;

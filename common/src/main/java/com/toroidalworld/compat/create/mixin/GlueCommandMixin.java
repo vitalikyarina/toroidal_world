@@ -7,8 +7,8 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.mojang.brigadier.Command;
 import com.simibubi.create.infrastructure.command.GlueCommand;
-import com.toroidalworld.command.SeamCommandErrors;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.engine.seam.SeamCommandErrors;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;

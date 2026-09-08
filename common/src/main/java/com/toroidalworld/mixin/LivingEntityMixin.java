@@ -10,7 +10,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.entity.SeamAim;
+import com.toroidalworld.engine.seam.SeamAim;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

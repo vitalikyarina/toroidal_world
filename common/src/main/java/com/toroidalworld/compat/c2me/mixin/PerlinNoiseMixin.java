@@ -6,9 +6,9 @@ import org.spongepowered.asm.mixin.Shadow;
 
 import com.toroidalworld.accessors.ClimateCompressionCache;
 import com.toroidalworld.accessors.ClimateFieldMark;
-import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.noise.GenerationTransformerContext.Context;
-import com.toroidalworld.noise.PeriodicOctaveSampler;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.noise.GenerationTransformerContext.Context;
+import com.toroidalworld.engine.noise.PeriodicOctaveSampler;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 

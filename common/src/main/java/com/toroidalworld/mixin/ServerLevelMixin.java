@@ -13,11 +13,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.net.ListenerCopies;
-import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.player.SeamSnap;
-import com.toroidalworld.storage.SeamRespawnData;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.engine.net.ListenerCopies;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.seam.SeamSnap;
+import com.toroidalworld.engine.level.SeamRespawnData;
+import com.toroidalworld.core.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 

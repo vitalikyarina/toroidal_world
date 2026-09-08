@@ -13,7 +13,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.toroidalworld.compat.sable.SableEntityQuery;
 import com.toroidalworld.compat.sable.SeamFrame;
-import com.toroidalworld.core.FoldedBoxQuery;
+import com.toroidalworld.engine.fold.FoldedBoxQuery;
 
 import dev.ryanhcode.sable.util.SubLevelInclusiveLevelEntityGetter;
 

@@ -4,8 +4,8 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 
-import com.toroidalworld.api.ToroidalShape;
-import com.toroidalworld.api.ToroidalWorldClientApi;
+import com.toroidalworld.api.v1.ToroidalShape;
+import com.toroidalworld.api.v1.ToroidalWorldClientApi;
 import com.toroidalworld.ToroidalWorld;
 import com.mojang.logging.LogUtils;
 

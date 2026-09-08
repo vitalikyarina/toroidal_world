@@ -10,8 +10,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.core.FlatShape;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

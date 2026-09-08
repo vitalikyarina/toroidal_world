@@ -12,9 +12,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.net.ListenerCopies;
-import com.toroidalworld.net.WorldShapeSync;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.engine.net.ListenerCopies;
+import com.toroidalworld.engine.net.WorldShapeSync;
+import com.toroidalworld.core.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;

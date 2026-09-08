@@ -8,12 +8,12 @@ import org.jspecify.annotations.Nullable;
 import com.toroidalworld.compat.SyncedTagFold;
 import com.toroidalworld.compat.aeronautics.mixin.MultiMiningSyncAccessor;
 import com.toroidalworld.compat.aeronautics.mixin.PhysicsStaffBeamPacketAccessor;
-import com.toroidalworld.core.FoldedCopies;
+import com.toroidalworld.engine.fold.FoldedCopies;
 import com.toroidalworld.core.JomlVectors;
-import com.toroidalworld.net.PacketTranslator;
-import com.toroidalworld.net.SpawnBufferFold;
-import com.toroidalworld.net.TagPositions;
-import com.toroidalworld.net.TranslationContext;
+import com.toroidalworld.engine.net.PacketTranslator;
+import com.toroidalworld.engine.net.SpawnBufferFold;
+import com.toroidalworld.engine.net.TagPositions;
+import com.toroidalworld.engine.net.TranslationContext;
 
 import dev.eriksonn.aeronautics.network.packets.LevititeCatalystCrystallizationPacket;
 import dev.simulated_team.simulated.content.blocks.docking_connector.DockingConnectorBlockEntity;

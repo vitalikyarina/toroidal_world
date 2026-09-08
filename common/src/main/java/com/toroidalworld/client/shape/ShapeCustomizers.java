@@ -2,7 +2,7 @@ package com.toroidalworld.client.shape;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.registry.StartupRegistry;
+import com.toroidalworld.core.StartupRegistry;
 import com.toroidalworld.shape.WorldShape;
 
 import net.minecraft.client.gui.screens.Screen;

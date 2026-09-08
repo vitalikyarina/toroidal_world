@@ -1,7 +1,7 @@
 package com.toroidalworld.compat.aeronautics;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import dev.simulated_team.simulated.content.blocks.nav_table.NavTableBlockEntity;
 

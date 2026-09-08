@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.SeamTransform;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.map.MapSurfaceCopies.Copies;
+import com.toroidalworld.engine.seam.MapSurfaceCopies.Copies;
 
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.BlockPos;

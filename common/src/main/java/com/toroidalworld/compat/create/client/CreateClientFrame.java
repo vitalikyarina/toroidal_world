@@ -4,10 +4,10 @@ import java.util.Collection;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.client.ClientFrame;
+import com.toroidalworld.client.engine.ClientFrame;
 import com.toroidalworld.compat.create.CreateSeamFold;
-import com.toroidalworld.core.FoldedBoxQuery;
-import com.toroidalworld.core.FoldedCopies;
+import com.toroidalworld.engine.fold.FoldedBoxQuery;
+import com.toroidalworld.engine.fold.FoldedCopies;
 import com.toroidalworld.core.WorldFold;
 
 import net.minecraft.client.Minecraft;

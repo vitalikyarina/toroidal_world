@@ -5,8 +5,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.simibubi.create.content.equipment.blueprint.BlueprintEntity;
-import com.toroidalworld.core.FoldedBoxQuery;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.FoldedBoxQuery;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;

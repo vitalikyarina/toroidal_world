@@ -8,8 +8,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.TransformerHolder;
-import com.toroidalworld.core.ChunkViewSweep;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.fold.ChunkViewSweep;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;

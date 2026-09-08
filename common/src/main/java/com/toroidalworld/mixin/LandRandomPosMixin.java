@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import com.toroidalworld.entity.SeamSteering;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.world.entity.PathfinderMob;

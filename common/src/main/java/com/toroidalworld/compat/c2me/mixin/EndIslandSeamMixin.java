@@ -5,8 +5,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.noise.PeriodicEndIslands;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.noise.PeriodicEndIslands;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 

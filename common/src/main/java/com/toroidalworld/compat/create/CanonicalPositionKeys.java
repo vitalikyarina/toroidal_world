@@ -12,7 +12,7 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;

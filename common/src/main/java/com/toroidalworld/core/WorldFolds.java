@@ -3,10 +3,7 @@ package com.toroidalworld.core;
 import java.util.List;
 import java.util.Optional;
 
-import com.toroidalworld.options.GenerationOptions;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
-import com.toroidalworld.options.WorldLoopSizes;
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 import com.mojang.serialization.DataResult;
 
 import net.minecraft.core.Direction;

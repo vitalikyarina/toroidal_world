@@ -1,15 +1,15 @@
 package com.toroidalworld;
 
-import com.toroidalworld.advancement.WorldLoopCriteria;
+import com.toroidalworld.engine.seam.WorldLoopCriteria;
 import com.toroidalworld.compat.aeronautics.AeronauticsTranslation;
 import com.toroidalworld.compat.create.CreateTranslation;
 import com.toroidalworld.compat.aeronautics.AeronauticsMod;
 import com.toroidalworld.compat.sable.SableMod;
-import com.toroidalworld.gen.LoopedChunkGenerator;
-import com.toroidalworld.gen.LoopedFlatChunkGenerator;
-import com.toroidalworld.gen.WorldLoopGenerators;
-import com.toroidalworld.net.WrappingSettingsPayload;
-import com.toroidalworld.options.WorldOptionSetup;
+import com.toroidalworld.engine.gen.LoopedChunkGenerator;
+import com.toroidalworld.engine.gen.LoopedFlatChunkGenerator;
+import com.toroidalworld.engine.gen.WorldLoopGenerators;
+import com.toroidalworld.engine.net.WrappingSettingsPayload;
+import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.platform.FabricPlatform;
 import com.toroidalworld.platform.Platforms;
 import com.toroidalworld.shape.WorldShapeSetup;

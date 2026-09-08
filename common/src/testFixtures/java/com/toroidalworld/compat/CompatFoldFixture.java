@@ -3,9 +3,9 @@ package com.toroidalworld.compat;
 import com.toroidalworld.core.DeckGroupFold;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
+import com.toroidalworld.core.FlatShape;
 
 import net.minecraft.core.Direction;
 

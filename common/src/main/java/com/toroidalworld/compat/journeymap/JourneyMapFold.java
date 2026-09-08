@@ -5,12 +5,12 @@ import java.io.File;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
-import com.toroidalworld.api.ToroidalShape;
-import com.toroidalworld.api.ToroidalWorldClientApi;
-import com.toroidalworld.client.ClientFrame;
+import com.toroidalworld.api.v1.ToroidalShape;
+import com.toroidalworld.api.v1.ToroidalWorldClientApi;
+import com.toroidalworld.client.engine.ClientFrame;
 import com.toroidalworld.compat.AxisCopies;
 import com.toroidalworld.compat.FullscreenZoomFloor;
-import com.toroidalworld.map.MapSurfaceCopies.Copies;
+import com.toroidalworld.engine.seam.MapSurfaceCopies.Copies;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.client.Minecraft;

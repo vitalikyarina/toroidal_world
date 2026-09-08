@@ -1,7 +1,7 @@
 package com.toroidalworld.compat.distanthorizons;
 
-import com.toroidalworld.api.ToroidalShape;
-import com.toroidalworld.api.ToroidalWorldClientApi;
+import com.toroidalworld.api.v1.ToroidalShape;
+import com.toroidalworld.api.v1.ToroidalWorldClientApi;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;

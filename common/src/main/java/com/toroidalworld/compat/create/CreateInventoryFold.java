@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.simibubi.create.api.packager.InventoryIdentifier;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import net.createmod.catnip.math.BlockFace;
 import net.minecraft.core.BlockPos;

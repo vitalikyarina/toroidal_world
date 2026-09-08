@@ -4,9 +4,9 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.ForeignFrames;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.CurrentClientLevel;
-import com.toroidalworld.storage.CurrentServer;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.engine.level.CurrentClientLevel;
+import com.toroidalworld.engine.level.CurrentServer;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;

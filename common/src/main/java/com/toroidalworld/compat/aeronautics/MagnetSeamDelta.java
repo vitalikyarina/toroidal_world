@@ -4,9 +4,9 @@ import org.joml.Vector3d;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.JomlVectors;
-import com.toroidalworld.core.SeamDelta;
+import com.toroidalworld.engine.fold.SeamDelta;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import dev.simulated_team.simulated.content.blocks.redstone_magnet.SimMagnet;
 

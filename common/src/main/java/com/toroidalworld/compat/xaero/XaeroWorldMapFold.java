@@ -3,11 +3,11 @@ package com.toroidalworld.compat.xaero;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.toroidalworld.api.ToroidalShape;
-import com.toroidalworld.api.ToroidalWorldClientApi;
+import com.toroidalworld.api.v1.ToroidalShape;
+import com.toroidalworld.api.v1.ToroidalWorldClientApi;
 import com.toroidalworld.compat.AxisCopies;
 import com.toroidalworld.compat.FullscreenZoomFloor;
-import com.toroidalworld.map.MapSurfaceCopies.Copies;
+import com.toroidalworld.engine.seam.MapSurfaceCopies.Copies;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;

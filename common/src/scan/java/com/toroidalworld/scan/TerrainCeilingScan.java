@@ -1,8 +1,8 @@
 package com.toroidalworld.scan;
 
-import static com.toroidalworld.noise.ClimateScanFixture.randomState;
-import static com.toroidalworld.noise.ClimateScanFixture.settingsOf;
-import static com.toroidalworld.noise.ClimateScanFixture.torusOfWidth;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.randomState;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.settingsOf;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.torusOfWidth;
 import static com.toroidalworld.scan.SuspendedLand.TOP_Y;
 import static com.toroidalworld.scan.SuspendedLand.WIDTH_BLOCKS;
 import static com.toroidalworld.scan.SuspendedLand.at;
@@ -19,11 +19,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.noise.ClimateScanFixture;
-import com.toroidalworld.noise.ClimateScanFixture.WorldType;
-import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.noise.PreliminarySurfaceLevel;
-import com.toroidalworld.noise.TerrainCeiling;
+import com.toroidalworld.engine.noise.ClimateScanFixture;
+import com.toroidalworld.engine.noise.ClimateScanFixture.WorldType;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.noise.PreliminarySurfaceLevel;
+import com.toroidalworld.engine.noise.TerrainCeiling;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;

@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;

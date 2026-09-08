@@ -8,8 +8,8 @@ import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.toroidalworld.compat.create.CreateTrackFold;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.map.MapSurfaceCopies;
-import com.toroidalworld.map.MapSurfaceCopies.Copies;
+import com.toroidalworld.engine.seam.MapSurfaceCopies;
+import com.toroidalworld.engine.seam.MapSurfaceCopies.Copies;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;

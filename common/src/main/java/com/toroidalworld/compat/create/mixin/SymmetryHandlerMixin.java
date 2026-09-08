@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.equipment.symmetryWand.SymmetryHandler;
-import com.toroidalworld.client.ClientFrame;
+import com.toroidalworld.client.engine.ClientFrame;
 
 import net.minecraft.world.phys.Vec3;
 

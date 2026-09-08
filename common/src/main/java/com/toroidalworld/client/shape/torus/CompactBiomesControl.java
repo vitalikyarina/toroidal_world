@@ -5,13 +5,13 @@ import java.util.OptionalDouble;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.client.screen.DigitsEditBox;
 import com.toroidalworld.client.options.WorldOptionContext;
 import com.toroidalworld.client.options.WorldOptionControl;
+import com.toroidalworld.client.screen.DigitsEditBox;
 import com.toroidalworld.client.shape.LoopSizeControls;
+import com.toroidalworld.core.GenerationOptions;
 import com.toroidalworld.shape.torus.ClimateScale;
 import com.toroidalworld.shape.torus.CompactBiomes;
-import com.toroidalworld.options.GenerationOptions;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.CycleButton;

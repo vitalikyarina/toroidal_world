@@ -4,7 +4,7 @@ import java.util.Locale;
 import java.util.function.Consumer;
 
 import com.toroidalworld.client.shape.LoopSizeControls;
-import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.shape.cylinder.CylinderSettings;
 
 import net.minecraft.client.Minecraft;

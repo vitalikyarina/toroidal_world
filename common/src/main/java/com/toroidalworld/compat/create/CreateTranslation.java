@@ -16,10 +16,10 @@ import com.simibubi.create.content.schematics.cannon.SchematicannonBlockEntity;
 import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
 import com.simibubi.create.infrastructure.command.HighlightPacket;
 import com.toroidalworld.compat.SyncedTagFold;
-import com.toroidalworld.core.FoldedCopies;
-import com.toroidalworld.net.PacketTranslator;
-import com.toroidalworld.net.TagPositions;
-import com.toroidalworld.net.TranslationContext;
+import com.toroidalworld.engine.fold.FoldedCopies;
+import com.toroidalworld.engine.net.PacketTranslator;
+import com.toroidalworld.engine.net.TagPositions;
+import com.toroidalworld.engine.net.TranslationContext;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;

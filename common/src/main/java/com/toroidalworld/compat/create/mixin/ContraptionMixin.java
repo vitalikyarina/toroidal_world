@@ -22,7 +22,7 @@ import com.toroidalworld.compat.create.CreateTranslation;
 import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.compat.create.LappedKeys;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import java.util.List;
 import java.util.Queue;

@@ -2,8 +2,7 @@ package com.toroidalworld.core;
 
 import java.util.List;
 
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
+import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 
 public final class WorldFoldFixture {
     public static final WorldLoopBounds SQUARE = new WorldLoopBounds(-32, 32, -32, 32);

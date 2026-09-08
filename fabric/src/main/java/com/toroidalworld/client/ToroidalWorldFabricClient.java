@@ -1,6 +1,7 @@
 package com.toroidalworld.client;
 
-import com.toroidalworld.net.WrappingSettingsPayload;
+import com.toroidalworld.client.engine.WorldLoopClientNetwork;
+import com.toroidalworld.engine.net.WrappingSettingsPayload;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;

@@ -13,7 +13,7 @@ import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.simibubi.create.content.logistics.tunnel.BrassTunnelBlockEntity;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 @Mixin(value = BrassTunnelBlockEntity.class, remap = false)
 public abstract class BrassTunnelBlockEntityMixin {

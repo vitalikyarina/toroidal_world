@@ -9,8 +9,8 @@ import java.util.List;
 import org.joml.Vector3d;
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.core.FlatShape;
 
 import net.minecraft.world.phys.Vec3;
 

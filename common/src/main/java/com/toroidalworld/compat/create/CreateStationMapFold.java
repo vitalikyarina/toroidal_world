@@ -3,7 +3,7 @@ package com.toroidalworld.compat.create;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.map.MapSeamFold;
+import com.toroidalworld.engine.seam.MapSeamFold;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;

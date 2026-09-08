@@ -3,9 +3,7 @@ package com.toroidalworld.core;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.toroidalworld.options.GenerationOptions;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
+import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

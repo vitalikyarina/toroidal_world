@@ -2,7 +2,7 @@ package com.toroidalworld.compat.sable.client;
 
 import org.joml.Vector3d;
 
-import com.toroidalworld.client.ClientFrame;
+import com.toroidalworld.client.engine.ClientFrame;
 import com.toroidalworld.core.JomlVectors;
 
 import dev.ryanhcode.sable.companion.math.Pose3d;

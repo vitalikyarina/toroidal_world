@@ -2,8 +2,8 @@ package com.toroidalworld.compat.create.client;
 
 import java.util.function.Supplier;
 
-import com.toroidalworld.map.MapSurfaceCopies;
-import com.toroidalworld.map.MapSurfaceCopies.Copies;
+import com.toroidalworld.engine.seam.MapSurfaceCopies;
+import com.toroidalworld.engine.seam.MapSurfaceCopies.Copies;
 
 public final class TrainMapSurface {
     public static <T> T showing(Copies copies, Supplier<T> render) {

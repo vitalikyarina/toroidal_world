@@ -2,11 +2,11 @@ package com.toroidalworld.shape.torus;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.gen.ShapedDimensions;
-import com.toroidalworld.options.GenerationOptions;
-import com.toroidalworld.options.NetherScales;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.core.FlatShape;
+import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.core.NetherScales;
+import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.engine.gen.ShapedDimensions;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.dimension.LevelStem;

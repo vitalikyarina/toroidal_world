@@ -9,9 +9,9 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.LevelHolder;
-import com.toroidalworld.core.FoldedOrder;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.FoldedOrder;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.server.level.ChunkMap;

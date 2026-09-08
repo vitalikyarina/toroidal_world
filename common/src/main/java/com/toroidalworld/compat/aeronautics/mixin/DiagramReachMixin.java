@@ -4,8 +4,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import com.toroidalworld.core.FoldedBoxQuery;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.FoldedBoxQuery;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import dev.simulated_team.simulated.content.entities.diagram.DiagramEntity;
 

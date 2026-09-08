@@ -2,7 +2,7 @@ package com.toroidalworld.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 
-import com.toroidalworld.entity.SeamAim;
+import com.toroidalworld.engine.seam.SeamAim;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 

@@ -11,7 +11,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.net.TagPositions;
+import com.toroidalworld.engine.net.TagPositions;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

@@ -11,8 +11,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.player.SeamSnap;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.seam.SeamSnap;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;

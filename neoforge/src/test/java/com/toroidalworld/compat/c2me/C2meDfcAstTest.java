@@ -1,17 +1,22 @@
 package com.toroidalworld.compat.c2me;
 
-import static com.toroidalworld.noise.DensityFunctionFixture.CLIMATE_AMPLITUDES;
-import static com.toroidalworld.noise.DensityFunctionFixture.CLIMATE_FIRST_OCTAVE;
-import static com.toroidalworld.noise.DensityFunctionFixture.CLIMATE_NOISE_DATA;
-import static com.toroidalworld.noise.DensityFunctionFixture.CLIMATE_XZ_SCALE;
-import static com.toroidalworld.noise.DensityFunctionFixture.NOISE_DATA;
-import static com.toroidalworld.noise.DensityFunctionFixture.SEED;
-import static com.toroidalworld.noise.DensityFunctionFixture.SQUARE;
-import static com.toroidalworld.noise.DensityFunctionFixture.WORLDS;
-import static com.toroidalworld.noise.DensityFunctionFixture.blockIn;
-import static com.toroidalworld.noise.DensityFunctionFixture.blockY;
-import static com.toroidalworld.noise.DensityFunctionFixture.withClimateNoise;
-import static com.toroidalworld.noise.DensityFunctionFixture.withLiveNoise;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.noise.ClimateScaleCompression;
+import com.toroidalworld.engine.noise.ContextScaledNoise;
+import com.toroidalworld.engine.noise.DomainWarp;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_AMPLITUDES;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_FIRST_OCTAVE;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_NOISE_DATA;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_XZ_SCALE;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.NOISE_DATA;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.SEED;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.SQUARE;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.WORLDS;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.blockIn;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.blockY;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.withClimateNoise;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.withLiveNoise;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -23,11 +28,6 @@ import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.noise.ClimateScaleCompression;
-import com.toroidalworld.noise.ContextScaledNoise;
-import com.toroidalworld.noise.DomainWarp;
-import com.toroidalworld.noise.GenerationTransformerContext;
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
 import com.ishland.c2me.opts.dfc.common.ast.McToAst;
 import com.ishland.c2me.opts.dfc.common.ast.binary.AddNode;

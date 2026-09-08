@@ -1,8 +1,8 @@
 package com.toroidalworld.compat;
 
-import com.toroidalworld.client.ClientFrame;
+import com.toroidalworld.client.engine.ClientFrame;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.net.TagPositions;
+import com.toroidalworld.engine.net.TagPositions;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 
-import com.toroidalworld.api.ToroidalShape;
+import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.compat.AxisCopies;
 import com.toroidalworld.compat.FullscreenZoomFloor;
 import com.toroidalworld.ToroidalWorld;

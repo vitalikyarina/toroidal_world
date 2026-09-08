@@ -7,8 +7,8 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.toroidalworld.compat.create.CreateSeamFold;
-import com.toroidalworld.core.FoldedBoxQuery;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.FoldedBoxQuery;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;

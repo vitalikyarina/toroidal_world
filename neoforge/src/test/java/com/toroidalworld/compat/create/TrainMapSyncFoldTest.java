@@ -18,8 +18,8 @@ import org.junit.jupiter.api.Test;
 import com.toroidalworld.core.DeckGroupFold;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.core.FlatShape;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;

@@ -17,7 +17,7 @@ import com.toroidalworld.compat.sable.SableConstraintJoin;
 import com.toroidalworld.compat.sable.SableMotorGoal;
 import com.toroidalworld.compat.sable.SableMotorGoalHolder;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.PhysicsPipelineBody;

@@ -21,7 +21,7 @@ import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.SeamTransform;
-import com.toroidalworld.player.SeamSnap;
+import com.toroidalworld.engine.seam.SeamSnap;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;

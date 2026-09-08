@@ -9,7 +9,7 @@ import org.jspecify.annotations.Nullable;
 import com.toroidalworld.core.ForeignFrames;
 import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;

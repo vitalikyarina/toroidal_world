@@ -1,7 +1,7 @@
 package com.toroidalworld.client.shape.mixin;
 
 import com.toroidalworld.client.shape.ShapeCustomizers;
-import com.toroidalworld.gen.ShapedDimensions;
+import com.toroidalworld.engine.gen.ShapedDimensions;
 import com.toroidalworld.shape.WorldShape;
 import com.toroidalworld.shape.WorldShapes;
 import com.llamalad7.mixinextras.sugar.Local;

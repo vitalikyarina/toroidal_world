@@ -1,6 +1,8 @@
 package com.toroidalworld.compat.c2me;
 
-import static com.toroidalworld.noise.DensityFunctionFixture.SQUARE;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.shape.WorldOptionSetup;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.SQUARE;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,8 +13,6 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.options.WorldOptionSetup;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.AbstractCompiledDensityFunction;
 
 import net.minecraft.SharedConstants;

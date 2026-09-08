@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.core.FlatShape;
 
 class SableSeamDistanceTest {
     private static final int HALF_WIDTH_CHUNKS_X = 16;

@@ -6,9 +6,9 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.noise.GenerationTransformerContext.Context;
-import com.toroidalworld.noise.NoiseConstants;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.noise.GenerationTransformerContext.Context;
+import com.toroidalworld.engine.noise.NoiseConstants;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
