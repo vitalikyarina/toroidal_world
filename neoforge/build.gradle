@@ -34,6 +34,12 @@ tasks.named('jar', Jar) {
     from(project(':common').sourceSets.main.output)
 }
 
+// 'common' is also this mod's API artifact — a loader build reads its classes directly and would never produce the
+// jar consumers compile against.
+tasks.named('assemble') {
+    dependsOn ':common:jar'
+}
+
 repositories {
     // MixinSquared — the C2ME compat mixin injects into C2ME's own handler.
     maven {
