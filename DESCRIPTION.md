@@ -1,6 +1,6 @@
 # Toroidal World
 
-**Walk around the world.** The world has a finite size and no edge: cross the border on one side and you walk in from the opposite side — no barrier, no teleport, no visible seam. Go around the world on foot, or run an SMP where nobody can outrun anybody forever.
+**Walk around the world.** The world has a finite size and no edge: cross the border on one side and you walk in from the opposite side — no barrier, no teleport, no visible seam. Or run an SMP where nobody can outrun anybody forever.
 
 ## What it does
 
@@ -9,9 +9,11 @@
 - The game keeps working across the seam, not just the blocks: mob AI and pathfinding, projectiles and explosions, sounds and particles, compasses and lodestones, villages and raids, distance-based advancements — they all treat the world as round.
 - The Nether and the End follow the shape — the Nether scaled relative to the overworld, the End with its own size.
 
+How it does that, in short: [how it works](https://github.com/vitalikyarina/toroidal_world/blob/main/docs/how-it-works.md).
+
 ## World shapes
 
-- **Toroidal** — both horizontal axes loop: walk far enough in any direction and you come back to where you started.
+- **Toroidal** — both horizontal axes loop.
 - **Cylinder** — one horizontal axis loops, the other goes on forever like vanilla; you pick which axis loops, and the Nether and the End loop along the same one.
 
 ## Dedicated servers
@@ -22,18 +24,11 @@ One line in `server.properties` creates a shaped world: `level-type=toroidal_wor
 
 Runs on **NeoForge** and **Fabric**.
 
-**Supported**
-
 - [Sodium](https://modrinth.com/mod/sodium) and [Iris Shaders](https://modrinth.com/mod/iris).
-- [Lithium](https://modrinth.com/mod/lithium) — two of its optimizations are switched off automatically.
-- [C2ME](https://modrinth.com/mod/c2me-fabric).
 - [JourneyMap](https://modrinth.com/mod/journeymap), [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) and [Xaero's World Map](https://modrinth.com/mod/xaeros-world-map).
-- [Create](https://modrinth.com/mod/create) (1.21.1 only).
 - [Distant Horizons](https://modrinth.com/mod/distanthorizons) — the far side of the world shows across the seam, out to half the world width.
 
-**Partially supported**
-
-- [Voxy](https://modrinth.com/mod/voxy) — distant terrain is not wrapped across the seam yet.
+Every mod checked against the world's shape, with the game versions and loaders each one applies to, is in the [supported mods list](https://github.com/vitalikyarina/toroidal_world/blob/main/docs/supported-mods.md).
 
 ## Before you download
 
