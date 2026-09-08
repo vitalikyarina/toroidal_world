@@ -49,13 +49,12 @@ The `world/` folder does not exist yet on a fresh server — create it with just
 {
   "pack": {
     "description": "Custom toroidal world preset",
-    "min_format": 107,
-    "max_format": 107
+    "pack_format": 48
   }
 }
 ```
 
-107 is the data pack format of Minecraft 26.2. For another game version, read `pack_version.data_major` out of the `version.json` inside the game jar.
+48 is the data pack format of Minecraft 1.21.1. For another game version, read `pack_version.data` out of the `version.json` inside the game jar.
 
 `my_toroidal.json` — the example carries the `tiny` configuration; change the `wrapping` bounds per dimension:
 

@@ -51,13 +51,12 @@ class DatapackTemplatesJsonTest {
 
     @Test
     void bothTemplatesDeclareTheDatapackFormatTheGameReads() throws IOException {
-        int format = SharedConstants.getCurrentVersion().packVersion(PackType.SERVER_DATA).major();
+        int format = SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA);
 
         for (String template : List.of(TORUS, CYLINDER)) {
             JsonObject pack = readJson(templateDir(template).resolve(PACK_METADATA)).getAsJsonObject("pack");
             assertNotNull(pack, template + ": no pack object");
-            assertEquals(format, pack.get("min_format").getAsInt(), template + ": min_format");
-            assertEquals(format, pack.get("max_format").getAsInt(), template + ": max_format");
+            assertEquals(format, pack.get("pack_format").getAsInt(), template + ": pack_format");
         }
     }
 
