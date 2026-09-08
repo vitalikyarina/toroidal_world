@@ -5,8 +5,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import com.toroidalworld.command.SeamCommandErrors;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.seam.SeamCommandErrors;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 

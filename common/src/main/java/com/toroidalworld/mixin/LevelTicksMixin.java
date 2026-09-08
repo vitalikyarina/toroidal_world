@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFold.Folded;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

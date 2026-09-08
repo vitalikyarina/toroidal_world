@@ -12,10 +12,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
-import com.toroidalworld.shape.FlatShape.Identification;
-import com.toroidalworld.shape.FlatShape.Mirror;
+import com.toroidalworld.core.FlatShape;
+import com.toroidalworld.core.FlatShape.Identification;
+import com.toroidalworld.core.FlatShape.Mirror;
+import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

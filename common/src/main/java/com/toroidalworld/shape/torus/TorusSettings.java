@@ -1,9 +1,9 @@
 package com.toroidalworld.shape.torus;
 
-import com.toroidalworld.options.GenerationOptions;
-import com.toroidalworld.options.NetherScales;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopSizes;
+import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.core.NetherScales;
+import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.core.WorldLoopSizes;
 
 public record TorusSettings(WorldLoopBounds overworld, int netherScale, WorldLoopBounds end,
         GenerationOptions generationOptions) {

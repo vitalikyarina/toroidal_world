@@ -5,12 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.api.TestShapes;
-import com.toroidalworld.api.ToroidalShape;
+import com.toroidalworld.api.v1.TestShapes;
+import com.toroidalworld.api.v1.ToroidalShape;
+import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 
 import net.minecraft.core.Direction;
 

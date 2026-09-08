@@ -4,7 +4,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.spongepowered.asm.mixin.Mixin;
 
-import com.toroidalworld.api.ToroidalShape;
+import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.compat.distanthorizons.DhKeys;
 import com.toroidalworld.compat.distanthorizons.DhRepoLevel;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;

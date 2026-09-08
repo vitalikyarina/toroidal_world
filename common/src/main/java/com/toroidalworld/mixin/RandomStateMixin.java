@@ -6,8 +6,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.noise.CoastFieldLift;
-import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.noise.CoastFieldLift;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
 
 import net.minecraft.core.HolderGetter;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;

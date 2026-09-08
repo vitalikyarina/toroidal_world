@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import com.toroidalworld.ToroidalWorld;
-import com.toroidalworld.gen.ShapedDimensions;
-import com.toroidalworld.registry.StartupRegistry;
+import com.toroidalworld.core.StartupRegistry;
+import com.toroidalworld.engine.gen.ShapedDimensions;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;

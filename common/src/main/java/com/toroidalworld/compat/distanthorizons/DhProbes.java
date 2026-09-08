@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
-import com.toroidalworld.api.ToroidalShape;
+import com.toroidalworld.api.v1.ToroidalShape;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 
 import net.minecraft.core.Direction;

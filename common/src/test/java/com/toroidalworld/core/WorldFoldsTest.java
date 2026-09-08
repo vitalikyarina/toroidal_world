@@ -12,11 +12,8 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 import com.mojang.serialization.DataResult;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopPresets;
-import com.toroidalworld.options.WorldLoopSizes;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
+import com.toroidalworld.shape.WorldLoopPresets;
 
 import net.minecraft.core.Direction;
 

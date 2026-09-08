@@ -13,11 +13,11 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.advancement.CircumnavigationTracker;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.entity.SeamAim;
-import com.toroidalworld.player.VehicleDismountResync;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.seam.CircumnavigationTracker;
+import com.toroidalworld.engine.seam.SeamAim;
+import com.toroidalworld.engine.seam.VehicleDismountResync;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;

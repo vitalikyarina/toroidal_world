@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-import com.toroidalworld.api.ToroidalShape;
+import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.compat.distanthorizons.DhKeys;
 import com.toroidalworld.compat.distanthorizons.DhRepoLevel;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;

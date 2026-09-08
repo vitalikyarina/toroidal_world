@@ -1,6 +1,6 @@
 package com.toroidalworld.compat;
 
-import com.toroidalworld.api.ToroidalShape;
+import com.toroidalworld.api.v1.ToroidalShape;
 
 import net.minecraft.core.Direction;
 

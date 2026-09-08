@@ -2,11 +2,11 @@ package com.toroidalworld.shape.cylinder;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.gen.ShapedDimensions;
-import com.toroidalworld.options.NetherScales;
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopSizes;
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.core.FlatShape;
+import com.toroidalworld.core.NetherScales;
+import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.core.WorldLoopSizes;
+import com.toroidalworld.engine.gen.ShapedDimensions;
 
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;

@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import com.toroidalworld.entity.SeamAim;
+import com.toroidalworld.engine.seam.SeamAim;
 
 import net.minecraft.world.entity.monster.breeze.Breeze;
 import net.minecraft.world.phys.Vec3;

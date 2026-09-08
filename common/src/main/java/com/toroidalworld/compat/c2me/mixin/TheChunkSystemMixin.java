@@ -15,7 +15,7 @@ import com.toroidalworld.accessors.LevelHolder;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.accessors.TransformerSourceBindable;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.storage.WorldLoopAttachments;
+import com.toroidalworld.core.WorldLoopAttachments;
 import com.ishland.c2me.base.common.scheduler.SchedulingManager;
 import com.ishland.c2me.rewrites.chunksystem.common.TheChunkSystem;
 import com.ishland.flowsched.scheduler.ItemHolder;

@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Unique;
 import com.toroidalworld.accessors.ClientBoundsHolder;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 

@@ -4,12 +4,12 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.client.shape.LoopSizeControls;
 import com.toroidalworld.client.options.WorldOptionContext;
 import com.toroidalworld.client.options.WorldOptionControl;
 import com.toroidalworld.client.options.WorldOptionControls;
-import com.toroidalworld.options.GenerationOptions;
-import com.toroidalworld.options.WorldLoopBounds;
+import com.toroidalworld.client.shape.LoopSizeControls;
+import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.core.WorldLoopBounds;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;

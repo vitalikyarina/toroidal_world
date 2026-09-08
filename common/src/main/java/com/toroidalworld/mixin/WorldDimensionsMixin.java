@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import com.toroidalworld.gen.ShapedDimensions;
+import com.toroidalworld.engine.gen.ShapedDimensions;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 
 import net.minecraft.core.Registry;

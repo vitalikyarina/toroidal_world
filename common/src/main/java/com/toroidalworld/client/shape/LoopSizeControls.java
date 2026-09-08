@@ -8,9 +8,9 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.client.screen.DigitsEditBox;
 import com.toroidalworld.core.CoordinateConstants;
-import com.toroidalworld.options.NetherScales;
-import com.toroidalworld.options.WorldLoopPresets;
-import com.toroidalworld.options.WorldLoopSizes;
+import com.toroidalworld.core.NetherScales;
+import com.toroidalworld.core.WorldLoopSizes;
+import com.toroidalworld.shape.WorldLoopPresets;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.Button;

@@ -1,12 +1,12 @@
 package com.toroidalworld.compat.c2me;
 
-import static com.toroidalworld.noise.DensityFunctionFixture.SQUARE;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.SQUARE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.noise.GenerationTransformerContext;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
 
