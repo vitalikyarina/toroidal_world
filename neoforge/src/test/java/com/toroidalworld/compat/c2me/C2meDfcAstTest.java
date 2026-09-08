@@ -36,6 +36,7 @@ import com.ishland.c2me.opts.dfc.common.ast.misc.ConstantNode;
 import com.ishland.c2me.opts.dfc.common.ast.misc.CoordinateNode;
 
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunctions;
 
@@ -132,6 +133,12 @@ class C2meDfcAstTest {
         AstNode produced = new ConstantNode(1.0);
 
         assertEquals(produced, C2meDfcAst.fold(source, produced));
+    }
+
+    @Test
+    void wrapperEntryKeepsTheInnerNoiseFolded() {
+        assertFoldMatchesVanilla(new DensityFunctions.HolderHolder(
+                Holder.direct(withLiveNoise(DensityFunctions.noise(NOISE_DATA, XZ_SCALE, Y_SCALE)))));
     }
 
     @Test
