@@ -157,7 +157,7 @@ class TerrainWallScan {
         double compression = ClimateScaleCompression.factor(fold, ClimateFields.isClimate(key), amplitudes,
                 lowestFreqInputFactor, CLIMATE_XZ_SCALE, HORIZONTAL_SHARE);
 
-        report.append("  ").append(key.identifier().getPath())
+        report.append("  ").append(key.location().getPath())
                 .append(String.format(", first octave %d, compression %.3f%n",
                         parameters.firstOctave(), compression));
         report.append(String.format("    %-7s %10s %9s %8s %7s %7s%n",
