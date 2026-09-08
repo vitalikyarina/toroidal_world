@@ -2,12 +2,12 @@ package com.toroidalworld.platform;
 
 import java.util.function.IntFunction;
 
-import com.toroidalworld.net.WrappingSettingsPayload;
-import com.toroidalworld.shape.FlatShape;
+import com.toroidalworld.ToroidalWorld;
+import com.toroidalworld.core.FlatShape;
+import com.toroidalworld.engine.net.WrappingSettingsPayload;
 
 import io.netty.buffer.Unpooled;
 
-import com.toroidalworld.ToroidalWorld;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;

@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.toroidalworld.InjectionTargets;
-import com.toroidalworld.entity.SeamAim;
+import com.toroidalworld.engine.seam.SeamAim;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.cubemob.SulfurCube;

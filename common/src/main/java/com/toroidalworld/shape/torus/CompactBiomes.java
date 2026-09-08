@@ -1,9 +1,9 @@
 package com.toroidalworld.shape.torus;
 
-import com.toroidalworld.client.shape.torus.CompactBiomesControl;
-import com.toroidalworld.options.WorldOption;
-import com.toroidalworld.options.WorldOptions;
 import com.toroidalworld.client.options.WorldOptionControls;
+import com.toroidalworld.client.shape.torus.CompactBiomesControl;
+import com.toroidalworld.core.WorldOption;
+import com.toroidalworld.core.WorldOptions;
 
 public final class CompactBiomes {
     public static final String KEY = "climate_compression";

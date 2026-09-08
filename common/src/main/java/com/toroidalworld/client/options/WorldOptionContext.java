@@ -2,7 +2,7 @@ package com.toroidalworld.client.options;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.options.GenerationOptions;
+import com.toroidalworld.core.GenerationOptions;
 
 import net.minecraft.client.gui.screens.Screen;
 

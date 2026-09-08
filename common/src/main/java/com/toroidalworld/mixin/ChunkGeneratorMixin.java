@@ -5,10 +5,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 import com.toroidalworld.accessors.ShapeStamp;
+import com.toroidalworld.core.FlatShape;
+import com.toroidalworld.core.GenerationOptions;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.options.GenerationOptions;
-import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.world.level.chunk.ChunkGenerator;
 

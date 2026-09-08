@@ -1,14 +1,23 @@
 package com.toroidalworld.scan;
 
-import static com.toroidalworld.noise.ClimateScanFixture.SCAN_Y_BLOCKS;
-import static com.toroidalworld.noise.ClimateScanFixture.SEED_BASE;
-import static com.toroidalworld.noise.ClimateScanFixture.TYPES;
-import static com.toroidalworld.noise.ClimateScanFixture.biomeSource;
-import static com.toroidalworld.noise.ClimateScanFixture.cylinderOfWidth;
-import static com.toroidalworld.noise.ClimateScanFixture.guaranteedTorusOfWidth;
-import static com.toroidalworld.noise.ClimateScanFixture.randomState;
-import static com.toroidalworld.noise.ClimateScanFixture.settingsOf;
-import static com.toroidalworld.noise.ClimateScanFixture.torusOfWidth;
+import com.toroidalworld.core.CoordinateConstants;
+import com.toroidalworld.core.NetherScales;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.core.WorldLoopSizes;
+import com.toroidalworld.engine.noise.ClimateScanFixture;
+import com.toroidalworld.engine.noise.ClimateScanFixture.WorldType;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.shape.WorldLoopPresets;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.SCAN_Y_BLOCKS;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.SEED_BASE;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.TYPES;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.biomeSource;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.cylinderOfWidth;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.guaranteedTorusOfWidth;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.randomState;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.settingsOf;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.torusOfWidth;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -24,15 +33,6 @@ import java.util.function.IntFunction;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.CoordinateConstants;
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
-import com.toroidalworld.noise.ClimateScanFixture;
-import com.toroidalworld.noise.ClimateScanFixture.WorldType;
-import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.options.NetherScales;
-import com.toroidalworld.options.WorldLoopPresets;
-import com.toroidalworld.options.WorldLoopSizes;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;

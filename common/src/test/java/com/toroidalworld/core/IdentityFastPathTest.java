@@ -1,5 +1,8 @@
 package com.toroidalworld.core;
 
+import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
+import com.toroidalworld.engine.fold.DimensionMapping;
+import com.toroidalworld.engine.fold.SeamSpans;
 import static com.toroidalworld.core.WorldFoldFixture.EVEN;
 import static com.toroidalworld.core.WorldFoldFixture.PER_AXIS;
 import static com.toroidalworld.core.WorldFoldFixture.SQUARE;
@@ -20,8 +23,6 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
-import com.toroidalworld.shape.FlatShape;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

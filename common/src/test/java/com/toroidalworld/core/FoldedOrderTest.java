@@ -10,8 +10,8 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.options.WorldLoopBounds;
-import com.toroidalworld.options.WorldLoopBounds.AxisBounds;
+import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
+import com.toroidalworld.engine.fold.FoldedOrder;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;

@@ -4,8 +4,8 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.InstructionAdapter;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.noise.ContextScaledNoise;
-import com.toroidalworld.noise.SlotAxes;
+import com.toroidalworld.engine.noise.ContextScaledNoise;
+import com.toroidalworld.engine.noise.SlotAxes;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.BytecodeEmitter;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.BytecodeGen;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.util.DfcObjectCache;

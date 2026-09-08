@@ -2,9 +2,9 @@ package com.toroidalworld.accessors;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.FlatShape;
+import com.toroidalworld.core.GenerationOptions;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.options.GenerationOptions;
-import com.toroidalworld.shape.FlatShape;
 
 public interface ShapeStamp {
     default @Nullable FlatShape toroidal$stampedShape() {

@@ -7,8 +7,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.FoldedBoxQuery;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.fold.FoldedBoxQuery;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 

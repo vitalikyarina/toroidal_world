@@ -6,8 +6,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.InjectionTargets;
-import com.toroidalworld.noise.CanonicalCellSampler;
-import com.toroidalworld.noise.NoiseConstants;
+import com.toroidalworld.engine.noise.CanonicalCellSampler;
+import com.toroidalworld.engine.noise.NoiseConstants;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;

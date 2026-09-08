@@ -1,8 +1,12 @@
 package com.toroidalworld.scan;
 
-import static com.toroidalworld.noise.ClimateScanFixture.randomState;
-import static com.toroidalworld.noise.ClimateScanFixture.settingsOf;
-import static com.toroidalworld.noise.ClimateScanFixture.torusOfWidth;
+import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.noise.ClimateScanFixture;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.noise.TerrainCeiling;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.randomState;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.settingsOf;
+import static com.toroidalworld.engine.noise.ClimateScanFixture.torusOfWidth;
 import static com.toroidalworld.scan.SuspendedLand.WIDTH_BLOCKS;
 import static com.toroidalworld.scan.SuspendedLand.at;
 import static com.toroidalworld.scan.SuspendedLand.withCeilingParked;
@@ -16,10 +20,6 @@ import java.util.Locale;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.noise.ClimateScanFixture;
-import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.noise.TerrainCeiling;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;

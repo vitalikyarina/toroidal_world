@@ -4,7 +4,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.InstructionAdapter;
 
 import com.toroidalworld.core.WrapDomain;
-import com.toroidalworld.noise.DomainWarp;
+import com.toroidalworld.engine.noise.DomainWarp;
 import com.ishland.c2me.opts.dfc.common.ast.misc.CoordinateNode;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.BytecodeEmitter;
 import com.ishland.c2me.opts.dfc.common.gen.jvm.BytecodeGen;

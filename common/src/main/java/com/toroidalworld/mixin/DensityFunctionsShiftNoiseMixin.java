@@ -6,11 +6,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import com.toroidalworld.noise.ContextScaledNoise;
-import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.noise.GenerationTransformerContext.Context;
-import com.toroidalworld.noise.NoiseConstants;
-import com.toroidalworld.noise.SlotAxes;
+import com.toroidalworld.engine.noise.ContextScaledNoise;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.noise.GenerationTransformerContext.Context;
+import com.toroidalworld.engine.noise.NoiseConstants;
+import com.toroidalworld.engine.noise.SlotAxes;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
 

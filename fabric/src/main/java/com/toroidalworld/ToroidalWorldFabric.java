@@ -1,14 +1,14 @@
 package com.toroidalworld;
 
-import com.toroidalworld.advancement.WorldLoopCriteria;
-import com.toroidalworld.gen.LoopedChunkGenerator;
-import com.toroidalworld.gen.LoopedFlatChunkGenerator;
-import com.toroidalworld.gen.WorldLoopGenerators;
-import com.toroidalworld.gen.WorldLoopTicketTypes;
-import com.toroidalworld.net.WrappingSettingsPayload;
-import com.toroidalworld.options.WorldOptionSetup;
+import com.toroidalworld.engine.gen.LoopedChunkGenerator;
+import com.toroidalworld.engine.gen.LoopedFlatChunkGenerator;
+import com.toroidalworld.engine.gen.WorldLoopGenerators;
+import com.toroidalworld.engine.gen.WorldLoopTicketTypes;
+import com.toroidalworld.engine.net.WrappingSettingsPayload;
+import com.toroidalworld.engine.seam.WorldLoopCriteria;
 import com.toroidalworld.platform.FabricPlatform;
 import com.toroidalworld.platform.Platforms;
+import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.shape.WorldShapeSetup;
 
 import net.fabricmc.api.ModInitializer;

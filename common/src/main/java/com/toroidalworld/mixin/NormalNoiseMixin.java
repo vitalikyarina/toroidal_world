@@ -7,9 +7,9 @@ import org.spongepowered.asm.mixin.Unique;
 
 import com.toroidalworld.accessors.ClimateFieldMark;
 import com.toroidalworld.accessors.CoastLiftCache;
-import com.toroidalworld.noise.GenerationTransformerContext;
-import com.toroidalworld.noise.GenerationTransformerContext.Context;
-import com.toroidalworld.noise.NoiseConstants;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.noise.GenerationTransformerContext.Context;
+import com.toroidalworld.engine.noise.NoiseConstants;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
