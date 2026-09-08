@@ -39,7 +39,7 @@ public final class FloatingCrumbs {
             return;
         }
 
-        int minY = chunk.getMinY();
+        int minY = chunk.getMinBuildHeight();
         int height = chunk.getHeight();
         boolean[] solid = new boolean[CHUNK_COLUMNS * CHUNK_COLUMNS * height];
         int solidBlocks = fill(chunk, solid, minY);
@@ -54,7 +54,7 @@ public final class FloatingCrumbs {
                 cursor.set(minX + cell % CHUNK_COLUMNS,
                         minY + cell / (CHUNK_COLUMNS * CHUNK_COLUMNS),
                         minZ + cell / CHUNK_COLUMNS % CHUNK_COLUMNS),
-                AIR));
+                AIR, false));
     }
 
     static Sweep clearCrumbs(boolean[] solid, int height, int solidBlocks, IntConsumer cleared) {
