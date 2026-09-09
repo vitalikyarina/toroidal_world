@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldFold;
@@ -61,6 +62,7 @@ public class EntitySelectorMixin {
         return resolved;
     }
 
+    @Unique
     private static boolean toroidal$insideThroughSeam(Entity entity, AABB absoluteAabb) {
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(entity.level());
         AABB box = FoldedBoxQuery.toward(transformer, entity.position(), absoluteAabb);
