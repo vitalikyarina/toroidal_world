@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.LevelHolder;
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.accessors.TransformerSourceBindable;
+import com.toroidalworld.compat.c2me.TransformerSourceBindable;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.ishland.c2me.base.common.scheduler.SchedulingManager;
