@@ -10,6 +10,7 @@ import com.toroidalworld.shape.cylinder.CylinderSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.ScrollableLayout;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.layouts.LinearLayout;
@@ -33,6 +34,7 @@ public class CylinderSettingsScreen extends Screen {
 
     private Direction.Axis axis;
 
+    private ScrollableLayout contentsScroll;
     private Button doneButton;
 
     public CylinderSettingsScreen(Screen parent, CylinderSettings current, Consumer<CylinderSettings> onDone) {
@@ -48,7 +50,7 @@ public class CylinderSettingsScreen extends Screen {
     protected void init() {
         this.layout.addTitleHeader(TITLE, this.font);
 
-        LinearLayout contents = this.layout.addToContents(LinearLayout.vertical().spacing(CONTENTS_SPACING));
+        LinearLayout contents = LinearLayout.vertical().spacing(CONTENTS_SPACING);
         this.controls.addPresets(contents);
 
         contents.addChild(CycleButton.builder(CylinderSettingsScreen::axisName, this.axis)
@@ -58,6 +60,9 @@ public class CylinderSettingsScreen extends Screen {
                         (button, chosen) -> this.axis = chosen));
 
         this.controls.addFields(this.font, contents);
+
+        this.contentsScroll = new ScrollableLayout(this.minecraft, contents, this.layout.getContentHeight());
+        this.layout.addToContents(this.contentsScroll);
 
         LinearLayout footer = this.layout.addToFooter(LinearLayout.horizontal().spacing(FOOTER_SPACING));
         this.doneButton = footer.addChild(Button.builder(CommonComponents.GUI_DONE, button -> this.commit()).build());
@@ -70,6 +75,8 @@ public class CylinderSettingsScreen extends Screen {
 
     @Override
     protected void repositionElements() {
+        this.contentsScroll.arrangeElements();
+        this.contentsScroll.setMaxHeight(this.layout.getContentHeight());
         this.layout.arrangeElements();
     }
 
