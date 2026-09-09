@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
     id 'net.neoforged.moddev'
     id 'idea'
 }
@@ -144,6 +145,78 @@ test {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+// The artifact a foreign mod compiles against: com/toroidalworld/api alone, out of this module's own output, so a
+// consumer's compile classpath cannot reach an internal type at all. That the API's own signatures name no internal
+// is a separate guarantee, held by ApiSurfaceTest. The loader jars are not compile targets — the NeoForge one carries
+// the whole mod, the Fabric one is remapped.
+def apiPackage = 'com/toroidalworld/api/**'
+def apiArtifactId = 'toroidal-world-api'
+
+var apiJar = tasks.register('apiJar', Jar) {
+    archiveBaseName = apiArtifactId
+    from sourceSets.main.output
+    include apiPackage
+}
+
+var apiSourcesJar = tasks.register('apiSourcesJar', Jar) {
+    archiveBaseName = apiArtifactId
+    archiveClassifier = 'sources'
+    from sourceSets.main.allJava
+    include apiPackage
+}
+
+// The doc comments on the three public types are what the API explains itself with, so javadoc is an artifact, not a
+// by-product: vanilla and the module's own classes are on the classpath, only the api sources are documented.
+var apiJavadoc = tasks.register('apiJavadoc', Javadoc) {
+    source = sourceSets.main.allJava.matching { include apiPackage }
+    classpath = sourceSets.main.compileClasspath + sourceSets.main.output
+    destinationDir = layout.buildDirectory.dir('docs/api-javadoc').get().asFile
+    options {
+        encoding = 'UTF-8'
+        charSet = 'UTF-8'
+        // The API documents itself in prose, not in @param/@return tags; the rest of doclint still gates a broken
+        // link or malformed HTML.
+        addStringOption('Xdoclint:all,-missing', '-quiet')
+    }
+}
+
+var apiJavadocJar = tasks.register('apiJavadocJar', Jar) {
+    archiveBaseName = apiArtifactId
+    archiveClassifier = 'javadoc'
+    from apiJavadoc
+}
+
+publishing {
+    publications {
+        register('api', MavenPublication) {
+            groupId = mod_group_id
+            artifactId = apiArtifactId
+            version = toroidal_world_version
+            artifact apiJar
+            artifact apiSourcesJar
+            artifact apiJavadocJar
+            pom {
+                name = 'Toroidal World API'
+                description = 'The semver-stable surface of Toroidal World for other mods.'
+                url = 'https://github.com/vitalikyarina/toroidal_world'
+                licenses {
+                    license {
+                        name = mod_license
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        // Where the maven tree is written. The default keeps it under build/; -PtoroidalMavenDir points it at the
+        // checkout of the repository's own 'maven' branch, which is what publishes it.
+        maven {
+            name = 'toroidal'
+            url = uri(findProperty('toroidalMavenDir') ?: layout.buildDirectory.dir('maven').get().asFile)
+        }
+    }
 }
 
 idea {
