@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.shape.WorldLoopPresets;
@@ -23,6 +24,9 @@ class WorldFoldsTest {
             new WorldLoopBounds(new AxisBounds.Looped(-16, 16), AxisBounds.Unbounded.INSTANCE);
     private static final WorldLoopBounds Z_ONLY =
             new WorldLoopBounds(AxisBounds.Unbounded.INSTANCE, new AxisBounds.Looped(-16, 16));
+
+    private static final WorldOption<Boolean> OPTION =
+            new WorldOption<>("test_option", 0, Codec.BOOL, false);
 
     private static List<FlatShape> decomposable() {
         return List.of(
@@ -89,6 +93,15 @@ class WorldFoldsTest {
     void anUnboundedShapeStillGetsAFoldThatKnowsItDoesNotWrap() {
         assertFalse(WorldFolds.of(FlatShape.rectangle()).isWrapped());
         assertTrue(WorldFolds.of(FlatShape.cylinder(X_ONLY)).isWrapped());
+    }
+
+    @Test
+    void aShapeLoopingOneAxisCarriesTheOptionsItWasBuiltWith() {
+        FlatShape cylinder = FlatShape.cylinder(X_ONLY);
+        GenerationOptions chosen = GenerationOptions.DEFAULT.with(OPTION, true);
+
+        assertTrue(WorldFolds.of(cylinder, chosen).generationOptions().get(OPTION));
+        assertTrue(new DeckGroupFold(cylinder, chosen).generationOptions().get(OPTION));
     }
 
     @Test

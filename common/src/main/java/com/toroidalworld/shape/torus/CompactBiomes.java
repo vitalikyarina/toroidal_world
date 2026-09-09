@@ -11,7 +11,7 @@ public final class CompactBiomes {
     private static final int POSITION = 0;
 
     public static final WorldOption<ClimateScale> OPTION = new WorldOption<>(
-            KEY, POSITION, ClimateScale.CODEC, ClimateScale.AUTO, ClimateScale.OFF);
+            KEY, POSITION, ClimateScale.CODEC, ClimateScale.AUTO);
 
     public static void register(boolean client) {
         WorldOptions.register(OPTION);
