@@ -209,6 +209,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             mod_name               : mod_name,
             mod_license            : mod_license,
             mod_version            : modIngameVersion,
+            journeymap_min_version : journeymap_min_version,
     ]
     inputs.properties replaceProperties
     expand replaceProperties

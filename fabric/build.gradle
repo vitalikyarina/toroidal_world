@@ -16,6 +16,8 @@ def withBuildSuffix = { baseVersion ->
 }
 def modIngameVersion = withBuildSuffix(toroidal_world_version)
 def jarVersion = withBuildSuffix("${toroidal_world_version}+mc${minecraft_version}")
+// The metadata closure is detached from this script by the configuration cache, so the property is read here.
+def journeymapMinVersion = journeymap_min_version
 
 base {
     archivesName = mod_id
@@ -252,8 +254,9 @@ test {
 
 processResources {
     inputs.property 'version', modIngameVersion
+    inputs.property 'journeymap_min_version', journeymapMinVersion
     filesMatching('fabric.mod.json') {
-        expand version: modIngameVersion
+        expand version: modIngameVersion, journeymap_min_version: journeymapMinVersion
     }
     // The NeoForge AT rides along in common's resources; the fabric jar carries the accesswidener instead.
     exclude 'META-INF/accesstransformer.cfg'

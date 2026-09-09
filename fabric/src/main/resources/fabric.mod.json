@@ -43,5 +43,8 @@
     "fabricloader": ">=0.19.3",
     "fabric-api": "*",
     "minecraft": "1.21.1"
+  },
+  "breaks": {
+    "journeymap": "<${journeymap_min_version}"
   }
 }
