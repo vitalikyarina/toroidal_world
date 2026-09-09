@@ -37,7 +37,7 @@ public final class FoldedValue {
     }
 
     private static ChunkPos nearestCopy(TranslationContext context, Vec3 anchor, ChunkPos chunkPos) {
-        return context.transformer().nearestCopy(ChunkPos.containing(BlockPos.containing(anchor)), chunkPos);
+        return context.transformer().nearestCopy(new ChunkPos(BlockPos.containing(anchor)), chunkPos);
     }
 
     private static SectionPos nearestCopy(TranslationContext context, Vec3 anchor, SectionPos sectionPos) {

@@ -18,10 +18,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 class OpenMenuTranslationTest {
-    private static final Identifier MENU_ID = Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, "probe_menu");
+    private static final ResourceLocation MENU_ID =
+            ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, "probe_menu");
 
     private static final int CONTAINER_ID = 3;
 

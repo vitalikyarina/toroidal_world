@@ -41,11 +41,11 @@ public class ClientChunkCacheMixin {
         }
 
         ChunkPos raw = new ChunkPos(chunkX, chunkZ);
-        ChunkPos held = ClientFrame.heldCopy(raw, pos -> original.call(pos.x(), pos.z(), status, false) != null);
+        ChunkPos held = ClientFrame.heldCopy(raw, pos -> original.call(pos.x, pos.z, status, false) != null);
         if (held == null || held.equals(raw)) {
             return chunk;
         }
 
-        return original.call(held.x(), held.z(), status, loadOrGenerate);
+        return original.call(held.x, held.z, status, loadOrGenerate);
     }
 }

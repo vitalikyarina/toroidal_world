@@ -17,8 +17,8 @@ public final class ChunkSeat {
     }
 
     private static boolean sitsIn(ChunkPos own, BlockPos pos) {
-        return SectionPos.blockToSectionCoord(pos.getX()) == own.x()
-                && SectionPos.blockToSectionCoord(pos.getZ()) == own.z();
+        return SectionPos.blockToSectionCoord(pos.getX()) == own.x
+                && SectionPos.blockToSectionCoord(pos.getZ()) == own.z;
     }
 
     private ChunkSeat() {
