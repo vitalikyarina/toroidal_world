@@ -37,7 +37,7 @@ public final class DeckGroupFold implements WorldFold {
         boolean xLooped = shape.bounds().x() instanceof AxisBounds.Looped;
         boolean zLooped = shape.bounds().z() instanceof AxisBounds.Looped;
         this.wrapped = xLooped || zLooped;
-        this.generationOptions = xLooped && zLooped ? generationOptions : GenerationOptions.NONE;
+        this.generationOptions = generationOptions;
         this.chunks = new Lattice(shape, 1);
         this.blocks = new Lattice(shape, CoordinateConstants.CHUNK_WIDTH);
     }
