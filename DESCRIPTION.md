@@ -8,6 +8,7 @@
 - Terrain is genuinely periodic — the noise itself wraps, so mountains, biomes and structures continue across the seam instead of hitting a mirrored wall or a cut-off cliff.
 - The game keeps working across the seam, not just the blocks: mob AI and pathfinding, projectiles and explosions, sounds and particles, compasses and lodestones, villages and raids, distance-based advancements — they all treat the world as round.
 - The Nether and the End follow the shape — the Nether scaled relative to the overworld, the End with its own size.
+- Modded terrain and modded dimensions come along. A world-generation mod that changes vanilla's terrain settings keeps its terrain, wrapped; a modded dimension takes the world's shape as long as it generates the vanilla way, and one with a generator of its own is left as its mod makes it.
 
 How it does that, in short: [how it works](https://github.com/vitalikyarina/toroidal_world/blob/main/docs/how-it-works.md).
 
