@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.toroidalworld.accessors.CoastLiftCache;
+import com.toroidalworld.api.v1.ToroidalShape;
+import com.toroidalworld.api.v1.gen.GenerationHooks;
+import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.shape.torus.GuaranteedLand;
 
 import net.minecraft.core.Direction;
@@ -30,16 +32,22 @@ public final class CoastFieldLift {
         GenerationHooks.atRandomState(GuaranteedLand.KEY, CoastFieldLift::solve);
     }
 
-    private static void solve(RandomState randomState, WorldFold fold, int seaLevel) {
-        if (!fold.generationOptions().get(GuaranteedLand.OPTION)) {
+    private static void solve(RandomState randomState, ToroidalShape shape, GenerationOptions options, int seaLevel) {
+        if (!options.get(GuaranteedLand.OPTION)) {
             return;
         }
 
-        WrapDomain xDomain = fold.blockDomain(Direction.Axis.X);
-        WrapDomain zDomain = fold.blockDomain(Direction.Axis.Z);
-        if (!xDomain.loops() || !zDomain.loops()) {
+        if (!shape.loops(Direction.Axis.X) || !shape.loops(Direction.Axis.Z)) {
             return;
         }
+
+        WorldFold fold = GenerationTransformerContext.context().routerBuildTransformer();
+        if (fold == null) {
+            return;
+        }
+
+        int xLength = shape.widthBlocks(Direction.Axis.X);
+        int zLength = shape.widthBlocks(Direction.Axis.Z);
 
         List<CoastLiftCache> coasts = coastNoises(randomState.router());
         if (coasts.isEmpty()) {
@@ -47,10 +55,9 @@ public final class CoastFieldLift {
         }
 
         DensityFunction density = randomState.router().finalDensity();
-        int stride = Math.max(STRIDE_BLOCKS,
-                Math.max(xDomain.domainLength, zDomain.domainLength) / GRID_CAP);
-        int xGrid = Math.max(1, xDomain.domainLength / stride);
-        int zGrid = Math.max(1, zDomain.domainLength / stride);
+        int stride = Math.max(STRIDE_BLOCKS, Math.max(xLength, zLength) / GRID_CAP);
+        int xGrid = Math.max(1, xLength / stride);
+        int zGrid = Math.max(1, zLength / stride);
         long cellBlocks = (long) stride * stride;
 
         for (double candidate : CANDIDATES) {

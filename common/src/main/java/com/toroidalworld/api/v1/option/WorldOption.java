@@ -1,4 +1,4 @@
-package com.toroidalworld.core;
+package com.toroidalworld.api.v1.option;
 
 import com.mojang.serialization.Codec;
 

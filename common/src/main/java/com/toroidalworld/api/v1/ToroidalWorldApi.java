@@ -3,6 +3,7 @@ package com.toroidalworld.api.v1;
 import java.util.Optional;
 import java.util.OptionalDouble;
 
+import com.toroidalworld.core.ToroidalShapeView;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
 
@@ -23,7 +24,7 @@ public final class ToroidalWorldApi {
      */
     public static Optional<ToroidalShape> shapeOf(Level level) {
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        return transformer == null ? Optional.empty() : Optional.of(new WorldFoldToroidalShape(transformer));
+        return transformer == null ? Optional.empty() : Optional.of(new ToroidalShapeView(transformer));
     }
 
     /**

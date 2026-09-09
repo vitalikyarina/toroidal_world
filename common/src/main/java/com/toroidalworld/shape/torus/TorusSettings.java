@@ -1,6 +1,6 @@
 package com.toroidalworld.shape.torus;
 
-import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.core.NetherScales;
 import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.core.WorldLoopSizes;

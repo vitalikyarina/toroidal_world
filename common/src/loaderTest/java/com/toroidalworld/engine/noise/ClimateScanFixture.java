@@ -3,7 +3,7 @@ package com.toroidalworld.engine.noise;
 import java.util.List;
 
 import com.toroidalworld.core.FlatShape;
-import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopBounds;

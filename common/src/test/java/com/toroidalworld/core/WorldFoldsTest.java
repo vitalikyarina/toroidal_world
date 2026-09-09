@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.toroidalworld.api.v1.option.GenerationOptions;
+import com.toroidalworld.api.v1.option.WorldOption;
 import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 import com.toroidalworld.shape.WorldLoopPresets;
 
