@@ -5,6 +5,8 @@ import org.jspecify.annotations.Nullable;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
 
+import java.util.function.Predicate;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -13,6 +15,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
 // mc/1.21: calls the members unused on main.
@@ -35,6 +38,15 @@ public final class ClientFrame {
         return fold.nearestCopy(anchor, target);
     }
 
+    public static @Nullable ChunkPos nearestCopy(@Nullable ChunkPos anchor, @Nullable ChunkPos target) {
+        WorldFold fold = fold();
+        if (fold == null || anchor == null || target == null) {
+            return target;
+        }
+
+        return fold.nearestCopy(anchor, target);
+    }
+
     public static @Nullable BlockPos nearestToPlayer(@Nullable BlockPos target) {
         LocalPlayer player = Minecraft.getInstance().player;
         return nearestCopy(player == null ? null : player.blockPosition(), target);
@@ -43,6 +55,11 @@ public final class ClientFrame {
     public static @Nullable Vec3 nearestToPlayer(@Nullable Vec3 target) {
         LocalPlayer player = Minecraft.getInstance().player;
         return nearestCopy(player == null ? null : player.position(), target);
+    }
+
+    public static @Nullable ChunkPos nearestToPlayer(@Nullable ChunkPos target) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        return nearestCopy(player == null ? null : player.chunkPosition(), target);
     }
 
     public static @Nullable Vec3 nearestToCamera(@Nullable Vec3 target) {
@@ -64,13 +81,21 @@ public final class ClientFrame {
         Minecraft minecraft = Minecraft.getInstance();
         ClientLevel level = minecraft.level;
         LocalPlayer player = minecraft.player;
-        WorldFold fold = fold();
-        if (level == null || player == null || fold == null) {
+        if (level == null) {
             return canonical;
         }
 
-        BlockPos nearest = fold.nearestCopy(player.blockPosition(), canonical);
-        return holds(level, nearest) ? nearest : null;
+        return heldCopy(fold(), player == null ? null : player.blockPosition(), canonical, pos -> holds(level, pos));
+    }
+
+    public static @Nullable BlockPos heldCopy(@Nullable WorldFold fold, @Nullable BlockPos anchor, BlockPos canonical,
+            Predicate<BlockPos> holds) {
+        if (fold == null || anchor == null) {
+            return canonical;
+        }
+
+        BlockPos nearest = fold.nearestCopy(anchor, canonical);
+        return holds.test(nearest) ? nearest : null;
     }
 
     public static boolean isClientLevel(@Nullable BlockGetter world) {
