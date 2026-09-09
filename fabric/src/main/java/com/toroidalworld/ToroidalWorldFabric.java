@@ -10,6 +10,7 @@ import com.toroidalworld.engine.gen.LoopedFlatChunkGenerator;
 import com.toroidalworld.engine.gen.WorldLoopGenerators;
 import com.toroidalworld.engine.net.OpenMenuTranslation;
 import com.toroidalworld.engine.net.WrappingSettingsPayload;
+import com.toroidalworld.engine.noise.GenerationHookSetup;
 import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.platform.FabricPlatform;
 import com.toroidalworld.platform.Platforms;
@@ -32,6 +33,7 @@ public class ToroidalWorldFabric implements ModInitializer {
         AeronauticsMod.register();
         CreateTranslation.register();
         AeronauticsTranslation.register();
+        GenerationHookSetup.registerAll();
 
         Registry.register(BuiltInRegistries.CHUNK_GENERATOR,
                 ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopGenerators.TOROIDAL_ID),

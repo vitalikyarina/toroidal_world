@@ -11,6 +11,7 @@ import com.toroidalworld.engine.gen.LoopedFlatChunkGenerator;
 import com.toroidalworld.engine.gen.WorldLoopGenerators;
 import com.toroidalworld.engine.net.AuxiliaryLightTranslation;
 import com.toroidalworld.engine.net.BlockParticleTranslation;
+import com.toroidalworld.engine.noise.GenerationHookSetup;
 import com.toroidalworld.engine.net.SpawnBufferTranslation;
 import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.platform.NeoForgePlatform;
@@ -43,6 +44,7 @@ public final class WorldLoop {
         AeronauticsMod.register();
         CreateTranslation.register();
         AeronauticsTranslation.register();
+        GenerationHookSetup.registerAll();
 
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_ID, () -> LoopedChunkGenerator.CODEC);
         CHUNK_GENERATORS.register(WorldLoopGenerators.TOROIDAL_FLAT_ID, () -> LoopedFlatChunkGenerator.CODEC);

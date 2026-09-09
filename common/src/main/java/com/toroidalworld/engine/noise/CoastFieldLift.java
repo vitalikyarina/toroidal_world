@@ -26,7 +26,11 @@ public final class CoastFieldLift {
 
     private static final int[][] NEIGHBOURS = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
-    public static void solve(RandomState randomState, WorldFold fold, int seaLevel) {
+    public static void register() {
+        GenerationHooks.atRandomState(GuaranteedLand.KEY, CoastFieldLift::solve);
+    }
+
+    private static void solve(RandomState randomState, WorldFold fold, int seaLevel) {
         if (!fold.generationOptions().get(GuaranteedLand.OPTION)) {
             return;
         }
