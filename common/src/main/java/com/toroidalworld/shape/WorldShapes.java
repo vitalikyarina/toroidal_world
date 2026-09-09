@@ -9,19 +9,18 @@ import com.toroidalworld.core.StartupRegistry;
 import com.toroidalworld.engine.gen.ShapedDimensions;
 
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.WorldDimensions;
 
 public final class WorldShapes {
-    private static final String NORMAL_ID = "normal";
-    private static final String NORMAL_LABEL_KEY = "gui.toroidal_world.world_shape.normal";
-    private static final String NORMAL_HINT_KEY = "gui.toroidal_world.world_shape.normal.hint";
+    private static final String NORMAL_PATH = "normal";
+
+    private static final ResourceLocation NORMAL_ID = ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, NORMAL_PATH);
 
     public static final WorldShape NORMAL = WorldShape.of(
-            ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, NORMAL_ID),
-            Component.translatable(NORMAL_LABEL_KEY),
-            Component.translatable(NORMAL_HINT_KEY),
+            NORMAL_ID,
+            WorldShape.label(NORMAL_ID),
+            WorldShape.hint(NORMAL_ID),
             (registries, dimensions) -> dimensions);
 
     private static final StartupRegistry<ResourceLocation, WorldShape> SHAPES = new StartupRegistry<>("World shapes");

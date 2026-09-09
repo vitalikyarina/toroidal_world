@@ -19,8 +19,8 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.client.shape.ShapeCustomizers;
-import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.CarriedShape;
+import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopBounds;
@@ -58,6 +58,9 @@ class ShapeRegistrationBoundaryTest {
     private static final ResourceLocation CYLINDER_ID =
             ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, "boundary_test_cylinder");
 
+    private static final ResourceLocation MODULE_ID =
+            ResourceLocation.fromNamespaceAndPath(ToroidalWorld.MODID, "boundary_test_module");
+
     private static final FlatShape CYLINDER = FlatShape.cylinder(
             new WorldLoopBounds(new AxisBounds.Looped(-16, 16), AxisBounds.Unbounded.INSTANCE));
 
@@ -65,6 +68,16 @@ class ShapeRegistrationBoundaryTest {
             new WorldLoopBounds(new AxisBounds.Looped(-64, 64), AxisBounds.Unbounded.INSTANCE));
 
     private static WorldShape cylinder;
+
+    private static final ShapeModule<FlatShape> MODULE = ShapeModule.of(
+            MODULE_ID,
+            CYLINDER,
+            (dimensions, shape) ->
+                    ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD, new CarriedShape(shape)),
+            dimensions -> {
+                FlatShape shape = ShapedDimensions.shapeOf(dimensions, LevelStem.OVERWORLD);
+                return WIDER_CYLINDER.equals(shape) ? shape : null;
+            });
 
     private static boolean settingsWereReset;
 
@@ -81,6 +94,7 @@ class ShapeRegistrationBoundaryTest {
 
         WorldShapes.register(cylinder);
         ShapeCustomizers.register(CYLINDER_ID, parent -> parent);
+        MODULE.register();
     }
 
     @AfterEach
@@ -195,6 +209,31 @@ class ShapeRegistrationBoundaryTest {
     void onlyAShapeWithAScreenLightsUpTheCustomizeButton() {
         assertNotNull(ShapeCustomizers.of(cylinder));
         assertNull(ShapeCustomizers.of(WorldShapes.NORMAL));
+    }
+
+    @Test
+    void aModuleAdoptsTheWorldItRecognisesAndResetsBackToItsOwnDefault() {
+        WorldShape registered = registeredModuleShape();
+        WorldDimensions wider = ShapedDimensions.withShape(
+                vanillaOverworld(), LevelStem.OVERWORLD, new CarriedShape(WIDER_CYLINDER));
+
+        WorldShapes.restoreFromExisting(REGISTRIES, wider);
+
+        assertSame(registered, WorldShapes.selected());
+        assertEquals(WIDER_CYLINDER, MODULE.settings());
+
+        WorldShapes.resetToDefault();
+
+        assertEquals(CYLINDER, MODULE.settings());
+        assertEquals(CYLINDER, ShapedDimensions.shapeOf(
+                registered.atCreation().apply(REGISTRIES, vanillaOverworld()), LevelStem.OVERWORLD));
+    }
+
+    private static WorldShape registeredModuleShape() {
+        return WorldShapes.shapes().stream()
+                .filter(shape -> shape.id().equals(MODULE_ID))
+                .findFirst()
+                .orElseThrow();
     }
 
     @Test

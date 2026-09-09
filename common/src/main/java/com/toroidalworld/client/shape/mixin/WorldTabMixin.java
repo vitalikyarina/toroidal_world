@@ -54,7 +54,7 @@ public class WorldTabMixin {
                     ordinal = 0))
     private void toroidal$addWorldShapeRow(CallbackInfo ci, @Local GridLayout.RowHelper helper,
             @Local(argsOnly = true) CreateWorldScreen screen) {
-        this.toroidal$shapeButton = helper.addChild(CycleButton.builder(WorldShape::label)
+        this.toroidal$shapeButton = helper.addChild(CycleButton.builder((WorldShape shape) -> shape.label())
                 .withValues(WorldShapes.shapes())
                 .withInitialValue(WorldShapes.selected())
                 .withTooltip(shape -> Tooltip.create(shape.hint()))
