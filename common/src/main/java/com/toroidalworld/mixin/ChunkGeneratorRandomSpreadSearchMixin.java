@@ -11,6 +11,7 @@ import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.engine.gen.SectorGridAxis;
+import com.toroidalworld.engine.seam.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.datafixers.util.Pair;
@@ -98,7 +99,6 @@ public class ChunkGeneratorRandomSpreadSearchMixin {
             return original.call(origin, candidate);
         }
 
-        return transformer.sqrDistance(
-                origin.getX(), origin.getY(), origin.getZ(), candidate.getX(), candidate.getY(), candidate.getZ());
+        return SeamRange.sqr(transformer, origin, candidate);
     }
 }

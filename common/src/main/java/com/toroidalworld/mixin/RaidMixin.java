@@ -15,6 +15,7 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.engine.fold.FoldedOrder;
 import com.toroidalworld.engine.seam.SeamRange;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -45,12 +46,7 @@ public class RaidMixin {
                     value = "INVOKE",
                     target = InjectionTargets.VEC3_AT_CENTER_OF))
     private Vec3 toroidal$raidHornThroughSeam(Vec3 raidLoc, @Local ServerPlayer listener) {
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
-        if (transformer == null) {
-            return raidLoc;
-        }
-
-        return transformer.nearestCopy(listener.position(), raidLoc);
+        return SeamSteering.nearestCopy(listener, raidLoc);
     }
 
     @WrapOperation(

@@ -17,6 +17,7 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.engine.fold.FoldedOrder;
+import com.toroidalworld.engine.seam.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -73,7 +74,7 @@ public class PoiManagerMixin {
         }
 
         double radiusSqr = (double) radius * radius;
-        return record -> toroidal$distSqr(transformer, center, record.getPos()) <= radiusSqr;
+        return record -> SeamRange.sqr(transformer, center, record.getPos()) <= radiusSqr;
     }
 
     @ModifyArg(
@@ -104,7 +105,7 @@ public class PoiManagerMixin {
             return original;
         }
 
-        return Comparator.comparingDouble(record -> toroidal$distSqr(transformer, center, record.getPos()));
+        return Comparator.comparingDouble(record -> SeamRange.sqr(transformer, center, record.getPos()));
     }
 
     @ModifyArg(
@@ -180,12 +181,6 @@ public class PoiManagerMixin {
     private static boolean toroidal$foldsOntoItself(int chunkRadius, WorldFold transformer) {
         int span = chunkRadius * 2 + 1;
         return transformer.bounds().x().foldsOntoItself(span) || transformer.bounds().z().foldsOntoItself(span);
-    }
-
-    @Unique
-    private static double toroidal$distSqr(WorldFold transformer, BlockPos center, BlockPos pos) {
-        return transformer.sqrDistance(
-                center.getX(), center.getY(), center.getZ(), pos.getX(), pos.getY(), pos.getZ());
     }
 
     @Unique

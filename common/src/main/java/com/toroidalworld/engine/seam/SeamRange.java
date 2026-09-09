@@ -25,44 +25,38 @@ public final class SeamRange {
         return anchor.distManhattan(transformer.nearestCopy(anchor, new BlockPos(to)));
     }
 
-    public static double sqr(Entity levelSource, Vec3i from, Vec3i to) {
-        WorldFold transformer = transformerOf(levelSource);
-        if (transformer == null) {
+    public static double sqr(@Nullable WorldFold fold, Vec3i from, Vec3i to) {
+        if (fold == null) {
             return from.distSqr(to);
         }
 
-        return transformer.sqrDistance(
+        return fold.sqrDistance(
                 from.getX(), from.getY(), from.getZ(),
                 to.getX(), to.getY(), to.getZ());
+    }
+
+    public static double sqr(@Nullable WorldFold fold, Vec3 from, Position to) {
+        if (fold == null) {
+            return from.distanceToSqr(to.x(), to.y(), to.z());
+        }
+
+        return fold.sqrDistance(from.x, from.y, from.z, to.x(), to.y(), to.z());
+    }
+
+    public static double sqr(Entity levelSource, Vec3i from, Vec3i to) {
+        return sqr(transformerOf(levelSource), from, to);
     }
 
     public static double sqr(Level levelSource, Vec3i from, Vec3i to) {
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(levelSource);
-        if (transformer == null) {
-            return from.distSqr(to);
-        }
-
-        return transformer.sqrDistance(
-                from.getX(), from.getY(), from.getZ(),
-                to.getX(), to.getY(), to.getZ());
+        return sqr(WorldLoopAttachments.wrappedTransformerOf(levelSource), from, to);
     }
 
     public static double sqr(Entity levelSource, Vec3 from, Position to) {
-        WorldFold transformer = transformerOf(levelSource);
-        if (transformer == null) {
-            return from.distanceToSqr(to.x(), to.y(), to.z());
-        }
-
-        return transformer.sqrDistance(from.x, from.y, from.z, to.x(), to.y(), to.z());
+        return sqr(transformerOf(levelSource), from, to);
     }
 
     public static double sqr(Level levelSource, Vec3 from, Position to) {
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(levelSource);
-        if (transformer == null) {
-            return from.distanceToSqr(to.x(), to.y(), to.z());
-        }
-
-        return transformer.sqrDistance(from.x, from.y, from.z, to.x(), to.y(), to.z());
+        return sqr(WorldLoopAttachments.wrappedTransformerOf(levelSource), from, to);
     }
 
     public static boolean closerThan(Entity levelSource, Vec3i from, Vec3i to, double distance) {

@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.engine.fold.FoldedBoxQuery;
+import com.toroidalworld.engine.seam.SeamAim;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
@@ -22,14 +23,12 @@ import net.minecraft.world.phys.Vec3;
 public class MobMixin {
     @ModifyVariable(method = "lookAt(Lnet/minecraft/world/entity/Entity;FF)V", at = @At("STORE"), ordinal = 0)
     private double toroidal$lookDeltaX(double deltaX, @Local(argsOnly = true) Entity target) {
-        WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? deltaX : toroidal$deltaTo(transformer, target).x;
+        return SeamAim.deltaTo((Mob) (Object) this, target.position()).x;
     }
 
     @ModifyVariable(method = "lookAt(Lnet/minecraft/world/entity/Entity;FF)V", at = @At("STORE"), ordinal = 1)
     private double toroidal$lookDeltaZ(double deltaZ, @Local(argsOnly = true) Entity target) {
-        WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? deltaZ : toroidal$deltaTo(transformer, target).z;
+        return SeamAim.deltaTo((Mob) (Object) this, target.position()).z;
     }
 
     @ModifyExpressionValue(
@@ -47,11 +46,6 @@ public class MobMixin {
                     opcode = Opcodes.GETFIELD))
     private BlockPos toroidal$homeThroughSeam(BlockPos home, @Local(argsOnly = true) BlockPos pos) {
         return toroidal$nearestHome(home, pos);
-    }
-
-    @Unique
-    private Vec3 toroidal$deltaTo(WorldFold transformer, Entity target) {
-        return transformer.foldDelta(((Mob) (Object) this).position(), target.position());
     }
 
     @Unique

@@ -5,8 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import com.toroidalworld.accessors.NavigationShifter;
-import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
@@ -29,13 +28,7 @@ public class LookControlMixin implements NavigationShifter {
     @WrapMethod(method = "setLookAt(DDDFF)V")
     private void toroidal$lookThroughSeam(double x, double y, double z, float yMaxRotSpeed, float xMaxRotAngle,
             Operation<Void> original) {
-        WorldFold transformer = ((TransformerSource) this.mob).toroidal$wrappedTransformer();
-        if (transformer == null) {
-            original.call(x, y, z, yMaxRotSpeed, xMaxRotAngle);
-            return;
-        }
-
-        Vec3 nearest = transformer.nearestCopy(this.mob.position(), new Vec3(x, y, z));
+        Vec3 nearest = SeamSteering.nearestCopy(this.mob, new Vec3(x, y, z));
         original.call(nearest.x, y, nearest.z, yMaxRotSpeed, xMaxRotAngle);
     }
 
