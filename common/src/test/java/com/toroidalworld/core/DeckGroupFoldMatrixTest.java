@@ -45,6 +45,8 @@ class DeckGroupFoldMatrixTest {
     private static final int SAMPLES = 300;
     private static final long SEED = 0x70201DL;
 
+    private static final int RIGID_SPAN = 3;
+
     private static final double[] HALF_BLOCK_OFFSETS = {0.0, 0.5};
 
     private static final double[] SEAM_COORDINATES =
@@ -500,6 +502,48 @@ class DeckGroupFoldMatrixTest {
             assertTrue(squared(nearest.value().getX() - ref.getX()) + squared(nearest.value().getZ() - ref.getZ())
                             < squared(target.getX() - ref.getX()) + squared(target.getZ() - ref.getZ()),
                     "the flipped copy is not nearer than the unflipped one");
+        }
+
+        @Test
+        void theTransformationSeatsTheCopyItNames() {
+            for (Subject subject : subjects()) {
+                WorldFold fold = subject.fold();
+                Random random = new Random(SEED + 11);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    BlockPos ref = new BlockPos(sample(random), 64, sample(random));
+                    BlockPos target = new BlockPos(sample(random), 64, sample(random));
+                    assertEquals(fold.nearestCopy(ref, target),
+                            fold.nearestCopyTransformation(ref, target).apply(target),
+                            subject.name() + ": the block transformation did not seat the nearest copy");
+
+                    Vec3 refPoint = new Vec3(sample(random) + 0.25, 64.0, sample(random) + 0.75);
+                    Vec3 targetPoint = new Vec3(sample(random) + 0.5, 64.0, sample(random) + 0.5);
+                    assertEquals(fold.nearestCopy(refPoint, targetPoint),
+                            fold.nearestCopyTransformation(refPoint, targetPoint).apply(targetPoint),
+                            subject.name() + ": the coordinate transformation did not seat the nearest copy");
+                }
+            }
+        }
+
+        @Test
+        void aTransformationAcrossAMirrorCarriesTheGroupWhereALapVectorDoesNot() {
+            DeckGroupFold fold = MOBIUS.fold();
+            BlockPos ref = new BlockPos(UPPER - 1, 64, 100);
+            BlockPos target = new BlockPos(LOWER + 1, 64, -100);
+            BlockPos nearest = fold.nearestCopy(ref, target);
+            DeckTransformation move = fold.nearestCopyTransformation(ref, target);
+            assertEquals(nearest, move.apply(target), "the transformation did not seat the copy it names");
+
+            BlockPos neighbour = target.offset(0, 0, RIGID_SPAN);
+            BlockPos lapped = neighbour.offset(
+                    nearest.getX() - target.getX(), 0, nearest.getZ() - target.getZ());
+
+            assertEquals(nearest.offset(0, 0, -RIGID_SPAN), move.apply(neighbour),
+                    "the mirror did not reverse the rest of the rigid group");
+            assertEquals(nearest.offset(0, 0, RIGID_SPAN), lapped,
+                    "the lap vector no longer seats the neighbour on the unmirrored side");
+            assertEquals(fold.nearestCopy(ref, neighbour), move.apply(neighbour),
+                    "the seated neighbour is not the copy the fold names for it");
         }
     }
 
