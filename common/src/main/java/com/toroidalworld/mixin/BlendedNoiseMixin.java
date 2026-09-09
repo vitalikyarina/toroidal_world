@@ -3,13 +3,13 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.engine.noise.GenerationTransformerContext.Context;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.synth.BlendedNoise;
 import net.minecraft.world.level.levelgen.synth.ImprovedNoise;
@@ -106,16 +106,7 @@ public class BlendedNoiseMixin {
                 pow /= 2.0;
             }
 
-            return toroidal$blendLimits(factor, blendMin / 512.0, blendMax / 512.0) / 128.0;
+            return Mth.clampedLerp(factor, blendMin / 512.0, blendMax / 512.0) / 128.0;
         }
-    }
-
-    @Unique
-    private static double toroidal$blendLimits(double factor, double min, double max) {
-        if (factor < 0.0) {
-            return min;
-        }
-
-        return factor > 1.0 ? max : min + factor * (max - min);
     }
 }
