@@ -88,6 +88,11 @@ public final class ClientFrame {
         return heldCopy(fold(), player == null ? null : player.blockPosition(), canonical, pos -> holds(level, pos));
     }
 
+    public static @Nullable ChunkPos heldCopy(ChunkPos canonical, Predicate<ChunkPos> holds) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        return heldCopy(fold(), player == null ? null : player.chunkPosition(), canonical, holds);
+    }
+
     public static @Nullable BlockPos heldCopy(@Nullable WorldFold fold, @Nullable BlockPos anchor, BlockPos canonical,
             Predicate<BlockPos> holds) {
         if (fold == null || anchor == null) {
@@ -95,6 +100,16 @@ public final class ClientFrame {
         }
 
         BlockPos nearest = fold.nearestCopy(anchor, canonical);
+        return holds.test(nearest) ? nearest : null;
+    }
+
+    public static @Nullable ChunkPos heldCopy(@Nullable WorldFold fold, @Nullable ChunkPos anchor, ChunkPos canonical,
+            Predicate<ChunkPos> holds) {
+        if (fold == null || anchor == null) {
+            return canonical;
+        }
+
+        ChunkPos nearest = fold.nearestCopy(anchor, canonical);
         return holds.test(nearest) ? nearest : null;
     }
 

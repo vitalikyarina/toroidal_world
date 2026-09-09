@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.toroidalworld.accessors.RelocatableBlockEntity;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.ChunkSeat;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -69,10 +70,15 @@ public class LevelChunkMixin {
     @Unique
     private BlockPos toroidal$wrap(BlockPos pos) {
         WorldFold transformer = WorldLoopAttachments.transformerOf(this.level);
-        if (!transformer.isWrapped()) {
+        if (transformer.isWrapped()) {
+            return transformer.fold(pos);
+        }
+
+        WorldFold clientBounds = WorldLoopAttachments.wrappedClientBoundsTransformerOf(this.level);
+        if (clientBounds == null) {
             return pos;
         }
 
-        return transformer.fold(pos);
+        return ChunkSeat.onto(clientBounds, ((LevelChunk) (Object) this).getPos(), pos);
     }
 }
