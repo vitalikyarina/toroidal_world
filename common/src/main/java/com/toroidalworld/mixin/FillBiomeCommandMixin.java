@@ -1,6 +1,7 @@
 package com.toroidalworld.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -79,10 +80,12 @@ public class FillBiomeCommandMixin {
         original.call(chunk, inFrame, sampler);
     }
 
+    @Unique
     private static boolean toroidal$leavesTheWorld(AxisBounds axis, int minCoord, int maxCoord) {
         return axis.isOver(minCoord) || axis.isOver(maxCoord);
     }
 
+    @Unique
     private static int toroidal$quartInRegionsFrame(WrapDomain domain, int regionMinCoord, int quart) {
         int block = QuartPos.toBlock(quart);
         int inFrame = domain.wrapFrom(regionMinCoord, block);
