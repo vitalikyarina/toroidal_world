@@ -9,9 +9,6 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 
 public final class GenerationTransformerContext {
-    private static final double UNSCALED = 1.0;
-    private static final double UNDIVIDED = 1.0;
-
     public static final double UNDECLARED_VERTICAL_SHARE = -1.0;
 
     public static double verticalShare(double xzScale, double yScale) {
@@ -21,10 +18,10 @@ public final class GenerationTransformerContext {
     public static final class Context {
         private WorldFold transformer = WorldFolds.NOOP;
         private @Nullable WorldFold routerBuild;
-        private double horizontalScale = UNSCALED;
+        private double horizontalScale = NoiseConstants.UNSCALED;
         private double verticalShare = UNDECLARED_VERTICAL_SHARE;
-        private double xDivisor = UNDIVIDED;
-        private double zDivisor = UNDIVIDED;
+        private double xDivisor = NoiseConstants.UNDIVIDED;
+        private double zDivisor = NoiseConstants.UNDIVIDED;
         private SlotAxes slotAxes = SlotAxes.DEFAULT;
         private final ScaleScope scaleScope = new ScaleScope();
         private final DivisorScope divisorScope = new DivisorScope();

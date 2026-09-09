@@ -24,6 +24,8 @@ public final class NoiseConstants {
 
     public static final double UNSCALED = 1.0;
 
+    public static final double UNDIVIDED = 1.0;
+
     private NoiseConstants() {
     }
 }

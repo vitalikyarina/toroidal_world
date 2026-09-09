@@ -29,34 +29,72 @@ public final class OctaveVarianceCorrection {
 
     private static final double FLOORED_BOUND = 1.5;
 
+    private static final double NOT_FLOORED = -1.0;
+
     private static final double NOMINAL_HEIGHT_BLOCKS = 384.0;
 
     public static double factor(WrapDomain xDomain, WrapDomain zDomain, double scale, double verticalShare) {
-        if (verticalShare < 0.0 || !xDomain.loops() || !zDomain.loops()) {
+        double cellsPerLap = flooredCellsPerLap(xDomain, zDomain, scale, verticalShare);
+        if (cellsPerLap < 0.0) {
             return 1.0;
         }
-        double xCells = xDomain.domainLength * scale;
-        double zCells = zDomain.domainLength * scale;
-        if (xCells >= FLOORED_BOUND || zCells >= FLOORED_BOUND) {
-            return 1.0;
-        }
-        double cellsPerLap = (xCells + zCells) / 2.0;
+
         double damp = flat(cellsPerLap);
         double verticalCells = NOMINAL_HEIGHT_BLOCKS * verticalShare * scale;
         if (verticalCells > 0.0) {
             damp *= liveness(cellsPerLap, verticalCells) / liveness(cellsPerLap, 0.0);
         }
+
         return Math.min(damp, 1.0);
+    }
+
+    public static double anchorGain(WrapDomain xDomain, WrapDomain zDomain, double scale, double verticalShare) {
+        double cellsPerLap = flooredCellsPerLap(xDomain, zDomain, scale, verticalShare);
+        if (cellsPerLap < 0.0) {
+            return 0.0;
+        }
+
+        double verticalFade = 1.0 - NOMINAL_HEIGHT_BLOCKS * verticalShare * scale;
+        if (verticalFade <= 0.0) {
+            return 0.0;
+        }
+
+        return interpolate(CELLS_PER_LAP, ANCHOR_GAIN, cellsPerLap) * verticalFade;
+    }
+
+    private static double flooredCellsPerLap(WrapDomain xDomain, WrapDomain zDomain, double scale,
+            double verticalShare) {
+        if (verticalShare < 0.0 || !xDomain.loops() || !zDomain.loops()) {
+            return NOT_FLOORED;
+        }
+
+        double xCells = xDomain.domainLength * scale;
+        double zCells = zDomain.domainLength * scale;
+        if (xCells >= FLOORED_BOUND || zCells >= FLOORED_BOUND) {
+            return NOT_FLOORED;
+        }
+
+        return (xCells + zCells) / 2.0;
+    }
+
+    static double flat(double cellsPerLap) {
+        if (cellsPerLap <= CELLS_PER_LAP[0]) {
+            return FLAT_CORRECTION[0] * cellsPerLap / CELLS_PER_LAP[0];
+        }
+
+        return interpolate(CELLS_PER_LAP, FLAT_CORRECTION, cellsPerLap);
     }
 
     static double liveness(double cellsPerLap, double verticalCells) {
         int row = upperIndex(LIVENESS_CELLS_PER_LAP, cellsPerLap);
-        int column = upperIndex(LIVENESS_VERTICAL_CELLS, verticalCells);
-        double rowBlend = blend(LIVENESS_CELLS_PER_LAP, row, cellsPerLap);
-        double columnBlend = blend(LIVENESS_VERTICAL_CELLS, column, verticalCells);
-        double atLowerRow = lerp(LIVENESS[row - 1][column - 1], LIVENESS[row - 1][column], columnBlend);
-        double atUpperRow = lerp(LIVENESS[row][column - 1], LIVENESS[row][column], columnBlend);
-        return lerp(atLowerRow, atUpperRow, rowBlend);
+        double atLowerRow = interpolate(LIVENESS_VERTICAL_CELLS, LIVENESS[row - 1], verticalCells);
+        double atUpperRow = interpolate(LIVENESS_VERTICAL_CELLS, LIVENESS[row], verticalCells);
+        return lerp(atLowerRow, atUpperRow, blend(LIVENESS_CELLS_PER_LAP, row, cellsPerLap));
+    }
+
+    private static double interpolate(double[] axis, double[] values, double value) {
+        int upper = upperIndex(axis, value);
+        return lerp(values[upper - 1], values[upper], blend(axis, upper, value));
     }
 
     private static int upperIndex(double[] axis, double value) {
@@ -77,41 +115,6 @@ public final class OctaveVarianceCorrection {
 
     private static double lerp(double from, double to, double t) {
         return from + t * (to - from);
-    }
-
-    public static double anchorGain(WrapDomain xDomain, WrapDomain zDomain, double scale, double verticalShare) {
-        if (verticalShare < 0.0 || !xDomain.loops() || !zDomain.loops()) {
-            return 0.0;
-        }
-        double xCells = xDomain.domainLength * scale;
-        double zCells = zDomain.domainLength * scale;
-        if (xCells >= FLOORED_BOUND || zCells >= FLOORED_BOUND) {
-            return 0.0;
-        }
-        double verticalFade = 1.0 - NOMINAL_HEIGHT_BLOCKS * verticalShare * scale;
-        if (verticalFade <= 0.0) {
-            return 0.0;
-        }
-        double cellsPerLap = (xCells + zCells) / 2.0;
-        double gain = cellsPerLap <= CELLS_PER_LAP[0] ? ANCHOR_GAIN[0] : interpolate(ANCHOR_GAIN, cellsPerLap);
-        return gain * verticalFade;
-    }
-
-    static double flat(double cellsPerLap) {
-        if (cellsPerLap <= CELLS_PER_LAP[0]) {
-            return FLAT_CORRECTION[0] * cellsPerLap / CELLS_PER_LAP[0];
-        }
-        return interpolate(FLAT_CORRECTION, cellsPerLap);
-    }
-
-    private static double interpolate(double[] values, double cellsPerLap) {
-        for (int i = 1; i < CELLS_PER_LAP.length; i++) {
-            if (cellsPerLap <= CELLS_PER_LAP[i]) {
-                double t = (cellsPerLap - CELLS_PER_LAP[i - 1]) / (CELLS_PER_LAP[i] - CELLS_PER_LAP[i - 1]);
-                return values[i - 1] + t * (values[i] - values[i - 1]);
-            }
-        }
-        return values[values.length - 1];
     }
 
     private OctaveVarianceCorrection() {
