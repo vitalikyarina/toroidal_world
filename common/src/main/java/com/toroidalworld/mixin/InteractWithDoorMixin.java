@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.SeamRange;
 import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -39,7 +40,7 @@ public class InteractWithDoorMixin {
     private static BlockPos toroidal$standingInDoorwayThroughSeam(BlockPos nodePos,
             @Local(argsOnly = true) LivingEntity body, @Local BlockPos doorPos) {
         WorldFold transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
-        return transformer == null ? nodePos : transformer.nearestCopy(doorPos, nodePos);
+        return NearestCopy.toward(transformer, doorPos, nodePos);
     }
 
     @WrapOperation(

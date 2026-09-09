@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import com.toroidalworld.engine.seam.SeamBlockName;
+import com.toroidalworld.core.WorldLoopAttachments;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.core.BlockPos;
@@ -18,6 +18,6 @@ public abstract class BlockStateInsideMixin {
             at = @At("HEAD"),
             argsOnly = true)
     private BlockPos toroidal$canonicalInsidePos(BlockPos pos, @Local(argsOnly = true) Level level) {
-        return SeamBlockName.canonical(level, pos);
+        return WorldLoopAttachments.transformerOf(level).fold(pos);
     }
 }

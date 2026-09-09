@@ -76,12 +76,7 @@ public class MinecraftServerMixin {
                     target = "Lnet/minecraft/server/level/PlayerRespawnLogic;getSpawnPosInChunk(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/ChunkPos;)Lnet/minecraft/core/BlockPos;"))
     private static @Nullable BlockPos toroidal$searchWrappedChunk(ServerLevel level, ChunkPos chunkPos,
             Operation<@Nullable BlockPos> original) {
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        if (transformer == null) {
-            return original.call(level, chunkPos);
-        }
-
-        return original.call(level, transformer.fold(chunkPos));
+        return original.call(level, WorldLoopAttachments.transformerOf(level).fold(chunkPos));
     }
 
     @WrapOperation(

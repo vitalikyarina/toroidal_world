@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
@@ -30,11 +31,7 @@ public class TrackedEntityMixin {
                     target = InjectionTargets.VEC3_SUBTRACT))
     private Vec3 toroidal$deltaThroughSeam(Vec3 playerPosition, Vec3 entityPosition, Operation<Vec3> original) {
         WorldFold transformer = ((TransformerSource) this.entity).toroidal$wrappedTransformer();
-        if (transformer == null) {
-            return original.call(playerPosition, entityPosition);
-        }
-
-        return original.call(transformer.nearestCopy(entityPosition, playerPosition), entityPosition);
+        return original.call(NearestCopy.toward(transformer, entityPosition, playerPosition), entityPosition);
     }
 
     @WrapOperation(

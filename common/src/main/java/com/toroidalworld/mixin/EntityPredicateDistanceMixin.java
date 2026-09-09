@@ -3,7 +3,8 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.engine.seam.SeamDistanceBounds;
+import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -24,7 +25,7 @@ public class EntityPredicateDistanceMixin {
             double referenceX, double referenceY, double referenceZ,
             double measuredX, double measuredY, double measuredZ,
             Operation<Boolean> original, @Local(argsOnly = true) ServerLevel level) {
-        Vec3 folded = SeamDistanceBounds.nearestCopy(level,
+        Vec3 folded = NearestCopy.toward(WorldLoopAttachments.wrappedTransformerOf(level),
                 new Vec3(referenceX, referenceY, referenceZ),
                 new Vec3(measuredX, measuredY, measuredZ));
         return original.call(bounds, referenceX, referenceY, referenceZ, folded.x, folded.y, folded.z);

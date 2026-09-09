@@ -10,6 +10,8 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.SeamAim;
 import com.toroidalworld.engine.seam.SeamSteering;
 
@@ -22,8 +24,7 @@ import net.minecraft.world.phys.Vec3;
 public class LivingEntityMixin {
     @ModifyVariable(method = "startSleeping", at = @At("HEAD"), argsOnly = true)
     private BlockPos toroidal$wrapBedPosition(BlockPos bedPosition) {
-        WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? bedPosition : transformer.fold(bedPosition);
+        return WorldLoopAttachments.transformerOf(((LivingEntity) (Object) this).level()).fold(bedPosition);
     }
 
     @ModifyVariable(method = "knockback(DDD)V", at = @At("HEAD"), argsOnly = true, ordinal = 1)
@@ -72,7 +73,7 @@ public class LivingEntityMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;blockPosition()Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$landingBlockNearBlock(BlockPos entityPos, @Local(argsOnly = true) BlockPos pos) {
         WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? entityPos : transformer.nearestCopy(pos, entityPos);
+        return NearestCopy.toward(transformer, pos, entityPos);
     }
 
     @Unique

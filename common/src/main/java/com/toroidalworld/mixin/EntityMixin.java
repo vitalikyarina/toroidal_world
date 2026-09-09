@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.CircumnavigationTracker;
 import com.toroidalworld.engine.seam.SeamAim;
 import com.toroidalworld.engine.seam.VehicleDismountResync;
@@ -128,20 +129,18 @@ public class EntityMixin implements TransformerSource {
     private Optional<BlockPos> toroidal$storeCanonicalSupportingBlock(Level level, Entity source, AABB box,
             Operation<Optional<BlockPos>> original) {
         Optional<BlockPos> found = original.call(level, source, box);
-        WorldFold transformer = toroidal$wrappedTransformer();
-        if (transformer == null || found.isEmpty()) {
+        if (found.isEmpty()) {
             return found;
         }
 
         BlockPos raw = found.get();
-        BlockPos folded = transformer.fold(raw);
+        BlockPos folded = WorldLoopAttachments.transformerOf(level).fold(raw);
         return folded == raw ? found : Optional.of(folded);
     }
 
     @ModifyReturnValue(method = "getOnPos(F)Lnet/minecraft/core/BlockPos;", at = @At("RETURN"))
     private BlockPos toroidal$canonicalOnPos(BlockPos raw) {
-        WorldFold transformer = toroidal$wrappedTransformer();
-        return transformer == null ? raw : transformer.fold(raw);
+        return WorldLoopAttachments.transformerOf(((Entity) (Object) this).level()).fold(raw);
     }
 
     @Inject(method = "moveTo(DDDFF)V", at = @At("TAIL"))
