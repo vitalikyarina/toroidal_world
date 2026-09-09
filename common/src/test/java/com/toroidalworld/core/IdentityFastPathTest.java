@@ -159,6 +159,52 @@ class IdentityFastPathTest {
     }
 
     @Test
+    void theNearestCopyTransformationSeatsTheTargetAndStandsDownOnTheCopyItAlreadyIs() {
+        forEach(FOLDS, (fold, random) -> {
+            Vec3 anchor = sampleVec(random, fold);
+            Vec3 vec = sampleVec(random, fold);
+            Vec3 nearest = fold.nearestCopy(anchor, vec);
+            DeckTransformation move = fold.nearestCopyTransformation(anchor, vec);
+
+            assertEquals(nearest, move.apply(vec),
+                    () -> "nearestCopyTransformation(" + anchor + ", " + vec + ").apply is not nearestCopy "
+                            + in(fold));
+
+            if (nearest.equals(vec)) {
+                assertSame(DeckTransformation.IDENTITY, move,
+                        () -> "nearestCopyTransformation(" + anchor + ", " + vec + ") allocated an identity "
+                                + in(fold));
+                assertSame(vec, move.apply(vec),
+                        () -> "nearestCopyTransformation(" + anchor + ", " + vec + ").apply rebuilt its argument "
+                                + in(fold));
+            }
+        });
+    }
+
+    @Test
+    void theBlockNearestCopyTransformationSeatsTheTargetAndStandsDownOnTheCopyItAlreadyIs() {
+        forEach(FOLDS, (fold, random) -> {
+            BlockPos anchor = sampleBlockPos(random, fold);
+            BlockPos pos = sampleBlockPos(random, fold);
+            BlockPos nearest = fold.nearestCopy(anchor, pos);
+            DeckTransformation move = fold.nearestCopyTransformation(anchor, pos);
+
+            assertEquals(nearest, move.apply(pos),
+                    () -> "nearestCopyTransformation(" + anchor + ", " + pos + ").apply is not nearestCopy "
+                            + in(fold));
+
+            if (nearest.equals(pos)) {
+                assertSame(DeckTransformation.IDENTITY, move,
+                        () -> "nearestCopyTransformation(" + anchor + ", " + pos + ") allocated an identity "
+                                + in(fold));
+                assertSame(pos, move.apply(pos),
+                        () -> "nearestCopyTransformation(" + anchor + ", " + pos + ").apply rebuilt its argument "
+                                + in(fold));
+            }
+        });
+    }
+
+    @Test
     void vectorFoldKeepsItsValueAndReturnsAnInBoundsArgumentUntouched() {
         forEach(FOLDS, (fold, random) -> {
             Vec3 vec = sampleVec(random, fold);

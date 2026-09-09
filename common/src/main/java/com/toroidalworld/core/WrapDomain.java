@@ -67,6 +67,18 @@ public class WrapDomain {
         return laps == 0 ? coord : (int) (coord - laps * domainLength);
     }
 
+    int shiftToward(double refCoord, double coord) {
+        return lapShift((long) lapsToward(refCoord, coord));
+    }
+
+    int shiftToward(int refCoord, int coord) {
+        return lapShift(lapsToward(refCoord, coord));
+    }
+
+    private int lapShift(long laps) {
+        return laps == 0 ? 0 : Math.toIntExact(Math.multiplyExact(-laps, (long) domainLength));
+    }
+
     private double lapsToward(double refCoord, double coord) {
         double quotient = (coord - refCoord) / domainLength;
         double laps = Math.round(quotient);
@@ -277,6 +289,16 @@ public class WrapDomain {
         @Override
         public int unwrapAround(int refCoord, int coord) {
             return coord;
+        }
+
+        @Override
+        int shiftToward(double refCoord, double coord) {
+            return 0;
+        }
+
+        @Override
+        int shiftToward(int refCoord, int coord) {
+            return 0;
         }
 
         @Override
