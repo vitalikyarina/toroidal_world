@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.engine.fold.FoldedBoxQuery;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.SeamAim;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -60,6 +61,6 @@ public class MobMixin {
     @Unique
     private BlockPos toroidal$nearestHome(BlockPos home, BlockPos anchor) {
         WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? home : transformer.nearestCopy(anchor, home);
+        return NearestCopy.toward(transformer, anchor, home);
     }
 }

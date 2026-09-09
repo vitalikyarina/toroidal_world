@@ -59,7 +59,6 @@ public class ForceLoadCommandMixin {
             at = @At(value = "NEW", target = "net/minecraft/world/level/ChunkPos"))
     private static ChunkPos toroidal$reportThePhysicalChunk(ChunkPos chunkPos,
             @Local(argsOnly = true) CommandSourceStack source) {
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(source.getLevel());
-        return transformer == null ? chunkPos : transformer.fold(chunkPos);
+        return WorldLoopAttachments.transformerOf(source.getLevel()).fold(chunkPos);
     }
 }

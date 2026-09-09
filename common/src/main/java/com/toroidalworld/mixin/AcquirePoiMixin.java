@@ -4,7 +4,6 @@ import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -23,7 +22,7 @@ public class AcquirePoiMixin {
         if (target == null) {
             return null;
         }
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        return transformer == null ? target : transformer.fold(target);
+
+        return WorldLoopAttachments.transformerOf(level).fold(target);
     }
 }

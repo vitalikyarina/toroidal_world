@@ -16,7 +16,7 @@ import net.minecraft.advancements.criterion.DistancePredicate;
 import net.minecraft.advancements.criterion.MinMaxBounds;
 import net.minecraft.world.phys.Vec3;
 
-class SeamDistanceBoundsTest {
+class DistanceBoundsSeamTest {
     private static final WorldFold WORLD =
             WorldFolds.of(FlatShape.torus(new WorldLoopBounds(-16, 16, -16, 16)));
 

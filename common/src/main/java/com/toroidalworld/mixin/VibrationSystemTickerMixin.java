@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -39,12 +40,12 @@ public interface VibrationSystemTickerMixin {
     private static Optional<Vec3> toroidal$reloadDestThroughSeam(PositionSource positionSource, Level level,
             Operation<Optional<Vec3>> original, @Local(ordinal = 0) Vec3 origin) {
         Optional<Vec3> destination = original.call(positionSource, level);
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        if (transformer == null || destination.isEmpty()) {
+        if (destination.isEmpty()) {
             return destination;
         }
 
-        Vec3 folded = transformer.nearestCopy(origin, destination.get());
+        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        Vec3 folded = NearestCopy.toward(transformer, origin, destination.get());
         return folded == destination.get() ? destination : Optional.of(folded);
     }
 }

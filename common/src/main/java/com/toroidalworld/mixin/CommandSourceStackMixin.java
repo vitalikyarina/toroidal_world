@@ -10,6 +10,7 @@ import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.engine.fold.DimensionMapping;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -57,11 +58,7 @@ public class CommandSourceStackMixin {
             argsOnly = true)
     private Vec3 toroidal$faceNearestCopy(Vec3 pos) {
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
-        if (transformer == null) {
-            return pos;
-        }
-
         Vec3 from = this.anchor.apply((CommandSourceStack) (Object) this);
-        return transformer.nearestCopy(from, pos);
+        return NearestCopy.toward(transformer, from, pos);
     }
 }

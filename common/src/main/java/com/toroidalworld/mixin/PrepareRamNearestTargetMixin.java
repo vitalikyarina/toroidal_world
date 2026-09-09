@@ -9,7 +9,9 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.engine.fold.FoldedOrder;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -41,12 +43,7 @@ public class PrepareRamNearestTargetMixin {
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/ai/behavior/PrepareRamNearestTarget$RamCandidate;getStartPosition()Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$ramStartThroughSeam(BlockPos startPos, @Local(argsOnly = true) PathfinderMob body) {
-        WorldFold transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
-        if (transformer == null) {
-            return startPos;
-        }
-
-        return transformer.fold(startPos);
+        return WorldLoopAttachments.transformerOf(body.level()).fold(startPos);
     }
 
     @WrapOperation(
@@ -56,10 +53,6 @@ public class PrepareRamNearestTargetMixin {
     private Vec3 toroidal$ramEdgeThroughSeam(PrepareRamNearestTarget<?> self, BlockPos startRamPos, BlockPos targetPos,
             Operation<Vec3> original, @Local(argsOnly = true) PathfinderMob body) {
         WorldFold transformer = ((TransformerSource) body).toroidal$wrappedTransformer();
-        if (transformer == null) {
-            return original.call(self, startRamPos, targetPos);
-        }
-
-        return original.call(self, transformer.nearestCopy(targetPos, startRamPos), targetPos);
+        return original.call(self, NearestCopy.toward(transformer, targetPos, startRamPos), targetPos);
     }
 }

@@ -20,12 +20,13 @@ public final class SeamRespawnData {
         }
 
         BlockPos pos = respawnData.pos();
-        if (!transformer.isOver(pos)) {
+        BlockPos folded = transformer.fold(pos);
+        if (folded == pos) {
             return respawnData;
         }
 
         return new LevelData.RespawnData(
-                GlobalPos.of(respawnData.dimension(), transformer.fold(pos)),
+                GlobalPos.of(respawnData.dimension(), folded),
                 respawnData.yaw(),
                 respawnData.pitch());
     }

@@ -9,6 +9,7 @@ import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -49,11 +50,7 @@ public class RaidsMixin implements LevelBindable {
             @Local(argsOnly = true) ServerPlayer player, @Local(argsOnly = true) BlockPos raidPosition) {
         BlockPos pos = original.call(record);
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
-        if (transformer == null) {
-            return pos;
-        }
-
-        return transformer.nearestCopy(raidPosition, pos);
+        return NearestCopy.toward(transformer, raidPosition, pos);
     }
 
     @WrapOperation(
@@ -63,12 +60,6 @@ public class RaidsMixin implements LevelBindable {
                     target = "Lnet/minecraft/core/BlockPos;containing(Lnet/minecraft/core/Position;)Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$centerIntoBounds(Position mean, Operation<BlockPos> original,
             @Local(argsOnly = true) ServerPlayer player) {
-        BlockPos center = original.call(mean);
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(player.level());
-        if (transformer == null) {
-            return center;
-        }
-
-        return transformer.fold(center);
+        return WorldLoopAttachments.transformerOf(player.level()).fold(original.call(mean));
     }
 }
