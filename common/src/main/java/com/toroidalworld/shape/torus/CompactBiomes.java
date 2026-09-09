@@ -1,6 +1,6 @@
 package com.toroidalworld.shape.torus;
 
-import com.toroidalworld.client.options.WorldOptionControls;
+import com.toroidalworld.api.v1.client.WorldOptionControls;
 import com.toroidalworld.client.shape.torus.CompactBiomesControl;
 import com.toroidalworld.api.v1.option.WorldOption;
 import com.toroidalworld.api.v1.option.WorldOptions;

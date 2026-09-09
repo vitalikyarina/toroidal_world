@@ -1,6 +1,6 @@
 package com.toroidalworld.client.shape.mixin;
 
-import com.toroidalworld.client.shape.ShapeCustomizers;
+import com.toroidalworld.api.v1.client.ShapeCustomizers;
 import com.toroidalworld.engine.gen.ShapedDimensions;
 import com.toroidalworld.shape.WorldShape;
 import com.toroidalworld.shape.WorldShapes;
@@ -89,12 +89,12 @@ public class WorldTabMixin {
     @Unique
     private void toroidal$refreshCustomizeButton() {
         this.toroidal$customizeShapeButton.active =
-                this.toroidal$shapeButton.active && ShapeCustomizers.of(WorldShapes.selected()) != null;
+                this.toroidal$shapeButton.active && ShapeCustomizers.of(WorldShapes.selected().id()) != null;
     }
 
     @Unique
     private static void toroidal$openCustomizer() {
-        ShapeCustomizers.Customizer customizer = ShapeCustomizers.of(WorldShapes.selected());
+        ShapeCustomizers.Customizer customizer = ShapeCustomizers.of(WorldShapes.selected().id());
         if (customizer == null) {
             return;
         }

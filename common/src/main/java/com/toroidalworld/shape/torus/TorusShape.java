@@ -2,7 +2,7 @@ package com.toroidalworld.shape.torus;
 
 import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.client.shape.torus.TorusShapeSetup;
-import com.toroidalworld.shape.ShapeModule;
+import com.toroidalworld.api.v1.shape.ShapeModule;
 
 import net.minecraft.resources.ResourceLocation;
 

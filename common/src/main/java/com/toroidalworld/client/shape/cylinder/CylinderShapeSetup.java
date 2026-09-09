@@ -1,6 +1,6 @@
 package com.toroidalworld.client.shape.cylinder;
 
-import com.toroidalworld.client.shape.ShapeCustomizers;
+import com.toroidalworld.api.v1.client.ShapeCustomizers;
 import com.toroidalworld.shape.cylinder.CylinderShape;
 
 import net.minecraft.client.gui.screens.Screen;
