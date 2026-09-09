@@ -2,7 +2,7 @@ package com.toroidalworld.engine.net;
 
 import static com.toroidalworld.engine.net.PacketTranslatorFixture.CLIENT_BLOCK;
 import static com.toroidalworld.engine.net.PacketTranslatorFixture.SERVER_BLOCK;
-import static com.toroidalworld.engine.net.PacketTranslatorFixture.context;
+import static com.toroidalworld.engine.net.PacketTranslatorFixture.productionContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -48,7 +48,7 @@ class OpenMenuTranslationTest {
     void openingPositionMovesToTheClientFrame() {
         ClientboundCustomPayloadPacket translated =
                 (ClientboundCustomPayloadPacket) PacketTranslator.toClient(
-                        openScreen(POSITION_CODEC, SERVER_BLOCK), context());
+                        openScreen(POSITION_CODEC, SERVER_BLOCK), productionContext());
 
         Networking.OpenScreenPayload<?> open = (Networking.OpenScreenPayload<?>) translated.payload();
         assertEquals(CLIENT_BLOCK, open.data());
@@ -62,13 +62,13 @@ class OpenMenuTranslationTest {
     void openingPositionAlreadyInTheClientFrameKeepsThePacket() {
         ClientboundCustomPayloadPacket packet = openScreen(POSITION_CODEC, CLIENT_BLOCK);
 
-        assertSame(packet, PacketTranslator.toClient(packet, context()));
+        assertSame(packet, PacketTranslator.toClient(packet, productionContext()));
     }
 
     @Test
     void openingDataThatIsNotAPositionPassesThrough() {
         ClientboundCustomPayloadPacket packet = openScreen(LABEL_CODEC, LABEL);
 
-        assertSame(packet, PacketTranslator.toClient(packet, context()));
+        assertSame(packet, PacketTranslator.toClient(packet, productionContext()));
     }
 }
