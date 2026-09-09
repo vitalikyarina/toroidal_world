@@ -37,7 +37,7 @@ public final class DeckGroupFold implements WorldFold {
         boolean xLooped = shape.bounds().x() instanceof AxisBounds.Looped;
         boolean zLooped = shape.bounds().z() instanceof AxisBounds.Looped;
         this.wrapped = xLooped || zLooped;
-        this.generationOptions = xLooped && zLooped ? generationOptions : GenerationOptions.NONE;
+        this.generationOptions = generationOptions;
         this.chunks = new Lattice(shape, 1);
         this.blocks = new Lattice(shape, CoordinateConstants.CHUNK_WIDTH);
     }
@@ -239,6 +239,20 @@ public final class DeckGroupFold implements WorldFold {
     public DeckTransformation foldTransformation(Vec3 pos) {
         SeamTransform applied = this.blocks.foldCoords(pos.x, pos.z);
         return applied.isIdentity() ? DeckTransformation.IDENTITY : new DeckTransformation(applied);
+    }
+
+    @Override
+    public DeckTransformation nearestCopyTransformation(Vec3 ref, Vec3 target) {
+        return carried(this.blocks.nearestCoords(ref.x, ref.z, target.x, target.z));
+    }
+
+    @Override
+    public DeckTransformation nearestCopyTransformation(BlockPos ref, BlockPos target) {
+        return carried(this.blocks.nearestCells(ref.getX(), ref.getZ(), target.getX(), target.getZ()));
+    }
+
+    private static DeckTransformation carried(SeamTransform move) {
+        return move.isIdentity() ? DeckTransformation.IDENTITY : new DeckTransformation(move);
     }
 
     @Override

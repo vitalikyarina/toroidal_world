@@ -4,11 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.FramedStructureStart;
@@ -47,7 +45,8 @@ public class StructureManagerMixin {
         if (transformer != null && !starts.isEmpty()) {
             List<StructureStart> framed = new ArrayList<>(starts.size());
             for (StructureStart start : starts) {
-                StructureStart inFrame = toroidal$inFrameOf(region, transformer, pos, start);
+                StructureStart inFrame = ((FramedStructureStart) (Object) start)
+                        .toroidal$framedToward(region, transformer, pos);
                 if (inFrame != null) {
                     framed.add(inFrame);
                 }
@@ -57,19 +56,6 @@ public class StructureManagerMixin {
         }
 
         return starts;
-    }
-
-    @Unique
-    private static @Nullable StructureStart toroidal$inFrameOf(
-            WorldGenRegion region, WorldFold transformer, ChunkPos centerPos, StructureStart start) {
-        if (!start.isValid()) {
-            return start;
-        }
-
-        ChunkPos startPos = start.getChunkPos();
-        ChunkPos nearest = transformer.nearestCopy(centerPos, startPos);
-        return ((FramedStructureStart) (Object) start).toroidal$framedBy(
-                region, transformer.deckTransformation(startPos, nearest));
     }
 
     @WrapOperation(

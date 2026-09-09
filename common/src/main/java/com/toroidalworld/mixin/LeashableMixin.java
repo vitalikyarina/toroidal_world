@@ -6,6 +6,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.seam.SeamRange;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -26,7 +28,7 @@ public interface LeashableMixin {
 
         Vec3 from = ((Entity) this).getBoundingBox().getCenter();
         Vec3 to = entity.getBoundingBox().getCenter();
-        return Math.sqrt(transformer.sqrDistance(from.x, from.y, from.z, to.x, to.y, to.z));
+        return Math.sqrt(SeamRange.sqr(transformer, from, to));
     }
 
     @WrapOperation(
@@ -37,12 +39,6 @@ public interface LeashableMixin {
                     ordinal = 1))
     private static Vec3 toroidal$holderPositionThroughSeam(Entity leashHolder, Operation<Vec3> original,
             @Local(argsOnly = true, ordinal = 0) Entity entity) {
-        Vec3 position = original.call(leashHolder);
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(leashHolder.level());
-        if (transformer == null) {
-            return position;
-        }
-
-        return transformer.nearestCopy(entity.position(), position);
+        return SeamSteering.nearestCopy(entity, original.call(leashHolder));
     }
 }

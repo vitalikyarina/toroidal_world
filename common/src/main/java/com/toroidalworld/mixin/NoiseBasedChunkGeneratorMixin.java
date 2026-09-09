@@ -1,11 +1,8 @@
 package com.toroidalworld.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 
 import com.toroidalworld.core.ShapedChunkGenerator;
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -27,7 +24,8 @@ public class NoiseBasedChunkGeneratorMixin {
             int cellYMin,
             int cellCountY,
             Operation<ChunkAccess> original) {
-        return GenerationTransformerContext.withTransformer(toroidal$transformer(),
+        return GenerationTransformerContext.withTransformer(
+                ShapedChunkGenerator.transformerOf((NoiseBasedChunkGenerator) (Object) this),
                 () -> original.call(blender, structureManager, randomState, centerChunk, cellYMin, cellCountY));
     }
 
@@ -38,13 +36,8 @@ public class NoiseBasedChunkGeneratorMixin {
             StructureManager structureManager,
             ChunkAccess protoChunk,
             Operation<Void> original) {
-        GenerationTransformerContext.runWithTransformer(toroidal$transformer(),
+        GenerationTransformerContext.runWithTransformer(
+                ShapedChunkGenerator.transformerOf((NoiseBasedChunkGenerator) (Object) this),
                 () -> original.call(blender, randomState, structureManager, protoChunk));
-    }
-
-    @Unique
-    private WorldFold toroidal$transformer() {
-        WorldFold transformer = ShapedChunkGenerator.wrappedTransformerOf((NoiseBasedChunkGenerator) (Object) this);
-        return transformer == null ? WorldFolds.NOOP : transformer;
     }
 }

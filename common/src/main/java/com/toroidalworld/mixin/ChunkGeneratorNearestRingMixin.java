@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.seam.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
@@ -31,7 +32,6 @@ public class ChunkGeneratorNearestRingMixin {
             return original.call(candidate, origin);
         }
 
-        return transformer.sqrDistance(
-                origin.getX(), origin.getY(), origin.getZ(), candidate.getX(), candidate.getY(), candidate.getZ());
+        return SeamRange.sqr(transformer, origin, candidate);
     }
 }

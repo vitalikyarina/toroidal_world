@@ -15,7 +15,7 @@ public final class GuaranteedLand {
     private static final boolean OFF = false;
 
     public static final WorldOption<Boolean> OPTION = new WorldOption<>(
-            KEY, POSITION, Codec.BOOL, OFF, OFF);
+            KEY, POSITION, Codec.BOOL, OFF);
 
     public static void register(boolean client) {
         WorldOptions.register(OPTION);

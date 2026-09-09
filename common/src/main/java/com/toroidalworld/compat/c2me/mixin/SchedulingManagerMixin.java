@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.accessors.TransformerSourceBindable;
+import com.toroidalworld.compat.c2me.TransformerSourceBindable;
 import com.toroidalworld.core.WorldFold;
 import com.ishland.c2me.base.common.scheduler.SchedulingManager;
 

@@ -58,6 +58,7 @@ public final class ClimateScanFixture {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
         WorldOptionSetup.registerAll(false);
+        GenerationHookSetup.registerAll();
         holders = VanillaRegistries.createLookup();
         noises = holders.lookupOrThrow(Registries.NOISE);
     }

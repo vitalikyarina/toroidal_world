@@ -2,6 +2,7 @@ package com.toroidalworld.shape.torus;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.GenerationOptions;
 import com.toroidalworld.core.NetherScales;
@@ -16,20 +17,15 @@ public final class TorusDimensions {
 
     public static WorldDimensions apply(WorldDimensions dimensions, TorusSettings settings) {
         GenerationOptions generationOptions = settings.generationOptions();
-        WorldDimensions withTorusOverworld = ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD,
-                FlatShape.torus(settings.overworld()), generationOptions);
-        if (withTorusOverworld == dimensions) {
-            return dimensions;
-        }
-
-        WorldDimensions withTorusNether = ShapedDimensions.withShape(withTorusOverworld, LevelStem.NETHER,
-                FlatShape.torus(netherWrapping(settings)), generationOptions);
-        return ShapedDimensions.withShape(withTorusNether, LevelStem.END, FlatShape.torus(settings.end()),
-                generationOptions);
+        return ShapedDimensions.withShapes(dimensions,
+                new CarriedShape(FlatShape.torus(settings.overworld()), generationOptions),
+                new CarriedShape(FlatShape.torus(netherWrapping(settings)), generationOptions),
+                new CarriedShape(FlatShape.torus(settings.end()), generationOptions));
     }
 
     public static @Nullable TorusSettings read(WorldDimensions dimensions) {
-        WorldLoopBounds overworld = torusBoundsOf(dimensions, LevelStem.OVERWORLD);
+        CarriedShape carried = ShapedDimensions.carriedShapeOf(dimensions, LevelStem.OVERWORLD);
+        WorldLoopBounds overworld = carried == null ? null : torusBounds(carried.shape());
         if (overworld == null) {
             return null;
         }
@@ -39,11 +35,14 @@ public final class TorusDimensions {
                 overworld,
                 NetherScales.normalize(readNetherScale(dimensions, overworldChunkWidth), overworldChunkWidth),
                 readEndWrapping(dimensions),
-                ShapedDimensions.generationOptionsOf(dimensions, LevelStem.OVERWORLD));
+                carried.generationOptions());
     }
 
     private static @Nullable WorldLoopBounds torusBoundsOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {
-        FlatShape shape = ShapedDimensions.shapeOf(dimensions, key);
+        return torusBounds(ShapedDimensions.shapeOf(dimensions, key));
+    }
+
+    private static @Nullable WorldLoopBounds torusBounds(@Nullable FlatShape shape) {
         if (shape == null || !shape.decomposesPerAxis() || !shape.bounds().isSquare()) {
             return null;
         }

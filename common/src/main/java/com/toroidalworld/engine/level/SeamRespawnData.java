@@ -8,33 +8,25 @@ import com.toroidalworld.core.WorldLoopAttachments;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.storage.LevelData;
 
 public final class SeamRespawnData {
     public static LevelData.RespawnData insideBounds(
             @Nullable MinecraftServer server, LevelData.RespawnData respawnData) {
-        if (server == null) {
-            return respawnData;
-        }
-
-        ServerLevel level = server.getLevel(respawnData.dimension());
-        if (level == null) {
-            return respawnData;
-        }
-
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
+        WorldFold transformer =
+                WorldLoopAttachments.wrappedTransformerOf(server, respawnData.dimension());
         if (transformer == null) {
             return respawnData;
         }
 
         BlockPos pos = respawnData.pos();
-        if (!transformer.isOver(pos)) {
+        BlockPos folded = transformer.fold(pos);
+        if (folded == pos) {
             return respawnData;
         }
 
         return new LevelData.RespawnData(
-                GlobalPos.of(respawnData.dimension(), transformer.fold(pos)),
+                GlobalPos.of(respawnData.dimension(), folded),
                 respawnData.yaw(),
                 respawnData.pitch());
     }

@@ -11,13 +11,13 @@ public final class C2meWarpedAxisNode implements AstNode {
     public final CoordinateNode.Axis axis;
     public final WrapDomain domain;
     public final AstNode shift;
-    public final double xzScale;
+    public final double divisor;
 
-    public C2meWarpedAxisNode(CoordinateNode.Axis axis, WrapDomain domain, AstNode shift, double xzScale) {
+    public C2meWarpedAxisNode(CoordinateNode.Axis axis, WrapDomain domain, AstNode shift, double divisor) {
         this.axis = Objects.requireNonNull(axis);
         this.domain = Objects.requireNonNull(domain);
         this.shift = Objects.requireNonNull(shift);
-        this.xzScale = xzScale;
+        this.divisor = divisor;
     }
 
     @Override
@@ -31,7 +31,7 @@ public final class C2meWarpedAxisNode implements AstNode {
 
         return transformer.transform(transformedShift == this.shift
                 ? this
-                : new C2meWarpedAxisNode(this.axis, this.domain, transformedShift, this.xzScale));
+                : new C2meWarpedAxisNode(this.axis, this.domain, transformedShift, this.divisor));
     }
 
     @Override
@@ -43,7 +43,7 @@ public final class C2meWarpedAxisNode implements AstNode {
         C2meWarpedAxisNode that = (C2meWarpedAxisNode) o;
         return this.axis == that.axis
                 && this.domain == that.domain
-                && Double.compare(this.xzScale, that.xzScale) == 0
+                && Double.compare(this.divisor, that.divisor) == 0
                 && this.shift.equals(that.shift);
     }
 
@@ -51,7 +51,7 @@ public final class C2meWarpedAxisNode implements AstNode {
     public int hashCode() {
         int result = this.axis.hashCode();
         result = 31 * result + System.identityHashCode(this.domain);
-        result = 31 * result + Double.hashCode(this.xzScale);
+        result = 31 * result + Double.hashCode(this.divisor);
         return 31 * result + this.shift.hashCode();
     }
 
@@ -64,7 +64,7 @@ public final class C2meWarpedAxisNode implements AstNode {
         C2meWarpedAxisNode that = (C2meWarpedAxisNode) o;
         return this.axis == that.axis
                 && this.domain == that.domain
-                && Double.compare(this.xzScale, that.xzScale) == 0
+                && Double.compare(this.divisor, that.divisor) == 0
                 && this.shift.relaxedEquals(that.shift);
     }
 
@@ -72,7 +72,7 @@ public final class C2meWarpedAxisNode implements AstNode {
     public int relaxedHashCode() {
         int result = this.axis.hashCode();
         result = 31 * result + System.identityHashCode(this.domain);
-        result = 31 * result + Double.hashCode(this.xzScale);
+        result = 31 * result + Double.hashCode(this.divisor);
         return 31 * result + this.shift.relaxedHashCode();
     }
 }

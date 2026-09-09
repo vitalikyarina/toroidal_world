@@ -241,12 +241,7 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
 
     @Unique
     private SectionPos toroidal$canonical(SectionPos section) {
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
-        if (transformer == null) {
-            return section;
-        }
-
-        return transformer.fold(section);
+        return WorldLoopAttachments.transformerOf(this.level).fold(section);
     }
 
     @WrapOperation(
@@ -255,9 +250,7 @@ public class ChunkMapMixin implements LevelHolder, ChunkResender, SeamDriveSched
                     value = "INVOKE",
                     target = "Lnet/minecraft/server/level/ServerPlayer;chunkPosition()Lnet/minecraft/world/level/ChunkPos;"))
     private ChunkPos toroidal$canonicalViewCenter(ServerPlayer player, Operation<ChunkPos> original) {
-        ChunkPos pos = original.call(player);
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(this.level);
-        return transformer == null ? pos : transformer.fold(pos);
+        return WorldLoopAttachments.transformerOf(this.level).fold(original.call(player));
     }
 
     @WrapOperation(

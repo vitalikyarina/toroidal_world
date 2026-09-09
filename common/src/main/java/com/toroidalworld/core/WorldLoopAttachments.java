@@ -10,6 +10,8 @@ import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.engine.seam.ClientPosition;
 import com.toroidalworld.engine.seam.SeamTravel;
 
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -35,6 +37,11 @@ public final class WorldLoopAttachments {
         return transformer.isWrapped() ? transformer : null;
     }
 
+    public static @Nullable WorldFold wrappedTransformerOf(
+            @Nullable MinecraftServer server, ResourceKey<Level> dimension) {
+        return server != null ? wrappedTransformerOf(server.getLevel(dimension)) : null;
+    }
+
     private static WorldFold clientBoundsTransformerOf(Level level) {
         return level instanceof ClientBoundsHolder holder ? holder.toroidal$clientBounds() : WorldFolds.NOOP;
     }
@@ -48,18 +55,31 @@ public final class WorldLoopAttachments {
         return transformer.isWrapped() ? transformer : null;
     }
 
-    public static WorldFold noiseTransformerOf(Level level) {
+    private static @Nullable Level levelOf(@Nullable LevelReader reader) {
+        if (reader instanceof Level level) {
+            return level;
+        }
+
+        return reader != null ? serverLevelOf(reader) : null;
+    }
+
+    public static WorldFold transformerOfReader(@Nullable LevelReader reader) {
+        Level level = levelOf(reader);
+        if (level == null) {
+            return WorldFolds.NOOP;
+        }
+
         WorldFold clientBounds = wrappedClientBoundsTransformerOf(level);
         return clientBounds != null ? clientBounds : transformerOf(level);
     }
 
-    public static @Nullable WorldFold noiseTransformerOfReader(LevelReader reader) {
-        if (reader instanceof Level level) {
-            return noiseTransformerOf(level);
-        }
+    public static WorldFold noiseTransformerOf(Level level) {
+        return transformerOfReader(level);
+    }
 
-        ServerLevel level = serverLevelOf(reader);
-        return level != null ? noiseTransformerOf(level) : null;
+    public static @Nullable WorldFold noiseTransformerOfReader(LevelReader reader) {
+        Level level = levelOf(reader);
+        return level != null ? transformerOfReader(level) : null;
     }
 
     public static @Nullable ServerLevel serverLevelOf(LevelReader reader) {

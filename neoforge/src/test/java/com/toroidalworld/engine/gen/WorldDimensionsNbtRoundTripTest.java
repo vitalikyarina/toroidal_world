@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.GenerationOptions;
 import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.shape.WorldOptionSetup;
@@ -22,6 +23,7 @@ import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.WorldDimensions;
@@ -65,9 +67,15 @@ class WorldDimensionsNbtRoundTripTest {
                 ShapedDimensions.shapeOf(reread, LevelStem.NETHER));
         assertEquals(ShapedDimensions.shapeOf(shaped, LevelStem.END),
                 ShapedDimensions.shapeOf(reread, LevelStem.END));
-        assertEquals(GENERATION_OPTIONS, ShapedDimensions.generationOptionsOf(reread, LevelStem.OVERWORLD));
-        assertEquals(GENERATION_OPTIONS, ShapedDimensions.generationOptionsOf(reread, LevelStem.NETHER));
-        assertEquals(GENERATION_OPTIONS, ShapedDimensions.generationOptionsOf(reread, LevelStem.END));
+        assertEquals(GENERATION_OPTIONS, carriedShapeOf(reread, LevelStem.OVERWORLD).generationOptions());
+        assertEquals(GENERATION_OPTIONS, carriedShapeOf(reread, LevelStem.NETHER).generationOptions());
+        assertEquals(GENERATION_OPTIONS, carriedShapeOf(reread, LevelStem.END).generationOptions());
+    }
+
+    private static CarriedShape carriedShapeOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {
+        CarriedShape carried = ShapedDimensions.carriedShapeOf(dimensions, key);
+        assertNotNull(carried, key.identifier().toString());
+        return carried;
     }
 
     private static WorldDimensions shapedPreset() {

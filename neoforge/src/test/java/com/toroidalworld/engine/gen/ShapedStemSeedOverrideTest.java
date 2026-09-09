@@ -1,7 +1,7 @@
 package com.toroidalworld.engine.gen;
 
 import com.toroidalworld.core.FlatShape;
-import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.shape.WorldOptionSetup;
 import static com.toroidalworld.engine.gen.BakeStampFixture.datapackRegistry;
@@ -58,7 +58,7 @@ class ShapedStemSeedOverrideTest {
         LevelStem declared = declaredStem(noiseGenerator(worldgen));
 
         WorldDimensions shaped = ShapedDimensions.withShape(
-                selected(Map.of(LevelStem.OVERWORLD, declared)), LevelStem.OVERWORLD, SHAPE);
+                selected(Map.of(LevelStem.OVERWORLD, declared)), LevelStem.OVERWORLD, new CarriedShape(SHAPE));
 
         assertReshapedAlone(declared, shaped.get(LevelStem.OVERWORLD).orElseThrow());
     }
@@ -67,8 +67,8 @@ class ShapedStemSeedOverrideTest {
     void stripShapesKeepsTheSeedOverride() {
         NoiseBasedChunkGenerator noise = (NoiseBasedChunkGenerator) noiseGenerator(worldgen);
         LevelStem declared = declaredStem(
-                new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(), SHAPE,
-                        GenerationOptions.DEFAULT));
+                new LoopedChunkGenerator(noise.getBiomeSource(), noise.generatorSettings(),
+                        new CarriedShape(SHAPE)));
 
         WorldDimensions stripped = ShapedDimensions.stripShapes(selected(Map.of(LevelStem.OVERWORLD, declared)));
 
@@ -91,7 +91,7 @@ class ShapedStemSeedOverrideTest {
         Registry<LevelStem> restored = restore(declared);
 
         LevelStem restoredStem = restored.getOptional(LevelStem.OVERWORLD).orElseThrow();
-        assertNotNull(ShapedChunkGenerator.wrappedShapeOf(restoredStem.generator()), "the stem took no shape");
+        assertNotNull(ShapedChunkGenerator.carriedShapeOf(restoredStem.generator()), "the stem took no shape");
         assertSame(declared.type(), restoredStem.type());
         assertEquals(OptionalLong.of(DECLARED_SEED), restoredStem.seedOverride());
     }

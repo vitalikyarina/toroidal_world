@@ -6,6 +6,8 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.NearestCopy;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -21,24 +23,13 @@ public class EyeOfEnderMixin {
 
     @WrapMethod(method = "signalTo")
     private void toroidal$signalThroughSeam(Vec3 target, Operation<Void> original) {
-        EyeOfEnder self = (EyeOfEnder) (Object) this;
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(self.level());
-        if (transformer == null) {
-            original.call(target);
-            return;
-        }
-
-        original.call(transformer.nearestCopy(self.position(), target));
+        original.call(SeamSteering.nearestCopy((EyeOfEnder) (Object) this, target));
     }
 
     @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = UPDATE_DELTA_MOVEMENT))
     private Vec3 toroidal$steerThroughSeam(Vec3 movement, Vec3 position, Vec3 target, Operation<Vec3> original) {
         EyeOfEnder self = (EyeOfEnder) (Object) this;
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(self.level());
-        if (transformer == null) {
-            return original.call(movement, position, target);
-        }
-
-        return original.call(movement, position, transformer.nearestCopy(position, target));
+        return original.call(movement, position, NearestCopy.toward(transformer, position, target));
     }
 }

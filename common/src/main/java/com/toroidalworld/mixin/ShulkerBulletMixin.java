@@ -4,9 +4,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.InjectionTargets;
-import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.engine.seam.SeamAim;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -40,12 +39,6 @@ public class ShulkerBulletMixin {
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/Entity;blockPosition()Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$targetBlockThroughSeam(BlockPos targetBlock) {
-        ShulkerBullet self = (ShulkerBullet) (Object) this;
-        WorldFold transformer = ((TransformerSource) self).toroidal$wrappedTransformer();
-        if (transformer == null) {
-            return targetBlock;
-        }
-
-        return transformer.nearestCopy(self.blockPosition(), targetBlock);
+        return SeamSteering.nearestCopy((ShulkerBullet) (Object) this, targetBlock);
     }
 }

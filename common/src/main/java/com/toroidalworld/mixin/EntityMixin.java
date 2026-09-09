@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.CircumnavigationTracker;
 import com.toroidalworld.engine.seam.SeamAim;
 import com.toroidalworld.engine.seam.VehicleDismountResync;
@@ -99,14 +100,12 @@ public class EntityMixin implements TransformerSource {
 
     @ModifyVariable(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("STORE"), ordinal = 0)
     private double toroidal$pushDeltaX(double deltaX, @Local(argsOnly = true) Entity other) {
-        WorldFold transformer = toroidal$wrappedTransformer();
-        return transformer == null ? deltaX : toroidal$deltaTo(transformer, other).x;
+        return SeamAim.deltaTo((Entity) (Object) this, other.position()).x;
     }
 
     @ModifyVariable(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("STORE"), ordinal = 1)
     private double toroidal$pushDeltaZ(double deltaZ, @Local(argsOnly = true) Entity other) {
-        WorldFold transformer = toroidal$wrappedTransformer();
-        return transformer == null ? deltaZ : toroidal$deltaTo(transformer, other).z;
+        return SeamAim.deltaTo((Entity) (Object) this, other.position()).z;
     }
 
     @ModifyArg(
@@ -117,12 +116,8 @@ public class EntityMixin implements TransformerSource {
             index = 0)
     private Vec3 toroidal$foldBridgeThroughSeam(Vec3 from) {
         WorldFold transformer = toroidal$wrappedTransformer();
-        if (transformer == null) {
-            return from;
-        }
-
         Vec3 position = ((Entity) (Object) this).position();
-        return transformer.nearestCopy(position, from);
+        return NearestCopy.toward(transformer, position, from);
     }
 
     @ModifyArg(
@@ -133,11 +128,7 @@ public class EntityMixin implements TransformerSource {
             index = 2)
     private Vec3 toroidal$portalPositionNearestCorner(Vec3 position, @Local(argsOnly = true) BlockUtil.FoundRectangle portalArea) {
         WorldFold transformer = toroidal$wrappedTransformer();
-        if (transformer == null) {
-            return position;
-        }
-
-        return transformer.nearestCopy(Vec3.atLowerCornerOf(portalArea.minCorner), position);
+        return NearestCopy.toward(transformer, Vec3.atLowerCornerOf(portalArea.minCorner), position);
     }
 
     @WrapOperation(
@@ -148,20 +139,18 @@ public class EntityMixin implements TransformerSource {
     private Optional<BlockPos> toroidal$storeCanonicalSupportingBlock(Level level, Entity source, AABB box,
             Operation<Optional<BlockPos>> original) {
         Optional<BlockPos> found = original.call(level, source, box);
-        WorldFold transformer = toroidal$wrappedTransformer();
-        if (transformer == null || found.isEmpty()) {
+        if (found.isEmpty()) {
             return found;
         }
 
         BlockPos raw = found.get();
-        BlockPos folded = transformer.fold(raw);
+        BlockPos folded = WorldLoopAttachments.transformerOf(level).fold(raw);
         return folded == raw ? found : Optional.of(folded);
     }
 
     @ModifyReturnValue(method = "getOnPos(F)Lnet/minecraft/core/BlockPos;", at = @At("RETURN"))
     private BlockPos toroidal$canonicalOnPos(BlockPos raw) {
-        WorldFold transformer = toroidal$wrappedTransformer();
-        return transformer == null ? raw : transformer.fold(raw);
+        return WorldLoopAttachments.transformerOf(((Entity) (Object) this).level()).fold(raw);
     }
 
     @Inject(method = "snapTo(DDDFF)V", at = @At("TAIL"))
@@ -210,11 +199,6 @@ public class EntityMixin implements TransformerSource {
 
         WorldFold transformer = this.toroidal$transformer;
         return transformer.isWrapped() ? transformer : null;
-    }
-
-    @Unique
-    private Vec3 toroidal$deltaTo(WorldFold transformer, Entity other) {
-        return transformer.foldDelta(((Entity) (Object) this).position(), other.position());
     }
 
     @Unique

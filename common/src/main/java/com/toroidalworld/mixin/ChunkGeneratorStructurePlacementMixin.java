@@ -3,9 +3,7 @@ package com.toroidalworld.mixin;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.accessors.FramedStructureStart;
@@ -46,25 +44,13 @@ public class ChunkGeneratorStructurePlacementMixin {
         ChunkPos centerPos = sectionPos.chunk();
         List<StructureStart> framed = new ArrayList<>(starts.size());
         for (StructureStart start : starts) {
-            StructureStart inFrame = toroidal$inFrameOf(level, transformer, centerPos, start);
+            StructureStart inFrame = ((FramedStructureStart) (Object) start)
+                    .toroidal$framedToward(level, transformer, centerPos);
             if (inFrame != null) {
                 framed.add(inFrame);
             }
         }
 
         return framed;
-    }
-
-    @Unique
-    private static @Nullable StructureStart toroidal$inFrameOf(
-            WorldGenLevel level, WorldFold transformer, ChunkPos centerPos, StructureStart start) {
-        if (!start.isValid()) {
-            return start;
-        }
-
-        ChunkPos startPos = start.getChunkPos();
-        ChunkPos nearest = transformer.nearestCopy(centerPos, startPos);
-        return ((FramedStructureStart) (Object) start).toroidal$framedBy(
-                level, transformer.deckTransformation(startPos, nearest));
     }
 }

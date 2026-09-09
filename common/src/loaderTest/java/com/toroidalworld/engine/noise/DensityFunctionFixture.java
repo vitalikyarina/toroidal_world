@@ -41,7 +41,7 @@ public final class DensityFunctionFixture {
 
     public static final Holder<NormalNoise.NoiseParameters> CLIMATE_NOISE_DATA = Holder.direct(CLIMATE_PARAMETERS);
 
-    private static final DensityFunction.NoiseHolder CLIMATE_NOISE = new DensityFunction.NoiseHolder(
+    public static final DensityFunction.NoiseHolder CLIMATE_NOISE = new DensityFunction.NoiseHolder(
             CLIMATE_NOISE_DATA, NormalNoise.create(new LegacyRandomSource(SEED), CLIMATE_PARAMETERS));
 
     public static final WorldFold SQUARE =

@@ -40,8 +40,4 @@ public enum WorldLoopPresets {
     public int blockWidth() {
         return chunkWidth * CoordinateConstants.CHUNK_WIDTH;
     }
-
-    public int endBlockWidth() {
-        return endChunkWidth() * CoordinateConstants.CHUNK_WIDTH;
-    }
 }

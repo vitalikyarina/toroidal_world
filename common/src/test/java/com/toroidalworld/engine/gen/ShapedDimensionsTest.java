@@ -11,8 +11,8 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.FlatShape;
-import com.toroidalworld.core.GenerationOptions;
 import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
@@ -45,7 +45,7 @@ class ShapedDimensionsTest {
     void strippingASuperflatShapeHandsBackThePlainFlatSourceOnItsOwnSettings() {
         FlatLevelGeneratorSettings settings = flatSettings();
         WorldDimensions stripped = ShapedDimensions.stripShapes(overworldOf(new LoopedFlatChunkGenerator(
-                settings, TORUS, GenerationOptions.DEFAULT)));
+                settings, new CarriedShape(TORUS))));
 
         ChunkGenerator generator = overworldGeneratorOf(stripped);
         assertNull(ShapedDimensions.shapeOf(stripped, LevelStem.OVERWORLD));
@@ -58,7 +58,7 @@ class ShapedDimensionsTest {
         BiomeSource biomes = plainsBiomeSource();
         Holder<NoiseGeneratorSettings> settings = overworldNoiseSettings();
         WorldDimensions stripped = ShapedDimensions.stripShapes(overworldOf(new LoopedChunkGenerator(
-                biomes, settings, TORUS, GenerationOptions.DEFAULT)));
+                biomes, settings, new CarriedShape(TORUS))));
 
         ChunkGenerator generator = overworldGeneratorOf(stripped);
         assertNull(ShapedDimensions.shapeOf(stripped, LevelStem.OVERWORLD));
@@ -71,8 +71,8 @@ class ShapedDimensionsTest {
     void reShapingASuperflatWorldRebuildsFromTheFlatSettingsRatherThanTheOldShape() {
         FlatLevelGeneratorSettings settings = flatSettings();
         WorldDimensions reshaped = ShapedDimensions.withShape(
-                overworldOf(new LoopedFlatChunkGenerator(settings, TORUS, GenerationOptions.DEFAULT)),
-                LevelStem.OVERWORLD, CYLINDER);
+                overworldOf(new LoopedFlatChunkGenerator(settings, new CarriedShape(TORUS))),
+                LevelStem.OVERWORLD, new CarriedShape(CYLINDER));
 
         assertEquals(CYLINDER, ShapedDimensions.shapeOf(reshaped, LevelStem.OVERWORLD));
         assertSame(settings, ((LoopedFlatChunkGenerator) overworldGeneratorOf(reshaped)).settings());
@@ -86,10 +86,33 @@ class ShapedDimensionsTest {
         assertSame(vanilla, ShapedDimensions.stripShapes(vanilla));
     }
 
+    @Test
+    void anOverworldThatRefusesTheShapeLeavesTheNetherUntouched() {
+        WorldDimensions foreign = overworldAndNetherOf(
+                new ForeignChunkGenerator(plainsBiomeSource(), overworldNoiseSettings()),
+                new NoiseBasedChunkGenerator(plainsBiomeSource(), overworldNoiseSettings()));
+
+        WorldDimensions shaped = ShapedDimensions.withShapes(foreign,
+                new CarriedShape(TORUS), new CarriedShape(TORUS), new CarriedShape(TORUS));
+
+        assertSame(foreign, shaped);
+        assertNull(ShapedDimensions.shapeOf(shaped, LevelStem.NETHER));
+    }
+
     private static WorldDimensions overworldOf(ChunkGenerator generator) {
         return new WorldDimensions(Map.of(LevelStem.OVERWORLD, new LevelStem(
                 WORLDGEN.lookupOrThrow(Registries.DIMENSION_TYPE).getOrThrow(BuiltinDimensionTypes.OVERWORLD),
                 generator)));
+    }
+
+    private static WorldDimensions overworldAndNetherOf(ChunkGenerator overworld, ChunkGenerator nether) {
+        return new WorldDimensions(Map.of(
+                LevelStem.OVERWORLD, new LevelStem(
+                        WORLDGEN.lookupOrThrow(Registries.DIMENSION_TYPE).getOrThrow(BuiltinDimensionTypes.OVERWORLD),
+                        overworld),
+                LevelStem.NETHER, new LevelStem(
+                        WORLDGEN.lookupOrThrow(Registries.DIMENSION_TYPE).getOrThrow(BuiltinDimensionTypes.NETHER),
+                        nether)));
     }
 
     private static ChunkGenerator overworldGeneratorOf(WorldDimensions dimensions) {
@@ -107,5 +130,11 @@ class ShapedDimensionsTest {
 
     private static Holder<NoiseGeneratorSettings> overworldNoiseSettings() {
         return WORLDGEN.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(NoiseGeneratorSettings.OVERWORLD);
+    }
+
+    private static class ForeignChunkGenerator extends NoiseBasedChunkGenerator {
+        ForeignChunkGenerator(BiomeSource biomes, Holder<NoiseGeneratorSettings> settings) {
+            super(biomes, settings);
+        }
     }
 }

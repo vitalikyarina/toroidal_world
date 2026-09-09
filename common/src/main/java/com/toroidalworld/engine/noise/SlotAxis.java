@@ -13,8 +13,6 @@ public enum SlotAxis {
 
     private static final WrapDomain UNWRAPPED = new WrapDomain.Noop();
 
-    private static final double UNDIVIDED = 1.0;
-
     public boolean carriesWorldAxis() {
         return this != NONE;
     }
@@ -35,7 +33,7 @@ public enum SlotAxis {
         return switch (this) {
             case X -> context.xDivisor();
             case Z -> context.zDivisor();
-            case NONE -> UNDIVIDED;
+            case NONE -> NoiseConstants.UNDIVIDED;
         };
     }
 }

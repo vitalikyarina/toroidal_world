@@ -1,10 +1,7 @@
 package com.toroidalworld.engine.gen;
 
-import com.toroidalworld.core.FlatShape;
-import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.ShapedChunkGenerator;
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -20,35 +17,19 @@ public class LoopedFlatChunkGenerator extends FlatLevelSource implements ShapedC
     public static final MapCodec<LoopedFlatChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                     FlatLevelGeneratorSettings.CODEC.fieldOf(SETTINGS_KEY).forGetter(LoopedFlatChunkGenerator::settings),
-                    SHAPE_CODEC.fieldOf(WRAPPING_KEY).forGetter(LoopedFlatChunkGenerator::shape),
-                    GENERATION_OPTIONS_CODEC.forGetter(LoopedFlatChunkGenerator::generationOptions)
+                    CARRIED_CODEC.forGetter(LoopedFlatChunkGenerator::carriedShape)
             ).apply(instance, instance.stable(LoopedFlatChunkGenerator::new)));
 
-    private final FlatShape shape;
-    private final GenerationOptions generationOptions;
-    private final WorldFold transformer;
+    private final CarriedShape carriedShape;
 
-    public LoopedFlatChunkGenerator(FlatLevelGeneratorSettings settings, FlatShape shape,
-            GenerationOptions generationOptions) {
+    public LoopedFlatChunkGenerator(FlatLevelGeneratorSettings settings, CarriedShape carriedShape) {
         super(settings);
-        this.shape = shape;
-        this.generationOptions = generationOptions;
-        this.transformer = WorldFolds.of(shape, generationOptions);
+        this.carriedShape = carriedShape;
     }
 
     @Override
-    public FlatShape shape() {
-        return this.shape;
-    }
-
-    @Override
-    public GenerationOptions generationOptions() {
-        return this.generationOptions;
-    }
-
-    @Override
-    public WorldFold transformer() {
-        return this.transformer;
+    public CarriedShape carriedShape() {
+        return this.carriedShape;
     }
 
     @Override

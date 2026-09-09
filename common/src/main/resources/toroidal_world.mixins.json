@@ -106,6 +106,7 @@
     "LandRandomPosMixin",
     "LeapAtTargetGoalMixin",
     "LeashableMixin",
+    "LevelChunkMixin",
     "LevelChunkPacketAccessor",
     "LevelLightEngineMixin",
     "LevelMixin",
@@ -240,10 +241,12 @@
   ],
   "client": [
     "BiomePrecipitationMixin",
+    "ClientChunkCacheMixin",
     "ClientLevelMixin",
     "ClientPacketListenerMixin",
     "CompassAngleStateMixin",
-    "DebugEntryPositionMixin"
+    "DebugEntryPositionMixin",
+    "LevelHeldBlockEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

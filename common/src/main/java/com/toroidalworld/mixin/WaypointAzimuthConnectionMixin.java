@@ -5,8 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
@@ -26,12 +25,6 @@ public class WaypointAzimuthConnectionMixin {
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/LivingEntity;position()Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$sourcePositionThroughSeam(LivingEntity sourceEntity, Operation<Vec3> original) {
-        Vec3 position = original.call(sourceEntity);
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(sourceEntity.level());
-        if (transformer == null) {
-            return position;
-        }
-
-        return transformer.nearestCopy(this.receiver.position(), position);
+        return SeamSteering.nearestCopy(this.receiver, original.call(sourceEntity));
     }
 }

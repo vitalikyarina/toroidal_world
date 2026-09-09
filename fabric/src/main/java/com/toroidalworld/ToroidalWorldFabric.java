@@ -4,7 +4,9 @@ import com.toroidalworld.engine.gen.LoopedChunkGenerator;
 import com.toroidalworld.engine.gen.LoopedFlatChunkGenerator;
 import com.toroidalworld.engine.gen.WorldLoopGenerators;
 import com.toroidalworld.engine.gen.WorldLoopTicketTypes;
+import com.toroidalworld.engine.net.OpenMenuTranslation;
 import com.toroidalworld.engine.net.WrappingSettingsPayload;
+import com.toroidalworld.engine.noise.GenerationHookSetup;
 import com.toroidalworld.engine.seam.WorldLoopCriteria;
 import com.toroidalworld.platform.FabricPlatform;
 import com.toroidalworld.platform.Platforms;
@@ -24,6 +26,7 @@ public class ToroidalWorldFabric implements ModInitializer {
         Platforms.set(new FabricPlatform());
         WorldOptionSetup.registerAll();
         WorldShapeSetup.registerAll();
+        GenerationHookSetup.registerAll();
 
         Registry.register(BuiltInRegistries.CHUNK_GENERATOR,
                 Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, WorldLoopGenerators.TOROIDAL_ID),
@@ -39,5 +42,7 @@ public class ToroidalWorldFabric implements ModInitializer {
                 WorldLoopCriteria.CIRCUMNAVIGATE);
 
         PayloadTypeRegistry.clientboundPlay().register(WrappingSettingsPayload.TYPE, WrappingSettingsPayload.STREAM_CODEC);
+
+        OpenMenuTranslation.register();
     }
 }

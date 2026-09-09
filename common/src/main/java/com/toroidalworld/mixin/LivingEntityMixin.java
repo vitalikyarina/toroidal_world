@@ -10,7 +10,10 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.SeamAim;
+import com.toroidalworld.engine.seam.SeamSteering;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -21,8 +24,7 @@ import net.minecraft.world.phys.Vec3;
 public class LivingEntityMixin {
     @ModifyVariable(method = "startSleeping", at = @At("HEAD"), argsOnly = true)
     private BlockPos toroidal$wrapBedPosition(BlockPos bedPosition) {
-        WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? bedPosition : transformer.fold(bedPosition);
+        return WorldLoopAttachments.transformerOf(((LivingEntity) (Object) this).level()).fold(bedPosition);
     }
 
     @ModifyVariable(
@@ -51,9 +53,7 @@ public class LivingEntityMixin {
             method = "hasLineOfSight(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/level/ClipContext$Block;Lnet/minecraft/world/level/ClipContext$Fluid;D)Z",
             at = @At("STORE"), ordinal = 1)
     private Vec3 toroidal$sightTargetThroughSeam(Vec3 to) {
-        LivingEntity self = (LivingEntity) (Object) this;
-        WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? to : transformer.nearestCopy(self.position(), to);
+        return SeamSteering.nearestCopy((LivingEntity) (Object) this, to);
     }
 
     @ModifyExpressionValue(
@@ -75,16 +75,12 @@ public class LivingEntityMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;blockPosition()Lnet/minecraft/core/BlockPos;"))
     private BlockPos toroidal$landingBlockNearBlock(BlockPos entityPos, @Local(argsOnly = true) BlockPos pos) {
         WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? entityPos : transformer.nearestCopy(pos, entityPos);
+        return NearestCopy.toward(transformer, pos, entityPos);
     }
 
     @Unique
     private double toroidal$nearestLandingCoordinate(Direction.Axis axis, double coordinate, BlockPos landingBlock) {
         WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        if (transformer == null) {
-            return coordinate;
-        }
-
-        return transformer.blockDomain(axis).unwrapAround(landingBlock.get(axis) + 0.5, coordinate);
+        return NearestCopy.toward(transformer, axis, landingBlock.get(axis) + 0.5, coordinate);
     }
 }

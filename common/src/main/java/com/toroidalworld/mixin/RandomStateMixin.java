@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.engine.noise.CoastFieldLift;
+import com.toroidalworld.engine.noise.GenerationHooks;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 
 import net.minecraft.core.HolderGetter;
@@ -18,11 +18,11 @@ import net.minecraft.world.level.levelgen.synth.NormalNoise;
 public class RandomStateMixin {
     @Inject(method = "<init>(Lnet/minecraft/world/level/levelgen/NoiseGeneratorSettings;"
             + "Lnet/minecraft/core/HolderGetter;J)V", at = @At("RETURN"))
-    private void toroidal$solveCoastLift(NoiseGeneratorSettings settings,
+    private void toroidal$runGenerationHooks(NoiseGeneratorSettings settings,
             HolderGetter<NormalNoise.NoiseParameters> noises, long seed, CallbackInfo callback) {
         WorldFold fold = GenerationTransformerContext.context().routerBuildTransformer();
         if (fold != null) {
-            CoastFieldLift.solve((RandomState) (Object) this, fold, settings.seaLevel());
+            GenerationHooks.runAtRandomState((RandomState) (Object) this, fold, settings.seaLevel());
         }
     }
 }

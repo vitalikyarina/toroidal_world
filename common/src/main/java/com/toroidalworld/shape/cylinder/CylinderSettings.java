@@ -9,10 +9,9 @@ import net.minecraft.core.Direction;
 
 public record CylinderSettings(WorldLoopBounds overworld, int netherScale, WorldLoopBounds end) {
     private static final Direction.Axis DEFAULT_AXIS = Direction.Axis.X;
-    private static final int DEFAULT_SIZE_CHUNKS = 32;
 
     public static final CylinderSettings DEFAULT = new CylinderSettings(
-            WorldLoopBounds.ofWidth(DEFAULT_AXIS, DEFAULT_SIZE_CHUNKS),
+            WorldLoopBounds.ofWidth(DEFAULT_AXIS, WorldLoopSizes.DEFAULT_CHUNK_WIDTH),
             NetherScales.DEFAULT,
             WorldLoopBounds.ofWidth(DEFAULT_AXIS, WorldLoopSizes.END_DEFAULT_CHUNK_WIDTH));
 

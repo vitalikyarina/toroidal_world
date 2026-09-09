@@ -36,7 +36,7 @@ final class WorldLoopTransformer implements WorldFold {
         boolean xLooped = bounds.x() instanceof AxisBounds.Looped;
         boolean zLooped = bounds.z() instanceof AxisBounds.Looped;
         this.wrapped = xLooped || zLooped;
-        this.generationOptions = xLooped && zLooped ? generationOptions : GenerationOptions.NONE;
+        this.generationOptions = generationOptions;
         this.maxViewDistance = bounds.maxViewDistance();
 
         this.coords = new CoordOps(blockDomainFor(bounds.x()), blockDomainFor(bounds.z()));
@@ -449,6 +449,26 @@ final class WorldLoopTransformer implements WorldFold {
         return new DeckTransformation(SeamTransform.translation(
                 -Math.multiplyExact(lapsX, coords.x.domainLength),
                 -Math.multiplyExact(lapsZ, coords.z.domainLength)));
+    }
+
+    @Override
+    public DeckTransformation nearestCopyTransformation(Vec3 ref, Vec3 target) {
+        return translation(coords.x.shiftToward(ref.x, target.x), coords.z.shiftToward(ref.z, target.z));
+    }
+
+    @Override
+    public DeckTransformation nearestCopyTransformation(BlockPos ref, BlockPos target) {
+        return translation(
+                coords.x.shiftToward(ref.getX(), target.getX()),
+                coords.z.shiftToward(ref.getZ(), target.getZ()));
+    }
+
+    private static DeckTransformation translation(int shiftX, int shiftZ) {
+        if (shiftX == 0 && shiftZ == 0) {
+            return DeckTransformation.IDENTITY;
+        }
+
+        return new DeckTransformation(SeamTransform.translation(shiftX, shiftZ));
     }
 
     @Override

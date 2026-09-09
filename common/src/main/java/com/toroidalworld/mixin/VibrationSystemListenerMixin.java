@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -31,10 +32,6 @@ public class VibrationSystemListenerMixin {
     private static Vec3 toroidal$unwrapOcclusionTarget(Vec3 dest, @Local(argsOnly = true, ordinal = 0) Vec3 origin,
             @Local(argsOnly = true) Level level) {
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        if (transformer == null) {
-            return dest;
-        }
-
-        return transformer.nearestCopy(origin, dest);
+        return NearestCopy.toward(transformer, origin, dest);
     }
 }

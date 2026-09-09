@@ -7,8 +7,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 
 public final class PeriodicSimplexSampler {
-    private static final long UNBOUNDED_PERIOD = 0L;
-
     private static final double SQRT_3 = Math.sqrt(3.0);
     static final double VANILLA_SKEW = 0.5 * (SQRT_3 - 1.0);
     private static final double VANILLA_UNSKEW = (3.0 - SQRT_3) / 6.0;
@@ -34,7 +32,7 @@ public final class PeriodicSimplexSampler {
 
         double skew;
         double unskew;
-        if (denominator == UNBOUNDED_PERIOD) {
+        if (denominator == PeriodicNoiseSampler.UNBOUNDED_PERIOD) {
             skew = VANILLA_SKEW;
             unskew = VANILLA_UNSKEW;
         } else {
@@ -42,8 +40,8 @@ public final class PeriodicSimplexSampler {
             unskew = skew / (1.0 + 2.0 * skew);
         }
 
-        long xLapV = denominator == UNBOUNDED_PERIOD ? 0L : numerator * (xLattice / denominator);
-        long zLapU = denominator == UNBOUNDED_PERIOD ? 0L : numerator * (zLattice / denominator);
+        long xLapV = denominator == PeriodicNoiseSampler.UNBOUNDED_PERIOD ? 0L : numerator * (xLattice / denominator);
+        long zLapU = denominator == PeriodicNoiseSampler.UNBOUNDED_PERIOD ? 0L : numerator * (zLattice / denominator);
         long xLapU = xLattice + xLapV;
         long zLapV = zLattice + zLapU;
 
@@ -80,11 +78,11 @@ public final class PeriodicSimplexSampler {
     }
 
     static long skewDenominator(long xPeriod, long zPeriod) {
-        if (xPeriod == UNBOUNDED_PERIOD) {
+        if (xPeriod == PeriodicNoiseSampler.UNBOUNDED_PERIOD) {
             return zPeriod;
         }
 
-        if (zPeriod == UNBOUNDED_PERIOD) {
+        if (zPeriod == PeriodicNoiseSampler.UNBOUNDED_PERIOD) {
             return xPeriod;
         }
 
@@ -92,7 +90,7 @@ public final class PeriodicSimplexSampler {
     }
 
     static long skewNumerator(long denominator) {
-        return denominator == UNBOUNDED_PERIOD ? 0L : (long) Math.floor(VANILLA_SKEW * denominator);
+        return denominator == PeriodicNoiseSampler.UNBOUNDED_PERIOD ? 0L : (long) Math.floor(VANILLA_SKEW * denominator);
     }
 
     private static long gcd(long first, long second) {
@@ -108,7 +106,7 @@ public final class PeriodicSimplexSampler {
     }
 
     private static long lattice(long period) {
-        return PeriodicNoiseSampler.closes(period) ? period : UNBOUNDED_PERIOD;
+        return PeriodicNoiseSampler.closes(period) ? period : PeriodicNoiseSampler.UNBOUNDED_PERIOD;
     }
 
     private static double foldAndScale(WrapDomain domain, long period, double scale, double coord) {
@@ -116,7 +114,7 @@ public final class PeriodicSimplexSampler {
             return 0.0;
         }
 
-        if (period == UNBOUNDED_PERIOD) {
+        if (period == PeriodicNoiseSampler.UNBOUNDED_PERIOD) {
             return coord * scale;
         }
 

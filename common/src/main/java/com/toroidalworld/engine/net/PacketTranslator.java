@@ -3,7 +3,6 @@ package com.toroidalworld.engine.net;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -13,6 +12,7 @@ import java.util.function.UnaryOperator;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.accessors.ChunkPacketPosition;
 import com.toroidalworld.core.StartupRegistry;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
@@ -24,12 +24,11 @@ import com.toroidalworld.engine.seam.MirrorWriter;
 import com.toroidalworld.mixin.BlockEntityDataPacketAccessor;
 import com.toroidalworld.mixin.ChunkWaypointAccessor;
 import com.toroidalworld.mixin.InitializeBorderPacketAccessor;
-import com.toroidalworld.mixin.LevelChunkPacketAccessor;
-import com.toroidalworld.mixin.LightUpdatePacketAccessor;
 import com.toroidalworld.mixin.PlayerLookAtPacketAccessor;
 import com.toroidalworld.mixin.SectionBlocksUpdatePacketAccessor;
 import com.toroidalworld.mixin.SetBorderCenterPacketAccessor;
 import com.toroidalworld.mixin.Vec3iWaypointAccessor;
+import com.google.common.base.Suppliers;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
@@ -109,8 +108,12 @@ public final class PacketTranslator {
             buffer -> new BorderCenter(buffer.readDouble(), buffer.readDouble()));
 
     private static final Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> TO_CLIENT = Map.ofEntries(
-            Map.entry(ClientboundLevelChunkWithLightPacket.class, rewriter(PacketTranslator::levelChunk)),
-            Map.entry(ClientboundLightUpdatePacket.class, rewriter(PacketTranslator::lightUpdate)),
+            Map.entry(ClientboundLevelChunkWithLightPacket.class, rewriter(
+                    (ClientboundLevelChunkWithLightPacket packet, TranslationContext context) ->
+                            chunkPosition(packet, packet.getX(), packet.getZ(), context))),
+            Map.entry(ClientboundLightUpdatePacket.class, rewriter(
+                    (ClientboundLightUpdatePacket packet, TranslationContext context) ->
+                            chunkPosition(packet, packet.getX(), packet.getZ(), context))),
             Map.entry(ClientboundForgetLevelChunkPacket.class, rewriter(PacketTranslator::forgetChunk)),
             Map.entry(ClientboundSetChunkCacheCenterPacket.class, rewriter(PacketTranslator::chunkCacheCenter)),
             Map.entry(ClientboundChunksBiomesPacket.class, rewriter(PacketTranslator::chunkBiomes)),
@@ -268,20 +271,10 @@ public final class PacketTranslator {
         return (Packet<T>) packet;
     }
 
-    private static ClientboundLevelChunkWithLightPacket levelChunk(ClientboundLevelChunkWithLightPacket packet, TranslationContext context) {
-        ChunkPos serverPos = new ChunkPos(packet.getX(), packet.getZ());
-        ChunkPos clientPos = context.toClient(serverPos);
+    private static Packet<?> chunkPosition(Packet<?> packet, int x, int z, TranslationContext context) {
+        ChunkPos clientPos = context.toClient(new ChunkPos(x, z));
 
-        LevelChunkPacketAccessor accessor = (LevelChunkPacketAccessor) packet;
-        accessor.toroidal$setX(clientPos.x());
-        accessor.toroidal$setZ(clientPos.z());
-        return packet;
-    }
-
-    private static ClientboundLightUpdatePacket lightUpdate(ClientboundLightUpdatePacket packet, TranslationContext context) {
-        ChunkPos clientPos = context.toClient(new ChunkPos(packet.getX(), packet.getZ()));
-
-        LightUpdatePacketAccessor accessor = (LightUpdatePacketAccessor) packet;
+        ChunkPacketPosition accessor = (ChunkPacketPosition) packet;
         accessor.toroidal$setX(clientPos.x());
         accessor.toroidal$setZ(clientPos.z());
         return packet;
@@ -337,13 +330,13 @@ public final class PacketTranslator {
 
         boolean relativeX = packet.relatives().contains(Relative.X);
         boolean relativeZ = packet.relatives().contains(Relative.Z);
-        double foldedX = relativeX ? SeamDelta.foldX(context.transformer(), position.x) : 0.0;
-        double foldedZ = relativeZ ? SeamDelta.foldZ(context.transformer(), position.z) : 0.0;
-        double clientX = relativeX ? clientPosition.x() + foldedX : context.nearestCopyX(position.x);
-        double clientZ = relativeZ ? clientPosition.z() + foldedZ : context.nearestCopyZ(position.z);
-        clientPosition.set(clientX, clientZ, MirrorWriter.POSITION_PACKET);
+        Vec3 clientDestination = clientPosition.destinationOf(context.transformer(), position, packet.relatives());
+        clientPosition.set(clientDestination.x, clientDestination.z, MirrorWriter.POSITION_PACKET);
 
-        Vec3 sentPosition = new Vec3(relativeX ? foldedX : clientX, position.y, relativeZ ? foldedZ : clientZ);
+        Vec3 sentPosition = new Vec3(
+                relativeX ? SeamDelta.foldX(context.transformer(), position.x) : clientDestination.x,
+                position.y,
+                relativeZ ? SeamDelta.foldZ(context.transformer(), position.z) : clientDestination.z);
         return new ClientboundPlayerPositionPacket(
                 packet.id(),
                 new PositionMoveRotation(sentPosition, change.deltaMovement(), change.yRot(), change.xRot()),
@@ -425,7 +418,7 @@ public final class PacketTranslator {
 
     private static ClientboundSetEntityDataPacket setEntityData(ClientboundSetEntityDataPacket packet, TranslationContext context) {
         List<SynchedEntityData.DataValue<?>> items = packet.packedItems();
-        Supplier<Vec3> anchor = entityAnchor(packet.id(), context);
+        Supplier<Vec3> anchor = Suppliers.memoize(() -> resolveEntityAnchor(packet.id(), context));
         List<SynchedEntityData.DataValue<?>> translated = new ArrayList<>(items.size());
         boolean changed = false;
         for (SynchedEntityData.DataValue<?> item : items) {
@@ -435,35 +428,6 @@ public final class PacketTranslator {
         }
 
         return changed ? new ClientboundSetEntityDataPacket(packet.id(), translated) : packet;
-    }
-
-    private static boolean isParticleList(List<?> values) {
-        if (values.isEmpty()) {
-            return false;
-        }
-
-        for (Object value : values) {
-            if (!(value instanceof ParticleOptions)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static Supplier<Vec3> entityAnchor(int entityId, TranslationContext context) {
-        return new Supplier<>() {
-            private @Nullable Vec3 anchor;
-
-            @Override
-            public Vec3 get() {
-                if (anchor == null) {
-                    anchor = resolveEntityAnchor(entityId, context);
-                }
-
-                return anchor;
-            }
-        };
     }
 
     private static Vec3 resolveEntityAnchor(int entityId, TranslationContext context) {
@@ -479,50 +443,14 @@ public final class PacketTranslator {
     private static SynchedEntityData.DataValue<?> toClientData(SynchedEntityData.DataValue<?> item,
             Supplier<Vec3> anchor, TranslationContext context) {
         Object value = item.value();
-        if (value instanceof Optional<?> optional) {
-            Object held = optional.orElse(null);
-            if (held == null) {
-                return item;
-            }
-
-            Object clientHeld = toClientValue(held, anchor, context);
-            return clientHeld == held ? item : withValue(item, Optional.of(clientHeld));
-        }
-
-        Object clientValue = toClientValue(value, anchor, context);
+        Object clientValue = FoldedValue.toward(context, anchor, value, particleFold(context, anchor));
         return clientValue == value ? item : withValue(item, clientValue);
     }
 
-    private static Object toClientValue(Object value, Supplier<Vec3> anchor, TranslationContext context) {
-        return switch (value) {
-            case BlockPos pos -> nearestCopyBlock(context, anchor.get(), pos);
-            case GlobalPos globalPos -> toClientGlobal(globalPos, anchor, context);
-            case ParticleOptions particle -> toClientParticle(context, particle, anchor.get());
-            case List<?> values when isParticleList(values) -> toClientParticles(values, anchor.get(), context);
-            default -> value;
-        };
-    }
-
-    private static GlobalPos toClientGlobal(GlobalPos globalPos, Supplier<Vec3> anchor, TranslationContext context) {
-        if (!globalPos.dimension().equals(context.dimension())) {
-            return globalPos;
-        }
-
-        BlockPos clientPos = nearestCopyBlock(context, anchor.get(), globalPos.pos());
-        return clientPos == globalPos.pos() ? globalPos : GlobalPos.of(globalPos.dimension(), clientPos);
-    }
-
-    private static List<?> toClientParticles(List<?> values, Vec3 anchor, TranslationContext context) {
-        List<ParticleOptions> clientParticles = new ArrayList<>(values.size());
-        boolean changed = false;
-        for (Object value : values) {
-            ParticleOptions particle = (ParticleOptions) value;
-            ParticleOptions clientParticle = toClientParticle(context, particle, anchor);
-            changed |= clientParticle != particle;
-            clientParticles.add(clientParticle);
-        }
-
-        return changed ? clientParticles : values;
+    private static UnaryOperator<Object> particleFold(TranslationContext context, Supplier<Vec3> anchor) {
+        return value -> value instanceof ParticleOptions particle
+                ? toClientParticle(context, particle, anchor.get())
+                : value;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -580,7 +508,7 @@ public final class PacketTranslator {
                     return particle;
                 }
 
-                BlockPos clientDestination = nearestCopyBlock(context, clientOrigin, destination.pos());
+                BlockPos clientDestination = FoldedValue.nearestCopy(context, clientOrigin, destination.pos());
                 return new VibrationParticleOption(
                         new BlockPositionSource(clientDestination), vibration.getArrivalInTicks());
             }
@@ -788,10 +716,6 @@ public final class PacketTranslator {
 
     private static BlockPos nearestCopyBlock(TranslationContext context, BlockPos pos) {
         return nearestCopyBlock(context.transformer(), context.clientPosition().chunk(), pos);
-    }
-
-    private static BlockPos nearestCopyBlock(TranslationContext context, Vec3 anchor, BlockPos pos) {
-        return context.transformer().nearestCopy(BlockPos.containing(anchor), pos);
     }
 
     static BlockPos nearestCopyBlock(WorldFold transformer, ChunkPos anchor, BlockPos pos) {

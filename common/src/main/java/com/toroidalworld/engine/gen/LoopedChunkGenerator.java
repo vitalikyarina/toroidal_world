@@ -10,11 +10,8 @@ import java.util.function.Predicate;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.FlatShape;
-import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.ShapedChunkGenerator;
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -41,24 +38,19 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
             instance -> instance.group(
                     BiomeSource.CODEC.fieldOf(BIOME_SOURCE_KEY).forGetter(ChunkGenerator::getBiomeSource),
                     NoiseGeneratorSettings.CODEC.fieldOf(SETTINGS_KEY).forGetter(NoiseBasedChunkGenerator::generatorSettings),
-                    SHAPE_CODEC.fieldOf(WRAPPING_KEY).forGetter(LoopedChunkGenerator::shape),
-                    GENERATION_OPTIONS_CODEC.forGetter(LoopedChunkGenerator::generationOptions)
+                    CARRIED_CODEC.forGetter(LoopedChunkGenerator::carriedShape)
             ).apply(instance, instance.stable(LoopedChunkGenerator::new)));
 
     private static final int BASE_HEIGHT_CACHE_CAP = 1 << 18;
 
-    private final FlatShape shape;
-    private final GenerationOptions generationOptions;
-    private final WorldFold transformer;
+    private final CarriedShape carriedShape;
 
     private final List<Map<Long, Integer>> baseHeightCache;
 
-    public LoopedChunkGenerator(BiomeSource biomeSource, Holder<NoiseGeneratorSettings> settings, FlatShape shape,
-            GenerationOptions generationOptions) {
+    public LoopedChunkGenerator(BiomeSource biomeSource, Holder<NoiseGeneratorSettings> settings,
+            CarriedShape carriedShape) {
         super(biomeSource, settings);
-        this.shape = shape;
-        this.generationOptions = generationOptions;
-        this.transformer = WorldFolds.of(shape, generationOptions);
+        this.carriedShape = carriedShape;
 
         List<Map<Long, Integer>> caches = new ArrayList<>();
         for (int i = 0; i < Heightmap.Types.values().length; i++) {
@@ -68,18 +60,8 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
     }
 
     @Override
-    public FlatShape shape() {
-        return this.shape;
-    }
-
-    @Override
-    public GenerationOptions generationOptions() {
-        return this.generationOptions;
-    }
-
-    @Override
-    public WorldFold transformer() {
-        return this.transformer;
+    public CarriedShape carriedShape() {
+        return this.carriedShape;
     }
 
     @Override
@@ -96,11 +78,10 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
     @Override
     public int getBaseHeight(int x, int z, Heightmap.Types type, LevelHeightAccessor heightAccessor,
             RandomState randomState) {
-        long folded = this.transformer.foldBlockNode(BlockPos.asLong(x, 0, z));
-        long wrappedColumn = (((long) BlockPos.getX(folded)) << 32) | (BlockPos.getZ(folded) & 0xFFFFFFFFL);
+        long folded = transformer().foldBlockNode(BlockPos.asLong(x, 0, z));
         Map<Long, Integer> cache = this.baseHeightCache.get(type.ordinal());
 
-        Integer cached = cache.get(wrappedColumn);
+        Integer cached = cache.get(folded);
         if (cached != null) {
             return cached;
         }
@@ -109,7 +90,7 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
         if (cache.size() >= BASE_HEIGHT_CACHE_CAP) {
             cache.clear();
         }
-        cache.put(wrappedColumn, height);
+        cache.put(folded, height);
         return height;
     }
 
@@ -121,7 +102,7 @@ public class LoopedChunkGenerator extends NoiseBasedChunkGenerator implements Sh
             int blockZ,
             @Nullable MutableObject<NoiseColumn> columnReference,
             @Nullable Predicate<BlockState> tester) {
-        return GenerationTransformerContext.withTransformer(this.transformer,
+        return GenerationTransformerContext.withTransformer(transformer(),
                 () -> super.iterateNoiseColumn(heightAccessor, randomState, blockX, blockZ, columnReference, tester));
     }
 

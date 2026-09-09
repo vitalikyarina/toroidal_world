@@ -6,12 +6,14 @@ import org.spongepowered.asm.mixin.Unique;
 import com.toroidalworld.accessors.ClientBoundsHolder;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 
 @Mixin(ClientLevel.class)
@@ -32,6 +34,7 @@ public class ClientLevelMixin implements ClientBoundsHolder {
     @WrapMethod(method = "getPrecipitationAt")
     private Biome.Precipitation toroidal$bindPrecipitationTransformer(
             BlockPos pos, Operation<Biome.Precipitation> original) {
-        return GenerationTransformerContext.withTransformer(this.toroidal$clientBounds, () -> original.call(pos));
+        return GenerationTransformerContext.withTransformer(
+                WorldLoopAttachments.noiseTransformerOf((Level) (Object) this), () -> original.call(pos));
     }
 }
