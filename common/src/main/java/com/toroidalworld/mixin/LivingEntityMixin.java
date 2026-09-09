@@ -81,10 +81,6 @@ public class LivingEntityMixin {
     @Unique
     private double toroidal$nearestLandingCoordinate(Direction.Axis axis, double coordinate, BlockPos landingBlock) {
         WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        if (transformer == null) {
-            return coordinate;
-        }
-
-        return transformer.blockDomain(axis).unwrapAround(landingBlock.get(axis) + 0.5, coordinate);
+        return NearestCopy.toward(transformer, axis, landingBlock.get(axis) + 0.5, coordinate);
     }
 }
