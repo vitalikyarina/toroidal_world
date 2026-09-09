@@ -49,6 +49,16 @@ public final class ShapedDimensions {
         return new WorldDimensions(stems);
     }
 
+    public static WorldDimensions withShapes(WorldDimensions dimensions, CarriedShape overworld, CarriedShape nether,
+            CarriedShape end) {
+        WorldDimensions withOverworld = withShape(dimensions, LevelStem.OVERWORLD, overworld);
+        if (withOverworld == dimensions) {
+            return dimensions;
+        }
+
+        return withShape(withShape(withOverworld, LevelStem.NETHER, nether), LevelStem.END, end);
+    }
+
     public static WorldDimensions stripShapes(WorldDimensions dimensions) {
         Map<ResourceKey<LevelStem>, LevelStem> stripped = null;
         for (Map.Entry<ResourceKey<LevelStem>, LevelStem> entry : dimensions.dimensions().entrySet()) {

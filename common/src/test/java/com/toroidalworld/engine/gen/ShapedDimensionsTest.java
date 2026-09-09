@@ -86,10 +86,33 @@ class ShapedDimensionsTest {
         assertSame(vanilla, ShapedDimensions.stripShapes(vanilla));
     }
 
+    @Test
+    void anOverworldThatRefusesTheShapeLeavesTheNetherUntouched() {
+        WorldDimensions foreign = overworldAndNetherOf(
+                new ForeignChunkGenerator(plainsBiomeSource(), overworldNoiseSettings()),
+                new NoiseBasedChunkGenerator(plainsBiomeSource(), overworldNoiseSettings()));
+
+        WorldDimensions shaped = ShapedDimensions.withShapes(foreign,
+                new CarriedShape(TORUS), new CarriedShape(TORUS), new CarriedShape(TORUS));
+
+        assertSame(foreign, shaped);
+        assertNull(ShapedDimensions.shapeOf(shaped, LevelStem.NETHER));
+    }
+
     private static WorldDimensions overworldOf(ChunkGenerator generator) {
         return new WorldDimensions(Map.of(LevelStem.OVERWORLD, new LevelStem(
                 WORLDGEN.lookupOrThrow(Registries.DIMENSION_TYPE).getOrThrow(BuiltinDimensionTypes.OVERWORLD),
                 generator)));
+    }
+
+    private static WorldDimensions overworldAndNetherOf(ChunkGenerator overworld, ChunkGenerator nether) {
+        return new WorldDimensions(Map.of(
+                LevelStem.OVERWORLD, new LevelStem(
+                        WORLDGEN.lookupOrThrow(Registries.DIMENSION_TYPE).getOrThrow(BuiltinDimensionTypes.OVERWORLD),
+                        overworld),
+                LevelStem.NETHER, new LevelStem(
+                        WORLDGEN.lookupOrThrow(Registries.DIMENSION_TYPE).getOrThrow(BuiltinDimensionTypes.NETHER),
+                        nether)));
     }
 
     private static ChunkGenerator overworldGeneratorOf(WorldDimensions dimensions) {
@@ -107,5 +130,11 @@ class ShapedDimensionsTest {
 
     private static Holder<NoiseGeneratorSettings> overworldNoiseSettings() {
         return WORLDGEN.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(NoiseGeneratorSettings.OVERWORLD);
+    }
+
+    private static class ForeignChunkGenerator extends NoiseBasedChunkGenerator {
+        ForeignChunkGenerator(BiomeSource biomes, Holder<NoiseGeneratorSettings> settings) {
+            super(biomes, settings);
+        }
     }
 }

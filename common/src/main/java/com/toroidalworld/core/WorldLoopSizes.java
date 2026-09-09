@@ -13,6 +13,8 @@ public final class WorldLoopSizes {
     public static final int MIN_CHUNK_WIDTH = MIN_CHUNK_RADIUS * 2;
     public static final int MAX_CHUNK_WIDTH = MAX_CHUNK_RADIUS * 2;
 
+    public static final int DEFAULT_CHUNK_WIDTH = 32;
+
     // Outer islands only generate past 64 chunks (1024 blocks) from the origin, so a narrower End has no progression.
     public static final int END_MIN_CHUNK_WIDTH = 192;
     public static final int END_DEFAULT_CHUNK_WIDTH = 256;

@@ -8,11 +8,11 @@ import net.minecraft.client.gui.screens.Screen;
 public final class CylinderShapeSetup {
 
     public static void register() {
-        ShapeCustomizers.register(CylinderShape.ID, CylinderShapeSetup::createScreen);
+        ShapeCustomizers.register(CylinderShape.MODULE.id(), CylinderShapeSetup::createScreen);
     }
 
     private static Screen createScreen(Screen parent) {
-        return new CylinderSettingsScreen(parent, CylinderShape.settings(), CylinderShape::settings);
+        return new CylinderSettingsScreen(parent, CylinderShape.MODULE.settings(), CylinderShape.MODULE::settings);
     }
 
     private CylinderShapeSetup() {
