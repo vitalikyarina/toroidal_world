@@ -41,7 +41,7 @@ final class WorldLoopTransformer implements WorldFold {
         boolean xLooped = bounds.x() instanceof AxisBounds.Looped;
         boolean zLooped = bounds.z() instanceof AxisBounds.Looped;
         this.wrapped = xLooped || zLooped;
-        this.generationOptions = xLooped && zLooped ? generationOptions : GenerationOptions.NONE;
+        this.generationOptions = generationOptions;
         this.maxViewDistance = bounds.maxViewDistance();
 
         this.coords = new CoordOps(

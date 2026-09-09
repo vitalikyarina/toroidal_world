@@ -2,7 +2,6 @@ package com.toroidalworld.core;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 import com.mojang.serialization.DataResult;
@@ -12,37 +11,24 @@ import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
 
 public final class GenerationOptions {
-    public static final GenerationOptions DEFAULT = new GenerationOptions(Map.of(), false);
-
-    public static final GenerationOptions NONE = new GenerationOptions(Map.of(), true);
+    public static final GenerationOptions DEFAULT = new GenerationOptions(Map.of());
 
     private final Map<WorldOption<?>, Object> chosen;
 
-    private final boolean inert;
-
-    private GenerationOptions(Map<WorldOption<?>, Object> chosen, boolean inert) {
+    private GenerationOptions(Map<WorldOption<?>, Object> chosen) {
         this.chosen = chosen;
-        this.inert = inert;
     }
 
     @SuppressWarnings("unchecked")
     public <T> T get(WorldOption<T> option) {
-        if (this.inert) {
-            return option.inertValue();
-        }
-
         Object value = this.chosen.get(option);
         return value == null ? option.defaultValue() : (T) value;
     }
 
     public <T> GenerationOptions with(WorldOption<T> option, T value) {
-        if (this.inert) {
-            return this;
-        }
-
         Map<WorldOption<?>, Object> grown = new HashMap<>(this.chosen);
         grown.put(option, value);
-        return new GenerationOptions(Map.copyOf(grown), false);
+        return new GenerationOptions(Map.copyOf(grown));
     }
 
     public static MapCodec<GenerationOptions> mapCodec(String keyPrefix) {
@@ -51,14 +37,12 @@ public final class GenerationOptions {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof GenerationOptions options
-                && this.inert == options.inert
-                && this.chosen.equals(options.chosen);
+        return other instanceof GenerationOptions options && this.chosen.equals(options.chosen);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.chosen, this.inert);
+        return this.chosen.hashCode();
     }
 
     private static final class Assembled extends MapCodec<GenerationOptions> {
