@@ -13,6 +13,7 @@ import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
@@ -73,5 +74,22 @@ class NearestCopyTest {
                 NearestCopy.toward(CYLINDER, ANCHOR_BLOCK_ACROSS_THE_SEAM, TARGET_BLOCK));
         assertEquals(new ChunkPos(TARGET_CHUNK.x() - WIDTH_IN_CHUNKS, TARGET_CHUNK.z()),
                 NearestCopy.toward(CYLINDER, ANCHOR_CHUNK_ACROSS_THE_SEAM, TARGET_CHUNK));
+    }
+
+    @Test
+    void towardANullFoldHandsTheCoordinateBack() {
+        assertEquals(TARGET.x, NearestCopy.toward(null, Direction.Axis.X, ANCHOR_ACROSS_THE_SEAM.x, TARGET.x));
+    }
+
+    @Test
+    void towardAFoldThatWrapsNothingHandsTheCoordinateBack() {
+        assertEquals(TARGET.x,
+                NearestCopy.toward(WorldFolds.NOOP, Direction.Axis.X, ANCHOR_ACROSS_THE_SEAM.x, TARGET.x));
+    }
+
+    @Test
+    void towardAnAnchorAcrossTheSeamSeatsTheCoordinateInTheLappedCopy() {
+        assertEquals(TARGET.x - WIDTH,
+                NearestCopy.toward(CYLINDER, Direction.Axis.X, ANCHOR_ACROSS_THE_SEAM.x, TARGET.x));
     }
 }

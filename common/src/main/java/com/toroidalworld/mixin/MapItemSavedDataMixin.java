@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.MapSeamFold;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
@@ -51,14 +52,14 @@ public class MapItemSavedDataMixin {
 
     @ModifyVariable(method = "toggleBanner", at = @At("STORE"), ordinal = 0)
     private double toroidal$foldBannerX(double xPos, @Local(argsOnly = true) LevelAccessor level) {
-        WorldFold transformer = MapSeamFold.transformerFor(level, this.dimension);
-        return transformer == null ? xPos : transformer.blockDomain(Direction.Axis.X).unwrapAround(this.centerX, xPos);
+        return NearestCopy.toward(MapSeamFold.transformerFor(level, this.dimension),
+                Direction.Axis.X, this.centerX, xPos);
     }
 
     @ModifyVariable(method = "toggleBanner", at = @At("STORE"), ordinal = 1)
     private double toroidal$foldBannerZ(double zPos, @Local(argsOnly = true) LevelAccessor level) {
-        WorldFold transformer = MapSeamFold.transformerFor(level, this.dimension);
-        return transformer == null ? zPos : transformer.blockDomain(Direction.Axis.Z).unwrapAround(this.centerZ, zPos);
+        return NearestCopy.toward(MapSeamFold.transformerFor(level, this.dimension),
+                Direction.Axis.Z, this.centerZ, zPos);
     }
 
     @Unique
