@@ -18,6 +18,7 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.engine.net.PacketReach;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.engine.seam.SeamRange;
 import com.toroidalworld.engine.seam.SeamSnap;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -168,13 +169,13 @@ public class ServerLevelMixin {
             return;
         }
 
+        Vec3 target = Vec3.atLowerCornerOf(blockPos);
         for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
             if (player.level() != level || player.getId() == id) {
                 continue;
             }
 
-            double distanceSqr = transformer.sqrDistance(player.getX(), player.getY(), player.getZ(),
-                    blockPos.getX(), blockPos.getY(), blockPos.getZ());
+            double distanceSqr = SeamRange.sqr(transformer, player.position(), target);
             if (distanceSqr >= BLOCK_DESTRUCTION_RANGE * BLOCK_DESTRUCTION_RANGE) {
                 continue;
             }
