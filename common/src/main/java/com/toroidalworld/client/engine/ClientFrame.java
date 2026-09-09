@@ -66,13 +66,12 @@ public final class ClientFrame {
     }
 
     public static double nearestToCamera(Direction.Axis axis, double coord) {
-        WorldFold fold = fold();
         Entity camera = Minecraft.getInstance().getCameraEntity();
-        if (fold == null || camera == null) {
+        if (camera == null) {
             return coord;
         }
 
-        return fold.blockDomain(axis).unwrapAround(camera.position().get(axis), coord);
+        return NearestCopy.toward(fold(), axis, camera.position().get(axis), coord);
     }
 
     public static @Nullable BlockPos heldCopy(BlockPos canonical) {

@@ -5,6 +5,7 @@ import com.toroidalworld.core.WorldFold;
 import org.jspecify.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
@@ -19,6 +20,10 @@ public final class NearestCopy {
 
     public static ChunkPos toward(@Nullable WorldFold fold, ChunkPos anchor, ChunkPos target) {
         return fold == null ? target : fold.nearestCopy(anchor, target);
+    }
+
+    public static double toward(@Nullable WorldFold fold, Direction.Axis axis, double anchor, double coord) {
+        return fold == null ? coord : fold.blockDomain(axis).unwrapAround(anchor, coord);
     }
 
     private NearestCopy() {
