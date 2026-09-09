@@ -25,7 +25,7 @@ public class LevelChunkMixin {
     private Level level;
 
     @ModifyVariable(
-            method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)"
+            method = "setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)"
                     + "Lnet/minecraft/world/level/block/state/BlockState;",
             at = @At("HEAD"), argsOnly = true)
     private BlockPos toroidal$wrapWrittenPos(BlockPos pos) {
