@@ -3,6 +3,7 @@ package com.toroidalworld.compat.create;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.MapSeamFold;
 
 import net.minecraft.core.BlockPos;
@@ -21,23 +22,21 @@ public final class CreateStationMapFold {
     }
 
     public static BlockPos targetInMapFrame(ResourceKey<Level> dimension, int centreX, int centreZ, BlockPos target) {
-        WorldFold transformer = transformerFor(dimension);
-        return transformer == null ? target : targetInMapFrame(transformer, centreX, centreZ, target);
+        return targetInMapFrame(transformerFor(dimension), centreX, centreZ, target);
     }
 
-    public static BlockPos targetInMapFrame(WorldFold transformer, int centreX, int centreZ, BlockPos target) {
-        return transformer.nearestCopy(new BlockPos(centreX, target.getY(), centreZ), target);
+    public static BlockPos targetInMapFrame(@Nullable WorldFold transformer, int centreX, int centreZ,
+            BlockPos target) {
+        return NearestCopy.toward(transformer, new BlockPos(centreX, target.getY(), centreZ), target);
     }
 
     public static Vec3 centreInMapFrame(ResourceKey<Level> dimension, int centreX, int centreZ, double x, double z) {
-        WorldFold transformer = transformerFor(dimension);
-        return transformer == null
-                ? new Vec3(x, 0.0, z)
-                : centreInMapFrame(transformer, centreX, centreZ, x, z);
+        return centreInMapFrame(transformerFor(dimension), centreX, centreZ, x, z);
     }
 
-    public static Vec3 centreInMapFrame(WorldFold transformer, int centreX, int centreZ, double x, double z) {
-        return transformer.nearestCopy(new Vec3(centreX, 0.0, centreZ), new Vec3(x, 0.0, z));
+    public static Vec3 centreInMapFrame(@Nullable WorldFold transformer, int centreX, int centreZ, double x,
+            double z) {
+        return NearestCopy.toward(transformer, new Vec3(centreX, 0.0, centreZ), new Vec3(x, 0.0, z));
     }
 
     private static @Nullable WorldFold transformerFor(ResourceKey<Level> dimension) {

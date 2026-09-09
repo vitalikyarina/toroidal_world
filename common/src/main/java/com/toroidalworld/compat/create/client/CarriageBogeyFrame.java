@@ -8,6 +8,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.simibubi.create.compat.trainmap.TrainMapSync.TrainMapSyncEntry;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.fold.NearestCopy;
 
 import net.minecraft.world.phys.Vec3;
 
@@ -50,6 +51,6 @@ public final class CarriageBogeyFrame {
             known = transformer == null ? rawLeading : transformer.fold(rawLeading);
         }
 
-        return transformer == null ? raw : transformer.nearestCopy(known, raw);
+        return NearestCopy.toward(transformer, known, raw);
     }
 }

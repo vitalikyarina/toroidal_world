@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 import org.junit.jupiter.api.Test;
 
-import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldFolds;
 
 import net.minecraft.world.level.ChunkPos;
 
@@ -29,6 +29,6 @@ class SableChunkKeysTest {
 
     @Test
     void anUnwrappedLevelKeysByTheRawChunk() {
-        assertSame(ONE_LAP_ON, SableChunkKeys.physical((WorldFold) null, ONE_LAP_ON));
+        assertSame(ONE_LAP_ON, SableChunkKeys.physical(WorldFolds.NOOP, ONE_LAP_ON));
     }
 }

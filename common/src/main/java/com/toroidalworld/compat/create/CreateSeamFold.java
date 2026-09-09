@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.ForeignFrames;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.level.CurrentClientLevel;
 import com.toroidalworld.engine.level.CurrentServer;
 import com.toroidalworld.core.WorldLoopAttachments;
@@ -37,12 +38,8 @@ public final class CreateSeamFold {
             return clientTransformerOf(dimension);
         }
 
-        return SERVER_FOLDS.of(server, dimension, () -> serverTransformerOf(server, dimension));
-    }
-
-    private static @Nullable WorldFold serverTransformerOf(MinecraftServer server, ResourceKey<Level> dimension) {
-        ServerLevel serverLevel = server.getLevel(dimension);
-        return serverLevel == null ? null : WorldLoopAttachments.wrappedTransformerOf(serverLevel);
+        return SERVER_FOLDS.of(server, dimension,
+                () -> WorldLoopAttachments.wrappedTransformerOf(server, dimension));
     }
 
     private static @Nullable WorldFold clientTransformerOf(ResourceKey<Level> dimension) {
@@ -97,7 +94,7 @@ public final class CreateSeamFold {
     }
 
     private static Vec3 nearestCopy(@Nullable WorldFold transformer, Vec3 anchor, Vec3 target) {
-        return transformer == null ? target : transformer.nearestCopy(anchor, target);
+        return NearestCopy.toward(transformer, anchor, target);
     }
 
     public static BlockPos nearestCopy(@Nullable WorldFold transformer, BlockPos anchor, BlockPos target) {
@@ -117,12 +114,7 @@ public final class CreateSeamFold {
     }
 
     public static Vec3 foldPointToBox(@Nullable Level level, AABB box, Vec3 point) {
-        if (level == null) {
-            return point;
-        }
-
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOfReader(level);
-        return transformer == null ? point : transformer.nearestCopy(box.getCenter(), point);
+        return NearestCopy.toward(WorldLoopAttachments.wrappedTransformerOfReader(level), box.getCenter(), point);
     }
 
     public static Vec3 inFrameOf(WorldFold transformer, Vec3 viewer, Vec3 anchor, Vec3 point) {
@@ -161,11 +153,7 @@ public final class CreateSeamFold {
     }
 
     public static BlockPos canonical(@Nullable ServerLevel level, BlockPos position) {
-        if (level == null) {
-            return position;
-        }
-
-        return canonical(WorldLoopAttachments.wrappedTransformerOf(level), position);
+        return WorldLoopAttachments.transformerOfReader(level).fold(position);
     }
 
     static BlockPos canonical(@Nullable WorldFold transformer, BlockPos position) {
@@ -173,11 +161,7 @@ public final class CreateSeamFold {
     }
 
     public static Vec3 canonical(@Nullable ServerLevel level, Vec3 position) {
-        if (level == null) {
-            return position;
-        }
-
-        return canonical(WorldLoopAttachments.wrappedTransformerOf(level), position);
+        return WorldLoopAttachments.transformerOfReader(level).fold(position);
     }
 
     // On the client the same write is the frame the viewer stands in: canonicalising it there jumps the carriage a
@@ -221,11 +205,7 @@ public final class CreateSeamFold {
     }
 
     static BlockPos nearest(@Nullable WorldFold transformer, BlockPos anchor, BlockPos target) {
-        if (transformer == null) {
-            return target;
-        }
-
-        return transformer.nearestCopy(anchor, target);
+        return NearestCopy.toward(transformer, anchor, target);
     }
 
     private CreateSeamFold() {

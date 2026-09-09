@@ -18,7 +18,7 @@ import net.minecraft.server.level.ServerLevel;
 
 public final class CreateFactoryPanelFold {
     public static FactoryPanelPosition canonical(@Nullable ServerLevel level, FactoryPanelPosition position) {
-        return level == null ? position : canonical(WorldLoopAttachments.wrappedTransformerOf(level), position);
+        return canonical(WorldLoopAttachments.transformerOfReader(level), position);
     }
 
     static FactoryPanelPosition canonical(@Nullable WorldFold transformer, FactoryPanelPosition position) {
