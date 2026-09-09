@@ -27,12 +27,10 @@ import com.toroidalworld.mixin.TeleportEntityPacketAccessor;
 import com.toroidalworld.engine.seam.ClientPosition;
 import com.toroidalworld.engine.seam.ClientPosition.BorderCenter;
 import com.toroidalworld.engine.seam.MirrorWriter;
-import com.toroidalworld.core.StartupRegistry;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.google.common.base.Suppliers;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.GlobalPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.VibrationParticleOption;

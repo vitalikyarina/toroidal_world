@@ -13,7 +13,6 @@ import com.toroidalworld.accessors.ChunkResender;
 import com.toroidalworld.accessors.ClientPositionHolder;
 import com.toroidalworld.accessors.TrackedEntityRefresher;
 import com.toroidalworld.core.DeckTransformation;
-import com.toroidalworld.engine.fold.SeamDelta;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.engine.seam.ClientPosition;
 import com.toroidalworld.engine.seam.MirrorWriter;
