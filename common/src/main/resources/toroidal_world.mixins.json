@@ -242,10 +242,12 @@
   ],
   "client": [
     "BiomePrecipitationMixin",
+    "ClientChunkCacheMixin",
     "ClientLevelMixin",
     "ClientPacketListenerMixin",
     "CompassAngleStateMixin",
     "DebugEntryPositionMixin",
+    "LevelHeldBlockEntityMixin",
     "WeatherEffectRendererMixin"
   ],
   "injectors": {
