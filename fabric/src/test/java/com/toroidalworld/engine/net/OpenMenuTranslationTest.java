@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.ToroidalWorld;
 
-import net.fabricmc.fabric.impl.menu.Networking;
+import net.fabricmc.fabric.impl.screenhandler.Networking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -52,7 +52,7 @@ class OpenMenuTranslationTest {
         Networking.OpenScreenPayload<?> open = (Networking.OpenScreenPayload<?>) translated.payload();
         assertEquals(CLIENT_BLOCK, open.data());
         assertEquals(MENU_ID, open.identifier());
-        assertEquals(CONTAINER_ID, open.containerId());
+        assertEquals(CONTAINER_ID, open.syncId());
         assertSame(TITLE, open.title());
         assertSame(POSITION_CODEC, open.innerCodec());
     }

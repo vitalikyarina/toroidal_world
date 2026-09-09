@@ -6,13 +6,13 @@ import com.mojang.logging.LogUtils;
 import com.toroidalworld.compat.ModPresence;
 import com.toroidalworld.engine.seam.ClientPosition;
 
-import net.fabricmc.fabric.impl.menu.Networking;
+import net.fabricmc.fabric.impl.screenhandler.Networking;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.phys.Vec3;
 
 public final class OpenMenuTranslation {
     private static final ModPresence GATE = ModPresence.of(LogUtils.getLogger(),
-            "net/fabricmc/fabric/impl/menu/Networking$OpenScreenPayload.class",
+            "net/fabricmc/fabric/impl/screenhandler/Networking$OpenScreenPayload.class",
             "[menu-api-compat] gate open_screen_present");
 
     public static void register() {
@@ -36,7 +36,7 @@ public final class OpenMenuTranslation {
 
             Object clientData = FoldedValue.toward(context, mirrorAnchor(context), data);
             return clientData == data ? payload
-                    : new Networking.OpenScreenPayload(payload.identifier(), payload.containerId(),
+                    : new Networking.OpenScreenPayload(payload.identifier(), payload.syncId(),
                             payload.title(), payload.innerCodec(), clientData);
         }
 
