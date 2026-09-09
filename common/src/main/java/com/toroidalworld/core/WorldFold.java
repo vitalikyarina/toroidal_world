@@ -2,6 +2,7 @@ package com.toroidalworld.core;
 
 import java.util.List;
 
+import com.toroidalworld.api.v1.option.GenerationOptions;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

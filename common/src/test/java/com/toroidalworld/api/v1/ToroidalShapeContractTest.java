@@ -35,21 +35,21 @@ class ToroidalShapeContractTest {
     private static final WorldLoopBounds X_ONLY = new WorldLoopBounds(LOOPED, AxisBounds.Unbounded.INSTANCE);
 
     private static ToroidalShape torus() {
-        return new WorldFoldToroidalShape(WorldFolds.of(FlatShape.torus(BOTH)));
+        return TestShapes.of(WorldFolds.of(FlatShape.torus(BOTH)));
     }
 
     private static ToroidalShape mobius() {
-        return new WorldFoldToroidalShape(
+        return TestShapes.of(
                 new DeckGroupFold(FlatShape.mirrored(X_ONLY, Direction.Axis.Z, 0)));
     }
 
     private static ToroidalShape klein() {
-        return new WorldFoldToroidalShape(
+        return TestShapes.of(
                 new DeckGroupFold(FlatShape.mirrored(BOTH, Direction.Axis.Z, 3)));
     }
 
     private static ToroidalShape latticeTorus() {
-        return new WorldFoldToroidalShape(new DeckGroupFold(FlatShape.latticeTorus(BOTH, 3)));
+        return TestShapes.of(new DeckGroupFold(FlatShape.latticeTorus(BOTH, 3)));
     }
 
     @Nested

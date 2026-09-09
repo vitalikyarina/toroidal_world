@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import com.toroidalworld.core.CarriedShape;
-import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.shape.torus.ClimateScale;

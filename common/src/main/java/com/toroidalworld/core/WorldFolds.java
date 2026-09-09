@@ -3,6 +3,7 @@ package com.toroidalworld.core;
 import java.util.List;
 import java.util.Optional;
 
+import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 import com.mojang.serialization.DataResult;
 

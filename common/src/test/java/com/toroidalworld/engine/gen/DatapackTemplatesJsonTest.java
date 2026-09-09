@@ -22,8 +22,8 @@ import com.mojang.serialization.JsonOps;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.WorldLoopBounds;
-import com.toroidalworld.core.WorldOption;
-import com.toroidalworld.core.WorldOptions;
+import com.toroidalworld.api.v1.option.WorldOption;
+import com.toroidalworld.api.v1.option.WorldOptions;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.server.packs.PackType;

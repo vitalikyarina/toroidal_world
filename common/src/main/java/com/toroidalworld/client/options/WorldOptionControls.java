@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.toroidalworld.core.StartupRegistry;
-import com.toroidalworld.core.WorldOption;
-import com.toroidalworld.core.WorldOptions;
+import com.toroidalworld.api.v1.option.WorldOption;
+import com.toroidalworld.api.v1.option.WorldOptions;
 
 public final class WorldOptionControls {
     @FunctionalInterface
