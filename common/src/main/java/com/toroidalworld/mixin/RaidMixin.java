@@ -1,7 +1,6 @@
 package com.toroidalworld.mixin;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.stream.Stream;
 
 import org.spongepowered.asm.mixin.Final;
