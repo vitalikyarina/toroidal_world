@@ -1,6 +1,7 @@
 package com.toroidalworld.engine.gen;
 
 import com.toroidalworld.ToroidalWorld;
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.GenerationOptions;
 import com.toroidalworld.core.ShapedChunkGenerator;
@@ -13,6 +14,7 @@ import static com.toroidalworld.engine.gen.BakeStampFixture.stamped;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -34,7 +36,7 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 
 @Timeout(60)
 class StampedGeneratorCodecTest {
-    private static final String SHAPE_KEY = ToroidalWorld.MODID + ":" + ShapedChunkGenerator.WRAPPING_KEY;
+    private static final String SHAPE_KEY = ToroidalWorld.MODID + ":" + CarriedShape.WRAPPING_KEY;
     private static final String CLIMATE_SCALE_KEY =
             ToroidalWorld.MODID + ":" + CompactBiomes.KEY;
 
@@ -63,9 +65,9 @@ class StampedGeneratorCodecTest {
         assertTrue(encoded.contains(SHAPE_KEY), "the stamped shape never reached the encoded generator");
         assertFalse(encoded.contains(CLIMATE_SCALE_KEY), "a compressed stamp wrote the choice it need not");
 
-        ChunkGenerator decoded = decode(encoded).getOrThrow();
-        assertEquals(shape, ShapedChunkGenerator.wrappedShapeOf(decoded));
-        assertEquals(ClimateScale.AUTO, ShapedChunkGenerator.generationOptionsOf(decoded).get(CompactBiomes.OPTION));
+        CarriedShape decoded = carriedShapeOf(decode(encoded).getOrThrow());
+        assertEquals(shape, decoded.shape());
+        assertEquals(ClimateScale.AUTO, decoded.generationOptions().get(CompactBiomes.OPTION));
     }
 
     @Test
@@ -75,9 +77,9 @@ class StampedGeneratorCodecTest {
 
         assertTrue(encoded.contains(CLIMATE_SCALE_KEY), "the stamped choice never reached the encoded generator");
 
-        ChunkGenerator decoded = decode(encoded).getOrThrow();
-        assertEquals(shape, ShapedChunkGenerator.wrappedShapeOf(decoded));
-        assertEquals(ClimateScale.OFF, ShapedChunkGenerator.generationOptionsOf(decoded).get(CompactBiomes.OPTION));
+        CarriedShape decoded = carriedShapeOf(decode(encoded).getOrThrow());
+        assertEquals(shape, decoded.shape());
+        assertEquals(ClimateScale.OFF, decoded.generationOptions().get(CompactBiomes.OPTION));
     }
 
     @Test
@@ -85,7 +87,7 @@ class StampedGeneratorCodecTest {
         CompoundTag encoded = encode(noiseGenerator(worldgen));
 
         assertFalse(encoded.contains(SHAPE_KEY));
-        assertNull(ShapedChunkGenerator.wrappedShapeOf(decode(encoded).getOrThrow()));
+        assertNull(ShapedChunkGenerator.carriedShapeOf(decode(encoded).getOrThrow()));
     }
 
     @Test
@@ -94,6 +96,12 @@ class StampedGeneratorCodecTest {
         encoded.putString(SHAPE_KEY, UNREADABLE_SHAPE);
 
         assertTrue(decode(encoded).isError(), "an unreadable stored shape loaded as an ordinary generator");
+    }
+
+    private static CarriedShape carriedShapeOf(ChunkGenerator generator) {
+        CarriedShape carried = ShapedChunkGenerator.carriedShapeOf(generator);
+        assertNotNull(carried, "the decoded generator carries no shape");
+        return carried;
     }
 
     private static CompoundTag encode(ChunkGenerator generator) {

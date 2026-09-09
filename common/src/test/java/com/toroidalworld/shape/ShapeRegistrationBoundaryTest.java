@@ -20,6 +20,7 @@ import com.mojang.serialization.JsonOps;
 import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.client.shape.ShapeCustomizers;
 import com.toroidalworld.core.FlatShape;
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopBounds;
@@ -73,7 +74,7 @@ class ShapeRegistrationBoundaryTest {
                 CYLINDER_ID,
                 Component.literal("Boundary test cylinder"),
                 Component.literal("A cylinder registered by the boundary test"),
-                (registries, dimensions) -> ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD, CYLINDER),
+                (registries, dimensions) -> ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD, new CarriedShape(CYLINDER)),
                 () -> settingsWereReset = true,
                 (registries, dimensions) ->
                         CYLINDER.equals(ShapedDimensions.shapeOf(dimensions, LevelStem.OVERWORLD)));
@@ -159,8 +160,8 @@ class ShapeRegistrationBoundaryTest {
     @Test
     void reCreatingIntoAShapeLeavesNoStemTheNewShapeDoesNotWrite() {
         WorldDimensions inherited = ShapedDimensions.withShape(
-                ShapedDimensions.withShape(vanillaOverworldAndNether(), LevelStem.OVERWORLD, CYLINDER),
-                LevelStem.NETHER, CYLINDER);
+                ShapedDimensions.withShape(vanillaOverworldAndNether(), LevelStem.OVERWORLD, new CarriedShape(CYLINDER)),
+                LevelStem.NETHER, new CarriedShape(CYLINDER));
 
         WorldShapes.select(cylinder);
         WorldDimensions created = WorldShapes.applyAtCreation(REGISTRIES, inherited);
@@ -172,7 +173,7 @@ class ShapeRegistrationBoundaryTest {
     @Test
     void reCreatingFromOneShapeIntoAnotherTakesTheNewGeometry() {
         WorldDimensions inherited =
-                ShapedDimensions.withShape(vanillaOverworld(), LevelStem.OVERWORLD, WIDER_CYLINDER);
+                ShapedDimensions.withShape(vanillaOverworld(), LevelStem.OVERWORLD, new CarriedShape(WIDER_CYLINDER));
 
         WorldShapes.select(cylinder);
         WorldDimensions created = WorldShapes.applyAtCreation(REGISTRIES, inherited);
@@ -198,8 +199,8 @@ class ShapeRegistrationBoundaryTest {
 
     @Test
     void theShapeGeometryPassesTheGeneratorFieldTheWireAndTheFold() {
-        JsonElement stored = ShapedChunkGenerator.SHAPE_CODEC.encodeStart(JsonOps.INSTANCE, CYLINDER).getOrThrow();
-        assertEquals(CYLINDER, ShapedChunkGenerator.SHAPE_CODEC.parse(JsonOps.INSTANCE, stored).getOrThrow(),
+        JsonElement stored = CarriedShape.SHAPE_CODEC.encodeStart(JsonOps.INSTANCE, CYLINDER).getOrThrow();
+        assertEquals(CYLINDER, CarriedShape.SHAPE_CODEC.parse(JsonOps.INSTANCE, stored).getOrThrow(),
                 stored.toString());
 
         RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), REGISTRIES);
