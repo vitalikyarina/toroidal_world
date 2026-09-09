@@ -4,10 +4,12 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
+import com.toroidalworld.accessors.ChunkPacketPosition;
+
 import net.minecraft.network.protocol.game.ClientboundLightUpdatePacket;
 
 @Mixin(ClientboundLightUpdatePacket.class)
-public interface LightUpdatePacketAccessor {
+public interface LightUpdatePacketAccessor extends ChunkPacketPosition {
     @Mutable
     @Accessor("x")
     void toroidal$setX(int x);
