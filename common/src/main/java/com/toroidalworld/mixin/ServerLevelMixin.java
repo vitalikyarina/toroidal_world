@@ -15,7 +15,6 @@ import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.engine.net.ListenerCopies;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
-import com.toroidalworld.engine.seam.SeamRange;
 import com.toroidalworld.engine.seam.SeamSnap;
 import com.toroidalworld.engine.level.SeamRespawnData;
 import com.toroidalworld.core.WorldLoopAttachments;
