@@ -26,7 +26,7 @@ One line in `server.properties` creates a shaped world: `level-type=toroidal_wor
 Runs on **NeoForge** and **Fabric**.
 
 - [Sodium](https://modrinth.com/mod/sodium) and [Iris Shaders](https://modrinth.com/mod/iris).
-- [JourneyMap](https://modrinth.com/mod/journeymap), [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) and [Xaero's World Map](https://modrinth.com/mod/xaeros-world-map).
+- [JourneyMap](https://modrinth.com/mod/journeymap) 6.0.7 or newer, [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) and [Xaero's World Map](https://modrinth.com/mod/xaeros-world-map).
 - [Distant Horizons](https://modrinth.com/mod/distanthorizons) — the far side of the world shows across the seam, out to half the world width.
 
 Every mod checked against the world's shape, with the game versions and loaders each one applies to, is in the [supported mods list](https://github.com/vitalikyarina/toroidal_world/blob/main/docs/supported-mods.md).

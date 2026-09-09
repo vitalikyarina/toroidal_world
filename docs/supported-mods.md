@@ -16,14 +16,14 @@ Toroidal World ships for Minecraft 26.2, 26.1.2 and 1.21.1, on NeoForge and Fabr
 | Mod | Minecraft | Loaders | Status | Notes |
 | --- | --- | --- | --- | --- |
 | [Distant Horizons](https://modrinth.com/mod/distanthorizons) | All | NeoForge, Fabric | Supported | |
-| [Voxy](https://modrinth.com/mod/voxy) | All | NeoForge, Fabric | No seam support | |
+| [Voxy](https://modrinth.com/mod/voxy) | All | Fabric | No seam support | |
 | Bobby | — | — | Not tested | |
 
 ## Maps and navigation
 
 | Mod | Minecraft | Loaders | Status | Notes |
 | --- | --- | --- | --- | --- |
-| [JourneyMap](https://modrinth.com/mod/journeymap) | All | NeoForge, Fabric | Supported | |
+| [JourneyMap](https://modrinth.com/mod/journeymap) | All | NeoForge, Fabric | Supported | Needs 6.0.7 or newer. |
 | [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) | All | NeoForge, Fabric | Supported | |
 | [Xaero's World Map](https://modrinth.com/mod/xaeros-world-map) | All | NeoForge, Fabric | Supported | |
 | FTB Chunks | — | — | Not tested | |
