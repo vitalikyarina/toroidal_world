@@ -12,6 +12,7 @@ import java.util.function.UnaryOperator;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.accessors.ChunkPacketPosition;
 import com.toroidalworld.engine.fold.SeamDelta;
 import com.toroidalworld.engine.fold.SeamHit;
 import com.toroidalworld.core.WorldFold;
@@ -19,8 +20,6 @@ import com.toroidalworld.mixin.BlockEntityDataPacketAccessor;
 import com.toroidalworld.mixin.BlockPositionSourceAccessor;
 import com.toroidalworld.mixin.InitializeBorderPacketAccessor;
 import com.toroidalworld.mixin.InteractPacketAccessor;
-import com.toroidalworld.mixin.LevelChunkPacketAccessor;
-import com.toroidalworld.mixin.LightUpdatePacketAccessor;
 import com.toroidalworld.mixin.MoveVehiclePacketAccessor;
 import com.toroidalworld.mixin.PlayerLookAtPacketAccessor;
 import com.toroidalworld.mixin.SectionBlocksUpdatePacketAccessor;
@@ -31,6 +30,7 @@ import com.toroidalworld.engine.seam.ClientPosition.BorderCenter;
 import com.toroidalworld.engine.seam.MirrorWriter;
 import com.toroidalworld.core.StartupRegistry;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.google.common.base.Suppliers;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
@@ -137,8 +137,12 @@ public final class PacketTranslator {
     private static final StreamCodec<FriendlyByteBuf, Unit> NO_PREFIX_CODEC = StreamCodec.unit(Unit.INSTANCE);
 
     private static final Map<Class<?>, BiFunction<Packet<?>, TranslationContext, Packet<?>>> TO_CLIENT = Map.ofEntries(
-            Map.entry(ClientboundLevelChunkWithLightPacket.class, rewriter(PacketTranslator::levelChunk)),
-            Map.entry(ClientboundLightUpdatePacket.class, rewriter(PacketTranslator::lightUpdate)),
+            Map.entry(ClientboundLevelChunkWithLightPacket.class, rewriter(
+                    (ClientboundLevelChunkWithLightPacket packet, TranslationContext context) ->
+                            chunkPosition(packet, packet.getX(), packet.getZ(), ChunkTraffic.CHUNK_DATA, context))),
+            Map.entry(ClientboundLightUpdatePacket.class, rewriter(
+                    (ClientboundLightUpdatePacket packet, TranslationContext context) ->
+                            chunkPosition(packet, packet.getX(), packet.getZ(), ChunkTraffic.LIGHT_UPDATE, context))),
             Map.entry(ClientboundForgetLevelChunkPacket.class, rewriter(PacketTranslator::forgetChunk)),
             Map.entry(ClientboundSetChunkCacheCenterPacket.class, rewriter(PacketTranslator::chunkCacheCenter)),
             Map.entry(ClientboundChunksBiomesPacket.class, rewriter(PacketTranslator::chunkBiomes)),
@@ -278,20 +282,11 @@ public final class PacketTranslator {
         return (Packet<T>) packet;
     }
 
-    private static ClientboundLevelChunkWithLightPacket levelChunk(ClientboundLevelChunkWithLightPacket packet, TranslationContext context) {
-        ChunkPos serverPos = new ChunkPos(packet.getX(), packet.getZ());
-        ChunkPos clientPos = context.toClient(serverPos, ChunkTraffic.CHUNK_DATA);
+    private static Packet<?> chunkPosition(Packet<?> packet, int x, int z, ChunkTraffic traffic,
+            TranslationContext context) {
+        ChunkPos clientPos = context.toClient(new ChunkPos(x, z), traffic);
 
-        LevelChunkPacketAccessor accessor = (LevelChunkPacketAccessor) packet;
-        accessor.toroidal$setX(clientPos.x);
-        accessor.toroidal$setZ(clientPos.z);
-        return packet;
-    }
-
-    private static ClientboundLightUpdatePacket lightUpdate(ClientboundLightUpdatePacket packet, TranslationContext context) {
-        ChunkPos clientPos = context.toClient(new ChunkPos(packet.getX(), packet.getZ()), ChunkTraffic.LIGHT_UPDATE);
-
-        LightUpdatePacketAccessor accessor = (LightUpdatePacketAccessor) packet;
+        ChunkPacketPosition accessor = (ChunkPacketPosition) packet;
         accessor.toroidal$setX(clientPos.x);
         accessor.toroidal$setZ(clientPos.z);
         return packet;
@@ -337,16 +332,20 @@ public final class PacketTranslator {
         Set<RelativeMovement> relatives = packet.getRelativeArguments();
         boolean relativeX = relatives.contains(RelativeMovement.X);
         boolean relativeZ = relatives.contains(RelativeMovement.Z);
-        double foldedX = relativeX ? SeamDelta.foldX(context.transformer(), packet.getX()) : 0.0;
-        double foldedZ = relativeZ ? SeamDelta.foldZ(context.transformer(), packet.getZ()) : 0.0;
-        double clientX = relativeX ? clientPosition.x() + foldedX : context.nearestCopyX(packet.getX());
-        double clientZ = relativeZ ? clientPosition.z() + foldedZ : context.nearestCopyZ(packet.getZ());
-        clientPosition.set(clientX, clientZ, MirrorWriter.POSITION_PACKET);
+        Vec3 clientDestination = clientPosition.destinationOf(
+                context.transformer(), new Vec3(packet.getX(), packet.getY(), packet.getZ()), relatives);
+        clientPosition.set(clientDestination.x, clientDestination.z, MirrorWriter.POSITION_PACKET);
 
+        double sentX = relativeX
+                ? SeamDelta.foldX(context.transformer(), packet.getX())
+                : clientDestination.x;
+        double sentZ = relativeZ
+                ? SeamDelta.foldZ(context.transformer(), packet.getZ())
+                : clientDestination.z;
         return new ClientboundPlayerPositionPacket(
-                relativeX ? foldedX : clientX,
+                sentX,
                 packet.getY(),
-                relativeZ ? foldedZ : clientZ,
+                sentZ,
                 packet.getYRot(), packet.getXRot(), relatives, packet.getId());
     }
 
@@ -422,7 +421,7 @@ public final class PacketTranslator {
 
     private static ClientboundSetEntityDataPacket setEntityData(ClientboundSetEntityDataPacket packet, TranslationContext context) {
         List<SynchedEntityData.DataValue<?>> items = packet.packedItems();
-        Supplier<Vec3> anchor = entityAnchor(packet.id(), context);
+        Supplier<Vec3> anchor = Suppliers.memoize(() -> resolveEntityAnchor(packet.id(), context));
         List<SynchedEntityData.DataValue<?>> translated = new ArrayList<>(items.size());
         boolean changed = false;
         for (SynchedEntityData.DataValue<?> item : items) {
@@ -432,21 +431,6 @@ public final class PacketTranslator {
         }
 
         return changed ? new ClientboundSetEntityDataPacket(packet.id(), translated) : packet;
-    }
-
-    private static Supplier<Vec3> entityAnchor(int entityId, TranslationContext context) {
-        return new Supplier<>() {
-            private @Nullable Vec3 anchor;
-
-            @Override
-            public Vec3 get() {
-                if (anchor == null) {
-                    anchor = resolveEntityAnchor(entityId, context);
-                }
-
-                return anchor;
-            }
-        };
     }
 
     private static Vec3 resolveEntityAnchor(int entityId, TranslationContext context) {

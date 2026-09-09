@@ -61,7 +61,7 @@ class CreatePayloadTranslationTest {
     private static TranslationContext contextAt(double playerX) {
         ClientPosition mirror = new ClientPosition();
         mirror.rebase(playerX, PLAYER_Z, Level.OVERWORLD, PER_AXIS);
-        return new TranslationContext(PER_AXIS, mirror, REGISTRIES, BUFFERS, Level.OVERWORLD,
+        return new TranslationContext(PER_AXIS, mirror, BUFFERS, Level.OVERWORLD,
                 VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, entityId -> null, () -> {},
                 PacketTranslator.production());
     }

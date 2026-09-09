@@ -19,7 +19,6 @@ import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ChunkTrackingView;
@@ -33,7 +32,6 @@ import net.minecraft.world.phys.Vec3;
 public record TranslationContext(
         WorldFold transformer,
         ClientPosition clientPosition,
-        RegistryAccess registryAccess,
         IntFunction<RegistryFriendlyByteBuf> bufferFactory,
         ResourceKey<Level> dimension,
         int trackedViewDistance,
@@ -62,7 +60,6 @@ public record TranslationContext(
         return new TranslationContext(
                 transformer,
                 WorldLoopAttachments.clientPositionOf(player),
-                player.registryAccess(),
                 Platforms.get().packetBuffers(player),
                 player.level().dimension(),
                 trackedViewDistance,
@@ -181,16 +178,14 @@ public record TranslationContext(
     }
 
     public double toClientX(double x, PacketReach reach) {
-        double anchor = clientPosition.x();
-        double clientX = transformer.blockDomain(Direction.Axis.X).unwrapAround(anchor, x);
-        guardReach(reach, Direction.Axis.X, x, clientX, anchor);
+        double clientX = nearestCopyX(x);
+        guardReach(reach, Direction.Axis.X, x, clientX, clientPosition.x());
         return clientX;
     }
 
     public double toClientZ(double z, PacketReach reach) {
-        double anchor = clientPosition.z();
-        double clientZ = transformer.blockDomain(Direction.Axis.Z).unwrapAround(anchor, z);
-        guardReach(reach, Direction.Axis.Z, z, clientZ, anchor);
+        double clientZ = nearestCopyZ(z);
+        guardReach(reach, Direction.Axis.Z, z, clientZ, clientPosition.z());
         return clientZ;
     }
 

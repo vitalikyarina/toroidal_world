@@ -152,13 +152,13 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
     @Unique
     private List<ChunkPos> toroidal$flippedChunks(double destinationX, double destinationZ, ClientPosition mirror) {
         WorldFold transformer = WorldLoopAttachments.transformerOf(this.player.level());
-        double clientX = transformer.blockDomain(Direction.Axis.X).unwrapAround(mirror.x(), destinationX);
-        double clientZ = transformer.blockDomain(Direction.Axis.Z).unwrapAround(mirror.z(), destinationZ);
+        Vec3 clientDestination =
+                mirror.destinationOf(transformer, new Vec3(destinationX, 0.0, destinationZ), Set.of());
 
         ChunkPos fromAnchor = mirror.chunk();
         ChunkPos toAnchor = new ChunkPos(
-                SectionPos.blockToSectionCoord(clientX),
-                SectionPos.blockToSectionCoord(clientZ));
+                SectionPos.blockToSectionCoord(clientDestination.x),
+                SectionPos.blockToSectionCoord(clientDestination.z));
 
         List<ChunkPos> flipped = new ArrayList<>();
         this.player.getChunkTrackingView().forEach(viewPos -> {

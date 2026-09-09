@@ -1,5 +1,7 @@
 package com.toroidalworld.engine.seam;
 
+import java.util.Set;
+
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -7,14 +9,17 @@ import com.toroidalworld.engine.fold.LogRateGate;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WrapDomain;
+import com.toroidalworld.engine.fold.SeamDelta;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public final class ClientPosition {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -116,6 +121,17 @@ public final class ClientPosition {
         return new ChunkPos(
                 SectionPos.blockToSectionCoord(currMirror.x()),
                 SectionPos.blockToSectionCoord(currMirror.z()));
+    }
+
+    public Vec3 destinationOf(WorldFold fold, Vec3 position, Set<RelativeMovement> relatives) {
+        Mirror currMirror = seededMirror();
+        double clientX = relatives.contains(RelativeMovement.X)
+                ? currMirror.x() + SeamDelta.foldX(fold, position.x)
+                : fold.blockDomain(Direction.Axis.X).unwrapAround(currMirror.x(), position.x);
+        double clientZ = relatives.contains(RelativeMovement.Z)
+                ? currMirror.z() + SeamDelta.foldZ(fold, position.z)
+                : fold.blockDomain(Direction.Axis.Z).unwrapAround(currMirror.z(), position.z);
+        return new Vec3(clientX, position.y, clientZ);
     }
 
     private static double clientCopy(MirrorWriter writer, Direction.Axis axis, Mirror currMirror, double reported) {
