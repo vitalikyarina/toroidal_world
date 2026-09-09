@@ -242,6 +242,20 @@ public final class DeckGroupFold implements WorldFold {
     }
 
     @Override
+    public DeckTransformation nearestCopyTransformation(Vec3 ref, Vec3 target) {
+        return carried(this.blocks.nearestCoords(ref.x, ref.z, target.x, target.z));
+    }
+
+    @Override
+    public DeckTransformation nearestCopyTransformation(BlockPos ref, BlockPos target) {
+        return carried(this.blocks.nearestCells(ref.getX(), ref.getZ(), target.getX(), target.getZ()));
+    }
+
+    private static DeckTransformation carried(SeamTransform move) {
+        return move.isIdentity() ? DeckTransformation.IDENTITY : new DeckTransformation(move);
+    }
+
+    @Override
     public DeckTransformation deckTransformation(ChunkPos chunk, ChunkPos copy) {
         if (chunk.equals(copy)) {
             return DeckTransformation.IDENTITY;

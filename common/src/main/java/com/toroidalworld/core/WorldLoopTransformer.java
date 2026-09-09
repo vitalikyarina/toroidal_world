@@ -465,6 +465,26 @@ final class WorldLoopTransformer implements WorldFold {
     }
 
     @Override
+    public DeckTransformation nearestCopyTransformation(Vec3 ref, Vec3 target) {
+        return translation(coords.x.shiftToward(ref.x, target.x), coords.z.shiftToward(ref.z, target.z));
+    }
+
+    @Override
+    public DeckTransformation nearestCopyTransformation(BlockPos ref, BlockPos target) {
+        return translation(
+                coords.x.shiftToward(ref.getX(), target.getX()),
+                coords.z.shiftToward(ref.getZ(), target.getZ()));
+    }
+
+    private static DeckTransformation translation(int shiftX, int shiftZ) {
+        if (shiftX == 0 && shiftZ == 0) {
+            return DeckTransformation.IDENTITY;
+        }
+
+        return new DeckTransformation(SeamTransform.translation(shiftX, shiftZ));
+    }
+
+    @Override
     public DeckTransformation deckTransformation(ChunkPos chunk, ChunkPos copy) {
         int deltaX = copy.x - chunk.x;
         int deltaZ = copy.z - chunk.z;
