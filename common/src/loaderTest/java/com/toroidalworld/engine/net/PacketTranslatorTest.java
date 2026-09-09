@@ -295,7 +295,7 @@ class PacketTranslatorTest {
                     new AxisBounds.Looped(-32, 32), AxisBounds.Unbounded.INSTANCE)));
             ClientPosition mirror = new ClientPosition();
             mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, singleAxis);
-            TranslationContext context = new TranslationContext(singleAxis, mirror, REGISTRIES, BUFFERS,
+            TranslationContext context = new TranslationContext(singleAxis, mirror, BUFFERS,
                     Level.OVERWORLD, VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
 
             ClientboundForgetLevelChunkPacket translated = (ClientboundForgetLevelChunkPacket) PacketTranslator.toClient(
@@ -336,7 +336,7 @@ class PacketTranslatorTest {
                 mirror.setHeldCacheCenter(heldCacheCenter);
             }
 
-            return new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS, Level.OVERWORLD,
+            return new TranslationContext(TRANSFORMER, mirror, BUFFERS, Level.OVERWORLD,
                     VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityPosition, () -> {});
         }
 
@@ -500,7 +500,7 @@ class PacketTranslatorTest {
         @Test
         void unseededMirrorPassesThrough() {
             ClientPosition mirror = new ClientPosition();
-            TranslationContext context = new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS,
+            TranslationContext context = new TranslationContext(TRANSFORMER, mirror, BUFFERS,
                     Level.OVERWORLD, VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
             ClientboundSetBorderCenterPacket packet = centerPacket();
 
@@ -681,7 +681,7 @@ class PacketTranslatorTest {
         void relativeLapFoldsToNoMove() {
             ClientPosition mirror = new ClientPosition();
             mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, TRANSFORMER);
-            TranslationContext context = new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS,
+            TranslationContext context = new TranslationContext(TRANSFORMER, mirror, BUFFERS,
                     Level.OVERWORLD, VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
 
             ClientboundPlayerPositionPacket translated = (ClientboundPlayerPositionPacket) PacketTranslator.toClient(
@@ -699,7 +699,7 @@ class PacketTranslatorTest {
         void relativeDeltaFoldsThroughTheSeam() {
             ClientPosition mirror = new ClientPosition();
             mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, TRANSFORMER);
-            TranslationContext context = new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS,
+            TranslationContext context = new TranslationContext(TRANSFORMER, mirror, BUFFERS,
                     Level.OVERWORLD, VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
 
             ClientboundPlayerPositionPacket translated = (ClientboundPlayerPositionPacket) PacketTranslator.toClient(
@@ -716,7 +716,7 @@ class PacketTranslatorTest {
         void relativeOffsetOfSeveralLapsFoldsAllTheWayDown() {
             ClientPosition mirror = new ClientPosition();
             mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, TRANSFORMER);
-            TranslationContext context = new TranslationContext(TRANSFORMER, mirror, REGISTRIES, BUFFERS,
+            TranslationContext context = new TranslationContext(TRANSFORMER, mirror, BUFFERS,
                     Level.OVERWORLD, VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
 
             ClientboundPlayerPositionPacket translated = (ClientboundPlayerPositionPacket) PacketTranslator.toClient(
@@ -729,6 +729,25 @@ class PacketTranslatorTest {
             assertEquals(-3000.0 + 3 * 1024.0, translated.change().position().z);
             assertEquals(MIRROR_X + (2000.0 - 2 * 1024.0), mirror.x());
             assertEquals(MIRROR_Z + (-3000.0 + 3 * 1024.0), mirror.z());
+        }
+
+        @Test
+        void relativeXAndAbsoluteZReachOneDestination() {
+            ClientPosition mirror = new ClientPosition();
+            mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, TRANSFORMER);
+            TranslationContext context = new TranslationContext(TRANSFORMER, mirror, BUFFERS,
+                    Level.OVERWORLD, VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, () -> {});
+
+            ClientboundPlayerPositionPacket translated = (ClientboundPlayerPositionPacket) PacketTranslator.toClient(
+                    new ClientboundPlayerPositionPacket(1,
+                            new PositionMoveRotation(new Vec3(1000.0, 0.0, 500.0), Vec3.ZERO, 0.0F, 0.0F),
+                            Set.of(Relative.X)),
+                    context);
+
+            assertEquals(-24.0, translated.change().position().x);
+            assertEquals(-524.0, translated.change().position().z);
+            assertEquals(MIRROR_X - 24.0, mirror.x());
+            assertEquals(-524.0, mirror.z());
         }
     }
 

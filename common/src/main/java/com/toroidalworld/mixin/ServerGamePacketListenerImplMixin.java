@@ -15,7 +15,6 @@ import com.toroidalworld.accessors.TrackedEntityRefresher;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
-import com.toroidalworld.engine.fold.SeamDelta;
 import com.toroidalworld.engine.seam.ClientPosition;
 import com.toroidalworld.engine.seam.MirrorWriter;
 import com.toroidalworld.engine.seam.SeamSnap;
@@ -146,18 +145,12 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
     @Unique
     private List<ChunkPos> toroidal$flippedChunks(PositionMoveRotation destination, Set<Relative> relatives, ClientPosition mirror) {
         WorldFold transformer = WorldLoopAttachments.transformerOf(this.player.level());
-        Vec3 position = destination.position();
-        double clientX = relatives.contains(Relative.X)
-                ? mirror.x() + SeamDelta.foldX(transformer, position.x)
-                : transformer.blockDomain(Direction.Axis.X).unwrapAround(mirror.x(), position.x);
-        double clientZ = relatives.contains(Relative.Z)
-                ? mirror.z() + SeamDelta.foldZ(transformer, position.z)
-                : transformer.blockDomain(Direction.Axis.Z).unwrapAround(mirror.z(), position.z);
+        Vec3 clientDestination = mirror.destinationOf(transformer, destination.position(), relatives);
 
         ChunkPos fromAnchor = mirror.chunk();
         ChunkPos toAnchor = new ChunkPos(
-                SectionPos.blockToSectionCoord(clientX),
-                SectionPos.blockToSectionCoord(clientZ));
+                SectionPos.blockToSectionCoord(clientDestination.x),
+                SectionPos.blockToSectionCoord(clientDestination.z));
 
         List<ChunkPos> flipped = new ArrayList<>();
         this.player.getChunkTrackingView().forEach(viewPos -> {
