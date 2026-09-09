@@ -66,6 +66,7 @@ class NetherColumnProbeTest {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
         WorldOptionSetup.registerAll(false);
+        GenerationHookSetup.registerAll();
         holders = VanillaRegistries.createLookup();
         Holder<NoiseGeneratorSettings> settingsHolder =
                 holders.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(NoiseGeneratorSettings.NETHER);
