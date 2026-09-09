@@ -1,5 +1,6 @@
 package com.toroidalworld.compat.c2me;
 
+import com.toroidalworld.engine.noise.GenerationHookSetup;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.shape.WorldOptionSetup;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.SQUARE;
@@ -59,6 +60,7 @@ class C2meFoldedRouterChunkTest {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
         WorldOptionSetup.registerAll(false);
+        GenerationHookSetup.registerAll();
         holders = VanillaRegistries.createLookup();
         noises = holders.lookupOrThrow(Registries.NOISE);
         overworld = holders.lookupOrThrow(Registries.NOISE_SETTINGS)
