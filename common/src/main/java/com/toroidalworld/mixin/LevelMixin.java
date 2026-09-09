@@ -195,15 +195,8 @@ public class LevelMixin implements TransformerCache, CrumbSweepCache {
         }
 
         return level == (Object) this
-                ? toroidal$generatorTransformer(level)
+                ? ShapedChunkGenerator.transformerOf(level.getChunkSource().getGenerator())
                 : WorldLoopAttachments.transformerOf(level);
-    }
-
-    @Unique
-    private static WorldFold toroidal$generatorTransformer(ServerLevel level) {
-        WorldFold transformer =
-                ShapedChunkGenerator.wrappedTransformerOf(level.getChunkSource().getGenerator());
-        return transformer == null ? WorldFolds.NOOP : transformer;
     }
 
     @WrapMethod(method = "precipitationAt")
