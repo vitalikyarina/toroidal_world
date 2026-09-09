@@ -8,6 +8,7 @@ import com.toroidalworld.compat.sable.SableMod;
 import com.toroidalworld.engine.gen.LoopedChunkGenerator;
 import com.toroidalworld.engine.gen.LoopedFlatChunkGenerator;
 import com.toroidalworld.engine.gen.WorldLoopGenerators;
+import com.toroidalworld.engine.net.OpenMenuTranslation;
 import com.toroidalworld.engine.net.WrappingSettingsPayload;
 import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.platform.FabricPlatform;
@@ -43,5 +44,7 @@ public class ToroidalWorldFabric implements ModInitializer {
                 WorldLoopCriteria.CIRCUMNAVIGATE);
 
         PayloadTypeRegistry.playS2C().register(WrappingSettingsPayload.TYPE, WrappingSettingsPayload.STREAM_CODEC);
+
+        OpenMenuTranslation.register();
     }
 }
