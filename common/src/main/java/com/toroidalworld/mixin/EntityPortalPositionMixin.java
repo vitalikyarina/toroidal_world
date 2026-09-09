@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.BlockUtil;
@@ -23,10 +24,6 @@ public class EntityPortalPositionMixin {
             index = 2)
     private Vec3 toroidal$portalPositionNearestCorner(Vec3 position, @Local(argsOnly = true) BlockUtil.FoundRectangle portalArea) {
         WorldFold transformer = ((TransformerSource) (Object) this).toroidal$wrappedTransformer();
-        if (transformer == null) {
-            return position;
-        }
-
-        return transformer.nearestCopy(Vec3.atLowerCornerOf(portalArea.minCorner), position);
+        return NearestCopy.toward(transformer, Vec3.atLowerCornerOf(portalArea.minCorner), position);
     }
 }
