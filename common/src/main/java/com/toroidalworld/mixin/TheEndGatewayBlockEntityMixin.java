@@ -17,9 +17,7 @@ import net.minecraft.world.phys.Vec3;
 public class TheEndGatewayBlockEntityMixin {
     @WrapMethod(method = "findExitPortalXZPosTentative(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/Vec3;")
     private static Vec3 toroidal$foldTentativeTarget(ServerLevel level, BlockPos endGatewayPos, Operation<Vec3> original) {
-        Vec3 tentative = original.call(level, endGatewayPos);
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(level);
-        return transformer == null ? tentative : transformer.fold(tentative);
+        return WorldLoopAttachments.transformerOf(level).fold(original.call(level, endGatewayPos));
     }
 
     @WrapMethod(method = "setExitPosition(Lnet/minecraft/core/BlockPos;Z)V")

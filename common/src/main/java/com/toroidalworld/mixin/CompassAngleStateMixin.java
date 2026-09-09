@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
@@ -32,12 +33,8 @@ public class CompassAngleStateMixin {
         }
 
         WorldFold transformer = WorldLoopAttachments.wrappedClientBoundsTransformerOf(owner.level());
-        if (transformer == null) {
-            return target;
-        }
-
         BlockPos stored = target.pos();
-        BlockPos nearest = transformer.nearestCopy(BlockPos.containing(owner.position()), stored);
+        BlockPos nearest = NearestCopy.toward(transformer, BlockPos.containing(owner.position()), stored);
         return nearest == stored ? target : GlobalPos.of(target.dimension(), nearest);
     }
 }

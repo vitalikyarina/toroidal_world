@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -29,10 +30,6 @@ public class EyeOfEnderMixin {
     private Vec3 toroidal$steerThroughSeam(Vec3 movement, Vec3 position, Vec3 target, Operation<Vec3> original) {
         EyeOfEnder self = (EyeOfEnder) (Object) this;
         WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(self.level());
-        if (transformer == null) {
-            return original.call(movement, position, target);
-        }
-
-        return original.call(movement, position, transformer.nearestCopy(position, target));
+        return original.call(movement, position, NearestCopy.toward(transformer, position, target));
     }
 }

@@ -5,8 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.accessors.TransformerSource;
-import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -37,7 +36,6 @@ public class LongDistancePatrolGoalMixin {
                             + "setPatrolTarget(Lnet/minecraft/core/BlockPos;)V"))
     private void toroidal$companionTargetInBounds(PatrollingMonster companion, BlockPos legEnd,
             Operation<Void> original) {
-        WorldFold transformer = ((TransformerSource) this.mob).toroidal$wrappedTransformer();
-        original.call(companion, transformer == null ? legEnd : transformer.fold(legEnd));
+        original.call(companion, WorldLoopAttachments.transformerOf(this.mob.level()).fold(legEnd));
     }
 }

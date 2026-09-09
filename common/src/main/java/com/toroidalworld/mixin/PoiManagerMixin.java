@@ -160,8 +160,7 @@ public class PoiManagerMixin {
             ordinal = 0,
             argsOnly = true)
     private BlockPos toroidal$positionThroughSeam(BlockPos pos) {
-        WorldFold transformer = toroidal$transformer();
-        return transformer == null ? pos : transformer.fold(pos);
+        return toroidal$levelFold().fold(pos);
     }
 
     @Unique
@@ -187,7 +186,7 @@ public class PoiManagerMixin {
     private @Nullable WorldFold toroidal$levelTransformer;
 
     @Unique
-    private @Nullable WorldFold toroidal$transformer() {
+    private WorldFold toroidal$levelFold() {
         WorldFold transformer = this.toroidal$levelTransformer;
         if (transformer == null) {
             transformer = ((SectionStorageAccessor) this).toroidal$getLevelHeightAccessor() instanceof ServerLevel level
@@ -196,6 +195,12 @@ public class PoiManagerMixin {
             this.toroidal$levelTransformer = transformer;
         }
 
+        return transformer;
+    }
+
+    @Unique
+    private @Nullable WorldFold toroidal$transformer() {
+        WorldFold transformer = toroidal$levelFold();
         return transformer.isWrapped() ? transformer : null;
     }
 }

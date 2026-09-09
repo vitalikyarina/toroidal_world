@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.InjectionTargets;
-import com.toroidalworld.engine.seam.SeamDistanceBounds;
+import com.toroidalworld.core.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -24,7 +24,7 @@ public class LevitationBoundsMixin {
             double referenceX, double referenceY, double referenceZ,
             double measuredX, double measuredY, double measuredZ,
             Operation<Boolean> original, @Local(argsOnly = true) ServerPlayer player) {
-        Vec3 folded = SeamDistanceBounds.nearestCopy(player.level(),
+        Vec3 folded = WorldLoopAttachments.transformerOf(player.level()).nearestCopy(
                 new Vec3(referenceX, referenceY, referenceZ),
                 new Vec3(measuredX, measuredY, measuredZ));
         return original.call(bounds, referenceX, referenceY, referenceZ, folded.x, folded.y, folded.z);

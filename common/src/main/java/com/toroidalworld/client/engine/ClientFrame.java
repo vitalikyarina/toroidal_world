@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.NearestCopy;
 
 import java.util.function.Predicate;
 
@@ -20,30 +21,27 @@ import net.minecraft.world.phys.Vec3;
 // mc/1.21: calls the members unused on main.
 public final class ClientFrame {
     public static @Nullable BlockPos nearestCopy(@Nullable BlockPos anchor, @Nullable BlockPos target) {
-        WorldFold fold = fold();
-        if (fold == null || anchor == null || target == null) {
+        if (anchor == null || target == null) {
             return target;
         }
 
-        return fold.nearestCopy(anchor, target);
+        return NearestCopy.toward(fold(), anchor, target);
     }
 
     public static @Nullable Vec3 nearestCopy(@Nullable Vec3 anchor, @Nullable Vec3 target) {
-        WorldFold fold = fold();
-        if (fold == null || anchor == null || target == null) {
+        if (anchor == null || target == null) {
             return target;
         }
 
-        return fold.nearestCopy(anchor, target);
+        return NearestCopy.toward(fold(), anchor, target);
     }
 
     public static @Nullable ChunkPos nearestCopy(@Nullable ChunkPos anchor, @Nullable ChunkPos target) {
-        WorldFold fold = fold();
-        if (fold == null || anchor == null || target == null) {
+        if (anchor == null || target == null) {
             return target;
         }
 
-        return fold.nearestCopy(anchor, target);
+        return NearestCopy.toward(fold(), anchor, target);
     }
 
     public static @Nullable BlockPos nearestToPlayer(@Nullable BlockPos target) {
