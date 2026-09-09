@@ -79,6 +79,29 @@ class C2meDfcAstTest {
     }
 
     @Test
+    void compactedShiftedNoiseIsPeriodicInBothAxes() {
+        assertCorrectionIsLive(SQUARE);
+        DensityFunction source = withClimateNoise(DensityFunctions.shiftedNoise2d(
+                DensityFunctions.constant(SHIFT_X), DensityFunctions.constant(SHIFT_Z),
+                CLIMATE_XZ_SCALE, CLIMATE_NOISE_DATA));
+        AstNode folded = GenerationTransformerContext.withRouterBuild(SQUARE, () -> McToAst.toAst(source));
+        Random random = new Random(SEED);
+        int xWidth = SQUARE.blockDomain(Direction.Axis.X).domainLength;
+        int zWidth = SQUARE.blockDomain(Direction.Axis.Z).domainLength;
+
+        for (int i = 0; i < PERIODICITY_SAMPLES; i++) {
+            int x = blockIn(random, SQUARE.blockDomain(Direction.Axis.X));
+            int y = blockY(random);
+            int z = blockIn(random, SQUARE.blockDomain(Direction.Axis.Z));
+
+            assertEquals(sampleFolded(folded, x, y, z), sampleFolded(folded, x + xWidth, y, z),
+                    "x lap at (" + x + ", " + y + ", " + z + ")");
+            assertEquals(sampleFolded(folded, x, y, z), sampleFolded(folded, x, y, z + zWidth),
+                    "z lap at (" + x + ", " + y + ", " + z + ")");
+        }
+    }
+
+    @Test
     void climateShapedNoiseFoldsToTheSameSample() {
         assertCorrectionIsLive(SQUARE);
         assertFoldMatchesVanillaOverGrid(
@@ -223,7 +246,7 @@ class C2meDfcAstTest {
             case MulNode mul -> evaluate(mul.left, x, y, z) * evaluate(mul.right, x, y, z);
             case AddNode add -> evaluate(add.left, x, y, z) + evaluate(add.right, x, y, z);
             case C2meWarpedAxisNode warped -> DomainWarp.apply(warped.domain,
-                    warped.axis == CoordinateNode.Axis.X ? x : z, evaluate(warped.shift, x, y, z), warped.xzScale);
+                    warped.axis == CoordinateNode.Axis.X ? x : z, evaluate(warped.shift, x, y, z), warped.divisor);
             default -> throw new IllegalStateException("no interpreter for " + node.getClass().getName());
         };
     }

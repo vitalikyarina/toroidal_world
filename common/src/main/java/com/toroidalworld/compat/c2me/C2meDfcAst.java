@@ -7,6 +7,7 @@ import com.mojang.logging.LogUtils;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.engine.noise.DensityFunctionSlotAxes;
+import com.toroidalworld.engine.noise.DomainWarp;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.engine.noise.NoiseConstants;
 import com.toroidalworld.engine.noise.SlotAxes;
@@ -82,14 +83,16 @@ public final class C2meDfcAst {
     private static AstNode foldNoise(DensityFunction source, GenericShiftedNoiseNode noise, Fold fold,
             WorldFold transformer) {
         SlotAxes axes = fold.axes();
-        AstNode foldedX = fold.warped()
-                ? warpedSlot(source, CoordinateNode.Axis.X, axes.x().domainOf(transformer), noise.inputX,
-                        fold.horizontalScale())
-                : slotNode(axes.x(), noise.inputX);
-        AstNode foldedZ = fold.warped()
-                ? warpedSlot(source, CoordinateNode.Axis.Z, axes.z().domainOf(transformer), noise.inputZ,
-                        fold.horizontalScale())
-                : slotNode(axes.z(), noise.inputZ);
+        AstNode foldedX = slotNode(axes.x(), noise.inputX);
+        AstNode foldedZ = slotNode(axes.z(), noise.inputZ);
+        if (fold.warped()) {
+            double divisor = DomainWarp.divisor(noise.noise, transformer, fold.horizontalScale(),
+                    fold.verticalShare());
+            foldedX = warpedSlot(source, CoordinateNode.Axis.X, axes.x().domainOf(transformer), noise.inputX,
+                    divisor);
+            foldedZ = warpedSlot(source, CoordinateNode.Axis.Z, axes.z().domainOf(transformer), noise.inputZ,
+                    divisor);
+        }
 
         return new C2meFoldedNoiseNode(noise.inputX, noise.inputY, noise.inputZ, noise.noise,
                 foldedX, slotNode(axes.y(), noise.inputY), foldedZ,
@@ -105,7 +108,7 @@ public final class C2meDfcAst {
     }
 
     private static AstNode warpedSlot(DensityFunction source, CoordinateNode.Axis axis, WrapDomain domain,
-            AstNode ownInput, double xzScale) {
+            AstNode ownInput, double divisor) {
         if (!(ownInput instanceof AddNode shifted
                 && shifted.left instanceof MulNode scaled
                 && scaled.left instanceof CoordinateNode coordinate
@@ -113,7 +116,7 @@ public final class C2meDfcAst {
             throw brokenShape(source, ownInput);
         }
 
-        return new C2meWarpedAxisNode(axis, domain, shifted.right, xzScale);
+        return new C2meWarpedAxisNode(axis, domain, shifted.right, divisor);
     }
 
     private static IllegalStateException brokenShape(DensityFunction source, AstNode produced) {
