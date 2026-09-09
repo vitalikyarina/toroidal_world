@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.seam.SeamRange;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -32,8 +33,7 @@ public class LocateCommandMixin {
             return original.call(sourcePos, foundPos);
         }
 
-        return transformer.sqrDistance(
-                sourcePos.getX(), sourcePos.getY(), sourcePos.getZ(), foundPos.getX(), foundPos.getY(), foundPos.getZ());
+        return SeamRange.sqr(transformer, sourcePos, foundPos);
     }
 
     @WrapOperation(

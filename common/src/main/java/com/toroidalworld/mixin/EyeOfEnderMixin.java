@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -21,14 +22,7 @@ public class EyeOfEnderMixin {
 
     @WrapMethod(method = "signalTo")
     private void toroidal$signalThroughSeam(Vec3 target, Operation<Void> original) {
-        EyeOfEnder self = (EyeOfEnder) (Object) this;
-        WorldFold transformer = WorldLoopAttachments.wrappedTransformerOf(self.level());
-        if (transformer == null) {
-            original.call(target);
-            return;
-        }
-
-        original.call(transformer.nearestCopy(self.position(), target));
+        original.call(SeamSteering.nearestCopy((EyeOfEnder) (Object) this, target));
     }
 
     @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = UPDATE_DELTA_MOVEMENT))

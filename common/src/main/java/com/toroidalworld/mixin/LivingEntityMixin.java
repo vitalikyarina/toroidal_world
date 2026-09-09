@@ -11,6 +11,7 @@ import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.engine.seam.SeamAim;
+import com.toroidalworld.engine.seam.SeamSteering;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -51,9 +52,7 @@ public class LivingEntityMixin {
             method = "hasLineOfSight(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/level/ClipContext$Block;Lnet/minecraft/world/level/ClipContext$Fluid;D)Z",
             at = @At("STORE"), ordinal = 1)
     private Vec3 toroidal$sightTargetThroughSeam(Vec3 to) {
-        LivingEntity self = (LivingEntity) (Object) this;
-        WorldFold transformer = ((TransformerSource) this).toroidal$wrappedTransformer();
-        return transformer == null ? to : transformer.nearestCopy(self.position(), to);
+        return SeamSteering.nearestCopy((LivingEntity) (Object) this, to);
     }
 
     @ModifyExpressionValue(

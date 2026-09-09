@@ -99,14 +99,12 @@ public class EntityMixin implements TransformerSource {
 
     @ModifyVariable(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("STORE"), ordinal = 0)
     private double toroidal$pushDeltaX(double deltaX, @Local(argsOnly = true) Entity other) {
-        WorldFold transformer = toroidal$wrappedTransformer();
-        return transformer == null ? deltaX : toroidal$deltaTo(transformer, other).x;
+        return SeamAim.deltaTo((Entity) (Object) this, other.position()).x;
     }
 
     @ModifyVariable(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("STORE"), ordinal = 1)
     private double toroidal$pushDeltaZ(double deltaZ, @Local(argsOnly = true) Entity other) {
-        WorldFold transformer = toroidal$wrappedTransformer();
-        return transformer == null ? deltaZ : toroidal$deltaTo(transformer, other).z;
+        return SeamAim.deltaTo((Entity) (Object) this, other.position()).z;
     }
 
     @ModifyArg(
@@ -210,11 +208,6 @@ public class EntityMixin implements TransformerSource {
 
         WorldFold transformer = this.toroidal$transformer;
         return transformer.isWrapped() ? transformer : null;
-    }
-
-    @Unique
-    private Vec3 toroidal$deltaTo(WorldFold transformer, Entity other) {
-        return transformer.foldDelta(((Entity) (Object) this).position(), other.position());
     }
 
     @Unique

@@ -14,8 +14,7 @@ public final class SeamAim {
     }
 
     public static BlockPos nearestTo(Entity viewer, BlockPos block) {
-        WorldFold transformer = ((TransformerSource) viewer).toroidal$wrappedTransformer();
-        return transformer == null ? block : transformer.nearestCopy(viewer.blockPosition(), block);
+        return SeamSteering.nearestCopy(viewer, block);
     }
 
     public static Vec3 deltaTo(Entity viewer, Vec3 point) {
