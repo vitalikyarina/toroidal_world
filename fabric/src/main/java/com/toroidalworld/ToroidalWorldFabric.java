@@ -4,6 +4,7 @@ import com.toroidalworld.engine.gen.LoopedChunkGenerator;
 import com.toroidalworld.engine.gen.LoopedFlatChunkGenerator;
 import com.toroidalworld.engine.gen.WorldLoopGenerators;
 import com.toroidalworld.engine.gen.WorldLoopTicketTypes;
+import com.toroidalworld.engine.net.OpenMenuTranslation;
 import com.toroidalworld.engine.net.WrappingSettingsPayload;
 import com.toroidalworld.engine.seam.WorldLoopCriteria;
 import com.toroidalworld.platform.FabricPlatform;
@@ -39,5 +40,7 @@ public class ToroidalWorldFabric implements ModInitializer {
                 WorldLoopCriteria.CIRCUMNAVIGATE);
 
         PayloadTypeRegistry.clientboundPlay().register(WrappingSettingsPayload.TYPE, WrappingSettingsPayload.STREAM_CODEC);
+
+        OpenMenuTranslation.register();
     }
 }
