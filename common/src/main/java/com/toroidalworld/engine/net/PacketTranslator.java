@@ -10,7 +10,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.ChunkPacketPosition;
 import com.toroidalworld.engine.fold.SeamDelta;
