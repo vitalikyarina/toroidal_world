@@ -17,15 +17,9 @@ public final class TorusDimensions {
 
     public static WorldDimensions apply(WorldDimensions dimensions, TorusSettings settings) {
         GenerationOptions generationOptions = settings.generationOptions();
-        WorldDimensions withTorusOverworld = ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD,
-                new CarriedShape(FlatShape.torus(settings.overworld()), generationOptions));
-        if (withTorusOverworld == dimensions) {
-            return dimensions;
-        }
-
-        WorldDimensions withTorusNether = ShapedDimensions.withShape(withTorusOverworld, LevelStem.NETHER,
-                new CarriedShape(FlatShape.torus(netherWrapping(settings)), generationOptions));
-        return ShapedDimensions.withShape(withTorusNether, LevelStem.END,
+        return ShapedDimensions.withShapes(dimensions,
+                new CarriedShape(FlatShape.torus(settings.overworld()), generationOptions),
+                new CarriedShape(FlatShape.torus(netherWrapping(settings)), generationOptions),
                 new CarriedShape(FlatShape.torus(settings.end()), generationOptions));
     }
 

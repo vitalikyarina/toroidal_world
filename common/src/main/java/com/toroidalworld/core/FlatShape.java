@@ -124,11 +124,11 @@ public record FlatShape(WorldLoopBounds bounds, int skewChunks, @Nullable Mirror
     }
 
     public static FlatShape rectangle() {
-        return new FlatShape(WorldLoopBounds.UNBOUNDED, 0, null);
+        return new FlatShape(WorldLoopBounds.UNBOUNDED, NO_SKEW, null);
     }
 
     public static FlatShape cylinder(WorldLoopBounds bounds) {
-        return new FlatShape(bounds, 0, null);
+        return new FlatShape(bounds, NO_SKEW, null);
     }
 
     public static FlatShape torus(WorldLoopBounds bounds) {
@@ -140,7 +140,7 @@ public record FlatShape(WorldLoopBounds bounds, int skewChunks, @Nullable Mirror
     }
 
     public static FlatShape mirrored(WorldLoopBounds bounds, Direction.Axis mirroredAxis, int mirrorLineChunk) {
-        return new FlatShape(bounds, 0, new Mirror(mirroredAxis, mirrorLineChunk));
+        return new FlatShape(bounds, NO_SKEW, new Mirror(mirroredAxis, mirrorLineChunk));
     }
 
     public Identification identification() {

@@ -17,15 +17,9 @@ import net.minecraft.world.level.levelgen.WorldDimensions;
 public final class CylinderDimensions {
 
     public static WorldDimensions apply(WorldDimensions dimensions, CylinderSettings settings) {
-        WorldDimensions withCylinderOverworld = ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD,
-                new CarriedShape(FlatShape.cylinder(settings.overworld())));
-        if (withCylinderOverworld == dimensions) {
-            return dimensions;
-        }
-
-        WorldDimensions withCylinderNether = ShapedDimensions.withShape(withCylinderOverworld, LevelStem.NETHER,
-                new CarriedShape(FlatShape.cylinder(netherWrapping(settings))));
-        return ShapedDimensions.withShape(withCylinderNether, LevelStem.END,
+        return ShapedDimensions.withShapes(dimensions,
+                new CarriedShape(FlatShape.cylinder(settings.overworld())),
+                new CarriedShape(FlatShape.cylinder(netherWrapping(settings))),
                 new CarriedShape(FlatShape.cylinder(settings.end())));
     }
 
