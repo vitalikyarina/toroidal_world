@@ -2,6 +2,7 @@ package com.toroidalworld.engine.net;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -31,6 +32,7 @@ import com.toroidalworld.core.WorldLoopAttachments;
 import com.google.common.base.Suppliers;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.VibrationParticleOption;
@@ -449,8 +451,38 @@ public final class PacketTranslator {
         }
 
         Object value = item.value();
+        if (!foldsAsEntityData(value)) {
+            return item;
+        }
+
         Object clientValue = FoldedValue.toward(context, anchor, value, particleFold(context, anchor));
         return clientValue == value ? item : withValue(item, clientValue);
+    }
+
+    // Past a registered serializer, only the position types this mod owns fold; a foreign value stays as sent.
+    private static boolean foldsAsEntityData(Object value) {
+        return switch (value) {
+            case BlockPos pos -> true;
+            case GlobalPos globalPos -> true;
+            case ParticleOptions particle -> true;
+            case Optional<?> held -> held.isPresent() && foldsAsEntityData(held.get());
+            case List<?> values -> isParticleList(values);
+            default -> false;
+        };
+    }
+
+    private static boolean isParticleList(List<?> values) {
+        if (values.isEmpty()) {
+            return false;
+        }
+
+        for (Object value : values) {
+            if (!(value instanceof ParticleOptions)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static UnaryOperator<Object> particleFold(TranslationContext context, Supplier<Vec3> anchor) {
