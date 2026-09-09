@@ -5,8 +5,8 @@ import java.util.OptionalDouble;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.client.options.WorldOptionContext;
-import com.toroidalworld.client.options.WorldOptionControl;
+import com.toroidalworld.api.v1.client.WorldOptionContext;
+import com.toroidalworld.api.v1.client.WorldOptionControl;
 import com.toroidalworld.client.screen.DigitsEditBox;
 import com.toroidalworld.client.shape.LoopSizeControls;
 import com.toroidalworld.api.v1.option.GenerationOptions;

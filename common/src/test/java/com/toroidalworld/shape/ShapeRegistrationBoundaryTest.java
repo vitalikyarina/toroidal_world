@@ -18,7 +18,8 @@ import org.junit.jupiter.api.Test;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import com.toroidalworld.ToroidalWorld;
-import com.toroidalworld.client.shape.ShapeCustomizers;
+import com.toroidalworld.api.v1.shape.ShapeModule;
+import com.toroidalworld.api.v1.client.ShapeCustomizers;
 import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.ShapedChunkGenerator;
@@ -207,8 +208,8 @@ class ShapeRegistrationBoundaryTest {
 
     @Test
     void onlyAShapeWithAScreenLightsUpTheCustomizeButton() {
-        assertNotNull(ShapeCustomizers.of(cylinder));
-        assertNull(ShapeCustomizers.of(WorldShapes.NORMAL));
+        assertNotNull(ShapeCustomizers.of(cylinder.id()));
+        assertNull(ShapeCustomizers.of(WorldShapes.NORMAL.id()));
     }
 
     @Test

@@ -1,6 +1,6 @@
 package com.toroidalworld.client.shape.torus;
 
-import com.toroidalworld.client.shape.ShapeCustomizers;
+import com.toroidalworld.api.v1.client.ShapeCustomizers;
 import com.toroidalworld.shape.torus.TorusShape;
 
 import net.minecraft.client.gui.screens.Screen;
