@@ -1,6 +1,6 @@
 package com.toroidalworld;
 
-public class InjectionTargets {
+public final class InjectionTargets {
     public static final String BLOCK_POS_CLOSER_THAN =
             "Lnet/minecraft/core/BlockPos;closerThan(Lnet/minecraft/core/Vec3i;D)Z";
 
@@ -74,4 +74,7 @@ public class InjectionTargets {
 
     public static final String VEC3_SUBTRACT =
             "Lnet/minecraft/world/phys/Vec3;subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;";
+
+    private InjectionTargets() {
+    }
 }
