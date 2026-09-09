@@ -8,6 +8,8 @@ import com.toroidalworld.shape.torus.CompactBiomes;
 
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.levelgen.DensityFunction;
+import net.minecraft.world.level.levelgen.synth.NormalNoise;
 
 public final class ClimateScaleCompression {
     static final double CELLS_PER_LAP = 1.5;
@@ -34,6 +36,15 @@ public final class ClimateScaleCompression {
         }
 
         return resolved.factor();
+    }
+
+    public static double factorOf(DensityFunction.NoiseHolder noise, WorldFold fold, double baseScale,
+            double verticalShare) {
+        NormalNoise.NoiseParameters parameters = noise.noiseData().value();
+        boolean climateField = noise.noiseData().unwrapKey().filter(ClimateFields::isClimate).isPresent();
+
+        return factor(fold, climateField, parameters.amplitudes(), Math.pow(2.0, parameters.firstOctave()),
+                baseScale, verticalShare);
     }
 
     public static double factor(WorldFold fold, boolean climateField, DoubleList amplitudes,

@@ -43,7 +43,7 @@ public final class C2meWarpedAxisEmitter implements BytecodeEmitter<C2meWarpedAx
         m.getfield(context.className, domainField, DOMAIN_DESC);
         m.load(node.axis == CoordinateNode.Axis.X ? SINGLE_X_LOCAL : SINGLE_Z_LOCAL, Type.INT_TYPE);
         context.callDelegateSingle(m, shiftMethod);
-        m.dconst(node.xzScale);
+        m.dconst(node.divisor);
         m.invokestatic(WARP_CLASS, WARP_METHOD, WARP_DESC, false);
         m.areturn(Type.DOUBLE_TYPE);
     }
@@ -75,7 +75,7 @@ public final class C2meWarpedAxisEmitter implements BytecodeEmitter<C2meWarpedAx
                 m.aload(Type.DOUBLE_TYPE);
             }
 
-            m.dconst(node.xzScale);
+            m.dconst(node.divisor);
             m.invokestatic(WARP_CLASS, WARP_METHOD, WARP_DESC, false);
             m.astore(Type.DOUBLE_TYPE);
         });
