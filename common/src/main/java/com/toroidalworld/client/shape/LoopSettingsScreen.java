@@ -89,7 +89,7 @@ public abstract class LoopSettingsScreen<S> extends Screen {
 
     @Override
     public void onClose() {
-        Minecraft.getInstance().gui.setScreen(this.parent);
+        Minecraft.getInstance().setScreen(this.parent);
     }
 
     private void commit() {
