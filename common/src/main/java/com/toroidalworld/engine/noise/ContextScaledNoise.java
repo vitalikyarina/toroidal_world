@@ -4,6 +4,7 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.engine.noise.GenerationTransformerContext.Context;
 
 import net.minecraft.world.level.levelgen.DensityFunction;
+import net.minecraft.world.level.levelgen.synth.NormalNoise;
 
 public final class ContextScaledNoise {
     public static double sample(Context context, DensityFunction.NoiseHolder noise,
@@ -16,6 +17,13 @@ public final class ContextScaledNoise {
     public static double sample(Context context, DensityFunction.NoiseHolder noise,
             double x, double y, double z, double horizontalScale, double verticalShare) {
         try (Context.ScaleScope scope = context.withScale(horizontalScale, verticalShare)) {
+            return noise.getValue(x, y, z);
+        }
+    }
+
+    public static double sample(Context context, NormalNoise noise,
+            double x, double y, double z, double horizontalScale) {
+        try (Context.ScaleScope scope = context.withScale(horizontalScale)) {
             return noise.getValue(x, y, z);
         }
     }

@@ -4,6 +4,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
+import com.toroidalworld.engine.noise.ContextScaledNoise;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.engine.noise.GenerationTransformerContext.Context;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -30,8 +31,7 @@ public class DualNoiseProviderMixin {
             return original.call(pos);
         }
 
-        try (Context.ScaleScope scope = generation.withScale(this.slowScale)) {
-            return this.slowNoise.getValue(pos.getX(), pos.getY() * this.slowScale, pos.getZ());
-        }
+        return ContextScaledNoise.sample(generation, this.slowNoise,
+                pos.getX(), pos.getY() * this.slowScale, pos.getZ(), this.slowScale);
     }
 }

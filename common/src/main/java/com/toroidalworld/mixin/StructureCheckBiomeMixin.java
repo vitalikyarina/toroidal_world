@@ -3,11 +3,8 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 
 import com.toroidalworld.core.ShapedChunkGenerator;
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -26,13 +23,7 @@ public class StructureCheckBiomeMixin {
     @WrapMethod(method = "canCreateStructure")
     private boolean toroidal$validateAgainstThisWorldsBiomes(ChunkPos pos, Structure structure,
             Operation<Boolean> original) {
-        return GenerationTransformerContext.withTransformer(toroidal$transformer(),
-                () -> original.call(pos, structure));
-    }
-
-    @Unique
-    private WorldFold toroidal$transformer() {
-        WorldFold transformer = ShapedChunkGenerator.wrappedTransformerOf(this.chunkGenerator);
-        return transformer == null ? WorldFolds.NOOP : transformer;
+        return GenerationTransformerContext.withTransformer(
+                ShapedChunkGenerator.transformerOf(this.chunkGenerator), () -> original.call(pos, structure));
     }
 }

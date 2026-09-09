@@ -52,6 +52,11 @@ public interface ShapedChunkGenerator {
         return generator instanceof ShapeStamp stamp ? wrapped(stamp.toroidal$stampedTransformer()) : null;
     }
 
+    static WorldFold transformerOf(ChunkGenerator generator) {
+        WorldFold transformer = wrappedTransformerOf(generator);
+        return transformer != null ? transformer : WorldFolds.NOOP;
+    }
+
     static GenerationOptions generationOptionsOf(ChunkGenerator generator) {
         if (generator instanceof ShapedChunkGenerator shaped) {
             return shaped.generationOptions();

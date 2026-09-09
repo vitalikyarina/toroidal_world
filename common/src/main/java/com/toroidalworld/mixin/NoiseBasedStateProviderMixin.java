@@ -4,6 +4,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
+import com.toroidalworld.engine.noise.ContextScaledNoise;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.engine.noise.GenerationTransformerContext.Context;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -26,8 +27,7 @@ public class NoiseBasedStateProviderMixin {
             return original.call(pos, scale);
         }
 
-        try (Context.ScaleScope scope = generation.withScale(scale)) {
-            return this.noise.getValue(pos.getX(), pos.getY() * scale, pos.getZ());
-        }
+        return ContextScaledNoise.sample(generation, this.noise,
+                pos.getX(), pos.getY() * scale, pos.getZ(), scale);
     }
 }

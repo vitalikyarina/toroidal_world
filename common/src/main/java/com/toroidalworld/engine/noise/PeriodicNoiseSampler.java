@@ -28,7 +28,7 @@ public final class PeriodicNoiseSampler {
             {0, -1, -1}
     };
 
-    private static final long UNBOUNDED_PERIOD = 0L;
+    static final long UNBOUNDED_PERIOD = 0L;
 
     static final long HELD_PERIOD = -1L;
 
