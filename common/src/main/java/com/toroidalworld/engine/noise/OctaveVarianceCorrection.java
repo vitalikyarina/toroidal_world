@@ -27,12 +27,8 @@ public final class OctaveVarianceCorrection {
             {0.788, 0.838, 0.855, 0.899, 0.929, 0.978, 0.994, 0.992},
             {0.890, 0.910, 0.915, 0.943, 0.967, 0.975, 0.993, 0.990}};
 
-    // The bound below which round(f) would fall under 2 — the regime where the sampler floors the period and the
-    // extra lattice structure over-delivers amplitude.
     private static final double FLOORED_BOUND = 1.5;
 
-    // The vertical span every ν is measured against. Dimensions differ (the nether is shorter), which shifts ν by a
-    // constant factor; the liveness surface is smooth enough that the resulting k error stays under ~0.05.
     private static final double NOMINAL_HEIGHT_BLOCKS = 384.0;
 
     public static double factor(WrapDomain xDomain, WrapDomain zDomain, double scale, double verticalShare) {
@@ -53,9 +49,6 @@ public final class OctaveVarianceCorrection {
         return Math.min(damp, 1.0);
     }
 
-    // Bilinear over the measured liveness grid, clamped to the edges on both axes: below the first row the relief of
-    // the lowest measured f applies, past ν=16 the tail is flat, and the min-1 cap in factor keeps any extrapolated
-    // relief from ever amplifying.
     static double liveness(double cellsPerLap, double verticalCells) {
         int row = upperIndex(LIVENESS_CELLS_PER_LAP, cellsPerLap);
         int column = upperIndex(LIVENESS_VERTICAL_CELLS, verticalCells);
@@ -86,9 +79,6 @@ public final class OctaveVarianceCorrection {
         return from + t * (to - from);
     }
 
-    // The anchor gain for a floored octave of a declared field, faded out as the octave's real vertical variation
-    // grows — a live column carries its own DC through Y, and the liveness-calibrated damp already accounts for the
-    // total variance there; by one vertical cell the anchor is gone. Zero when the damp does not apply.
     public static double anchorGain(WrapDomain xDomain, WrapDomain zDomain, double scale, double verticalShare) {
         if (verticalShare < 0.0 || !xDomain.loops() || !zDomain.loops()) {
             return 0.0;
@@ -107,9 +97,6 @@ public final class OctaveVarianceCorrection {
         return gain * verticalFade;
     }
 
-    // Linear interpolation over the measured points. Below the first point the vanilla window is a near-linear patch
-    // of one cell, so its std — and with it k — scales proportionally with the window size; past the last point the
-    // period-1 regime only reaches f < 1.5, so the tail clamps.
     static double flat(double cellsPerLap) {
         if (cellsPerLap <= CELLS_PER_LAP[0]) {
             return FLAT_CORRECTION[0] * cellsPerLap / CELLS_PER_LAP[0];
