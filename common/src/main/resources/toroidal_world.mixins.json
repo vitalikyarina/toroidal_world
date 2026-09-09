@@ -106,6 +106,7 @@
     "LandRandomPosMixin",
     "LeapAtTargetGoalMixin",
     "LeashableMixin",
+    "LevelChunkMixin",
     "LevelChunkPacketAccessor",
     "LevelLightEngineMixin",
     "LevelMixin",
