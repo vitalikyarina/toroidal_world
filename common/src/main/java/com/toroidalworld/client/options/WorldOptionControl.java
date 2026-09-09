@@ -1,6 +1,6 @@
 package com.toroidalworld.client.options;
 
-import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.api.v1.option.GenerationOptions;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.layouts.LinearLayout;

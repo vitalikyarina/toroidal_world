@@ -2,6 +2,7 @@ package com.toroidalworld.core;
 
 import java.util.Objects;
 
+import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

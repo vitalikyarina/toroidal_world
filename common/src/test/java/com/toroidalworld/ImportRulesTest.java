@@ -78,7 +78,7 @@ class ImportRulesTest {
     }
 
     private static boolean isVocabulary(String group) {
-        return group.equals("accessors") || group.equals("platform") || group.equals(ROOT_GROUP);
+        return group.equals("accessors") || group.equals("api") || group.equals("platform") || group.equals(ROOT_GROUP);
     }
 
     private static String groupOf(String packageName) {

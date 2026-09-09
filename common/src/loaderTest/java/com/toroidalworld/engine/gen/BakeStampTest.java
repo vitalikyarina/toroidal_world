@@ -2,7 +2,7 @@ package com.toroidalworld.engine.gen;
 
 import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.FlatShape;
-import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.shape.torus.ClimateScale;
 import com.toroidalworld.shape.torus.CompactBiomes;

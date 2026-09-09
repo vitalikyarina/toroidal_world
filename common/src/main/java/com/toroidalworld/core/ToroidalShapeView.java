@@ -1,8 +1,6 @@
-package com.toroidalworld.api.v1;
+package com.toroidalworld.core;
 
-import com.toroidalworld.core.CoordinateConstants;
-import com.toroidalworld.core.FoldOrientation;
-import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 
 import net.minecraft.core.BlockPos;
@@ -10,10 +8,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
-final class WorldFoldToroidalShape implements ToroidalShape {
+public final class ToroidalShapeView implements ToroidalShape {
     private final WorldFold fold;
 
-    WorldFoldToroidalShape(WorldFold fold) {
+    public ToroidalShapeView(WorldFold fold) {
         this.fold = fold;
     }
 
