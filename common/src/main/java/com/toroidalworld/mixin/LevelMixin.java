@@ -20,7 +20,7 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.engine.gen.FloatingCrumbs;
 import com.toroidalworld.core.ShapedChunkGenerator;
-import com.toroidalworld.core.FlatShape;
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -40,7 +40,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.entity.EntityTypeTest;
@@ -193,17 +192,15 @@ public class LevelMixin implements TransformerCache, CrumbSweepCache {
 
     @Unique
     private static WorldFold toroidal$generatorTransformer(ServerLevel level) {
-        ChunkGenerator generator = level.getChunkSource().getGenerator();
-        WorldFold generatorTransformer = ShapedChunkGenerator.wrappedTransformerOf(generator);
-        if (generatorTransformer == null) {
+        CarriedShape carried = ShapedChunkGenerator.carriedShapeOf(level.getChunkSource().getGenerator());
+        if (carried == null) {
             return WorldFolds.NOOP;
         }
 
-        FlatShape shape = ShapedChunkGenerator.wrappedShapeOf(generator);
         List<ForeignFrame> foreignFrames = ForeignFrames.of(level);
-        return shape == null || foreignFrames.isEmpty()
-                ? generatorTransformer
-                : WorldFolds.of(shape, foreignFrames);
+        return foreignFrames.isEmpty()
+                ? carried.fold()
+                : WorldFolds.of(carried.shape(), foreignFrames);
     }
 
     // Whether rain falls on a block is the same temperature field the ice is placed from, asked outside any

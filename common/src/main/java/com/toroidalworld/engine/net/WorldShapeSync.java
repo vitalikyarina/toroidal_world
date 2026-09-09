@@ -1,6 +1,6 @@
 package com.toroidalworld.engine.net;
 
-import com.toroidalworld.core.FlatShape;
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.platform.Platforms;
 
@@ -19,9 +19,9 @@ public final class WorldShapeSync {
     }
 
     private static void send(ServerPlayer player, ServerLevel level) {
-        FlatShape shape = ShapedChunkGenerator.wrappedShapeOf(level.getChunkSource().getGenerator());
-        if (shape != null) {
-            Platforms.get().sendWorldShape(player, level.dimension(), shape);
+        CarriedShape carried = ShapedChunkGenerator.carriedShapeOf(level);
+        if (carried != null) {
+            Platforms.get().sendWorldShape(player, level.dimension(), carried.shape());
         }
     }
 

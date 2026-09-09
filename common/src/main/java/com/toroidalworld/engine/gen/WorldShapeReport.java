@@ -6,6 +6,7 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.ToroidalWorld;
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.core.WorldLoopBounds;
@@ -41,7 +42,7 @@ public final class WorldShapeReport {
 
     public static List<Line> lines(MinecraftServer server) {
         ServerLevel overworld = server.overworld();
-        FlatShape overworldShape = wrappedShapeOf(overworld);
+        FlatShape overworldShape = shapeOf(overworld);
         if (overworldShape == null) {
             String note = overworld == null
                     ? null
@@ -52,7 +53,7 @@ public final class WorldShapeReport {
 
         List<Line> lines = new ArrayList<>();
         for (ServerLevel level : server.getAllLevels()) {
-            FlatShape shape = wrappedShapeOf(level);
+            FlatShape shape = shapeOf(level);
             if (shape != null) {
                 lines.add(wrappedLine(server, level, shape));
             } else {
@@ -138,8 +139,9 @@ public final class WorldShapeReport {
                 + " loader=" + Platforms.get().loaderName() + " " + Platforms.get().loaderVersion();
     }
 
-    private static @Nullable FlatShape wrappedShapeOf(@Nullable ServerLevel level) {
-        return level == null ? null : ShapedChunkGenerator.wrappedShapeOf(level.getChunkSource().getGenerator());
+    private static @Nullable FlatShape shapeOf(@Nullable ServerLevel level) {
+        CarriedShape carried = level == null ? null : ShapedChunkGenerator.carriedShapeOf(level);
+        return carried == null ? null : carried.shape();
     }
 
     private static String generatorId(ChunkGenerator generator) {
@@ -183,7 +185,7 @@ public final class WorldShapeReport {
             return Note.NONE;
         }
 
-        FlatShape overworldShape = wrappedShapeOf(server.overworld());
+        FlatShape overworldShape = shapeOf(server.overworld());
         return overworldShape == null ? Note.NONE : netherScaleNote(overworldShape.bounds(), bounds);
     }
 

@@ -5,50 +5,27 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 import com.toroidalworld.accessors.ShapeStamp;
-import com.toroidalworld.core.FlatShape;
-import com.toroidalworld.core.GenerationOptions;
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.core.CarriedShape;
 
 import net.minecraft.world.level.chunk.ChunkGenerator;
 
 @Mixin(ChunkGenerator.class)
 public class ChunkGeneratorMixin implements ShapeStamp {
     @Unique
-    private volatile @Nullable FlatShape toroidal$stampedShape;
-
-    @Unique
-    private volatile @Nullable WorldFold toroidal$stampedTransformer;
-
-    @Unique
-    private volatile GenerationOptions toroidal$stampedGenerationOptions = GenerationOptions.DEFAULT;
+    private volatile @Nullable CarriedShape toroidal$carriedShape;
 
     @Override
-    public @Nullable FlatShape toroidal$stampedShape() {
-        return this.toroidal$stampedShape;
+    public @Nullable CarriedShape toroidal$carriedShape() {
+        return this.toroidal$carriedShape;
     }
 
     @Override
-    public @Nullable WorldFold toroidal$stampedTransformer() {
-        return this.toroidal$stampedTransformer;
-    }
-
-    @Override
-    public GenerationOptions toroidal$stampedGenerationOptions() {
-        return this.toroidal$stampedGenerationOptions;
-    }
-
-    @Override
-    public void toroidal$stamp(FlatShape shape, GenerationOptions generationOptions) {
-        this.toroidal$stampedShape = shape;
-        this.toroidal$stampedGenerationOptions = generationOptions;
-        this.toroidal$stampedTransformer = WorldFolds.of(shape, generationOptions);
+    public void toroidal$stamp(CarriedShape carried) {
+        this.toroidal$carriedShape = carried;
     }
 
     @Override
     public void toroidal$clearStamp() {
-        this.toroidal$stampedShape = null;
-        this.toroidal$stampedGenerationOptions = GenerationOptions.DEFAULT;
-        this.toroidal$stampedTransformer = null;
+        this.toroidal$carriedShape = null;
     }
 }
