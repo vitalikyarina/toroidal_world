@@ -14,6 +14,7 @@ import com.toroidalworld.core.WorldLoopBounds;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ScrollableLayout;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.layouts.LayoutSettings;
@@ -38,6 +39,7 @@ public class TorusSettingsScreen extends Screen {
     private final List<WorldOptionControl> optionControls;
 
     private HeaderAndFooterLayout layout;
+    private ScrollableLayout contentsScroll;
     private Button doneButton;
 
     public TorusSettingsScreen(Screen parent, WorldLoopBounds current, int currentNetherScale,
@@ -56,7 +58,7 @@ public class TorusSettingsScreen extends Screen {
         this.layout = new HeaderAndFooterLayout(this);
         this.layout.addTitleHeader(TITLE, this.font);
 
-        LinearLayout contents = this.layout.addToContents(LinearLayout.vertical().spacing(CONTENTS_SPACING));
+        LinearLayout contents = LinearLayout.vertical().spacing(CONTENTS_SPACING);
         this.controls.addPresets(contents);
         this.controls.addFields(this.font, contents);
 
@@ -66,6 +68,9 @@ public class TorusSettingsScreen extends Screen {
         for (WorldOptionControl control : this.optionControls) {
             control.addWidgets(this.font, contents);
         }
+
+        this.contentsScroll = new ScrollableLayout(this.minecraft, contents, this.layout.getContentHeight());
+        this.layout.addToContents(this.contentsScroll);
 
         LinearLayout footer = this.layout.addToFooter(LinearLayout.horizontal().spacing(FOOTER_SPACING));
         this.doneButton = footer.addChild(Button.builder(CommonComponents.GUI_DONE, button -> this.commit()).build());
@@ -78,6 +83,8 @@ public class TorusSettingsScreen extends Screen {
 
     @Override
     protected void repositionElements() {
+        this.contentsScroll.arrangeElements();
+        this.contentsScroll.setMaxHeight(this.layout.getContentHeight());
         this.layout.arrangeElements();
     }
 
