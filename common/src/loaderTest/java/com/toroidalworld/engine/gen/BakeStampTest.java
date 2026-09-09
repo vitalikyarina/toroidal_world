@@ -1,12 +1,13 @@
 package com.toroidalworld.engine.gen;
 
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.GenerationOptions;
-import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.shape.torus.ClimateScale;
 import com.toroidalworld.shape.torus.CompactBiomes;
 import static com.toroidalworld.engine.gen.BakeStampFixture.OVERWORLD_CHUNK_WIDTH;
+import static com.toroidalworld.engine.gen.BakeStampFixture.carriedShapeOf;
 import static com.toroidalworld.engine.gen.BakeStampFixture.chunkWidth;
 import static com.toroidalworld.engine.gen.BakeStampFixture.datapackRegistry;
 import static com.toroidalworld.engine.gen.BakeStampFixture.foreignGenerator;
@@ -327,9 +328,9 @@ class BakeStampTest {
                 Map.of(LevelStem.OVERWORLD, stem(SAME_SCALE, overworld)),
                 Map.of(FOREIGN, stem(SAME_SCALE, foreignGenerator())));
 
-        assertNotNull(shapeOf(baked, FOREIGN), "the foreign stem carries no fold, so this run says nothing");
-        assertEquals(ClimateScale.OFF,
-                ShapedChunkGenerator.generationOptionsOf(generatorOf(baked, FOREIGN)).get(CompactBiomes.OPTION));
+        CarriedShape foreign = carriedShapeOf(baked, FOREIGN);
+        assertNotNull(foreign, "the foreign stem carries no fold, so this run says nothing");
+        assertEquals(ClimateScale.OFF, foreign.generationOptions().get(CompactBiomes.OPTION));
     }
 
     @Test
@@ -342,7 +343,7 @@ class BakeStampTest {
 
         LoopedChunkGenerator restored = assertInstanceOf(LoopedChunkGenerator.class,
                 generatorOf(baked, LevelStem.OVERWORLD));
-        assertEquals(ClimateScale.OFF, restored.generationOptions().get(CompactBiomes.OPTION));
+        assertEquals(ClimateScale.OFF, restored.carriedShape().generationOptions().get(CompactBiomes.OPTION));
     }
 
     private static Map<ResourceKey<LevelStem>, LevelStem> storedToroidalWorld() {

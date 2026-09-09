@@ -11,11 +11,10 @@ import org.jspecify.annotations.Nullable;
 import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.MapCodec;
 import com.toroidalworld.accessors.ShapeStamp;
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.GenerationOptions;
 import com.toroidalworld.core.ShapedChunkGenerator;
-import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopBounds;
 
 import net.minecraft.core.BlockPos;
@@ -88,7 +87,7 @@ final class BakeStampFixture {
     }
 
     static ChunkGenerator stamped(ChunkGenerator generator, FlatShape shape, GenerationOptions generationOptions) {
-        ((ShapeStamp) generator).toroidal$stamp(shape, generationOptions);
+        ((ShapeStamp) generator).toroidal$stamp(new CarriedShape(shape, generationOptions));
         return generator;
     }
 
@@ -124,7 +123,12 @@ final class BakeStampFixture {
     }
 
     static @Nullable FlatShape shapeOf(Registry<LevelStem> baked, ResourceKey<LevelStem> key) {
-        return ShapedChunkGenerator.wrappedShapeOf(generatorOf(baked, key));
+        CarriedShape carried = carriedShapeOf(baked, key);
+        return carried == null ? null : carried.shape();
+    }
+
+    static @Nullable CarriedShape carriedShapeOf(Registry<LevelStem> baked, ResourceKey<LevelStem> key) {
+        return ShapedChunkGenerator.carriedShapeOf(generatorOf(baked, key));
     }
 
     static ChunkGenerator generatorOf(Registry<LevelStem> baked, ResourceKey<LevelStem> key) {
@@ -227,27 +231,15 @@ final class BakeStampFixture {
 
     private static final class ShapedForeignChunkGenerator extends ForeignChunkGenerator
             implements ShapedChunkGenerator {
-        private final FlatShape shape;
-        private final WorldFold transformer;
+        private final CarriedShape carriedShape;
 
         private ShapedForeignChunkGenerator(FlatShape shape) {
-            this.shape = shape;
-            this.transformer = WorldFolds.of(shape);
+            this.carriedShape = new CarriedShape(shape);
         }
 
         @Override
-        public FlatShape shape() {
-            return this.shape;
-        }
-
-        @Override
-        public GenerationOptions generationOptions() {
-            return GenerationOptions.DEFAULT;
-        }
-
-        @Override
-        public WorldFold transformer() {
-            return this.transformer;
+        public CarriedShape carriedShape() {
+            return this.carriedShape;
         }
 
         @Override

@@ -2,6 +2,7 @@ package com.toroidalworld.shape.cylinder;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.NetherScales;
 import com.toroidalworld.core.WorldLoopBounds;
@@ -17,14 +18,15 @@ public final class CylinderDimensions {
 
     public static WorldDimensions apply(WorldDimensions dimensions, CylinderSettings settings) {
         WorldDimensions withCylinderOverworld = ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD,
-                FlatShape.cylinder(settings.overworld()));
+                new CarriedShape(FlatShape.cylinder(settings.overworld())));
         if (withCylinderOverworld == dimensions) {
             return dimensions;
         }
 
         WorldDimensions withCylinderNether = ShapedDimensions.withShape(withCylinderOverworld, LevelStem.NETHER,
-                FlatShape.cylinder(netherWrapping(settings)));
-        return ShapedDimensions.withShape(withCylinderNether, LevelStem.END, FlatShape.cylinder(settings.end()));
+                new CarriedShape(FlatShape.cylinder(netherWrapping(settings))));
+        return ShapedDimensions.withShape(withCylinderNether, LevelStem.END,
+                new CarriedShape(FlatShape.cylinder(settings.end())));
     }
 
     public static @Nullable CylinderSettings read(WorldDimensions dimensions) {

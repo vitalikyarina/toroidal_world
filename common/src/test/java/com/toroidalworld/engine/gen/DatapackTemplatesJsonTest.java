@@ -20,7 +20,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import com.toroidalworld.core.FlatShape;
-import com.toroidalworld.core.ShapedChunkGenerator;
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.core.WorldOption;
 import com.toroidalworld.core.WorldOptions;
@@ -95,8 +95,8 @@ class DatapackTemplatesJsonTest {
         assertEquals(GENERATOR_ID, generator.get("type").getAsString(), context + ": generator type");
         assertEquals(noiseSettingsId, generator.get("settings").getAsString(), context + ": noise settings");
 
-        FlatShape shape = ShapedChunkGenerator.SHAPE_CODEC
-                .parse(JsonOps.INSTANCE, generator.get(ShapedChunkGenerator.WRAPPING_KEY))
+        FlatShape shape = CarriedShape.SHAPE_CODEC
+                .parse(JsonOps.INSTANCE, generator.get(CarriedShape.WRAPPING_KEY))
                 .getOrThrow(message -> new AssertionError(context + ": wrapping is refused: " + message));
         assertEquals(identification, shape.identification(), context + ": identification");
 

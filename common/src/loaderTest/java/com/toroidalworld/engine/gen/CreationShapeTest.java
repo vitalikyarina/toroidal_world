@@ -1,5 +1,6 @@
 package com.toroidalworld.engine.gen;
 
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.shape.torus.CompactBiomes;
@@ -66,7 +67,7 @@ class CreationShapeTest {
         WorldDimensions dimensions = overworldOnly(overworld);
         FlatShape shape = squareTorus(CHOSEN_CHUNK_WIDTH);
 
-        WorldDimensions shaped = ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD, shape);
+        WorldDimensions shaped = ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD, new CarriedShape(shape));
 
         assertNotSame(dimensions, shaped, "the shaped dimensions are the object the apply guard compares");
         assertEquals(shape, ShapedDimensions.shapeOf(shaped, LevelStem.OVERWORLD));
@@ -78,7 +79,7 @@ class CreationShapeTest {
         WorldDimensions dimensions = overworldOnly(foreignGenerator());
 
         assertSame(dimensions,
-                ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD, squareTorus(CHOSEN_CHUNK_WIDTH)));
+                ShapedDimensions.withShape(dimensions, LevelStem.OVERWORLD, new CarriedShape(squareTorus(CHOSEN_CHUNK_WIDTH))));
     }
 
     @Test
@@ -98,8 +99,10 @@ class CreationShapeTest {
 
         assertNotNull(ShapedDimensions.shapeOf(shaped, LevelStem.NETHER), "the nether was never reached");
         for (ResourceKey<LevelStem> key : List.of(LevelStem.OVERWORLD, LevelStem.NETHER, LevelStem.END)) {
+            CarriedShape carried = ShapedDimensions.carriedShapeOf(shaped, key);
+            assertNotNull(carried, key.identifier().toString());
             assertEquals(TorusSettings.DEFAULT.generationOptions().get(CompactBiomes.OPTION),
-                    ShapedDimensions.generationOptionsOf(shaped, key).get(CompactBiomes.OPTION), key.identifier().toString());
+                    carried.generationOptions().get(CompactBiomes.OPTION), key.identifier().toString());
         }
         TorusSettings read = TorusDimensions.read(shaped);
         assertNotNull(read, "the shaped world does not read back as a torus");
@@ -110,7 +113,7 @@ class CreationShapeTest {
     void strippingClearsAShapeStampedByAnEarlierAttempt() {
         ChunkGenerator overworld = noiseSubclassGenerator(worldgen);
         WorldDimensions shaped = ShapedDimensions.withShape(overworldOnly(overworld), LevelStem.OVERWORLD,
-                squareTorus(CHOSEN_CHUNK_WIDTH));
+                new CarriedShape(squareTorus(CHOSEN_CHUNK_WIDTH)));
 
         assertNull(ShapedDimensions.shapeOf(ShapedDimensions.stripShapes(shaped), LevelStem.OVERWORLD));
     }

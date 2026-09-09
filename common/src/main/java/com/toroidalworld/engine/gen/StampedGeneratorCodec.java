@@ -4,8 +4,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.accessors.ShapeStamp;
-import com.toroidalworld.core.FlatShape;
-import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.ShapedChunkGenerator;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
@@ -19,21 +18,20 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 public final class StampedGeneratorCodec {
     private static final String KEY_PREFIX = ToroidalWorld.MODID + ":";
 
-    static final String SHAPE_KEY = KEY_PREFIX + ShapedChunkGenerator.WRAPPING_KEY;
+    static final String SHAPE_KEY = KEY_PREFIX + CarriedShape.WRAPPING_KEY;
 
-    private static final MapCodec<GenerationOptions> GENERATION_OPTIONS_CODEC =
-            GenerationOptions.mapCodec(KEY_PREFIX);
+    private static final MapCodec<CarriedShape> CARRIED_CODEC = CarriedShape.mapCodec(KEY_PREFIX);
 
     public static Codec<ChunkGenerator> over(Codec<ChunkGenerator> dispatch) {
         return new StampCarrying(dispatch);
     }
 
-    private static @Nullable ShapeStamp stampToCarry(ChunkGenerator generator) {
+    private static @Nullable CarriedShape carriedToWrite(ChunkGenerator generator) {
         if (generator instanceof ShapedChunkGenerator) {
             return null;
         }
 
-        return generator instanceof ShapeStamp stamp && stamp.toroidal$stampedShape() != null ? stamp : null;
+        return generator instanceof ShapeStamp stamp ? stamp.toroidal$carriedShape() : null;
     }
 
     private static @Nullable ShapeStamp stampToFill(ChunkGenerator generator) {
@@ -48,17 +46,12 @@ public final class StampedGeneratorCodec {
         @Override
         public <T> DataResult<T> encode(ChunkGenerator input, DynamicOps<T> ops, T prefix) {
             DataResult<T> encoded = this.dispatch.encode(input, ops, prefix);
-            ShapeStamp stamp = stampToCarry(input);
-            if (stamp == null) {
+            CarriedShape carried = carriedToWrite(input);
+            if (carried == null) {
                 return encoded;
             }
 
-            FlatShape shape = stamp.toroidal$stampedShape();
-            GenerationOptions generationOptions = stamp.toroidal$stampedGenerationOptions();
-            return encoded.flatMap(map -> ShapedChunkGenerator.SHAPE_CODEC.encodeStart(ops, shape)
-                    .flatMap(value -> ops.mergeToMap(map, ops.createString(SHAPE_KEY), value)))
-                    .flatMap(map -> GENERATION_OPTIONS_CODEC.encode(generationOptions, ops, ops.mapBuilder())
-                            .build(map));
+            return encoded.flatMap(map -> CARRIED_CODEC.encode(carried, ops, ops.mapBuilder()).build(map));
         }
 
         @Override
@@ -70,16 +63,14 @@ public final class StampedGeneratorCodec {
                 Pair<ChunkGenerator, T> decoded) {
             ShapeStamp stamp = stampToFill(decoded.getFirst());
             MapLike<T> map = ops.getMap(input).result().orElse(null);
-            T carried = map == null ? null : map.get(SHAPE_KEY);
-            if (stamp == null || carried == null) {
+            if (stamp == null || map == null || map.get(SHAPE_KEY) == null) {
                 return DataResult.success(decoded);
             }
 
-            return ShapedChunkGenerator.SHAPE_CODEC.parse(ops, carried)
-                    .flatMap(shape -> GENERATION_OPTIONS_CODEC.decode(ops, map).map(generationOptions -> {
-                        stamp.toroidal$stamp(shape, generationOptions);
-                        return decoded;
-                    }));
+            return CARRIED_CODEC.decode(ops, map).map(carried -> {
+                stamp.toroidal$stamp(carried);
+                return decoded;
+            });
         }
     }
 
