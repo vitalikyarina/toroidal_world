@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.platform.Window;
@@ -162,12 +163,9 @@ public abstract class MapRendererMixin implements JourneyMapSeamPass {
                 : JourneyMapFold.nearestPixelCoord(Direction.Axis.Z, this.centerBlockZ, blockZ);
     }
 
-    @Inject(method = "getCalculatedGridSize(I)I", at = @At("RETURN"), cancellable = true)
-    private void toroidal$floorGridSizeToWorld(int zoom, CallbackInfoReturnable<Integer> cir) {
-        int floor = JourneyMapFold.minGridSize();
-        if (floor > cir.getReturnValue()) {
-            cir.setReturnValue(floor);
-        }
+    @ModifyReturnValue(method = "getCalculatedGridSize(I)I", at = @At("RETURN"))
+    private int toroidal$floorGridSizeToWorld(int original) {
+        return Math.max(original, JourneyMapFold.minGridSize());
     }
 
     @ModifyVariable(method = "setZoom(D)Z", at = @At("HEAD"), argsOnly = true)

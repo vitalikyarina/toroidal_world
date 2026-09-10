@@ -3,8 +3,9 @@ package com.toroidalworld.compat.xaero.mixin.map;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.toroidalworld.compat.xaero.XaeroInjectionTargets;
 import com.toroidalworld.compat.xaero.XaeroWorldMapFold;
 
@@ -33,68 +34,73 @@ public abstract class SupportXaeroWorldmapMixin {
     @Unique
     private MapRegion toroidal$foldedRegion;
 
-    @Redirect(
+    @WrapOperation(
             method = "renderChunks",
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/MapProcessor;getMinimapMapRegion(II)Lxaero/map/region/MapRegion;"))
-    private MapRegion toroidal$fetchMinimapRegion(MapProcessor processor, int regX, int regZ) {
+    private MapRegion toroidal$fetchMinimapRegion(MapProcessor processor, int regX, int regZ,
+            Operation<MapRegion> original) {
         this.toroidal$fetchRegionX = regX;
         this.toroidal$fetchRegionZ = regZ;
         this.toroidal$fetchIsLeaf = false;
-        MapRegion original = processor.getMinimapMapRegion(regX, regZ);
-        if (original != null || !XaeroWorldMapFold.active()) {
-            return original;
+        MapRegion existing = original.call(processor, regX, regZ);
+        if (existing != null || !XaeroWorldMapFold.active()) {
+            return existing;
         }
 
         // A candidate value only, so the null-guarded chunk fetch runs at all; the chunk redirect re-fetches precisely.
-        return processor.getMinimapMapRegion(
+        return original.call(
+                processor,
                 XaeroWorldMapFold.foldRegion(Direction.Axis.X, regX),
                 XaeroWorldMapFold.foldRegion(Direction.Axis.Z, regZ));
     }
 
-    @Redirect(
+    @WrapOperation(
             method = "renderChunks",
             at = @At(
                     value = "INVOKE",
                     target = XaeroInjectionTargets.MAP_PROCESSOR_GET_LEAF_MAP_REGION))
-    private MapRegion toroidal$fetchLeafRegion(MapProcessor processor, int caveLayer, int regX, int regZ, boolean create) {
+    private MapRegion toroidal$fetchLeafRegion(MapProcessor processor, int caveLayer, int regX, int regZ,
+            boolean create, Operation<MapRegion> original) {
         this.toroidal$fetchRegionX = regX;
         this.toroidal$fetchRegionZ = regZ;
         this.toroidal$fetchIsLeaf = true;
         this.toroidal$fetchLeafLayer = caveLayer;
-        MapRegion original = processor.getLeafMapRegion(caveLayer, regX, regZ, create);
-        if (original != null || !XaeroWorldMapFold.active()) {
-            return original;
+        MapRegion existing = original.call(processor, caveLayer, regX, regZ, create);
+        if (existing != null || !XaeroWorldMapFold.active()) {
+            return existing;
         }
 
-        return processor.getLeafMapRegion(
+        return original.call(
+                processor,
                 caveLayer,
                 XaeroWorldMapFold.foldRegion(Direction.Axis.X, regX),
                 XaeroWorldMapFold.foldRegion(Direction.Axis.Z, regZ),
                 create);
     }
 
-    @Redirect(
+    @WrapOperation(
             method = "renderChunks",
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/region/MapRegion;getChunk(II)Lxaero/map/region/MapTileChunk;"))
-    private MapTileChunk toroidal$fetchCanonicalChunk(MapRegion region, int localX, int localZ) {
+    private MapTileChunk toroidal$fetchCanonicalChunk(MapRegion region, int localX, int localZ,
+            Operation<MapTileChunk> original) {
         int mirrorTileX = XaeroWorldMapFold.firstTileChunkOfRegion(this.toroidal$fetchRegionX) + localX;
         int mirrorTileZ = XaeroWorldMapFold.firstTileChunkOfRegion(this.toroidal$fetchRegionZ) + localZ;
         this.toroidal$mirrorTileX = mirrorTileX;
         this.toroidal$mirrorTileZ = mirrorTileZ;
         this.toroidal$foldedRegion = null;
         if (!XaeroWorldMapFold.active()) {
-            return region == null ? null : region.getChunk(localX, localZ);
+            return region == null ? null : original.call(region, localX, localZ);
         }
 
         int foldedTileX = XaeroWorldMapFold.foldTileChunk(Direction.Axis.X, mirrorTileX);
         int foldedTileZ = XaeroWorldMapFold.foldTileChunk(Direction.Axis.Z, mirrorTileZ);
         WorldMapSession session = WorldMapSession.getCurrentSession();
         if (session == null) {
-            return region == null ? null : region.getChunk(localX, localZ);
+            return region == null ? null : original.call(region, localX, localZ);
         }
 
         MapProcessor processor = session.getMapProcessor();
@@ -112,33 +118,34 @@ public abstract class SupportXaeroWorldmapMixin {
         }
 
         this.toroidal$foldedRegion = foldedRegion;
-        return foldedRegion.getChunk(XaeroWorldMapFold.tileChunkInRegion(foldedTileX),
+        return original.call(foldedRegion, XaeroWorldMapFold.tileChunkInRegion(foldedTileX),
                 XaeroWorldMapFold.tileChunkInRegion(foldedTileZ));
     }
 
-    @Redirect(
+    @WrapOperation(
             method = "renderChunks",
             at = @At(value = "INVOKE", target = "Lxaero/map/region/MapTileChunk;getX()I"))
-    private int toroidal$placeAtMirrorX(MapTileChunk chunk) {
-        return XaeroWorldMapFold.active() ? this.toroidal$mirrorTileX : chunk.getX();
+    private int toroidal$placeAtMirrorX(MapTileChunk chunk, Operation<Integer> original) {
+        return XaeroWorldMapFold.active() ? this.toroidal$mirrorTileX : original.call(chunk);
     }
 
-    @Redirect(
+    @WrapOperation(
             method = "renderChunks",
             at = @At(value = "INVOKE", target = "Lxaero/map/region/MapTileChunk;getZ()I"))
-    private int toroidal$placeAtMirrorZ(MapTileChunk chunk) {
-        return XaeroWorldMapFold.active() ? this.toroidal$mirrorTileZ : chunk.getZ();
+    private int toroidal$placeAtMirrorZ(MapTileChunk chunk, Operation<Integer> original) {
+        return XaeroWorldMapFold.active() ? this.toroidal$mirrorTileZ : original.call(chunk);
     }
 
-    @Redirect(
+    @WrapOperation(
             method = "renderChunks",
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/common/mods/SupportXaeroWorldmap;bumpLoadedRegion(Lxaero/map/MapProcessor;Lxaero/map/region/MapRegion;)V"))
-    private void toroidal$bumpFoldedRegion(SupportXaeroWorldmap support, MapProcessor processor, MapRegion region) {
+    private void toroidal$bumpFoldedRegion(SupportXaeroWorldmap support, MapProcessor processor, MapRegion region,
+            Operation<Void> original) {
         MapRegion actual = this.toroidal$foldedRegion != null ? this.toroidal$foldedRegion : region;
         if (actual != null) {
-            support.bumpLoadedRegion(processor, actual);
+            original.call(support, processor, actual);
         }
     }
 }
