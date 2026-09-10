@@ -1,12 +1,30 @@
 package com.toroidalworld.compat.c2me;
 
+import org.jspecify.annotations.Nullable;
+
 import com.toroidalworld.core.WorldFold;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import net.minecraft.util.StaticCache2D;
 import net.minecraft.world.level.ChunkPos;
 
 public final class C2meSeamFold {
-    public static ChunkPos canonicalSlot(
+    public static <T> StaticCache2D.Initializer<T> foldingInitializer(
+            @Nullable WorldFold transformer,
+            int centerX,
+            int centerZ,
+            StaticCache2D.Initializer<T> initializer) {
+        if (transformer == null) {
+            return initializer;
+        }
+
+        return (slotX, slotZ) -> {
+            ChunkPos slot = canonicalSlot(transformer, centerX, centerZ, slotX, slotZ);
+            return initializer.get(slot.x, slot.z);
+        };
+    }
+
+    private static ChunkPos canonicalSlot(
             WorldFold transformer, int centerX, int centerZ, int slotX, int slotZ) {
         if (slotX == centerX && slotZ == centerZ) {
             return new ChunkPos(slotX, slotZ);
