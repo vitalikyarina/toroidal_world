@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.engine.net.ListenerCopies;
 import com.toroidalworld.engine.net.WorldShapeSync;
+import com.toroidalworld.engine.seam.ClientPosition;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -75,7 +76,7 @@ public class PlayerListMixin {
     private void toroidal$rebaseMirrorOnRespawn(ServerPlayer player, boolean keepEverything,
             Entity.RemovalReason reason, CallbackInfoReturnable<ServerPlayer> cir,
             @Local(ordinal = 1) ServerPlayer respawned) {
-        WorldLoopAttachments.rebaseClientPositionOf(respawned);
+        ClientPosition.rebase(respawned);
     }
 
     @Inject(method = "respawn", at = @At("TAIL"))

@@ -5,10 +5,12 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
-import com.toroidalworld.engine.fold.LogRateGate;
+import com.toroidalworld.accessors.ClientPositionHolder;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.core.WrapDomain;
+import com.toroidalworld.engine.fold.LogRateGate;
 import com.toroidalworld.engine.fold.SeamDelta;
 import com.mojang.logging.LogUtils;
 
@@ -16,6 +18,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -41,6 +44,10 @@ public final class ClientPosition {
     private volatile @Nullable ChunkPos heldCacheCenter;
 
     private final LogRateGate warnGate = new LogRateGate();
+
+    public static ClientPosition of(ServerPlayer player) {
+        return ((ClientPositionHolder) player.connection).toroidal$clientPosition();
+    }
 
     public double x() {
         return seededMirror().x();
@@ -83,6 +90,16 @@ public final class ClientPosition {
 
     public boolean describes(ResourceKey<Level> dimension) {
         return dimension.equals(this.mirror.space());
+    }
+
+    public static void rebase(ServerPlayer player) {
+        if (player.connection == null) {
+            return;
+        }
+
+        WorldFold transformer = WorldLoopAttachments.transformerOf(player.level());
+        Vec3 folded = transformer.fold(player.position());
+        of(player).rebase(folded.x, folded.z, player.level().dimension(), transformer);
     }
 
     public void rebase(double x, double z, ResourceKey<Level> dimension, WorldFold transformer) {

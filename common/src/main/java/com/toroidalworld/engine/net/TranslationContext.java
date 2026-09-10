@@ -13,7 +13,6 @@ import com.toroidalworld.api.v1.net.SeamContext;
 import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.ToroidalShapeView;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.engine.fold.LogRateGate;
 import com.toroidalworld.engine.seam.ClientPosition;
@@ -62,7 +61,7 @@ public record TranslationContext(
         int trackedViewDistance = trackedViewDistanceOf(player, transformer);
         return new TranslationContext(
                 transformer,
-                WorldLoopAttachments.clientPositionOf(player),
+                ClientPosition.of(player),
                 Platforms.get().packetBuffers(player),
                 player.level().dimension(),
                 trackedViewDistance,
@@ -70,7 +69,7 @@ public record TranslationContext(
                 entityId -> isControlledVehicle(player, entityId),
                 entityId -> positionOf(player, entityId),
                 entityId -> classOf(player, entityId),
-                () -> WorldLoopAttachments.rebaseClientPositionOf(player),
+                () -> ClientPosition.rebase(player),
                 PacketTranslator.production());
     }
 
