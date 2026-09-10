@@ -73,7 +73,8 @@ class PillarSiteScan {
             report.addAll(masses("with the ceiling", cutState.router().finalDensity(), site));
         });
 
-        ScanReports.write(REPORT, report);
+        ScanReports.write(REPORT, ScanReports.noPopulation(
+                "one named site, taken from the suspended-land search rather than from a sample"), report);
     }
 
     private static List<String> masses(String label, DensityFunction density, SuspendedLand.Site site) {
