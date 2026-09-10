@@ -6,14 +6,12 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import com.toroidalworld.api.v1.ToroidalShape;
-import com.toroidalworld.api.v1.ToroidalWorldClientApi;
 import com.toroidalworld.client.engine.ClientFrame;
 import com.toroidalworld.compat.AxisCopies;
+import com.toroidalworld.compat.ClientShapes;
 import com.toroidalworld.compat.FullscreenZoomFloor;
 import com.mojang.logging.LogUtils;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
@@ -30,23 +28,18 @@ public final class JourneyMapFold {
     public static final String WORLD_CHANGED = "world";
     public static final String DIMENSION_CHANGED = "dimension";
 
-    private static ToroidalShape shape() {
-        ClientLevel level = Minecraft.getInstance().level;
-        return level == null ? null : ToroidalWorldClientApi.shapeOf(level).orElse(null);
-    }
-
     public static int foldRegionChunk(Direction.Axis axis, int chunk) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = ClientShapes.current();
         return shape == null ? chunk : shape.foldChunk(axis, chunk);
     }
 
     public static double foldCenterCoord(Direction.Axis axis, double coord) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = ClientShapes.current();
         return shape == null ? coord : shape.foldCoord(axis, coord);
     }
 
     public static double nearestPixelCoord(Direction.Axis axis, double ref, double coord) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = ClientShapes.current();
         return shape == null ? coord : shape.nearestCoord(axis, ref, coord);
     }
 
@@ -55,26 +48,26 @@ public final class JourneyMapFold {
     }
 
     public static boolean active() {
-        return shape() != null;
+        return ClientShapes.current() != null;
     }
 
     public static int foldUiCoord(Direction.Axis axis, int coord) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = ClientShapes.current();
         return shape == null ? coord : shape.foldBlock(axis, coord);
     }
 
     public static BlockPos foldUiBlock(BlockPos pos) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = ClientShapes.current();
         return shape == null || pos == null ? pos : shape.fold(pos);
     }
 
     public static AxisCopies copies(Direction.Axis axis) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = ClientShapes.current();
         return shape == null ? AxisCopies.UNBOUNDED : AxisCopies.of(shape, axis);
     }
 
     public static double worldPixelPeriod(Direction.Axis axis, int zoom) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = ClientShapes.current();
         if (shape == null || !shape.loops(axis)) {
             return 0.0;
         }
@@ -83,7 +76,7 @@ public final class JourneyMapFold {
     }
 
     public static int loopedAxes() {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = ClientShapes.current();
         if (shape == null) {
             return 0;
         }
@@ -92,19 +85,8 @@ public final class JourneyMapFold {
     }
 
     public static int zoomFloor() {
-        ToroidalShape shape = shape();
-        if (shape == null) {
-            return 0;
-        }
-
-        int floor = 0;
-        for (Direction.Axis axis : new Direction.Axis[] {Direction.Axis.X, Direction.Axis.Z}) {
-            if (shape.loops(axis)) {
-                floor = Math.max(floor, FullscreenZoomFloor.journeyMapZoom(shape.widthBlocks(axis)));
-            }
-        }
-
-        return floor;
+        ToroidalShape shape = ClientShapes.current();
+        return shape == null ? 0 : FullscreenZoomFloor.journeyMapZoom(shape);
     }
 
     public static int[] viewSpan(double centerBlock, int windowPixels, int zoom) {
@@ -113,7 +95,7 @@ public final class JourneyMapFold {
     }
 
     public static int tilesWithContent(int zoom, int viewportX, int viewportZ) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = ClientShapes.current();
         if (shape == null) {
             return 1;
         }
@@ -165,7 +147,7 @@ public final class JourneyMapFold {
     }
 
     public static int minGridSize() {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = ClientShapes.current();
         if (shape == null) {
             return 0;
         }

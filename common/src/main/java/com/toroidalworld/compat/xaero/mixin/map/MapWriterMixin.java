@@ -50,8 +50,8 @@ public abstract class MapWriterMixin {
 
         args.set(16, foldedX);
         args.set(17, foldedZ);
-        args.set(18, foldedX & 7);
-        args.set(19, foldedZ & 7);
+        args.set(18, XaeroWorldMapFold.tileChunkInRegion(foldedX));
+        args.set(19, XaeroWorldMapFold.tileChunkInRegion(foldedZ));
     }
 
     @Redirect(
@@ -89,8 +89,8 @@ public abstract class MapWriterMixin {
             return;
         }
 
-        int canonicalX = XaeroWorldMapFold.foldChunk(Direction.Axis.X, x + 16) - 16;
-        int canonicalZ = XaeroWorldMapFold.foldChunk(Direction.Axis.Z, z + 16) - 16;
+        int canonicalX = XaeroWorldMapFold.foldComparisonChunk(Direction.Axis.X, x);
+        int canonicalZ = XaeroWorldMapFold.foldComparisonChunk(Direction.Axis.Z, z);
         LeveledRegion.setComparison(canonicalX, canonicalZ, level, canonicalX, canonicalZ);
     }
 }

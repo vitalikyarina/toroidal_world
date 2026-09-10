@@ -2,7 +2,6 @@ package com.toroidalworld.engine.seam;
 
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -10,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.WorldFold;
 
 import net.minecraft.core.Direction;
@@ -40,8 +40,6 @@ public final class SeamTravel {
 
     public static final Codec<SeamTravel> CODEC = Codec.unboundedMap(Level.RESOURCE_KEY_CODEC, Lap.CODEC)
             .xmap(SeamTravel::new, travel -> travel.laps);
-
-    private static final List<Direction.Axis> HORIZONTAL = List.of(Direction.Axis.X, Direction.Axis.Z);
 
     private final Map<ResourceKey<Level>, Lap> laps;
 
@@ -80,7 +78,7 @@ public final class SeamTravel {
         Set<Direction.Axis> closed = EnumSet.noneOf(Direction.Axis.class);
         Lap after = in(space);
 
-        for (Direction.Axis axis : HORIZONTAL) {
+        for (Direction.Axis axis : CoordinateConstants.HORIZONTAL_AXES) {
             if (!fold.bounds().loops(axis)) {
                 continue;
             }
