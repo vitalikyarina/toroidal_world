@@ -5,19 +5,24 @@ import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import com.toroidalworld.MixinGatePlugin;
 import com.toroidalworld.compat.ModPresence;
+import com.toroidalworld.compat.ModSymbol;
 
 public class JourneyMapMixinPlugin extends MixinGatePlugin {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private static final boolean JOURNEYMAP_PRESENT = ModPresence.probe("journeymap/client/JourneymapClient.class");
+    static final ModSymbol MAP_RENDERER_CENTRE =
+            new ModSymbol("journeymap/client/render/map/MapRenderer", "centerBlockX", "D");
+
+    private static final ModPresence JOURNEYMAP = ModPresence.of(LOGGER,
+            "journeymap/client/JourneymapClient.class", "[jm-compat] gate jm_present", MAP_RENDERER_CENTRE);
 
     @Override
     public void onLoad(String mixinPackage) {
-        LOGGER.info("[jm-compat] gate jm_present={}", JOURNEYMAP_PRESENT);
+        JOURNEYMAP.present();
     }
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        return JOURNEYMAP_PRESENT;
+        return JOURNEYMAP.present();
     }
 }

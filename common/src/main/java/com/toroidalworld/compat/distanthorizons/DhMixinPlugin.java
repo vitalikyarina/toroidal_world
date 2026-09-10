@@ -5,20 +5,26 @@ import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import com.toroidalworld.MixinGatePlugin;
 import com.toroidalworld.compat.ModPresence;
+import com.toroidalworld.compat.ModSymbol;
 
 public class DhMixinPlugin extends MixinGatePlugin {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private static final boolean DH_PRESENT = ModPresence.probe(
-            "com/seibel/distanthorizons/core/api/internal/ClientApi.class");
+    static final ModSymbol LEVEL_CHUNK_HASH_REPO = new ModSymbol(
+            "com/seibel/distanthorizons/core/level/AbstractDhLevel", "chunkHashRepo",
+            "Lcom/seibel/distanthorizons/core/sql/repo/ChunkHashRepo;");
+
+    private static final ModPresence DH = ModPresence.of(LOGGER,
+            "com/seibel/distanthorizons/core/api/internal/ClientApi.class",
+            "[dh-compat] gate distanthorizons_present", LEVEL_CHUNK_HASH_REPO);
 
     @Override
     public void onLoad(String mixinPackage) {
-        LOGGER.info("[dh-compat] gate distanthorizons_present={}", DH_PRESENT);
+        DH.present();
     }
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        return DH_PRESENT;
+        return DH.present();
     }
 }
