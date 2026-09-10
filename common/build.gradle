@@ -196,6 +196,12 @@ dependencies {
     // The claim-request fold takes and returns FTB Library's own XZ keys, so the tests build them.
     testCompileOnly("dev.ftb.mods:ftb-library-neoforge:${ftblibrary_version}") { transitive = false }
     testRuntimeOnly("dev.ftb.mods:ftb-library-neoforge:${ftblibrary_version}") { transitive = false }
+    // The compat jars and Mixin on the test runtime alone: what the gate-symbol tests read is the class file each
+    // gate names, and a config plugin cannot even load without IMixinConfigPlugin.
+    testRuntimeOnly "maven.modrinth:journeymap:${journeymap_version}"
+    testRuntimeOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
+    testRuntimeOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
+    testRuntimeOnly "net.fabricmc:sponge-mixin:${mixin_version}"
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.junit.platform:junit-platform-launcher'
