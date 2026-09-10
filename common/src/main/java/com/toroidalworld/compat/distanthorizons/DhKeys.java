@@ -28,10 +28,13 @@ public final class DhKeys {
         int x = DhFold.foldSection(shape, Direction.Axis.X, detail, rawX);
         int z = DhFold.foldSection(shape, Direction.Axis.Z, detail, rawZ);
         if (x == rawX && z == rawZ) {
+            DhProbes.keyKept(DhProbes.Key.SECTION);
             return pos;
         }
 
-        return DhSectionPos.encode(detail, x, z);
+        long folded = DhSectionPos.encode(detail, x, z);
+        DhProbes.sectionKeyFolded(pos, folded);
+        return folded;
     }
 
     public static DhChunkPos foldChunk(ToroidalShape shape, DhChunkPos pos) {
@@ -42,9 +45,11 @@ public final class DhKeys {
         int x = DhFold.foldChunk(shape, Direction.Axis.X, LEAF, pos.getX());
         int z = DhFold.foldChunk(shape, Direction.Axis.Z, LEAF, pos.getZ());
         if (x == pos.getX() && z == pos.getZ()) {
+            DhProbes.keyKept(DhProbes.Key.CHUNK);
             return pos;
         }
 
+        DhProbes.chunkKeyFolded(pos.getX(), pos.getZ(), x, z);
         return new DhChunkPos(x, z);
     }
 
@@ -56,9 +61,11 @@ public final class DhKeys {
         int x = DhFold.foldChunk(shape, Direction.Axis.X, LEAF, pos.x);
         int z = DhFold.foldChunk(shape, Direction.Axis.Z, LEAF, pos.z);
         if (x == pos.x && z == pos.z) {
+            DhProbes.keyKept(DhProbes.Key.CHUNK);
             return pos;
         }
 
+        DhProbes.chunkKeyFolded(pos.x, pos.z, x, z);
         return new ChunkPos(x, z);
     }
 
@@ -70,10 +77,13 @@ public final class DhKeys {
         int x = shape.foldBlock(Direction.Axis.X, pos.getX());
         int z = shape.foldBlock(Direction.Axis.Z, pos.getZ());
         if (x == pos.getX() && z == pos.getZ()) {
+            DhProbes.keyKept(DhProbes.Key.BEACON);
             return pos;
         }
 
-        return new DhBlockPos(x, pos.getY(), z);
+        DhBlockPos folded = new DhBlockPos(x, pos.getY(), z);
+        DhProbes.beaconKeyFolded(pos, folded);
+        return folded;
     }
 
     public static boolean containsACopy(ToroidalShape shape, long sectionPos, long copyPos) {
