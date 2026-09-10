@@ -39,8 +39,6 @@ class ImportRulesTest {
             "client.shape.torus.ClimateFactorPreview -> engine.noise.ClimateScaleCompression",
             "api.v1.shape.ShapeDimensions -> engine.gen.ShapedDimensions",
             "shape.WorldShapes -> engine.gen.ShapedDimensions",
-            "shape.torus.TorusDimensions -> engine.gen.ShapedDimensions",
-            "shape.cylinder.CylinderDimensions -> engine.gen.ShapedDimensions",
             "core.WorldLoopAttachments -> engine.seam.ClientPosition",
             "core.WorldLoopAttachments -> engine.seam.SeamTravel");
 
