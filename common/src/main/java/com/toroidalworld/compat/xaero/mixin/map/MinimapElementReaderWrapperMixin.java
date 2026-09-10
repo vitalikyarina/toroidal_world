@@ -15,7 +15,7 @@ import xaero.map.mods.minimap.element.MinimapElementReaderWrapper;
 public abstract class MinimapElementReaderWrapperMixin {
     @Inject(method = "getRenderX", at = @At("RETURN"), cancellable = true)
     private void toroidal$foldRenderX(CallbackInfoReturnable<Double> cir) {
-        double folded = XaeroWorldMapFold.foldElementCoord(Direction.Axis.X, cir.getReturnValue());
+        double folded = XaeroWorldMapFold.foldCoord(Direction.Axis.X, cir.getReturnValue());
         if (folded != cir.getReturnValue()) {
             cir.setReturnValue(folded);
         }
@@ -23,7 +23,7 @@ public abstract class MinimapElementReaderWrapperMixin {
 
     @Inject(method = "getRenderZ", at = @At("RETURN"), cancellable = true)
     private void toroidal$foldRenderZ(CallbackInfoReturnable<Double> cir) {
-        double folded = XaeroWorldMapFold.foldElementCoord(Direction.Axis.Z, cir.getReturnValue());
+        double folded = XaeroWorldMapFold.foldCoord(Direction.Axis.Z, cir.getReturnValue());
         if (folded != cir.getReturnValue()) {
             cir.setReturnValue(folded);
         }

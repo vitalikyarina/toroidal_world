@@ -18,7 +18,7 @@ public abstract class WaypointWrapperMixin {
     @Inject(method = "getX", at = @At("RETURN"), cancellable = true)
     private void toroidal$foldX(CallbackInfoReturnable<Integer> cir) {
         if (this.dimDiv == 1.0) {
-            int folded = XaeroWorldMapFold.foldWaypointBlock(Direction.Axis.X, cir.getReturnValue());
+            int folded = XaeroWorldMapFold.foldBlock(Direction.Axis.X, cir.getReturnValue());
             if (folded != cir.getReturnValue()) {
                 cir.setReturnValue(folded);
             }
@@ -28,7 +28,7 @@ public abstract class WaypointWrapperMixin {
     @Inject(method = "getZ", at = @At("RETURN"), cancellable = true)
     private void toroidal$foldZ(CallbackInfoReturnable<Integer> cir) {
         if (this.dimDiv == 1.0) {
-            int folded = XaeroWorldMapFold.foldWaypointBlock(Direction.Axis.Z, cir.getReturnValue());
+            int folded = XaeroWorldMapFold.foldBlock(Direction.Axis.Z, cir.getReturnValue());
             if (folded != cir.getReturnValue()) {
                 cir.setReturnValue(folded);
             }

@@ -3,12 +3,10 @@ package com.toroidalworld.compat.xaero;
 import org.slf4j.Logger;
 
 import com.toroidalworld.api.v1.ToroidalShape;
-import com.toroidalworld.api.v1.ToroidalWorldClientApi;
 import com.toroidalworld.client.engine.ClientFrame;
+import com.toroidalworld.compat.ClientShapes;
 import com.mojang.logging.LogUtils;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
@@ -17,13 +15,8 @@ public final class XaeroFold {
 
     private static volatile Object[] coordReadoutDisplays;
 
-    private static ToroidalShape shape() {
-        ClientLevel level = Minecraft.getInstance().level;
-        return level == null ? null : ToroidalWorldClientApi.shapeOf(level).orElse(null);
-    }
-
     public static BlockPos foldWorldNodeSpawn(BlockPos spawn) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = ClientShapes.current();
         if (shape == null || spawn == null) {
             return spawn;
         }
@@ -40,7 +33,7 @@ public final class XaeroFold {
     }
 
     public static BlockPos foldInfoDisplayPos(Object infoDisplay, BlockPos playerPos) {
-        ToroidalShape shape = shape();
+        ToroidalShape shape = ClientShapes.current();
         if (shape == null || playerPos == null) {
             return playerPos;
         }

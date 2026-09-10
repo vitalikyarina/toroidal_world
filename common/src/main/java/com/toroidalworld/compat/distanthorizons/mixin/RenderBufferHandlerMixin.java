@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.api.v1.ToroidalShape;
-import com.toroidalworld.compat.distanthorizons.DhClientShapes;
+import com.toroidalworld.compat.ClientShapes;
 import com.toroidalworld.compat.distanthorizons.DhKeys;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -31,7 +31,7 @@ public class RenderBufferHandlerMixin {
             return false;
         }
 
-        ToroidalShape shape = DhClientShapes.ofCurrentLevel();
+        ToroidalShape shape = ClientShapes.current();
         if (shape == null) {
             return true;
         }

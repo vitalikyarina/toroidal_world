@@ -49,8 +49,8 @@ public abstract class SupportXaeroWorldmapMixin {
 
         // A candidate value only, so the null-guarded chunk fetch runs at all; the chunk redirect re-fetches precisely.
         return processor.getMinimapMapRegion(
-                Math.floorDiv(XaeroWorldMapFold.foldTileChunk(Direction.Axis.X, regX * 8), 8),
-                Math.floorDiv(XaeroWorldMapFold.foldTileChunk(Direction.Axis.Z, regZ * 8), 8));
+                XaeroWorldMapFold.foldRegion(Direction.Axis.X, regX),
+                XaeroWorldMapFold.foldRegion(Direction.Axis.Z, regZ));
     }
 
     @Redirect(
@@ -70,8 +70,8 @@ public abstract class SupportXaeroWorldmapMixin {
 
         return processor.getLeafMapRegion(
                 caveLayer,
-                Math.floorDiv(XaeroWorldMapFold.foldTileChunk(Direction.Axis.X, regX * 8), 8),
-                Math.floorDiv(XaeroWorldMapFold.foldTileChunk(Direction.Axis.Z, regZ * 8), 8),
+                XaeroWorldMapFold.foldRegion(Direction.Axis.X, regX),
+                XaeroWorldMapFold.foldRegion(Direction.Axis.Z, regZ),
                 create);
     }
 
@@ -81,8 +81,8 @@ public abstract class SupportXaeroWorldmapMixin {
                     value = "INVOKE",
                     target = "Lxaero/map/region/MapRegion;getChunk(II)Lxaero/map/region/MapTileChunk;"))
     private MapTileChunk toroidal$fetchCanonicalChunk(MapRegion region, int localX, int localZ) {
-        int mirrorTileX = this.toroidal$fetchRegionX * 8 + localX;
-        int mirrorTileZ = this.toroidal$fetchRegionZ * 8 + localZ;
+        int mirrorTileX = XaeroWorldMapFold.firstTileChunkOfRegion(this.toroidal$fetchRegionX) + localX;
+        int mirrorTileZ = XaeroWorldMapFold.firstTileChunkOfRegion(this.toroidal$fetchRegionZ) + localZ;
         this.toroidal$mirrorTileX = mirrorTileX;
         this.toroidal$mirrorTileZ = mirrorTileZ;
         this.toroidal$foldedRegion = null;
@@ -98,8 +98,8 @@ public abstract class SupportXaeroWorldmapMixin {
         }
 
         MapProcessor processor = session.getMapProcessor();
-        int foldedRegionX = Math.floorDiv(foldedTileX, 8);
-        int foldedRegionZ = Math.floorDiv(foldedTileZ, 8);
+        int foldedRegionX = XaeroWorldMapFold.regionOfTileChunk(foldedTileX);
+        int foldedRegionZ = XaeroWorldMapFold.regionOfTileChunk(foldedTileZ);
         MapRegion foldedRegion = this.toroidal$fetchIsLeaf
                 ? processor.getLeafMapRegion(this.toroidal$fetchLeafLayer, foldedRegionX, foldedRegionZ, false)
                 : processor.getMinimapMapRegion(foldedRegionX, foldedRegionZ);
@@ -112,7 +112,8 @@ public abstract class SupportXaeroWorldmapMixin {
         }
 
         this.toroidal$foldedRegion = foldedRegion;
-        return foldedRegion.getChunk(foldedTileX & 7, foldedTileZ & 7);
+        return foldedRegion.getChunk(XaeroWorldMapFold.tileChunkInRegion(foldedTileX),
+                XaeroWorldMapFold.tileChunkInRegion(foldedTileZ));
     }
 
     @Redirect(

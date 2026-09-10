@@ -1,12 +1,12 @@
 package com.toroidalworld.compat.distanthorizons;
 
 import com.toroidalworld.api.v1.ToroidalShape;
+import com.toroidalworld.core.CoordinateConstants;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 
 public final class DhFold {
-    private static final Direction.Axis[] HORIZONTAL = {Direction.Axis.X, Direction.Axis.Z};
     private static final int SNAP_CELLS_PER_WORLD = 16;
     private static final int BLOCK = 1;
 
@@ -16,7 +16,7 @@ public final class DhFold {
 
     public static byte maxExactDetailLevel(ToroidalShape shape) {
         int cap = Byte.MAX_VALUE;
-        for (Direction.Axis axis : HORIZONTAL) {
+        for (Direction.Axis axis : CoordinateConstants.HORIZONTAL_AXES) {
             if (shape.loops(axis)) {
                 cap = Math.min(cap, Integer.numberOfTrailingZeros(shape.widthBlocks(axis)));
                 cap = Math.min(cap, Integer.numberOfTrailingZeros(shape.minBlock(axis)));
@@ -99,7 +99,7 @@ public final class DhFold {
 
     public static byte snapDetailLevel(ToroidalShape shape, byte leafDetailLevel) {
         int narrowest = Integer.MAX_VALUE;
-        for (Direction.Axis axis : HORIZONTAL) {
+        for (Direction.Axis axis : CoordinateConstants.HORIZONTAL_AXES) {
             if (shape.loops(axis)) {
                 narrowest = Math.min(narrowest, shape.widthBlocks(axis));
             }

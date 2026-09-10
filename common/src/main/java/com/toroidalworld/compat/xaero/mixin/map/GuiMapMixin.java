@@ -107,7 +107,7 @@ public abstract class GuiMapMixin {
                     value = "INVOKE",
                     target = "Lxaero/map/entity/util/EntityUtil;getEntityX(Lnet/minecraft/world/entity/Entity;F)D"))
     private double toroidal$foldCameraX(Entity entity, float partialTicks, Operation<Double> original) {
-        return XaeroWorldMapFold.foldCameraCoord(Direction.Axis.X, original.call(entity, partialTicks));
+        return XaeroWorldMapFold.foldCoord(Direction.Axis.X, original.call(entity, partialTicks));
     }
 
     @WrapOperation(
@@ -116,7 +116,7 @@ public abstract class GuiMapMixin {
                     value = "INVOKE",
                     target = "Lxaero/map/entity/util/EntityUtil;getEntityZ(Lnet/minecraft/world/entity/Entity;F)D"))
     private double toroidal$foldCameraZ(Entity entity, float partialTicks, Operation<Double> original) {
-        return XaeroWorldMapFold.foldCameraCoord(Direction.Axis.Z, original.call(entity, partialTicks));
+        return XaeroWorldMapFold.foldCoord(Direction.Axis.Z, original.call(entity, partialTicks));
     }
 
     @Inject(
@@ -154,7 +154,7 @@ public abstract class GuiMapMixin {
         }
 
         // A candidate value only, so the draw block runs at all; the texture redirect re-resolves each slot precisely.
-        int side = 512 << level;
+        int side = XaeroWorldMapFold.REGION_BLOCKS << level;
         int foldedOriginX = XaeroWorldMapFold.foldBlock(Direction.Axis.X, regX * side);
         int foldedOriginZ = XaeroWorldMapFold.foldBlock(Direction.Axis.Z, regZ * side);
         LeveledRegion<?> candidate = processor.getLeveledRegion(
@@ -175,10 +175,13 @@ public abstract class GuiMapMixin {
             return original;
         }
 
-        int foldedOriginX = XaeroWorldMapFold.foldBlock(Direction.Axis.X, regX * 512);
-        int foldedOriginZ = XaeroWorldMapFold.foldBlock(Direction.Axis.Z, regZ * 512);
+        int foldedOriginX =
+                XaeroWorldMapFold.foldBlock(Direction.Axis.X, regX * XaeroWorldMapFold.REGION_BLOCKS);
+        int foldedOriginZ =
+                XaeroWorldMapFold.foldBlock(Direction.Axis.Z, regZ * XaeroWorldMapFold.REGION_BLOCKS);
         return processor.getLeafMapRegion(
-                caveLayer, Math.floorDiv(foldedOriginX, 512), Math.floorDiv(foldedOriginZ, 512), false);
+                caveLayer, Math.floorDiv(foldedOriginX, XaeroWorldMapFold.REGION_BLOCKS),
+                Math.floorDiv(foldedOriginZ, XaeroWorldMapFold.REGION_BLOCKS), false);
     }
 
     @Redirect(
@@ -202,8 +205,8 @@ public abstract class GuiMapMixin {
         this.toroidal$slotFolded = false;
         boolean isCandidate = region == this.toroidal$leveledCandidate;
         int level = this.toroidal$viewLevel;
-        int slotSize = 64 << level;
-        int side = 512 << level;
+        int slotSize = XaeroWorldMapFold.SLOT_BLOCKS << level;
+        int side = XaeroWorldMapFold.REGION_BLOCKS << level;
         int viewBlockX = this.toroidal$viewLeveledRegX * side + slotX * slotSize;
         int viewBlockZ = this.toroidal$viewLeveledRegZ * side + slotZ * slotSize;
         this.toroidal$slotViewBlockX = viewBlockX;
@@ -252,7 +255,7 @@ public abstract class GuiMapMixin {
     private void toroidal$drawClippedPeriodCopies(
             Matrix4f matrix, float x, float y, float width, float height,
             int texture, boolean hasLight, MultiTextureRenderTypeRenderer renderer, Operation<Void> original) {
-        int slotSize = 64 << this.toroidal$viewLevel;
+        int slotSize = XaeroWorldMapFold.SLOT_BLOCKS << this.toroidal$viewLevel;
         if (!XaeroWorldMapFold.active() || XaeroWorldMapFold.glueableAt(slotSize)) {
             original.call(matrix, x, y, width, height, texture, hasLight, renderer);
             return;
