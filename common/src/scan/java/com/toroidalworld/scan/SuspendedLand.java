@@ -35,9 +35,11 @@ final class SuspendedLand {
 
     static final int SITE_COLUMNS = 16;
 
-    private static final int SEEDS = 16;
+    private static final String SCAN = "suspended-land";
 
-    private static final long SEED_STEP = 0x9E3779B97F4A7C15L;
+    static final int SEEDS = 16;
+
+    static final long SEED_STEP = 0x9E3779B97F4A7C15L;
 
     private static final int SWEEP_STEP_BLOCKS = 8;
 
@@ -166,6 +168,8 @@ final class SuspendedLand {
                         () -> result[0] = sweep(type, seed, ceiling, density, vanilla.seaLevel()));
                 found = result[0].site();
                 Hit reach = result[0].highest();
+                ScanReports.note(SCAN, "suspended", "type=" + type.name() + " width=" + WIDTH_BLOCKS
+                        + " seed=" + seed + " site=" + (found != null));
                 if (reach != null && (highest == null || reach.overshoot() > highest.overshoot())) {
                     highest = reach;
                     highestAt = type.name() + " seed " + seed + " x=" + reach.blockX()
