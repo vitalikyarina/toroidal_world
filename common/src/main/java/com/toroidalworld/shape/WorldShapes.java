@@ -1,5 +1,6 @@
 package com.toroidalworld.shape;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -32,10 +33,15 @@ public final class WorldShapes {
     }
 
     public static List<WorldShape> shapes() {
-        return Stream.concat(
-                Stream.of(NORMAL),
-                SHAPES.entries().values().stream()
-                        .sorted(Comparator.comparing((WorldShape shape) -> shape.id().toString())))
+        List<WorldShape> own = new ArrayList<>();
+        List<WorldShape> foreign = new ArrayList<>();
+        for (WorldShape shape : SHAPES.entries().values()) {
+            (ToroidalWorld.MODID.equals(shape.id().getNamespace()) ? own : foreign).add(shape);
+        }
+        foreign.sort(Comparator.comparing(shape -> shape.id().toString()));
+
+        return Stream.of(Stream.of(NORMAL), own.stream(), foreign.stream())
+                .flatMap(shapes -> shapes)
                 .toList();
     }
 
