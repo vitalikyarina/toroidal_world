@@ -148,6 +148,10 @@ class ClimateScan {
                 .append("A torus that declined compression and a cylinder are never compressed, so one lap of")
                 .append(" either is vanilla's own window of that size; the one-biome gate applies to the")
                 .append(" compressed torus alone.")
+                .append(System.lineSeparator())
+                .append("Criterion: the distribution clause. The empty-control check is a blindness guard and")
+                .append(" the one-biome check a feature gate on compression; every number in the table is a")
+                .append(" reading.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         List<String> thin = new ArrayList<>();
@@ -212,6 +216,9 @@ class ClimateScan {
                 .append("under = seeds whose land share falls below ")
                 .append(String.format("%.0f%%", USABLE_LAND_SHARE * 100))
                 .append("; best seed is the one to hand a round that needs land.")
+                .append(System.lineSeparator())
+                .append("Criterion: the distribution clause. The only assertion is a blindness guard - no")
+                .append(" median, minimum or under-count here is a gate.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         List<String> blind = new ArrayList<>();
@@ -319,6 +326,10 @@ class ClimateScan {
                 .append(" they bracket the mean a lift has to reach; vanilla puts ocean under ")
                 .append(OCEAN_CONTINENTALNESS).append(".").append(System.lineSeparator())
                 .append("spread = mean of the per-seed standard deviation of continentalness over the lap.")
+                .append(System.lineSeparator())
+                .append("Criterion: the distribution clause. The empty-lap check is a blindness guard and the")
+                .append(" floor check a feature gate on the land guarantee; the medians, minima and")
+                .append(" correlation are readings.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         List<String> blind = new ArrayList<>();
@@ -505,6 +516,9 @@ class ClimateScan {
                 .append("; the spread is gated at ").append(String.format("%.0f%%", MAX_SPREAD_DRIFT * 100))
                 .append(" - the ring's rule cannot move a line, so this is the estimator's own floor and")
                 .append(" catches a compression-class regression, not the ring.")
+                .append(System.lineSeparator())
+                .append("Criterion: the distribution clause. Both drift checks are distribution gates - the")
+                .append(" folded reading against the unbounded control.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         List<String> off = new ArrayList<>();

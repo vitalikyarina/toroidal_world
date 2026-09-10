@@ -161,6 +161,10 @@ class TerrainWallScan {
                 .append("The control binds WorldFolds.NOOP, so it reads the same window of an unbounded vanilla")
                 .append(" world - the same seed, the same coordinates, no fold.").append(System.lineSeparator())
                 .append("Jaggedness is not a member of NoiseRouter and is not reported.")
+                .append(System.lineSeparator())
+                .append("Criterion: the per-site-count clause. Every blade site below is a reading on one")
+                .append(" seed at one width, never a closing condition; the only assertion is a blindness")
+                .append(" guard on an all-water or all-land control window.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         for (Pass pass : List.of(folded, control)) {
@@ -193,6 +197,9 @@ class TerrainWallScan {
                 .append(System.lineSeparator())
                 .append("damp = OctaveVarianceCorrection.factor, gain = its anchor gain; an octave the floor")
                 .append(" never caught takes damp 1 and gain 0.")
+                .append(System.lineSeparator())
+                .append("Criterion: none. This table reads what the fold applies to each octave and measures")
+                .append(" no terrain, so it gates nothing.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         for (ResourceKey<NormalNoise.NoiseParameters> key : TERRAIN_FIELDS) {
@@ -232,6 +239,10 @@ class TerrainWallScan {
                 .append(NEEDLE_DROP_BLOCKS).append(" blocks) past the control's; max is one column and swings")
                 .append(" both ways, so it is printed and not gated. The needle and pit counts under it are")
                 .append(" outliers of the same numbers, reported so a row can be followed to a place.")
+                .append(System.lineSeparator())
+                .append("Criterion: the distribution clause on the percentiles, which are a distribution gate")
+                .append(" against the unbounded control, and the per-site-count clause on the needle and pit")
+                .append(" counts, which are readings.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         report.append(String.format("    %-8s %-14s %29s %29s%n", "", "", "torus", "control"));
