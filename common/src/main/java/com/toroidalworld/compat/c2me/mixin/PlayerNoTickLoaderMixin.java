@@ -1,6 +1,5 @@
 package com.toroidalworld.compat.c2me.mixin;
 
-import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -9,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import com.toroidalworld.accessors.LevelHolder;
+import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.compat.c2me.C2meSeamFold;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
@@ -29,23 +29,6 @@ public class PlayerNoTickLoaderMixin {
     @Final
     private ChunkMap tacs;
 
-    @Unique
-    private boolean toroidal$resolved;
-
-    @Unique
-    private @Nullable WorldFold toroidal$transformer;
-
-    @Unique
-    private @Nullable WorldFold toroidal$transformer() {
-        if (!this.toroidal$resolved) {
-            this.toroidal$transformer =
-                    WorldLoopAttachments.wrappedTransformerOf(((LevelHolder) (Object) this.tacs).toroidal$level());
-            this.toroidal$resolved = true;
-        }
-
-        return this.toroidal$transformer;
-    }
-
     @WrapOperation(
             method = "loadChunk0",
             at = @At(
@@ -59,7 +42,8 @@ public class PlayerNoTickLoaderMixin {
             ItemStatus<?, ?, ?> status,
             Runnable callback,
             Operation<ItemHolder<?, ?, ?, ?>> original) {
-        return original.call(chunkSystem, this.toroidal$canonical(key), type, source, status, callback);
+        return original.call(
+                chunkSystem, this.toroidal$canonical(chunkSystem, key), type, source, status, callback);
     }
 
     @WrapOperation(
@@ -74,12 +58,12 @@ public class PlayerNoTickLoaderMixin {
             Object source,
             ItemStatus<?, ?, ?> status,
             Operation<Void> original) {
-        original.call(chunkSystem, this.toroidal$canonical(key), type, source, status);
+        original.call(chunkSystem, this.toroidal$canonical(chunkSystem, key), type, source, status);
     }
 
     @Unique
-    private Object toroidal$canonical(Object key) {
-        WorldFold transformer = this.toroidal$transformer();
+    private Object toroidal$canonical(TheChunkSystem chunkSystem, Object key) {
+        WorldFold transformer = ((TransformerSource) chunkSystem).toroidal$wrappedTransformer();
         if (transformer == null || !(key instanceof ChunkPos pos)) {
             return key;
         }
@@ -89,7 +73,8 @@ public class PlayerNoTickLoaderMixin {
 
     @ModifyVariable(method = "setViewDistance", at = @At("HEAD"), argsOnly = true)
     private int toroidal$clampNoTickViewDistance(int viewDistance) {
-        WorldFold transformer = this.toroidal$transformer();
+        WorldFold transformer =
+                WorldLoopAttachments.wrappedTransformerOf(((LevelHolder) (Object) this.tacs).toroidal$level());
         return transformer == null ? viewDistance : transformer.limitViewDistance(viewDistance);
     }
 }

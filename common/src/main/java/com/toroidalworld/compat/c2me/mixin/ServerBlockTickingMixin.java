@@ -15,7 +15,6 @@ import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.util.StaticCache2D;
-import net.minecraft.world.level.ChunkPos;
 
 @Mixin(ServerBlockTicking.class)
 public class ServerBlockTickingMixin {
@@ -33,14 +32,7 @@ public class ServerBlockTickingMixin {
             @Local(argsOnly = true) ChunkLoadingContext context) {
         WorldFold transformer =
                 ((TransformerSource) context.theChunkSystem()).toroidal$wrappedTransformer();
-        if (transformer == null) {
-            return original.call(centerX, centerZ, range, initializer);
-        }
-
-        StaticCache2D.Initializer<GenerationChunkHolder> folding = (slotX, slotZ) -> {
-            ChunkPos slot = C2meSeamFold.canonicalSlot(transformer, centerX, centerZ, slotX, slotZ);
-            return initializer.get(slot.x(), slot.z());
-        };
-        return original.call(centerX, centerZ, range, folding);
+        return original.call(centerX, centerZ, range,
+                C2meSeamFold.foldingInitializer(transformer, centerX, centerZ, initializer));
     }
 }
