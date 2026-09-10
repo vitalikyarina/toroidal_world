@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import com.toroidalworld.api.v1.shape.LoopSpans;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.engine.gen.ShapedDimensions;
@@ -33,10 +34,10 @@ class CylinderDimensionsTest {
     private static final HolderLookup.Provider WORLDGEN = VanillaRegistries.createLookup();
 
     private static final CylinderSettings X_32 = new CylinderSettings(
-            WorldLoopBounds.ofWidth(Direction.Axis.X, 32), 2, WorldLoopBounds.ofWidth(Direction.Axis.X, 256));
+            LoopSpans.ofWidth(Direction.Axis.X, 32), 2, LoopSpans.ofWidth(Direction.Axis.X, 256));
 
     private static final CylinderSettings Z_64 = new CylinderSettings(
-            WorldLoopBounds.ofWidth(Direction.Axis.Z, 64), 4, WorldLoopBounds.ofWidth(Direction.Axis.Z, 320));
+            LoopSpans.ofWidth(Direction.Axis.Z, 64), 4, LoopSpans.ofWidth(Direction.Axis.Z, 320));
 
     @Test
     void anXCylinderRoundTripsThroughItsThreeGenerators() {
@@ -78,8 +79,8 @@ class CylinderDimensionsTest {
         WorldDimensions created = CylinderDimensions.apply(overworldOnly(), Z_64);
 
         assertNull(ShapedDimensions.shapeOf(created, LevelStem.NETHER));
-        assertEquals(new CylinderSettings(WorldLoopBounds.ofWidth(Direction.Axis.Z, 64), 4,
-                WorldLoopBounds.ofWidth(Direction.Axis.Z, 256)), CylinderDimensions.read(created));
+        assertEquals(new CylinderSettings(LoopSpans.ofWidth(Direction.Axis.Z, 64), 4,
+                LoopSpans.ofWidth(Direction.Axis.Z, 256)), CylinderDimensions.read(created));
     }
 
     @Test
@@ -95,11 +96,11 @@ class CylinderDimensionsTest {
     @Test
     void settingsRefuseATorusOverworldAndAnEndOffTheAxis() {
         assertThrows(IllegalArgumentException.class, () -> new CylinderSettings(
-                WorldLoopBounds.ofWidth(32), 2, WorldLoopBounds.ofWidth(Direction.Axis.X, 256)));
+                LoopSpans.ofWidth(32), 2, LoopSpans.ofWidth(Direction.Axis.X, 256)));
         assertThrows(IllegalArgumentException.class, () -> new CylinderSettings(
-                WorldLoopBounds.ofWidth(Direction.Axis.X, 32), 2, WorldLoopBounds.ofWidth(Direction.Axis.Z, 256)));
+                LoopSpans.ofWidth(Direction.Axis.X, 32), 2, LoopSpans.ofWidth(Direction.Axis.Z, 256)));
         assertThrows(IllegalArgumentException.class, () -> new CylinderSettings(
-                WorldLoopBounds.ofWidth(Direction.Axis.X, 32), 2, WorldLoopBounds.ofWidth(256)));
+                LoopSpans.ofWidth(Direction.Axis.X, 32), 2, LoopSpans.ofWidth(256)));
     }
 
     private static WorldDimensions vanillaDimensions() {
