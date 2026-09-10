@@ -1,6 +1,7 @@
 package com.toroidalworld.core;
 
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class StartupRegistry<K, V> {
@@ -24,9 +25,9 @@ public final class StartupRegistry<K, V> {
             throw new IllegalStateException(subject + " must be registered before the server starts.");
         }
 
-        Map<K, V> grown = new HashMap<>(entries);
+        Map<K, V> grown = new LinkedHashMap<>(entries);
         grown.put(key, value);
-        entries = Map.copyOf(grown);
+        entries = Collections.unmodifiableMap(grown);
     }
 
     public Map<K, V> entries() {
