@@ -2,13 +2,11 @@ package com.toroidalworld.shape.torus;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.core.CarriedShape;
-import com.toroidalworld.core.FlatShape;
-import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.api.v1.shape.LoopSpans;
+import com.toroidalworld.api.v1.shape.ShapeDimensions;
 import com.toroidalworld.core.NetherScales;
-import com.toroidalworld.core.WorldLoopBounds;
-import com.toroidalworld.engine.gen.ShapedDimensions;
 
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.WorldDimensions;
@@ -16,53 +14,47 @@ import net.minecraft.world.level.levelgen.WorldDimensions;
 public final class TorusDimensions {
 
     public static WorldDimensions apply(WorldDimensions dimensions, TorusSettings settings) {
-        GenerationOptions generationOptions = settings.generationOptions();
-        return ShapedDimensions.withShapes(dimensions,
-                new CarriedShape(FlatShape.torus(settings.overworld()), generationOptions),
-                new CarriedShape(FlatShape.torus(netherWrapping(settings)), generationOptions),
-                new CarriedShape(FlatShape.torus(settings.end()), generationOptions));
+        return ShapeDimensions.withSpans(dimensions,
+                settings.overworld(),
+                netherSpans(settings),
+                settings.end(),
+                settings.generationOptions());
     }
 
     public static @Nullable TorusSettings read(WorldDimensions dimensions) {
-        CarriedShape carried = ShapedDimensions.carriedShapeOf(dimensions, LevelStem.OVERWORLD);
-        WorldLoopBounds overworld = carried == null ? null : torusBounds(carried.shape());
+        LoopSpans overworld = torusSpansOf(dimensions, LevelStem.OVERWORLD);
         if (overworld == null) {
             return null;
         }
 
-        int overworldChunkWidth = overworld.chunkWidth();
+        int overworldChunkWidth = overworld.chunkWidth(Direction.Axis.X);
         return new TorusSettings(
                 overworld,
                 NetherScales.normalize(readNetherScale(dimensions, overworldChunkWidth), overworldChunkWidth),
-                readEndWrapping(dimensions),
-                carried.generationOptions());
+                readEndSpans(dimensions),
+                ShapeDimensions.optionsOf(dimensions, LevelStem.OVERWORLD));
     }
 
-    private static @Nullable WorldLoopBounds torusBoundsOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {
-        return torusBounds(ShapedDimensions.shapeOf(dimensions, key));
+    private static @Nullable LoopSpans torusSpansOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {
+        LoopSpans spans = ShapeDimensions.spansOf(dimensions, key);
+        return spans != null && spans.isSquare() ? spans : null;
     }
 
-    private static @Nullable WorldLoopBounds torusBounds(@Nullable FlatShape shape) {
-        if (shape == null || !shape.decomposesPerAxis() || !shape.bounds().isSquare()) {
-            return null;
-        }
-
-        return shape.bounds();
-    }
-
-    private static WorldLoopBounds netherWrapping(TorusSettings settings) {
-        int scale = NetherScales.normalize(settings.netherScale(), settings.overworld().chunkWidth());
+    private static LoopSpans netherSpans(TorusSettings settings) {
+        int scale = NetherScales.normalize(settings.netherScale(), settings.chunkWidth());
         return settings.overworld().scaledDown(scale);
     }
 
-    private static WorldLoopBounds readEndWrapping(WorldDimensions dimensions) {
-        WorldLoopBounds end = torusBoundsOf(dimensions, LevelStem.END);
+    private static LoopSpans readEndSpans(WorldDimensions dimensions) {
+        LoopSpans end = torusSpansOf(dimensions, LevelStem.END);
         return end != null ? end : TorusSettings.DEFAULT.end();
     }
 
     private static int readNetherScale(WorldDimensions dimensions, int overworldChunkWidth) {
-        WorldLoopBounds nether = torusBoundsOf(dimensions, LevelStem.NETHER);
-        return nether != null ? overworldChunkWidth / nether.chunkWidth() : NetherScales.DEFAULT;
+        LoopSpans nether = torusSpansOf(dimensions, LevelStem.NETHER);
+        return nether != null
+                ? overworldChunkWidth / nether.chunkWidth(Direction.Axis.X)
+                : NetherScales.DEFAULT;
     }
 
     private TorusDimensions() {

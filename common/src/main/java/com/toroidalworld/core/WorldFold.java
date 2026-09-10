@@ -2,6 +2,7 @@ package com.toroidalworld.core;
 
 import java.util.List;
 
+import com.toroidalworld.api.v1.option.GenerationOptions;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -85,7 +86,6 @@ public interface WorldFold {
 
     DeckTransformation deckTransformation(ChunkPos chunk, ChunkPos copy);
 
-    // mc/1.21: calls the pair, unused on main.
     DeckTransformation nearestCopyTransformation(Vec3 ref, Vec3 target);
 
     DeckTransformation nearestCopyTransformation(BlockPos ref, BlockPos target);

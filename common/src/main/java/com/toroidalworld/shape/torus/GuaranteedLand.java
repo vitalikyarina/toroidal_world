@@ -1,9 +1,9 @@
 package com.toroidalworld.shape.torus;
 
-import com.toroidalworld.client.options.WorldOptionControls;
+import com.toroidalworld.api.v1.client.WorldOptionControls;
 import com.toroidalworld.client.shape.torus.GuaranteedLandControl;
-import com.toroidalworld.core.WorldOption;
-import com.toroidalworld.core.WorldOptions;
+import com.toroidalworld.api.v1.option.WorldOption;
+import com.toroidalworld.api.v1.option.WorldOptions;
 
 import com.mojang.serialization.Codec;
 

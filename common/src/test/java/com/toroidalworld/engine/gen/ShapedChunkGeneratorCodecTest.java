@@ -18,7 +18,7 @@ import com.mojang.serialization.MapCodec;
 import com.toroidalworld.core.CarriedShape;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.FlatShape.Identification;
-import com.toroidalworld.core.GenerationOptions;
+import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.core.WorldLoopBounds.AxisBounds;

@@ -13,6 +13,7 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
 import com.toroidalworld.ToroidalWorld;
+import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.shape.torus.ClimateScale;
 import com.toroidalworld.shape.torus.CompactBiomes;
 

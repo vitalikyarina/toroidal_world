@@ -5,8 +5,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.toroidalworld.core.GenerationMoments;
+import com.toroidalworld.core.ToroidalShapeView;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.engine.noise.GenerationHooks;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 
 import net.minecraft.core.HolderGetter;
@@ -22,7 +23,8 @@ public class RandomStateMixin {
             HolderGetter<NormalNoise.NoiseParameters> noises, long seed, CallbackInfo callback) {
         WorldFold fold = GenerationTransformerContext.context().routerBuildTransformer();
         if (fold != null) {
-            GenerationHooks.runAtRandomState((RandomState) (Object) this, fold, settings.seaLevel());
+            GenerationMoments.runAtRandomState((RandomState) (Object) this, new ToroidalShapeView(fold),
+                    fold.generationOptions(), settings.seaLevel());
         }
     }
 }

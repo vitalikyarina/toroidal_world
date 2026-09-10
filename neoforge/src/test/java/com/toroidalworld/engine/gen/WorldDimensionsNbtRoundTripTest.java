@@ -8,9 +8,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import com.toroidalworld.api.v1.option.GenerationOptions;
+import com.toroidalworld.api.v1.shape.LoopSpans;
 import com.toroidalworld.core.CarriedShape;
-import com.toroidalworld.core.GenerationOptions;
-import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.shape.torus.ClimateScale;
 import com.toroidalworld.shape.torus.CompactBiomes;
@@ -79,8 +79,8 @@ class WorldDimensionsNbtRoundTripTest {
     }
 
     private static WorldDimensions shapedPreset() {
-        TorusSettings settings = new TorusSettings(WorldLoopBounds.ofWidth(OVERWORLD_CHUNK_WIDTH), NETHER_SCALE,
-                WorldLoopBounds.ofWidth(END_CHUNK_WIDTH), GENERATION_OPTIONS);
+        TorusSettings settings = new TorusSettings(LoopSpans.ofWidth(OVERWORLD_CHUNK_WIDTH), NETHER_SCALE,
+                LoopSpans.ofWidth(END_CHUNK_WIDTH), GENERATION_OPTIONS);
         return TorusDimensions.apply(WorldPresets.createNormalWorldDimensions(worldgen), settings);
     }
 

@@ -1,19 +1,19 @@
-package com.toroidalworld.api.v1;
+package com.toroidalworld.core;
 
-import com.toroidalworld.core.CoordinateConstants;
-import com.toroidalworld.core.FoldOrientation;
-import com.toroidalworld.core.WorldFold;
+import com.toroidalworld.api.v1.SeamShift;
+import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-final class WorldFoldToroidalShape implements ToroidalShape {
+public final class ToroidalShapeView implements ToroidalShape {
     private final WorldFold fold;
 
-    WorldFoldToroidalShape(WorldFold fold) {
+    public ToroidalShapeView(WorldFold fold) {
         this.fold = fold;
     }
 
@@ -128,6 +128,21 @@ final class WorldFoldToroidalShape implements ToroidalShape {
     }
 
     @Override
+    public AABB nearestCopy(Vec3 ref, AABB box) {
+        return this.fold.foldBox(ref, box).value();
+    }
+
+    @Override
+    public SeamShift shiftToNearestCopy(Vec3 ref, Vec3 anchor) {
+        return new SeamShiftView(this.fold.nearestCopyTransformation(ref, anchor));
+    }
+
+    @Override
+    public SeamShift shiftToNearestCopy(BlockPos ref, BlockPos anchor) {
+        return new SeamShiftView(this.fold.nearestCopyTransformation(ref, anchor));
+    }
+
+    @Override
     public Oriented<Vec3> nearestCopyOriented(Vec3 ref, Vec3 target) {
         return oriented(this.fold.nearestCopyOriented(ref, target));
     }
@@ -135,6 +150,11 @@ final class WorldFoldToroidalShape implements ToroidalShape {
     @Override
     public Oriented<BlockPos> nearestCopyOriented(BlockPos ref, BlockPos target) {
         return oriented(this.fold.nearestCopyOriented(ref, target));
+    }
+
+    @Override
+    public Oriented<AABB> nearestCopyOriented(Vec3 ref, AABB box) {
+        return oriented(this.fold.foldBox(ref, box));
     }
 
     private static <T> Oriented<T> oriented(WorldFold.Folded<T> folded) {

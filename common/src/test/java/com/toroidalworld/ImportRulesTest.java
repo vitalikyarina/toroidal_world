@@ -37,9 +37,9 @@ class ImportRulesTest {
             "engine.noise.CoastFieldLift -> shape.torus.GuaranteedLand",
             "client.shape.torus.ClimateFactorPreview -> engine.noise.ClimateFields",
             "client.shape.torus.ClimateFactorPreview -> engine.noise.ClimateScaleCompression",
+            "api.v1.shape.ShapeDimensions -> engine.gen.ShapedDimensions",
+            "api.v1.net.PacketRewriters -> engine.net.PacketTranslator",
             "shape.WorldShapes -> engine.gen.ShapedDimensions",
-            "shape.torus.TorusDimensions -> engine.gen.ShapedDimensions",
-            "shape.cylinder.CylinderDimensions -> engine.gen.ShapedDimensions",
             "core.WorldLoopAttachments -> engine.seam.ClientPosition",
             "core.WorldLoopAttachments -> engine.seam.SeamTravel");
 
@@ -78,7 +78,7 @@ class ImportRulesTest {
     }
 
     private static boolean isVocabulary(String group) {
-        return group.equals("accessors") || group.equals("platform") || group.equals(ROOT_GROUP);
+        return group.equals("accessors") || group.equals("api") || group.equals("platform") || group.equals(ROOT_GROUP);
     }
 
     private static String groupOf(String packageName) {

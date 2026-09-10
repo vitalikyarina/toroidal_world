@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.ToroidalWorld;
+import com.toroidalworld.api.v1.net.PacketRewriters;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
@@ -1089,7 +1090,7 @@ class PacketTranslatorTest {
     class ServerboundPayloads {
         @BeforeAll
         static void registerTheProbeThroughThePublicSeamAlone() {
-            PacketTranslator.registerServerboundPayloadRewriter(SeamProbePayload.class, (payload, context) -> {
+            PacketRewriters.registerServerboundPayload(SeamProbePayload.class, (payload, context) -> {
                 BlockPos canonical = context.toServer(payload.pos());
                 return canonical.equals(payload.pos()) ? payload : new SeamProbePayload(canonical);
             });

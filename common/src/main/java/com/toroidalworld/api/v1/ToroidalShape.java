@@ -3,6 +3,7 @@ package com.toroidalworld.api.v1;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -133,6 +134,26 @@ public interface ToroidalShape {
     BlockPos nearestCopy(BlockPos ref, BlockPos target);
 
     /**
+     * The whole box carried into the copy nearest {@code ref}, chosen by where its centre lands. The box moves
+     * rigidly — its size never changes and it is never split at a seam, so a box straddling one comes back
+     * straddling it. That is what a range check, a selection or a rendered bound wants: one box in the frame the
+     * reference is in, rather than the pieces the world would cut it into. Y passes through untouched, and a box
+     * already nearest {@code ref} comes back as the argument instance itself.
+     */
+    AABB nearestCopy(Vec3 ref, AABB box);
+
+    /**
+     * The one move that carries a whole rigid group into the copy nearest {@code ref}, chosen by where
+     * {@code anchor} — one position of the group — lands. Apply the result to every member: seating each member on
+     * its own with {@link #nearestCopy(Vec3, Vec3)} lets two of them pick different copies and tears the group in
+     * half. Y passes through untouched.
+     */
+    SeamShift shiftToNearestCopy(Vec3 ref, Vec3 anchor);
+
+    /** {@link #shiftToNearestCopy(Vec3, Vec3)} on the block grid. */
+    SeamShift shiftToNearestCopy(BlockPos ref, BlockPos anchor);
+
+    /**
      * The shortest vector from {@code from} to {@code to}, measured through the seam where that is shorter — what a
      * waypoint arrow, a distance readout or a direction indicator needs. Equal to
      * {@code nearestCopy(from, to).subtract(from)}. Always a fresh vector: unlike the folds, it never hands an
@@ -209,4 +230,7 @@ public interface ToroidalShape {
 
     /** {@link #nearestCopy(BlockPos, BlockPos)}, reporting the orientation of the copy it chose. */
     Oriented<BlockPos> nearestCopyOriented(BlockPos ref, BlockPos target);
+
+    /** {@link #nearestCopy(Vec3, AABB)}, reporting the orientation of the copy it chose. */
+    Oriented<AABB> nearestCopyOriented(Vec3 ref, AABB box);
 }

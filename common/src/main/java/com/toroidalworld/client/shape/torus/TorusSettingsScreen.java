@@ -5,12 +5,12 @@ import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.client.options.WorldOptionContext;
-import com.toroidalworld.client.options.WorldOptionControl;
-import com.toroidalworld.client.options.WorldOptionControls;
+import com.toroidalworld.api.v1.client.WorldOptionContext;
+import com.toroidalworld.api.v1.client.WorldOptionControl;
+import com.toroidalworld.api.v1.client.WorldOptionControls;
 import com.toroidalworld.client.shape.LoopSettingsScreen;
-import com.toroidalworld.core.GenerationOptions;
-import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.api.v1.option.GenerationOptions;
+import com.toroidalworld.api.v1.shape.LoopSpans;
 import com.toroidalworld.shape.torus.TorusSettings;
 
 import net.minecraft.ChatFormatting;
@@ -31,7 +31,7 @@ public class TorusSettingsScreen extends LoopSettingsScreen<TorusSettings> {
     private final List<WorldOptionControl> optionControls;
 
     public TorusSettingsScreen(Screen parent, TorusSettings current, Consumer<TorusSettings> onDone) {
-        super(TITLE, parent, current.overworld().chunkWidth(), current.netherScale(), current.end().chunkWidth(),
+        super(TITLE, parent, current.chunkWidth(), current.netherScale(), current.endChunkWidth(),
                 onDone);
         this.generationOptions = current.generationOptions();
         this.optionControls = WorldOptionControls.createAll(new ScreenContext());
@@ -68,9 +68,9 @@ public class TorusSettingsScreen extends LoopSettingsScreen<TorusSettings> {
         }
 
         return new TorusSettings(
-                WorldLoopBounds.ofWidth(this.controls.effectiveSize()),
+                LoopSpans.ofWidth(this.controls.effectiveSize()),
                 this.controls.netherScale(),
-                WorldLoopBounds.ofWidth(this.controls.effectiveEndSize()),
+                LoopSpans.ofWidth(this.controls.effectiveEndSize()),
                 chosen);
     }
 

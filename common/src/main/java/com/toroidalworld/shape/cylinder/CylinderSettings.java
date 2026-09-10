@@ -1,19 +1,19 @@
 package com.toroidalworld.shape.cylinder;
 
+import com.toroidalworld.api.v1.shape.LoopSpans;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.NetherScales;
-import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.core.WorldLoopSizes;
 
 import net.minecraft.core.Direction;
 
-public record CylinderSettings(WorldLoopBounds overworld, int netherScale, WorldLoopBounds end) {
+public record CylinderSettings(LoopSpans overworld, int netherScale, LoopSpans end) {
     private static final Direction.Axis DEFAULT_AXIS = Direction.Axis.X;
 
     public static final CylinderSettings DEFAULT = new CylinderSettings(
-            WorldLoopBounds.ofWidth(DEFAULT_AXIS, WorldLoopSizes.DEFAULT_CHUNK_WIDTH),
+            LoopSpans.ofWidth(DEFAULT_AXIS, WorldLoopSizes.DEFAULT_CHUNK_WIDTH),
             NetherScales.DEFAULT,
-            WorldLoopBounds.ofWidth(DEFAULT_AXIS, WorldLoopSizes.END_DEFAULT_CHUNK_WIDTH));
+            LoopSpans.ofWidth(DEFAULT_AXIS, WorldLoopSizes.END_DEFAULT_CHUNK_WIDTH));
 
     public CylinderSettings {
         if (!isCylinder(overworld)) {
@@ -38,15 +38,15 @@ public record CylinderSettings(WorldLoopBounds overworld, int netherScale, World
         return end.chunkWidth(axis());
     }
 
-    public static boolean isCylinder(WorldLoopBounds bounds) {
-        return bounds.loops(Direction.Axis.X) != bounds.loops(Direction.Axis.Z);
+    public static boolean isCylinder(LoopSpans spans) {
+        return spans.loops(Direction.Axis.X) != spans.loops(Direction.Axis.Z);
     }
 
     public static boolean isCylinder(FlatShape shape) {
         return shape.identification() == FlatShape.Identification.CYLINDER;
     }
 
-    public static Direction.Axis loopedAxis(WorldLoopBounds bounds) {
-        return bounds.loops(Direction.Axis.X) ? Direction.Axis.X : Direction.Axis.Z;
+    public static Direction.Axis loopedAxis(LoopSpans spans) {
+        return spans.loops(Direction.Axis.X) ? Direction.Axis.X : Direction.Axis.Z;
     }
 }

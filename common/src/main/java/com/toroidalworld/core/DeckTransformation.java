@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public record DeckTransformation(SeamTransform blocks) {
@@ -41,6 +42,20 @@ public record DeckTransformation(SeamTransform blocks) {
         return new ChunkPos(
                 SectionPos.blockToSectionCoord(this.blocks.applyCellX(chunk.getMinBlockX())),
                 SectionPos.blockToSectionCoord(this.blocks.applyCellZ(chunk.getMinBlockZ())));
+    }
+
+    public AABB apply(AABB box) {
+        if (isIdentity()) {
+            return box;
+        }
+
+        double firstX = this.blocks.applyX(box.minX);
+        double secondX = this.blocks.applyX(box.maxX);
+        double firstZ = this.blocks.applyZ(box.minZ);
+        double secondZ = this.blocks.applyZ(box.maxZ);
+        return new AABB(
+                Math.min(firstX, secondX), box.minY, Math.min(firstZ, secondZ),
+                Math.max(firstX, secondX), box.maxY, Math.max(firstZ, secondZ));
     }
 
     public BoundingBox apply(BoundingBox box) {

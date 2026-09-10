@@ -2,7 +2,7 @@ package com.toroidalworld.shape.cylinder;
 
 import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.client.shape.cylinder.CylinderShapeSetup;
-import com.toroidalworld.shape.ShapeModule;
+import com.toroidalworld.api.v1.shape.ShapeModule;
 
 import net.minecraft.resources.Identifier;
 
