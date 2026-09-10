@@ -21,6 +21,7 @@ public abstract class LoopSettingsScreen<S> extends Screen {
     private final Consumer<S> onDone;
 
     private HeaderAndFooterLayout layout;
+    private ScrollableContents contentsScroll;
     private Button doneButton;
 
     protected LoopSettingsScreen(Component title, Screen parent, int chunkWidth, int netherScale, int endChunkWidth,
@@ -66,7 +67,8 @@ public abstract class LoopSettingsScreen<S> extends Screen {
         this.controls.addFields(this.font, contents);
         this.addAfterFields(this.font, contents);
 
-        this.layout.addToContents(contents);
+        this.contentsScroll = new ScrollableContents(contents);
+        this.layout.addToContents(this.contentsScroll);
 
         LinearLayout footer = this.layout.addToFooter(LinearLayout.horizontal().spacing(FOOTER_SPACING));
         this.doneButton = footer.addChild(Button.builder(CommonComponents.GUI_DONE, button -> this.commit()).build());
@@ -79,6 +81,7 @@ public abstract class LoopSettingsScreen<S> extends Screen {
 
     @Override
     protected void repositionElements() {
+        this.contentsScroll.setMaxHeight(this.layout.getContentHeight());
         this.layout.arrangeElements();
     }
 
