@@ -62,6 +62,8 @@ class ShapeRegistrationBoundaryTest {
     private static final Identifier MODULE_ID =
             Identifier.fromNamespaceAndPath(ToroidalWorld.MODID, "boundary_test_module");
 
+    private static final Identifier FOREIGN_ID = Identifier.fromNamespaceAndPath("boundary_test_mod", "band");
+
     private static final FlatShape CYLINDER = FlatShape.cylinder(
             new WorldLoopBounds(new AxisBounds.Looped(-16, 16), AxisBounds.Unbounded.INSTANCE));
 
@@ -92,6 +94,12 @@ class ShapeRegistrationBoundaryTest {
                 () -> settingsWereReset = true,
                 (registries, dimensions) ->
                         CYLINDER.equals(ShapedDimensions.shapeOf(dimensions, LevelStem.OVERWORLD)));
+
+        WorldShapes.register(WorldShape.of(
+                FOREIGN_ID,
+                Component.literal("Boundary test band"),
+                Component.literal("A shape registered from another namespace"),
+                (registries, dimensions) -> dimensions));
 
         WorldShapes.register(cylinder);
         ShapeCustomizers.register(CYLINDER_ID, parent -> parent);
@@ -134,6 +142,14 @@ class ShapeRegistrationBoundaryTest {
 
         assertSame(WorldShapes.NORMAL, offered.get(0));
         assertTrue(offered.contains(cylinder), offered.toString());
+    }
+
+    @Test
+    void theModsOwnShapesKeepTheirRegistrationOrderAndForeignOnesFollow() {
+        List<Identifier> offered = WorldShapes.shapes().stream().map(WorldShape::id).toList();
+
+        assertTrue(offered.indexOf(CYLINDER_ID) < offered.indexOf(MODULE_ID), offered.toString());
+        assertTrue(offered.indexOf(MODULE_ID) < offered.indexOf(FOREIGN_ID), offered.toString());
     }
 
     @Test
