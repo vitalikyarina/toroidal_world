@@ -26,6 +26,7 @@
     "toroidal_world.shape.mixins.json",
     "toroidal_world.compat.journeymap.mixins.json",
     "toroidal_world.compat.xaero.mixins.json",
+    "toroidal_world.compat.ftbchunks.mixins.json",
     "toroidal_world.compat.c2me.mixins.json",
     "toroidal_world.compat.distanthorizons.mixins.json",
     "toroidal_world.compat.create.mixins.json",
@@ -45,6 +46,7 @@
     "minecraft": "1.21.1"
   },
   "breaks": {
-    "journeymap": "<${journeymap_min_version}"
+    "journeymap": "<${journeymap_min_version}",
+    "ftbchunks": "<${ftbchunks_min_version}"
   }
 }

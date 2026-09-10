@@ -67,6 +67,15 @@ Circumnavigate the world — walk, sail or fly past the border and come out on t
     ordering="NONE"
     side="CLIENT"
 
+# FTB Chunks dependency — the map folds inject into private members and one lambda the older FTB Chunks spells
+# differently.
+[[dependencies.${mod_id}]]
+    modId="ftbchunks"
+    type="optional"
+    versionRange="[${ftbchunks_min_version},)"
+    ordering="NONE"
+    side="CLIENT"
+
 [[mixins]]
 config="toroidal_world.mixins.json"
 
@@ -78,6 +87,9 @@ config="toroidal_world.compat.journeymap.mixins.json"
 
 [[mixins]]
 config="toroidal_world.compat.xaero.mixins.json"
+
+[[mixins]]
+config="toroidal_world.compat.ftbchunks.mixins.json"
 
 [[mixins]]
 config="toroidal_world.compat.c2me.mixins.json"

@@ -18,6 +18,7 @@ def modIngameVersion = withBuildSuffix(toroidal_world_version)
 def jarVersion = withBuildSuffix("${toroidal_world_version}+mc${minecraft_version}")
 // The metadata closure is detached from this script by the configuration cache, so the property is read here.
 def journeymapMinVersion = journeymap_min_version
+def ftbchunksMinVersion = ftbchunks_min_version
 
 base {
     archivesName = mod_id
@@ -60,6 +61,14 @@ repositories {
         url = 'https://maven.bawnorton.com/releases'
         content {
             includeGroup 'com.github.bawnorton.mixinsquared'
+        }
+    }
+    // FTB Chunks and ftb-library. Needed here too: common's sources compile in this module.
+    maven {
+        name = 'FTB'
+        url = 'https://maven.ftb.dev/releases'
+        content {
+            includeGroup 'dev.ftb.mods'
         }
     }
 }
@@ -181,6 +190,12 @@ dependencies {
     modCompileOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_fabric_version}"
     modCompileOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_fabric_version}"
     modCompileOnly "maven.modrinth:sable:${sable_fabric_version}"
+    // The FTB jars ride modCompileOnly as the FABRIC flavor, for the same reason the Xaero ones do: without the
+    // remap the map screens do not resolve to their vanilla supertypes and the shipped jar keeps Mojmap descriptors
+    // no Fabric runtime can match.
+    // Non-transitive for the same reason as in common: the FTB poms ask for Architectury and no fold names its types.
+    modCompileOnly("dev.ftb.mods:ftb-chunks-fabric:${ftbchunks_version}") { transitive = false }
+    modCompileOnly("dev.ftb.mods:ftb-library-fabric:${ftblibrary_version}") { transitive = false }
     // Needed here only because common's sources compile in this module. Plain compileOnly, and the neoforge flavor:
     // there is no fabric flavor of Create to remap, and none is wanted — Create cannot be installed on this loader,
     // so the compat config stays gated off and remapJar has nothing to resolve.
@@ -255,8 +270,10 @@ test {
 processResources {
     inputs.property 'version', modIngameVersion
     inputs.property 'journeymap_min_version', journeymapMinVersion
+    inputs.property 'ftbchunks_min_version', ftbchunksMinVersion
     filesMatching('fabric.mod.json') {
-        expand version: modIngameVersion, journeymap_min_version: journeymapMinVersion
+        expand version: modIngameVersion, journeymap_min_version: journeymapMinVersion,
+                ftbchunks_min_version: ftbchunksMinVersion
     }
     // The NeoForge AT rides along in common's resources; the fabric jar carries the accesswidener instead.
     exclude 'META-INF/accesstransformer.cfg'

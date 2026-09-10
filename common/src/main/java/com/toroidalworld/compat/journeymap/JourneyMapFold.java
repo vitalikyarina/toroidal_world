@@ -10,22 +10,18 @@ import com.toroidalworld.client.engine.ClientFrame;
 import com.toroidalworld.compat.AxisCopies;
 import com.toroidalworld.compat.ClientShapes;
 import com.toroidalworld.compat.FullscreenZoomFloor;
+import com.toroidalworld.compat.MapCopyBudget;
 import com.toroidalworld.engine.seam.MapSurfaceCopies.Copies;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.Vec3;
 
 public final class JourneyMapFold {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     private static final int REGION_BLOCKS = 512;
-    private static final int REGION_CHUNKS = 32;
-
-    private static final int MAX_TILE_BLITS = 16_384;
-    private static final double VIEWPORT_COVER = 0.75;
 
     public static final String WORLD_CHANGED = "world";
     public static final String DIMENSION_CHANGED = "dimension";
@@ -100,37 +96,7 @@ public final class JourneyMapFold {
     }
 
     public static int tilesWithContent(int zoom, int viewportX, int viewportZ) {
-        ToroidalShape shape = ClientShapes.current();
-        if (shape == null) {
-            return 1;
-        }
-
-        return tilesAlong(shape, Direction.Axis.X, zoom, viewportX) * tilesAlong(shape, Direction.Axis.Z, zoom, viewportZ);
-    }
-
-    private static int tilesAlong(ToroidalShape shape, Direction.Axis axis, int zoom, int viewportPixels) {
-        return shape.loops(axis) ? regionSpan(shape, axis) : viewportTiles(zoom, viewportPixels);
-    }
-
-    public static int viewportTiles(int zoom, int viewportPixels) {
-        return zoom <= 0 ? 1 : (int) Math.ceil((double) viewportPixels / zoom) + 1;
-    }
-
-    public static int copyRangeCap(int loopedAxes, int tilesWithContent) {
-        int budget = MAX_TILE_BLITS / Math.max(1, tilesWithContent);
-        return switch (loopedAxes) {
-            case 2 -> (int) ((Math.sqrt(budget) - 1) / 2);
-            case 1 -> (budget - 1) / 2;
-            default -> 0;
-        };
-    }
-
-    public static int copyRange(int loopedAxes, int tilesWithContent, double periodPixels, int viewportPixels) {
-        return Math.min(copiesToCover(periodPixels, viewportPixels), copyRangeCap(loopedAxes, tilesWithContent));
-    }
-
-    private static int copiesToCover(double periodPixels, int viewportPixels) {
-        return periodPixels <= 0.0 ? 0 : (int) Math.ceil(viewportPixels * VIEWPORT_COVER / periodPixels);
+        return MapCopyBudget.tilesWithContent(ClientShapes.current(), zoom, viewportX, viewportZ);
     }
 
     public static void recordFullscreenCopyRange(int rangeX, int rangeZ) {
@@ -139,21 +105,8 @@ public final class JourneyMapFold {
     }
 
     public static Copies fullscreenCopies() {
-        return new Copies(Math.max(fullscreenRangeX, fullscreenRangeZ), new BoundingBox(
-                paintedMin(Direction.Axis.X, fullscreenRangeX), Integer.MIN_VALUE,
-                paintedMin(Direction.Axis.Z, fullscreenRangeZ),
-                paintedMax(Direction.Axis.X, fullscreenRangeX), Integer.MAX_VALUE,
-                paintedMax(Direction.Axis.Z, fullscreenRangeZ)));
-    }
-
-    private static int paintedMin(Direction.Axis axis, int range) {
-        AxisCopies copies = copies(axis);
-        return copies.loops() ? copies.min() + copies.offset(-range) : Integer.MIN_VALUE;
-    }
-
-    private static int paintedMax(Direction.Axis axis, int range) {
-        AxisCopies copies = copies(axis);
-        return copies.loops() ? copies.max() + copies.offset(range) - 1 : Integer.MAX_VALUE;
+        return MapCopyBudget.painted(copies(Direction.Axis.X), fullscreenRangeX,
+                copies(Direction.Axis.Z), fullscreenRangeZ);
     }
 
     public static <D> @Nullable String staleGridReason(@Nullable D lastDimension, @Nullable D dimension,
@@ -180,18 +133,9 @@ public final class JourneyMapFold {
             return 0;
         }
 
-        int span = Math.max(regionSpan(shape, Direction.Axis.X), regionSpan(shape, Direction.Axis.Z));
+        int span = Math.max(MapCopyBudget.regionSpan(shape, Direction.Axis.X),
+                MapCopyBudget.regionSpan(shape, Direction.Axis.Z));
         return span == 0 ? 0 : 2 * span + 3;
-    }
-
-    private static int regionSpan(ToroidalShape shape, Direction.Axis axis) {
-        if (!shape.loops(axis)) {
-            return 0;
-        }
-
-        int minRegion = Math.floorDiv(shape.minChunk(axis), REGION_CHUNKS);
-        int maxRegion = Math.floorDiv(shape.maxChunk(axis) - 1, REGION_CHUNKS);
-        return maxRegion - minRegion + 1;
     }
 
     private JourneyMapFold() {

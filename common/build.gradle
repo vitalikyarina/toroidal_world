@@ -44,6 +44,14 @@ repositories {
             includeGroup 'com.github.bawnorton.mixinsquared'
         }
     }
+    // FTB Chunks and ftb-library for the map compat mixins — FTB publishes nowhere else.
+    maven {
+        name = 'FTB'
+        url = 'https://maven.ftb.dev/releases'
+        content {
+            includeGroup 'dev.ftb.mods'
+        }
+    }
 }
 
 // C2ME publishes one jar that carries no classes of its own — every module rides inside it as a jar-in-jar, and no
@@ -149,6 +157,10 @@ dependencies {
     compileOnly "maven.modrinth:distanthorizons:${distanthorizons_version}"
     compileOnly "maven.modrinth:create:${create_version}"
     compileOnly "maven.modrinth:sable:${sable_version}"
+    // Non-transitive: the FTB poms ask for Architectury, whose types no map fold names — pulling its maven in would
+    // put a whole mod on the compile classpath to satisfy a reference nothing makes.
+    compileOnly("dev.ftb.mods:ftb-chunks-neoforge:${ftbchunks_version}") { transitive = false }
+    compileOnly("dev.ftb.mods:ftb-library-neoforge:${ftblibrary_version}") { transitive = false }
     compileOnly "com.github.bawnorton.mixinsquared:mixinsquared-common:${mixinsquared_version}"
 }
 

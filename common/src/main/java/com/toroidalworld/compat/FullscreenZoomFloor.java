@@ -9,6 +9,7 @@ public final class FullscreenZoomFloor {
     public static final int MIN_WORLD_PIXELS = 64;
 
     private static final int JOURNEYMAP_REGION_BLOCKS = 512;
+    private static final int FTBCHUNKS_ZOOM_BLOCKS = 256;
 
     public static int journeyMapZoom(ToroidalShape shape) {
         int floor = 0;
@@ -32,8 +33,23 @@ public final class FullscreenZoomFloor {
         return floor;
     }
 
+    public static int ftbChunksZoom(ToroidalShape shape) {
+        int floor = 0;
+        for (Direction.Axis axis : CoordinateConstants.HORIZONTAL_AXES) {
+            if (shape.loops(axis)) {
+                floor = Math.max(floor, ftbChunksZoom(shape.widthBlocks(axis)));
+            }
+        }
+
+        return floor;
+    }
+
     static int journeyMapZoom(int widthBlocks) {
         return Math.ceilDiv(MIN_WORLD_PIXELS * JOURNEYMAP_REGION_BLOCKS, widthBlocks);
+    }
+
+    static int ftbChunksZoom(int widthBlocks) {
+        return Math.ceilDiv(MIN_WORLD_PIXELS * FTBCHUNKS_ZOOM_BLOCKS, widthBlocks);
     }
 
     static double xaeroScale(int widthBlocks, double scaleMultiplier) {

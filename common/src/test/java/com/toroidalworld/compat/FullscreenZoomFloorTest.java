@@ -31,6 +31,20 @@ class FullscreenZoomFloorTest {
     }
 
     @Test
+    void ftbChunksKeepsTheWorldAtLeast64PixelsWide() {
+        assertEquals(32, FullscreenZoomFloor.ftbChunksZoom(512), "a 512-block world: 512 * 32 / 256 = 64 px");
+        assertEquals(16, FullscreenZoomFloor.ftbChunksZoom(1024), "a 1024-block world: 64 * 256 / 1024 = 16");
+        assertEquals(128, FullscreenZoomFloor.ftbChunksZoom(128), "a 128-block world: 64 * 256 / 128 = 128");
+        assertEquals(55, FullscreenZoomFloor.ftbChunksZoom(300), "a 300-block world: ceil(16384 / 300) = 55");
+    }
+
+    @Test
+    void ftbChunksTakesTheNarrowestLoopedAxis() {
+        assertEquals(32, FullscreenZoomFloor.ftbChunksZoom(torus(1024, 512)), "the 512-block axis sets the floor");
+        assertEquals(32, FullscreenZoomFloor.ftbChunksZoom(cylinder(512)), "an unbounded axis asks for no floor");
+    }
+
+    @Test
     void journeyMapTakesTheNarrowestLoopedAxis() {
         assertEquals(64, FullscreenZoomFloor.journeyMapZoom(torus(1024, 512)), "the 512-block axis sets the floor");
         assertEquals(64, FullscreenZoomFloor.journeyMapZoom(cylinder(512)), "an unbounded axis asks for no floor");

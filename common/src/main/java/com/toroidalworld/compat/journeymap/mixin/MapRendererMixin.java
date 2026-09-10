@@ -18,6 +18,7 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.platform.Window;
+import com.toroidalworld.compat.MapCopyBudget;
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
 
 import journeymap.api.v2.client.display.Context;
@@ -188,8 +189,8 @@ public abstract class MapRendererMixin {
         double periodZ = JourneyMapFold.worldPixelPeriod(Direction.Axis.Z, this.zoom);
         Window window = Minecraft.getInstance().getWindow();
         int tiles = JourneyMapFold.tilesWithContent(this.zoom, window.getWidth(), window.getHeight());
-        int rangeX = JourneyMapFold.copyRange(loopedAxes, tiles, periodX, window.getWidth());
-        int rangeZ = JourneyMapFold.copyRange(loopedAxes, tiles, periodZ, window.getHeight());
+        int rangeX = MapCopyBudget.copyRange(loopedAxes, tiles, periodX, window.getWidth());
+        int rangeZ = MapCopyBudget.copyRange(loopedAxes, tiles, periodZ, window.getHeight());
         if (this.contextUi == Context.UI.Fullscreen) {
             JourneyMapFold.recordFullscreenCopyRange(rangeX, rangeZ);
         }
