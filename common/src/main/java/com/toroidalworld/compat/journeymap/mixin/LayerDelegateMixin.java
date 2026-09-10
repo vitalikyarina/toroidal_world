@@ -2,20 +2,16 @@ package com.toroidalworld.compat.journeymap.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.toroidalworld.compat.journeymap.JourneyMapFold;
 
 import net.minecraft.core.BlockPos;
 
 @Mixin(targets = "journeymap.client.ui.fullscreen.layer.LayerDelegate", remap = false)
 public class LayerDelegateMixin {
-    @Inject(method = "getBlockPos", at = @At("RETURN"), cancellable = true)
-    private void toroidal$foldMouseBlock(CallbackInfoReturnable<BlockPos> cir) {
-        BlockPos folded = JourneyMapFold.foldUiBlock(cir.getReturnValue());
-        if (folded != cir.getReturnValue()) {
-            cir.setReturnValue(folded);
-        }
+    @ModifyReturnValue(method = "getBlockPos", at = @At("RETURN"))
+    private BlockPos toroidal$foldMouseBlock(BlockPos original) {
+        return JourneyMapFold.foldUiBlock(original);
     }
 }
