@@ -24,7 +24,7 @@ public final class ClientAnchorSync {
             return;
         }
 
-        ClientPosition clientPosition = WorldLoopAttachments.clientPositionOf(player);
+        ClientPosition clientPosition = ClientPosition.of(player);
         if (!clientPosition.describes(level.dimension())) {
             return;
         }
