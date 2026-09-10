@@ -4,7 +4,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.spongepowered.asm.mixin.Mixin;
 
-import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.compat.distanthorizons.DhKeys;
 import com.toroidalworld.compat.distanthorizons.DhRepoLevel;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -18,7 +17,7 @@ public class GeneratedFullDataSourceProviderMixin {
     @WrapMethod(method = "queuePositionForRetrieval")
     private CompletableFuture<DataSourceRetrievalResult> toroidal$retrieveTheOneSection(Long genPos,
             Operation<CompletableFuture<DataSourceRetrievalResult>> original) {
-        ToroidalShape shape = ((DhRepoLevel) ((FullDataSourceProviderV2) (Object) this).repo).toroidal$shape();
-        return original.call(shape == null ? genPos : DhKeys.foldSection(shape, genPos));
+        return original.call(DhKeys.foldSection(
+                ((DhRepoLevel) ((FullDataSourceProviderV2) (Object) this).repo).toroidal$shape(), genPos));
     }
 }

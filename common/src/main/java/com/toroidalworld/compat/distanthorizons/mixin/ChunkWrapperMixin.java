@@ -6,7 +6,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.compat.distanthorizons.DhKeys;
 import com.toroidalworld.compat.distanthorizons.DhShapes;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -46,8 +45,7 @@ public class ChunkWrapperMixin {
         ChunkPos folded = this.toroidal$foldedPos;
         if (folded == null) {
             ChunkPos raw = original.call(chunk);
-            ToroidalShape shape = DhShapes.of(this.wrappedLevel);
-            folded = shape == null ? raw : DhKeys.foldChunk(shape, raw);
+            folded = DhKeys.foldChunk(DhShapes.of(this.wrappedLevel), raw);
             this.toroidal$foldedPos = folded;
         }
 

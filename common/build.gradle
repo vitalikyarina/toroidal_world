@@ -179,6 +179,8 @@ dependencies {
     testRuntimeOnly "maven.modrinth:sable:${sable_version}"
     testRuntimeOnly files(sableCompanionJars).asFileTree.matching { include '*.jar' }
     testRuntimeOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
+    testCompileOnly "maven.modrinth:distanthorizons:${distanthorizons_version}"
+    testRuntimeOnly "maven.modrinth:distanthorizons:${distanthorizons_version}"
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.junit.platform:junit-platform-launcher'

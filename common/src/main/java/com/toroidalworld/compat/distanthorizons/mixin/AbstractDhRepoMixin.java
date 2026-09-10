@@ -28,11 +28,6 @@ public class AbstractDhRepoMixin implements DhRepoLevel {
     }
 
     @Override
-    public IDhLevel toroidal$level() {
-        return this.toroidal$level;
-    }
-
-    @Override
     public ToroidalShape toroidal$shape() {
         ToroidalShape shape = DhShapes.of(this.toroidal$level);
         boolean present = shape != null;
