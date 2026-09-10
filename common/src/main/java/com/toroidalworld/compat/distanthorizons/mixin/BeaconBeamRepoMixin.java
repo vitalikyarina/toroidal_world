@@ -2,7 +2,6 @@ package com.toroidalworld.compat.distanthorizons.mixin;
 
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
-import java.util.function.Supplier;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -26,37 +25,20 @@ public class BeaconBeamRepoMixin {
         return ((DhRepoLevel) this).toroidal$shape();
     }
 
-    @Unique
-    private DhBlockPos toroidal$fold(DhBlockPos pos) {
-        ToroidalShape shape = toroidal$shape();
-        return shape == null ? pos : DhKeys.foldBlock(shape, pos);
-    }
-
-    @Unique
-    private PreparedStatement toroidal$withFoldedPos(BeaconBeamDTO dto, Supplier<PreparedStatement> statement) {
-        DhBlockPos raw = dto.blockPos;
-        dto.blockPos = toroidal$fold(raw);
-        try {
-            return statement.get();
-        } finally {
-            dto.blockPos = raw;
-        }
-    }
-
     @WrapMethod(method = "setPreparedStatementWhereClause(Ljava/sql/PreparedStatement;ILcom/seibel/distanthorizons/core/pos/blockPos/DhBlockPos;)I")
     private int toroidal$foldWhereKey(PreparedStatement statement, int index, DhBlockPos pos,
             Operation<Integer> original) {
-        return original.call(statement, index, toroidal$fold(pos));
+        return original.call(statement, index, DhKeys.foldBlock(toroidal$shape(), pos));
     }
 
     @WrapMethod(method = "createInsertStatement(Lcom/seibel/distanthorizons/core/sql/dto/BeaconBeamDTO;)Ljava/sql/PreparedStatement;")
     private PreparedStatement toroidal$foldInsert(BeaconBeamDTO dto, Operation<PreparedStatement> original) {
-        return toroidal$withFoldedPos(dto, () -> original.call(dto));
+        return DhKeys.withFoldedKey(toroidal$shape(), dto, () -> original.call(dto));
     }
 
     @WrapMethod(method = "createUpdateStatement(Lcom/seibel/distanthorizons/core/sql/dto/BeaconBeamDTO;)Ljava/sql/PreparedStatement;")
     private PreparedStatement toroidal$foldUpdate(BeaconBeamDTO dto, Operation<PreparedStatement> original) {
-        return toroidal$withFoldedPos(dto, () -> original.call(dto));
+        return DhKeys.withFoldedKey(toroidal$shape(), dto, () -> original.call(dto));
     }
 
     @WrapMethod(method = "getAllBeamsInBlockPosRange")

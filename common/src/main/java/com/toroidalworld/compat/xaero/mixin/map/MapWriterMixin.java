@@ -7,9 +7,10 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.toroidalworld.compat.xaero.XaeroInjectionTargets;
 import com.toroidalworld.compat.xaero.XaeroWorldMapFold;
 
@@ -17,7 +18,6 @@ import net.minecraft.core.Direction;
 
 import xaero.map.MapProcessor;
 import xaero.map.MapWriter;
-import xaero.map.region.LeveledRegion;
 import xaero.map.region.MapRegion;
 
 @Mixin(value = MapWriter.class, remap = false)
@@ -50,18 +50,19 @@ public abstract class MapWriterMixin {
 
         args.set(16, foldedX);
         args.set(17, foldedZ);
-        args.set(18, foldedX & 7);
-        args.set(19, foldedZ & 7);
+        args.set(18, XaeroWorldMapFold.tileChunkInRegion(foldedX));
+        args.set(19, XaeroWorldMapFold.tileChunkInRegion(foldedZ));
     }
 
-    @Redirect(
+    @WrapOperation(
             method = "onRender",
             at = @At(
                     value = "INVOKE",
                     target = XaeroInjectionTargets.MAP_PROCESSOR_GET_LEAF_MAP_REGION))
-    private MapRegion toroidal$visitCanonicalRegion(MapProcessor processor, int caveLayer, int regionX, int regionZ, boolean create) {
+    private MapRegion toroidal$visitCanonicalRegion(MapProcessor processor, int caveLayer, int regionX, int regionZ,
+            boolean create, Operation<MapRegion> original) {
         if (!XaeroWorldMapFold.active()) {
-            return processor.getLeafMapRegion(caveLayer, regionX, regionZ, create);
+            return original.call(processor, caveLayer, regionX, regionZ, create);
         }
 
         if (this.toroidal$visitQueue.isEmpty()) {
@@ -75,22 +76,22 @@ public abstract class MapWriterMixin {
         }
 
         int[] next = this.toroidal$visitQueue.poll();
-        return processor.getLeafMapRegion(caveLayer, next[0], next[1], true);
+        return original.call(processor, caveLayer, next[0], next[1], true);
     }
 
-    @Redirect(
+    @WrapOperation(
             method = "onRender",
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/region/LeveledRegion;setComparison(IIIII)V"))
-    private void toroidal$foldComparison(int x, int z, int level, int leafX, int leafZ) {
+    private void toroidal$foldComparison(int x, int z, int level, int leafX, int leafZ, Operation<Void> original) {
         if (!XaeroWorldMapFold.active()) {
-            LeveledRegion.setComparison(x, z, level, leafX, leafZ);
+            original.call(x, z, level, leafX, leafZ);
             return;
         }
 
-        int canonicalX = XaeroWorldMapFold.foldChunk(Direction.Axis.X, x + 16) - 16;
-        int canonicalZ = XaeroWorldMapFold.foldChunk(Direction.Axis.Z, z + 16) - 16;
-        LeveledRegion.setComparison(canonicalX, canonicalZ, level, canonicalX, canonicalZ);
+        int canonicalX = XaeroWorldMapFold.foldComparisonChunk(Direction.Axis.X, x);
+        int canonicalZ = XaeroWorldMapFold.foldComparisonChunk(Direction.Axis.Z, z);
+        original.call(canonicalX, canonicalZ, level, canonicalX, canonicalZ);
     }
 }

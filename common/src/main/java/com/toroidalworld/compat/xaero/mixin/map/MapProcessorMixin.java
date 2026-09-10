@@ -3,10 +3,9 @@ package com.toroidalworld.compat.xaero.mixin.map;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.toroidalworld.compat.xaero.XaeroWorldMapFold;
 
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -20,14 +19,9 @@ public abstract class MapProcessorMixin {
     @Shadow
     public ClientLevel mainWorld;
 
-    @Inject(method = "getAutoIdBase", at = @At("RETURN"), cancellable = true)
-    private void toroidal$foldIdSpawn(ClientLevel world, CallbackInfoReturnable<Object> cir) {
-        if (cir.getReturnValue() instanceof BlockPos spawn) {
-            BlockPos folded = XaeroWorldMapFold.foldIdSpawn(world, spawn);
-            if (folded != spawn) {
-                cir.setReturnValue(folded);
-            }
-        }
+    @ModifyReturnValue(method = "getAutoIdBase", at = @At("RETURN"))
+    private Object toroidal$foldIdSpawn(Object original, ClientLevel world) {
+        return original instanceof BlockPos spawn ? XaeroWorldMapFold.foldIdSpawn(world, spawn) : original;
     }
 
     @ModifyArg(

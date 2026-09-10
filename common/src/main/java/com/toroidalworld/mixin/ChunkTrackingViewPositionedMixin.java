@@ -7,11 +7,11 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 
 import net.minecraft.server.level.ChunkTrackingView;
 import net.minecraft.world.level.ChunkPos;
@@ -31,15 +31,14 @@ public abstract class ChunkTrackingViewPositionedMixin implements TransformerHol
         this.toroidal$transformer = transformer;
     }
 
-    @Inject(method = "contains(IIZ)Z", at = @At("HEAD"), cancellable = true)
-    private void toroidal$containsWrapped(int chunkX, int chunkZ, boolean includeNeighbors, CallbackInfoReturnable<Boolean> cir) {
+    @ModifyReturnValue(method = "contains(IIZ)Z", at = @At("RETURN"))
+    private boolean toroidal$containsWrapped(boolean original, int chunkX, int chunkZ, boolean includeNeighbors) {
         if (!this.toroidal$transformer.isWrapped()) {
-            return;
+            return original;
         }
 
         if (this.toroidal$transformer.isOver(new ChunkPos(chunkX, chunkZ))) {
-            cir.setReturnValue(false);
-            return;
+            return false;
         }
 
         ChunkPos center = ((ChunkTrackingView.Positioned) (Object) this).center();
@@ -47,8 +46,8 @@ public abstract class ChunkTrackingViewPositionedMixin implements TransformerHol
 
         ChunkPos unwrapped = this.toroidal$transformer.nearestCopy(center, new ChunkPos(chunkX, chunkZ));
 
-        cir.setReturnValue(ChunkTrackingView.isWithinDistance(
-                center.x(), center.z(), viewDistance, unwrapped.x(), unwrapped.z(), includeNeighbors));
+        return ChunkTrackingView.isWithinDistance(
+                center.x(), center.z(), viewDistance, unwrapped.x(), unwrapped.z(), includeNeighbors);
     }
 
     @Inject(method = "forEach", at = @At("HEAD"), cancellable = true)

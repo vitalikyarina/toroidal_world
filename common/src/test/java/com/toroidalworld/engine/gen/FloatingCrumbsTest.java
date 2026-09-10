@@ -9,28 +9,59 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+
 class FloatingCrumbsTest {
     private static final int SIDE = 16;
 
     private static final int HEIGHT = 8;
 
+    private static final byte SEA = 1;
+
+    private static final byte OTHER = 2;
+
     private static final class Grid {
         private final boolean[] solid = new boolean[SIDE * SIDE * HEIGHT];
+        private final byte[] fluid = new byte[SIDE * SIDE * HEIGHT];
         private int blocks;
 
+        private static int cell(int x, int z, int y) {
+            return x + z * SIDE + y * SIDE * SIDE;
+        }
+
         Grid set(int x, int z, int y) {
-            this.solid[x + z * SIDE + y * SIDE * SIDE] = true;
+            this.solid[cell(x, z, y)] = true;
             this.blocks++;
             return this;
         }
 
+        Grid sea(int x, int z, int y) {
+            this.fluid[cell(x, z, y)] = SEA;
+            return this;
+        }
+
+        Grid other(int x, int z, int y) {
+            this.fluid[cell(x, z, y)] = OTHER;
+            return this;
+        }
+
+        Grid drowned(int x, int z, int y) {
+            return this.set(x, z, y).sea(x, z, y);
+        }
+
         boolean at(int x, int z, int y) {
-            return this.solid[x + z * SIDE + y * SIDE * SIDE];
+            return this.solid[cell(x, z, y)];
+        }
+
+        byte fluidAt(int x, int z, int y) {
+            return this.fluid[cell(x, z, y)];
         }
 
         List<Integer> sweep() {
             List<Integer> cleared = new ArrayList<>();
-            this.result = FloatingCrumbs.clearCrumbs(this.solid, HEIGHT, this.blocks, cleared::add);
+            this.result = FloatingCrumbs.clearCrumbs(this.solid, this.fluid, HEIGHT, this.blocks, cleared::add);
             return cleared;
         }
 
@@ -149,5 +180,103 @@ class FloatingCrumbsTest {
         assertEquals(new FloatingCrumbs.Sweep(1, 1, 1), grid.result);
         assertTrue(grid.at(8, 8, 0));
         assertFalse(grid.at(8, 8, 3));
+    }
+
+    @Test
+    void aSubmergedCrumbTakesTheFluidAroundIt() {
+        Grid grid = new Grid().set(8, 8, 4)
+                .sea(7, 8, 4).sea(9, 8, 4).sea(8, 7, 4).sea(8, 9, 4).sea(8, 8, 5);
+
+        grid.sweep();
+
+        assertEquals(SEA, grid.fluidAt(8, 8, 4));
+    }
+
+    @Test
+    void aCrumbInAirIsLeftAsAir() {
+        Grid grid = new Grid().set(8, 8, 4);
+
+        grid.sweep();
+
+        assertEquals(FloatingCrumbs.NO_FLUID, grid.fluidAt(8, 8, 4));
+    }
+
+    @Test
+    void aCrumbInAnotherFluidTakesThatFluid() {
+        Grid grid = new Grid().set(8, 8, 4)
+                .other(7, 8, 4).other(9, 8, 4).other(8, 7, 4).other(8, 9, 4).other(8, 8, 5);
+
+        grid.sweep();
+
+        assertEquals(OTHER, grid.fluidAt(8, 8, 4));
+    }
+
+    @Test
+    void theFluidReachesTheHeartOfASubmergedMass() {
+        Grid grid = new Grid();
+        for (int x = 6; x <= 10; x++) {
+            for (int z = 6; z <= 10; z++) {
+                for (int y = 1; y <= 5; y++) {
+                    boolean inside = x >= 7 && x <= 9 && z >= 7 && z <= 9 && y >= 2 && y <= 4;
+                    if (inside) {
+                        grid.set(x, z, y);
+                    } else {
+                        grid.sea(x, z, y);
+                    }
+                }
+            }
+        }
+
+        List<Integer> cleared = grid.sweep();
+
+        assertEquals(27, cleared.size());
+        assertEquals(SEA, grid.fluidAt(8, 8, 3));
+    }
+
+    @Test
+    void aCrumbBreakingTheSurfaceKeepsAirAboveTheFluidLine() {
+        Grid grid = new Grid().set(8, 8, 4).set(8, 8, 5)
+                .sea(7, 8, 4).sea(9, 8, 4).sea(8, 7, 4).sea(8, 9, 4).sea(8, 8, 3);
+
+        grid.sweep();
+
+        assertEquals(SEA, grid.fluidAt(8, 8, 4));
+        assertEquals(FloatingCrumbs.NO_FLUID, grid.fluidAt(8, 8, 5));
+    }
+
+    @Test
+    void aClearedCellThatCarriedAFluidKeepsIt() {
+        Grid grid = new Grid().drowned(8, 8, 4);
+
+        grid.sweep();
+
+        assertEquals(SEA, grid.fluidAt(8, 8, 4));
+    }
+
+    @Test
+    void aFluidCarryingCellHoldsTheMassTogether() {
+        Grid grid = new Grid().set(8, 8, 4).drowned(8, 8, 5).set(8, 8, 6);
+
+        List<Integer> cleared = grid.sweep();
+
+        assertEquals(3, cleared.size());
+        assertEquals(new FloatingCrumbs.Sweep(1, 1, 3), grid.result);
+    }
+
+    @Test
+    void aFluidCarryingBlockIsSolidAndItsFluidIsTakenAtItsSource() {
+        BlockState waterlogged = Blocks.OAK_STAIRS.defaultBlockState()
+                .setValue(BlockStateProperties.WATERLOGGED, true);
+
+        assertTrue(FloatingCrumbs.solidCell(Blocks.STONE.defaultBlockState()));
+        assertTrue(FloatingCrumbs.solidCell(waterlogged));
+        assertFalse(FloatingCrumbs.solidCell(Blocks.WATER.defaultBlockState()));
+        assertFalse(FloatingCrumbs.solidCell(Blocks.AIR.defaultBlockState()));
+        assertEquals(Blocks.WATER.defaultBlockState(),
+                FloatingCrumbs.sourceBlockOf(waterlogged.getFluidState()));
+        assertEquals(Blocks.LAVA.defaultBlockState(),
+                FloatingCrumbs.sourceBlockOf(Blocks.LAVA.defaultBlockState().getFluidState()));
+        assertEquals(Blocks.WATER.defaultBlockState(), FloatingCrumbs.sourceBlockOf(
+                Blocks.WATER.defaultBlockState().setValue(BlockStateProperties.LEVEL, 3).getFluidState()));
     }
 }

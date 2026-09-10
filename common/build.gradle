@@ -109,6 +109,8 @@ neoForge.addModdingDependenciesTo(sourceSets.test)
 dependencies {
     testCompileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     testRuntimeOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
+    testCompileOnly "maven.modrinth:distanthorizons:${distanthorizons_version}"
+    testRuntimeOnly "maven.modrinth:distanthorizons:${distanthorizons_version}"
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.junit.platform:junit-platform-launcher'

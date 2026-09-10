@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.ToroidalWorld;
 import com.toroidalworld.core.CarriedShape;
+import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.core.WorldLoopBounds;
@@ -25,9 +26,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 
 public final class WorldShapeReport {
-    private static final List<Direction.Axis> HORIZONTAL =
-            List.of(Direction.Axis.X, Direction.Axis.Z);
-
     private static final String CODEC_SOURCE = "codec";
     private static final String STAMP_SOURCE = "stamp";
     private static final String RESTORED_SOURCE = "restored";
@@ -190,7 +188,7 @@ public final class WorldShapeReport {
     }
 
     static Note netherScaleNote(WorldLoopBounds overworld, WorldLoopBounds nether) {
-        for (Direction.Axis axis : HORIZONTAL) {
+        for (Direction.Axis axis : CoordinateConstants.HORIZONTAL_AXES) {
             if (sharedLoop(overworld, nether, axis)
                     && overworld.chunkWidth(axis) % nether.chunkWidth(axis) != 0) {
                 return new Note(true, ", BROKEN portal scale on the " + axis.getName() + " axis: an overworld of "
@@ -200,7 +198,7 @@ public final class WorldShapeReport {
             }
         }
 
-        for (Direction.Axis axis : HORIZONTAL) {
+        for (Direction.Axis axis : CoordinateConstants.HORIZONTAL_AXES) {
             if (sharedLoop(overworld, nether, axis)) {
                 return new Note(false, ", scale 1:" + overworld.chunkWidth(axis) / nether.chunkWidth(axis));
             }
@@ -214,7 +212,7 @@ public final class WorldShapeReport {
     }
 
     static Note endWidthNote(WorldLoopBounds end) {
-        for (Direction.Axis axis : HORIZONTAL) {
+        for (Direction.Axis axis : CoordinateConstants.HORIZONTAL_AXES) {
             if (end.loops(axis) && end.chunkWidth(axis) < WorldLoopSizes.END_MIN_CHUNK_WIDTH) {
                 return new Note(true, ", BROKEN End width on the " + axis.getName() + " axis: "
                         + WorldLoopSizes.describe(end.chunkWidth(axis)) + " is under the "
