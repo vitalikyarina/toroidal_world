@@ -162,6 +162,7 @@
     "PortalForcerMixin",
     "PrepareRamNearestTargetMixin",
     "ProjectileUtilMixin",
+    "ProtoChunkMixin",
     "RaidMixin",
     "RaiderMoveThroughVillageGoalMixin",
     "RaidsMixin",
