@@ -2,6 +2,7 @@ package com.toroidalworld.compat.distanthorizons;
 
 import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.api.v1.ToroidalWorldApi;
+import com.toroidalworld.compat.ClientShapes;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 
@@ -18,7 +19,7 @@ public final class DhShapes {
         }
 
         ToroidalShape shape = mcLevel.isClientSide()
-                ? DhClientShapes.of(mcLevel)
+                ? ClientShapes.of(mcLevel)
                 : ToroidalWorldApi.shapeOf(mcLevel).orElse(null);
         if (shape != null) {
             DhProbes.keyPeriod(shape, DhKeys.LEAF);

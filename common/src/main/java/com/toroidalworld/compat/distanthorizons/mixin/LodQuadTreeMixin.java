@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.api.v1.ToroidalShape;
-import com.toroidalworld.compat.distanthorizons.DhClientShapes;
+import com.toroidalworld.compat.ClientShapes;
 import com.toroidalworld.compat.distanthorizons.DhFold;
 import com.toroidalworld.compat.distanthorizons.DhKeys;
 import com.toroidalworld.compat.distanthorizons.DhShapes;
@@ -124,7 +124,7 @@ public class LodQuadTreeMixin {
                     target = "Lcom/seibel/distanthorizons/core/pos/DhSectionPos;contains(JJ)Z"))
     private static boolean toroidal$cancelByACopyOfTheSection(long sectionPos, long genPos,
             Operation<Boolean> original) {
-        ToroidalShape shape = DhClientShapes.ofCurrentLevel();
+        ToroidalShape shape = ClientShapes.current();
         return shape == null ? original.call(sectionPos, genPos) : DhKeys.containsACopy(shape, sectionPos, genPos);
     }
 }

@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.core.CarriedShape;
+import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.engine.gen.ShapedDimensions;
@@ -65,7 +66,7 @@ public final class ShapeDimensions {
 
     private static WorldLoopBounds bounds(LoopSpans spans) {
         WorldLoopBounds bounds = WorldLoopBounds.UNBOUNDED;
-        for (Direction.Axis axis : new Direction.Axis[] {Direction.Axis.X, Direction.Axis.Z}) {
+        for (Direction.Axis axis : CoordinateConstants.HORIZONTAL_AXES) {
             if (spans.loops(axis)) {
                 bounds = withAxis(bounds, axis, spans.minChunk(axis), spans.maxChunk(axis));
             }
@@ -83,7 +84,7 @@ public final class ShapeDimensions {
 
     private static LoopSpans spans(WorldLoopBounds bounds) {
         LoopSpans spans = LoopSpans.NONE;
-        for (Direction.Axis axis : new Direction.Axis[] {Direction.Axis.X, Direction.Axis.Z}) {
+        for (Direction.Axis axis : CoordinateConstants.HORIZONTAL_AXES) {
             if (bounds.axis(axis) instanceof WorldLoopBounds.AxisBounds.Looped looped) {
                 spans = spans.and(axis, looped.minChunk(), looped.maxChunk());
             }
