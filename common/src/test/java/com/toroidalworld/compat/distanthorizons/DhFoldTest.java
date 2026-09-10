@@ -3,7 +3,11 @@ package com.toroidalworld.compat.distanthorizons;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.awt.Color;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,6 +18,11 @@ import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
+import com.seibel.distanthorizons.core.pos.DhChunkPos;
+import com.seibel.distanthorizons.core.pos.DhSectionPos;
+import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos;
+import com.seibel.distanthorizons.core.sql.dto.BeaconBeamDTO;
+import com.seibel.distanthorizons.core.sql.dto.ChunkHashDTO;
 
 import net.minecraft.core.Direction;
 
@@ -581,6 +590,93 @@ class DhFoldTest {
 
                 assertEquals(cellsPerWorld, inside, "ref " + ref);
             }
+        }
+    }
+
+    @Nested
+    class TheRepositoryKeyIsFoldedByItsType {
+        private final ToroidalShape shape = torus(0, WIDTH_CHUNKS);
+        private final int sectionsPerWorld = WIDTH_BLOCKS / DhFold.sectionWidthBlocks(DhKeys.LEAF);
+
+        @Test
+        void aSectionKeyPastTheSeamFoldsIntoTheWorld() {
+            long folded = (Long) DhKeys.foldKey(shape, DhSectionPos.encode(DhKeys.LEAF, sectionsPerWorld, 1));
+            assertEquals(DhKeys.LEAF, DhSectionPos.getDetailLevel(folded));
+            assertEquals(0, DhSectionPos.getX(folded));
+            assertEquals(1, DhSectionPos.getZ(folded));
+        }
+
+        @Test
+        void aChunkKeyPastTheSeamFoldsIntoTheWorld() {
+            DhChunkPos folded = (DhChunkPos) DhKeys.foldKey(shape, new DhChunkPos(WIDTH_CHUNKS, 1));
+            assertEquals(0, folded.getX());
+            assertEquals(1, folded.getZ());
+        }
+
+        @Test
+        void aBlockKeyPastTheSeamFoldsIntoTheWorld() {
+            DhBlockPos folded = (DhBlockPos) DhKeys.foldKey(shape, new DhBlockPos(WIDTH_BLOCKS, 64, 1));
+            assertEquals(0, folded.getX());
+            assertEquals(64, folded.getY());
+            assertEquals(1, folded.getZ());
+        }
+
+        @Test
+        void aKeyInsideTheWorldComesBackUntouched() {
+            DhChunkPos inside = new DhChunkPos(3, 4);
+            assertSame(inside, DhKeys.foldKey(shape, inside));
+        }
+
+        @Test
+        void anUnwrappedLevelFoldsNothing() {
+            DhChunkPos past = new DhChunkPos(WIDTH_CHUNKS, 1);
+            assertSame(past, DhKeys.foldKey(null, past));
+        }
+
+        @Test
+        void aKeyOfAnUnknownTypeComesBackUntouched() {
+            String key = "not a position";
+            assertSame(key, DhKeys.foldKey(shape, key));
+        }
+    }
+
+    @Nested
+    class TheStatementSeesTheFoldedKeyAndTheDtoKeepsItsOwn {
+        private final ToroidalShape shape = torus(0, WIDTH_CHUNKS);
+
+        @Test
+        void aChunkHashRowIsWrittenUnderTheFoldedKey() {
+            ChunkHashDTO dto = new ChunkHashDTO(new DhChunkPos(WIDTH_CHUNKS, 1), 7);
+            DhChunkPos seen = DhKeys.withFoldedKey(shape, dto, () -> dto.pos);
+            assertEquals(0, seen.getX());
+            assertEquals(1, seen.getZ());
+            assertEquals(WIDTH_CHUNKS, dto.pos.getX());
+        }
+
+        @Test
+        void aBeaconBeamRowIsWrittenUnderTheFoldedKey() {
+            BeaconBeamDTO dto = new BeaconBeamDTO(new DhBlockPos(WIDTH_BLOCKS, 64, 1), Color.WHITE);
+            DhBlockPos seen = DhKeys.withFoldedKey(shape, dto, () -> dto.blockPos);
+            assertEquals(0, seen.getX());
+            assertEquals(1, seen.getZ());
+            assertEquals(WIDTH_BLOCKS, dto.blockPos.getX());
+        }
+
+        @Test
+        void aThrownStatementStillGivesTheDtoItsKeyBack() {
+            ChunkHashDTO dto = new ChunkHashDTO(new DhChunkPos(WIDTH_CHUNKS, 1), 7);
+            assertThrows(IllegalStateException.class, () -> DhKeys.withFoldedKey(shape, dto, () -> {
+                throw new IllegalStateException();
+            }));
+            assertEquals(WIDTH_CHUNKS, dto.pos.getX());
+        }
+
+        @Test
+        void anUnwrappedLevelLeavesTheKeyAloneThroughout() {
+            DhChunkPos raw = new DhChunkPos(WIDTH_CHUNKS, 1);
+            ChunkHashDTO dto = new ChunkHashDTO(raw, 7);
+            assertSame(raw, DhKeys.withFoldedKey(null, dto, () -> dto.pos));
+            assertSame(raw, dto.pos);
         }
     }
 }

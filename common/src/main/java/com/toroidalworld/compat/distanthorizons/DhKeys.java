@@ -1,5 +1,7 @@
 package com.toroidalworld.compat.distanthorizons;
 
+import java.util.function.Supplier;
+
 import com.toroidalworld.api.v1.ToroidalShape;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
@@ -16,6 +18,10 @@ public final class DhKeys {
     public static final byte LEAF = DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL;
 
     public static long foldSection(ToroidalShape shape, long pos) {
+        if (shape == null) {
+            return pos;
+        }
+
         byte detail = DhSectionPos.getDetailLevel(pos);
         int rawX = DhSectionPos.getX(pos);
         int rawZ = DhSectionPos.getZ(pos);
@@ -29,6 +35,10 @@ public final class DhKeys {
     }
 
     public static DhChunkPos foldChunk(ToroidalShape shape, DhChunkPos pos) {
+        if (shape == null) {
+            return pos;
+        }
+
         int x = DhFold.foldChunk(shape, Direction.Axis.X, LEAF, pos.getX());
         int z = DhFold.foldChunk(shape, Direction.Axis.Z, LEAF, pos.getZ());
         if (x == pos.getX() && z == pos.getZ()) {
@@ -39,6 +49,10 @@ public final class DhKeys {
     }
 
     public static ChunkPos foldChunk(ToroidalShape shape, ChunkPos pos) {
+        if (shape == null) {
+            return pos;
+        }
+
         int x = DhFold.foldChunk(shape, Direction.Axis.X, LEAF, pos.x());
         int z = DhFold.foldChunk(shape, Direction.Axis.Z, LEAF, pos.z());
         if (x == pos.x() && z == pos.z()) {
@@ -49,6 +63,10 @@ public final class DhKeys {
     }
 
     public static DhBlockPos foldBlock(ToroidalShape shape, DhBlockPos pos) {
+        if (shape == null) {
+            return pos;
+        }
+
         int x = shape.foldBlock(Direction.Axis.X, pos.getX());
         int z = shape.foldBlock(Direction.Axis.Z, pos.getZ());
         if (x == pos.getX() && z == pos.getZ()) {
@@ -100,6 +118,28 @@ public final class DhKeys {
 
     public static byte snapLevel(ToroidalShape shape) {
         return DhFold.snapDetailLevel(shape, LEAF);
+    }
+
+    public static Object foldKey(ToroidalShape shape, Object key) {
+        if (key instanceof Long pos) {
+            return foldSection(shape, pos);
+        } else if (key instanceof DhChunkPos pos) {
+            return foldChunk(shape, pos);
+        } else if (key instanceof DhBlockPos pos) {
+            return foldBlock(shape, pos);
+        }
+
+        return key;
+    }
+
+    public static <T> T withFoldedKey(ToroidalShape shape, IBaseDTO<?> dto, Supplier<T> statement) {
+        Object raw = dto.getKey();
+        reseat(dto, foldKey(shape, raw));
+        try {
+            return statement.get();
+        } finally {
+            reseat(dto, raw);
+        }
     }
 
     public static void reseat(IBaseDTO<?> dto, Object key) {
