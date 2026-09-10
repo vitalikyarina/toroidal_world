@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 
 import com.toroidalworld.client.shape.LoopSettingsScreen;
 import com.toroidalworld.client.shape.LoopSizeControls;
-import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.api.v1.shape.LoopSpans;
 import com.toroidalworld.shape.cylinder.CylinderSettings;
 
 import net.minecraft.client.gui.Font;
@@ -41,9 +41,9 @@ public class CylinderSettingsScreen extends LoopSettingsScreen<CylinderSettings>
     @Override
     protected CylinderSettings build() {
         return new CylinderSettings(
-                WorldLoopBounds.ofWidth(this.axis, this.controls.effectiveSize()),
+                LoopSpans.ofWidth(this.axis, this.controls.effectiveSize()),
                 this.controls.netherScale(),
-                WorldLoopBounds.ofWidth(this.axis, this.controls.effectiveEndSize()));
+                LoopSpans.ofWidth(this.axis, this.controls.effectiveEndSize()));
     }
 
     private static Component axisName(Direction.Axis axis) {

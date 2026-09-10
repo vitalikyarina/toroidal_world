@@ -1,8 +1,10 @@
-# Reading a Toroidal World from Another Mod
+# Toroidal World from Another Mod
 
-Toroidal World exposes one package to other mods: `com.toroidalworld.api.v1`. It answers what the world's shape is and folds coordinates into it, so a mod that measures distance, keys storage by position or draws a marker keeps working when the world loops.
+Toroidal World exposes one package to other mods: `com.toroidalworld.api.v1`. It does two things. It answers what the world's shape is and folds coordinates into it, so a mod that measures distance, keys storage by position or draws a marker keeps working when the world loops. And it lets a mod declare a world shape of its own, which the player then picks on the create-world screen beside the ones this mod ships.
 
 Everything outside that package is internal — it moves between releases without notice, and mixins into it are unsupported.
+
+Reading a shape is the first half of this page; declaring one starts at [Declaring a world shape](#declaring-a-world-shape).
 
 ## Depending on it
 
@@ -89,3 +91,104 @@ Vec3 heading = folded.orientation().applyToDelta(velocity);
 ```
 
 `Orientation.IDENTITY` is the only orientation an unmirrored shape ever reports — which today means the only one you will see — and `preservesHandedness()` tells a half turn from a genuine mirror.
+
+## Declaring a world shape
+
+A shape is one declaration: an id, the settings it starts from, what it writes into the world's dimensions at creation, and how it reads itself back out of an existing world.
+
+```java
+public static final ShapeModule<BandSettings> MODULE = ShapeModule.of(
+        ResourceLocation.fromNamespaceAndPath("your_mod", "band"),
+        BandSettings.DEFAULT,
+        BandDimensions::apply,
+        BandDimensions::read);
+```
+
+`MODULE.register()` enrols it. Call that from your mod's initialiser: the registry closes at `MinecraftServer.runServer`, before the levels load, and a `register` past that throws instead of being silently half-effective.
+
+The settings type is yours and Toroidal World never looks inside it. `MODULE.settings()` is what a Customize screen reads and `MODULE.settings(chosen)` what it writes back; the module holds the player's choice until the world is made.
+
+The shape's name and tooltip come from `gui.<namespace>.world_shape.<path>` and that key plus `.hint` — for the module above, `gui.your_mod.world_shape.band` and `gui.your_mod.world_shape.band.hint`.
+
+### The geometry it declares
+
+`LoopSpans` is the whole of it: which horizontal axes loop and over what span of chunks. Spans are half-open — `minChunk` is the first chunk inside the world, `maxChunk` the first one past it.
+
+```java
+LoopSpans.ofWidth(24);                        // both axes, 24 chunks, centred on the origin
+LoopSpans.ofWidth(Direction.Axis.Z, 24);      // Z alone; X runs to the vanilla world border
+LoopSpans.of(Direction.Axis.X, -12, 12);      // an explicit span
+```
+
+Which flat surface the world ends up being is read off the spans, never declared: both axes give a torus, one gives a cylinder, neither gives an ordinary world. `scaledDown(scale)` divides every looping axis and re-centres — how the nether is normally derived from the overworld, so the vanilla portal ratio still lands inside the world.
+
+`ShapeDimensions` writes those spans into the three vanilla stems, and reads them back:
+
+```java
+public static WorldDimensions apply(WorldDimensions dimensions, BandSettings settings) {
+    LoopSpans spans = settings.spans();
+    return ShapeDimensions.withSpans(dimensions, spans, spans.scaledDown(8), spans, settings.options());
+}
+
+public static @Nullable BandSettings read(WorldDimensions dimensions) {
+    LoopSpans spans = ShapeDimensions.spansOf(dimensions, LevelStem.OVERWORLD);
+    if (spans == null || spans.loops(Direction.Axis.X) || !spans.loops(Direction.Axis.Z)) {
+        return null;
+    }
+
+    return new BandSettings(spans, ShapeDimensions.optionsOf(dimensions, LevelStem.OVERWORLD));
+}
+```
+
+`read` is asked of every registered shape when an existing world is opened, and the first one to answer non-null owns it. So refuse anything you did not write: check which axes loop, not merely that a shape is there. `spansOf` answers `null` for a stem carrying no shape of ours, and for one whose axes do not fold independently — geometry this API cannot declare.
+
+The dimensions handed to `apply` have had any earlier shape stripped, so state your whole geometry rather than amending someone else's. A stem whose generator cannot take a shape is left alone.
+
+### The settings screen
+
+`ShapeCustomizers` maps the shape's id to the screen behind the Customize button; a shape with no customizer registered leaves that button dark. Register it from the client side only.
+
+```java
+ShapeCustomizers.register(MODULE.id(), parent -> new BandSettingsScreen(parent, MODULE.settings(), MODULE::settings));
+```
+
+## Declaring a world option
+
+A world option is a value the player picks at creation, stored in the world and read back at load. It is a declaration, not a screen: the codec key, where it sits among the other options, its codec and its default.
+
+```java
+public static final WorldOption<Boolean> OPTION =
+        new WorldOption<>("band_floor", 100, Codec.BOOL, Boolean.FALSE);
+
+WorldOptions.register(OPTION);
+```
+
+The key is written into the world's generators and must be unique across every mod. `position` orders the option against the others on a settings screen; equal positions fall back to the key.
+
+`GenerationOptions` is the value set a world carries — `get(option)` to read, `with(option, value)` to write, `GenerationOptions.DEFAULT` to start from. Only a value that differs from its option's default is written to the world file, so an option nobody touched costs nothing on disk.
+
+The client half is one control per option:
+
+```java
+WorldOptionControls.register(OPTION, BandFloorControl::new);
+```
+
+A `WorldOptionControl` adds its own widgets, commits its value into the options, and may veto **Done** while its value is unusable. It reaches the screen around it only through `WorldOptionContext` — the parent screen, the loop width the screen states, the current options, a change signal and a rebuild request. A shape's settings screen builds them all with `WorldOptionControls.createAll(context)`, in registry order.
+
+## Hooking a generation moment
+
+`GenerationHooks.atRandomState(key, hook)` runs a hook as a level's `RandomState` finishes building — the moment its noise router exists and nothing has sampled it yet, so rewriting a noise in that router still reaches every chunk.
+
+```java
+GenerationHooks.atRandomState("band_floor", (randomState, shape, options, seaLevel) -> {
+    if (shape.loops(Direction.Axis.X) || !shape.loops(Direction.Axis.Z) || !options.get(OPTION)) {
+        return;
+    }
+
+    liftTheCoastNoise(randomState.router(), shape.widthBlocks(Direction.Axis.Z));
+});
+```
+
+**A hook gates itself.** Every registered hook runs for every folding level of every world, whatever shape made it and whichever mod declared that shape — a hook is not scoped to the shape it was registered beside. A world builds one `RandomState` per dimension, so it runs once for the overworld, once for the nether and once for the End. Read `shape` and `options` and return early unless both are what the hook is for; reaching for a span on an axis that does not loop throws.
+
+The key orders the hooks against one another and, like an option key, must be unique across every mod. Registration closes at the same boundary as everything else.
