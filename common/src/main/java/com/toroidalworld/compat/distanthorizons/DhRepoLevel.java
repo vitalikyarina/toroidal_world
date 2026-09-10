@@ -7,10 +7,6 @@ public interface DhRepoLevel {
     default void toroidal$bindLevel(IDhLevel level) {
     }
 
-    default IDhLevel toroidal$level() {
-        return null;
-    }
-
     default ToroidalShape toroidal$shape() {
         return null;
     }
