@@ -19,8 +19,8 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
-// mc/1.21: calls the members unused on main.
 public final class ClientFrame {
+    // mc/1.21: calls the explicit-anchor trio, unused on main.
     public static @Nullable BlockPos nearestCopy(@Nullable BlockPos anchor, @Nullable BlockPos target) {
         if (anchor == null || target == null) {
             return target;
@@ -114,6 +114,7 @@ public final class ClientFrame {
         return world != null && world == Minecraft.getInstance().level;
     }
 
+    // mc/1.21: hands the fold out to compat/, unused on main.
     public static @Nullable WorldFold fold() {
         return WorldLoopAttachments.wrappedClientBoundsTransformerOf(Minecraft.getInstance().level);
     }

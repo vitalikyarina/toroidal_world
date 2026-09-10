@@ -2,6 +2,7 @@ package com.toroidalworld.api.v1;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,6 +22,7 @@ import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 class ToroidalShapeContractTest {
@@ -131,6 +133,114 @@ class ToroidalShapeContractTest {
             assertEquals(WIDTH, shape.widthBlocks(Direction.Axis.Z), "a coupled shape lost its z width");
             assertThrows(IllegalArgumentException.class, () -> shape.minChunk(Direction.Axis.Y),
                     "y reported an extent");
+        }
+    }
+
+    @Nested
+    class SeatingABox {
+        @Test
+        void aBoxAWorldAwayComesBackBesideTheReference() {
+            ToroidalShape shape = torus();
+            AABB seated = shape.nearestCopy(new Vec3(LOWER + WIDTH - 7.5, 64.0, 0.5),
+                    new AABB(LOWER + 6.0, 60.0, -1.0, LOWER + 10.0, 62.0, 1.0));
+
+            assertEquals(new AABB(LOWER + WIDTH + 6.0, 60.0, -1.0, LOWER + WIDTH + 10.0, 62.0, 1.0), seated,
+                    "the box was not carried into the copy beside the reference");
+        }
+
+        @Test
+        void aBoxAlreadyNearestIsHandedBack() {
+            ToroidalShape shape = torus();
+            AABB box = new AABB(LOWER + 6.0, 60.0, -1.0, LOWER + 10.0, 62.0, 1.0);
+
+            assertSame(box, shape.nearestCopy(new Vec3(LOWER + 8.0, 64.0, 0.5), box),
+                    "a box that moved nothing was rebuilt");
+        }
+
+        @Test
+        void aBoxStraddlingTheSeamStaysWhole() {
+            ToroidalShape shape = torus();
+            AABB box = new AABB(LOWER + WIDTH - 2.0, 60.0, -1.0, LOWER + WIDTH + 2.0, 62.0, 1.0);
+            AABB seated = shape.nearestCopy(new Vec3(LOWER + WIDTH - 4.0, 64.0, 0.5), box);
+
+            assertSame(box, seated, "a box across the seam was cut into the pieces the world would make of it");
+        }
+
+        @Test
+        void aBoxCarriedAcrossAMirroredSeamKeepsItsSizeAndReportsTheFlip() {
+            ToroidalShape shape = mobius();
+            Vec3 ref = new Vec3(LOWER + WIDTH - 1.5, 64.0, 100.5);
+            AABB box = new AABB(LOWER + 0.5, 60.0, -102.5, LOWER + 2.5, 62.0, -98.5);
+            Oriented<AABB> seated = shape.nearestCopyOriented(ref, box);
+
+            assertTrue(seated.orientation().flipsZ(), "the flipped copy did not report its flip");
+            assertEquals(shape.nearestCopy(ref, box), seated.value(),
+                    "the oriented seating disagrees with the plain one");
+            assertEquals(box.getXsize(), seated.value().getXsize(), "the box changed width across the seam");
+            assertEquals(box.getZsize(), seated.value().getZsize(), "the box changed depth across the seam");
+            assertEquals(box.getYsize(), seated.value().getYsize(), "the box changed height across the seam");
+        }
+    }
+
+    @Nested
+    class ShiftingARigidGroup {
+        @Test
+        void oneShiftHoldsTogetherAGroupThatSeatingApartWouldTear() {
+            ToroidalShape shape = torus();
+            Vec3 ref = new Vec3(LOWER + WIDTH - 7.5, 64.0, 0.5);
+            Vec3 anchor = new Vec3(-6.0, 64.0, 0.5);
+            Vec3 member = new Vec3(-10.0, 64.0, 0.5);
+            double apart = anchor.x - member.x;
+
+            assertNotEquals(apart, shape.nearestCopy(ref, anchor).x - shape.nearestCopy(ref, member).x,
+                    "the pair no longer straddles half a world width, so it proves nothing");
+
+            SeamShift shift = shape.shiftToNearestCopy(ref, anchor);
+            assertEquals(apart, shift.apply(anchor).x - shift.apply(member).x, "one shift tore the group");
+            assertEquals(shape.nearestCopy(ref, anchor), shift.apply(anchor),
+                    "the shift lands the anchor somewhere else than seating it does");
+        }
+
+        @Test
+        void aGroupAlreadyInTheRightCopyGetsTheIdentity() {
+            ToroidalShape shape = torus();
+            Vec3 member = new Vec3(6.0, 64.0, 0.5);
+            SeamShift shift = shape.shiftToNearestCopy(new Vec3(0.0, 64.0, 0.5), new Vec3(2.0, 64.0, 0.5));
+
+            assertTrue(shift.isIdentity(), "a group already in the right copy was moved");
+            assertTrue(shift.orientation().isIdentity(), "an identity shift reported a turn");
+            assertSame(member, shift.apply(member), "an identity shift rebuilt its argument");
+        }
+
+        @Test
+        void theBlockGridFormAgreesWithSeatingTheAnchor() {
+            ToroidalShape shape = torus();
+            BlockPos ref = new BlockPos(LOWER + WIDTH - 8, 64, 0);
+            BlockPos anchor = new BlockPos(-6, 64, 0);
+            BlockPos member = new BlockPos(-10, 64, 0);
+            SeamShift shift = shape.shiftToNearestCopy(ref, anchor);
+
+            assertEquals(shape.nearestCopy(ref, anchor), shift.apply(anchor),
+                    "the shift lands the anchor somewhere else than seating it does");
+            assertEquals(anchor.getX() - member.getX(), shift.apply(anchor).getX() - shift.apply(member).getX(),
+                    "one shift tore the group on the block grid");
+        }
+
+        @Test
+        void aShiftAcrossAMirroredSeamCarriesItsTurnAndKeepsABoxRigid() {
+            ToroidalShape shape = mobius();
+            Vec3 ref = new Vec3(LOWER + WIDTH - 1.5, 64.0, 100.5);
+            Vec3 anchor = new Vec3(LOWER + 1.5, 64.0, -100.5);
+            SeamShift shift = shape.shiftToNearestCopy(ref, anchor);
+
+            assertTrue(shift.orientation().flipsZ(), "the shift across a mirrored seam reported no turn");
+            assertEquals(shape.nearestCopy(ref, anchor), shift.apply(anchor),
+                    "the shift lands the anchor somewhere else than seating it does");
+
+            AABB box = new AABB(LOWER + 0.5, 60.0, -102.5, LOWER + 2.5, 62.0, -98.5);
+            AABB moved = shift.apply(box);
+            assertEquals(box.getXsize(), moved.getXsize(), "the box changed width under the shift");
+            assertEquals(box.getZsize(), moved.getZsize(), "the box changed depth under the shift");
         }
     }
 

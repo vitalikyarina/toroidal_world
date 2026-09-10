@@ -14,7 +14,8 @@ public enum ChunkTraffic {
     BLOCK_EVENT("block_event"),
     LEVEL_EVENT("level_event"),
     SIGN_EDITOR("sign_editor"),
-    BLOCK_PARTICLE("block_particle");
+    BLOCK_PARTICLE("block_particle"),
+    MOD_REWRITER("mod_rewriter");
 
     private final String key;
 

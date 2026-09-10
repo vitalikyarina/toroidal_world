@@ -1,10 +1,10 @@
 # Toroidal World from Another Mod
 
-Toroidal World exposes one package to other mods: `com.toroidalworld.api.v1`. It does two things. It answers what the world's shape is and folds coordinates into it, so a mod that measures distance, keys storage by position or draws a marker keeps working when the world loops. And it lets a mod declare a world shape of its own, which the player then picks on the create-world screen beside the ones this mod ships.
+Toroidal World exposes one package to other mods: `com.toroidalworld.api.v1`. It does three things. It answers what the world's shape is and folds coordinates into it, so a mod that measures distance, keys storage by position or draws a marker keeps working when the world loops. It lets a mod carry its own packets, particles and rigid groups across the seam, which nothing but that mod's author can do for them. And it lets a mod declare a world shape of its own, which the player then picks on the create-world screen beside the ones this mod ships.
 
 Everything outside that package is internal — it moves between releases without notice, and mixins into it are unsupported.
 
-Reading a shape is the first half of this page; declaring one starts at [Declaring a world shape](#declaring-a-world-shape).
+Reading a shape is the first part of this page; making your own mechanism work on one starts at [Making your own mechanism cross the seam](#making-your-own-mechanism-cross-the-seam), and declaring a shape at [Declaring a world shape](#declaring-a-world-shape).
 
 ## Depending on it
 
@@ -91,6 +91,78 @@ Vec3 heading = folded.orientation().applyToDelta(velocity);
 ```
 
 `Orientation.IDENTITY` is the only orientation an unmirrored shape ever reports — which today means the only one you will see — and `preservesHandedness()` tells a half turn from a genuine mirror.
+
+## Making your own mechanism cross the seam
+
+Everything above moves a coordinate you are holding. This part is about the coordinates you are *sending*, and about groups of them that have to stay together.
+
+Every vanilla packet that carries a world position is already rewritten on its way out — the server's canonical position becomes whichever copy that client is holding, and back again on the way in. A payload of yours is not, and cannot be: nothing outside your mod knows which of its fields is a position. Registered rewriters are how you say.
+
+### A payload of your own
+
+```java
+PacketRewriters.registerClientboundPayload(StationCursorPayload.class, (payload, context) ->
+        new StationCursorPayload(context.toClient(payload.target())));
+
+PacketRewriters.registerServerboundPayload(StationPickPayload.class, (payload, context) ->
+        new StationPickPayload(context.toServer(payload.picked())));
+```
+
+`SeamContext` is the two frames one connection has. `toClient` takes a canonical position to the copy that client holds — the one to write into anything it will draw, place or measure against. `toServer` folds a position the client sent back into the world's bounds. Both come in `BlockPos`, `Vec3` and (clientbound) `ChunkPos` forms, both hand the argument instance itself back when nothing moved, and `context.shape()` is the level's whole geometry for anything the two do not cover.
+
+Register from your mod's initialiser, beside everything else: the table closes at `MinecraftServer.runServer`, before the levels load, and a later registration throws rather than being silently half-effective. A rewriter runs for payloads of that exact class, on a folding level and nowhere else — on an ordinary world nothing you registered is ever called.
+
+A context belongs to the packet being rewritten. Never hold one past the call.
+
+### A particle type of your own
+
+```java
+PacketRewriters.registerParticle(BeaconTrailOption.class, (particle, context, clientOrigin) ->
+        new BeaconTrailOption(context.toClient(particle.destination())));
+```
+
+`clientOrigin` is where the particle itself lands in the client's frame. Seat a position the particle points at near that rather than near the player, or a long trail flips across the seam halfway along.
+
+### A group that has to stay rigid
+
+A contraption, a vehicle, a multiblock, a set of linked nodes — anything whose members are meaningless apart. Seating each member with `nearestCopy` tears it: two blocks four apart, but on opposite sides of half a world width from your reference, pick different copies and end up a world away from each other.
+
+Take one shift from an anchor instead, and apply it to every member:
+
+```java
+SeamShift shift = shape.shiftToNearestCopy(player.position(), contraption.anchor());
+for (BlockPos member : contraption.blocks()) {
+    render(shift.apply(member));
+}
+Vec3 heading = shift.orientation().applyToDelta(contraption.velocity());
+```
+
+`apply` comes in `Vec3`, `BlockPos`, `ChunkPos` and `AABB` forms; the box form moves rigidly too, so its size never changes and it is never split at a seam. `isIdentity()` is the normal answer for a group already in the right copy, and there every `apply` hands its argument straight back.
+
+A shift is not a vector, which is why subtracting a seated anchor from the original and adding that difference to the rest is wrong: across a seam that mirrors, the shift also turns the space it moves. `orientation()` is that turn, and `applyToDelta` carries a velocity or a facing through it.
+
+`ToroidalShape.nearestCopy(ref, box)` is the same rigid move for a single box you do not need a shift object for.
+
+### Anchors the client already has
+
+```java
+BlockPos seated = ClientAnchors.nearestToCamera(marker);
+```
+
+`ClientAnchors` reads the anchor off the running client, so you state which one you mean and nothing else: `nearestToPlayer` in `BlockPos`, `Vec3` and `ChunkPos`, `nearestToCamera` for a point. Reaching for the wrong one shows — something drawn folds toward the camera, and in third person or a spectator's view that is not where the player is.
+
+With no level, no player or no folding world every member hands the argument straight back, so a call needs no guard of its own.
+
+`ClientAnchors.heldCopy` answers a different question: which copy of a position the client is *holding*, not which is nearest. A client near a seam is sent one copy of a chunk and not the others, and which one is the server's choice. Anything you key by a block position on the client — a block entity, a rendered overlay, a cached state — has to be keyed by the copy that is actually there:
+
+```java
+BlockPos held = ClientAnchors.heldCopy(canonical);
+if (held == null) {
+    return;
+}
+```
+
+`null` means the client holds none of them. Treat it as "not loaded"; using the canonical position instead puts your entry on a chunk that is not there.
 
 ## Declaring a world shape
 

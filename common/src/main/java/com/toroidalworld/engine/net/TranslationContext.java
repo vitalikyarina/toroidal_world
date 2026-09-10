@@ -8,7 +8,10 @@ import java.util.function.IntPredicate;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
+import com.toroidalworld.api.v1.ToroidalShape;
+import com.toroidalworld.api.v1.net.SeamContext;
 import com.toroidalworld.core.CoordinateConstants;
+import com.toroidalworld.core.ToroidalShapeView;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.core.WrapDomain;
@@ -40,7 +43,7 @@ public record TranslationContext(
         IntFunction<@Nullable Vec3> entityPosition,
         IntFunction<@Nullable Class<?>> entityClass,
         Runnable rebase,
-        PacketRewriters rewriters) {
+        PacketRewriters rewriters) implements SeamContext {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -96,6 +99,21 @@ public record TranslationContext(
     private static @Nullable Class<?> classOf(ServerPlayer player, int entityId) {
         Entity entity = player.level().getEntity(entityId);
         return entity == null ? null : entity.getClass();
+    }
+
+    @Override
+    public ToroidalShape shape() {
+        return new ToroidalShapeView(transformer);
+    }
+
+    @Override
+    public BlockPos toClient(BlockPos pos) {
+        return transformer.reseat(pos, toClient(new ChunkPos(pos), ChunkTraffic.MOD_REWRITER));
+    }
+
+    @Override
+    public ChunkPos toClient(ChunkPos chunkPos) {
+        return toClient(chunkPos, ChunkTraffic.MOD_REWRITER);
     }
 
     public ChunkPos toClient(ChunkPos chunkPos, ChunkTraffic traffic) {
@@ -248,6 +266,11 @@ public record TranslationContext(
                 reach.blocks(), reach.slackBlocks());
     }
 
+    @Override
+    public Vec3 toClient(Vec3 position) {
+        return toClient(position, trackedReach());
+    }
+
     public Vec3 toClient(Vec3 position, PacketReach reach) {
         Vec3 clientPos = nearestCopy(position);
         guardReach(reach, Direction.Axis.X, position.x, clientPos.x, clientPosition.x());
@@ -259,6 +282,7 @@ public record TranslationContext(
         return transformer.nearestCopy(new Vec3(clientPosition.x(), position.y, clientPosition.z()), position);
     }
 
+    @Override
     public BlockPos toServer(BlockPos pos) {
         return transformer.fold(pos);
     }
@@ -267,6 +291,7 @@ public record TranslationContext(
         return transformer.foldOriented(pos);
     }
 
+    @Override
     public Vec3 toServer(Vec3 position) {
         return transformer.fold(position);
     }
