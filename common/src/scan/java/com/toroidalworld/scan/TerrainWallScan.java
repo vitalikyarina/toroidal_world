@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -42,6 +43,8 @@ import net.minecraft.world.level.levelgen.synth.NormalNoise;
 class TerrainWallScan {
     private static final long WALL_SEED = -4241666765127210365L;
 
+    private static final int WALL_SEEDS = 10;
+
     private static final int WIDTH_BLOCKS = 512;
 
     private static final int CELL_WIDTH = 4;
@@ -62,7 +65,9 @@ class TerrainWallScan {
 
     private static final int NEEDLE_WINDOW_BLOCKS = 48;
 
-    private static final int NEEDLE_SEEDS = 4;
+    private static final String SCAN = "terrain-wall";
+
+    private static final int NEEDLE_SEEDS = 10;
 
     private static final long NEEDLE_SEED_STEP = 0x9E3779B97F4A7C15L;
 
@@ -137,12 +142,24 @@ class TerrainWallScan {
     @Test
     void locatesTheThinTerrainWallsOfACompactedLap() {
         WorldType type = TYPES.getFirst();
-        Pass folded = pass("torus " + WIDTH_BLOCKS + " blocks", type, torusOfWidth(WIDTH_BLOCKS));
-        Pass control = pass("control (unbounded vanilla)", type, WorldFolds.NOOP);
+        List<Pass> torusPasses = new ArrayList<>();
+        List<Pass> controlPasses = new ArrayList<>();
+
+        for (int s = 0; s < WALL_SEEDS; s++) {
+            long seed = WALL_SEED + s * NEEDLE_SEED_STEP;
+            torusPasses.add(pass("torus " + WIDTH_BLOCKS + " blocks", type, torusOfWidth(WIDTH_BLOCKS), seed));
+            controlPasses.add(pass("control (unbounded vanilla)", type, WorldFolds.NOOP, seed));
+            ScanReports.note(SCAN, "wall", "type=" + type.name() + " width=" + WIDTH_BLOCKS + " seed=" + seed
+                    + " blades=" + torusPasses.getLast().blades().size());
+        }
+
+        Pass folded = torusPasses.getFirst();
+        Pass control = controlPasses.getFirst();
 
         StringBuilder report = new StringBuilder();
-        report.append("Terrain wall scan - final density on the generator's own cell lattice, seed ")
-                .append(WALL_SEED).append(", world type ").append(type.name()).append(".")
+        report.append("Terrain wall scan - final density on the generator's own cell lattice, over ")
+                .append(WALL_SEEDS).append(" seeds from ").append(WALL_SEED).append(", world type ")
+                .append(type.name()).append(".")
                 .append(System.lineSeparator())
                 .append("The generator interpolates final density over ").append(CELL_WIDTH).append("x")
                 .append(CELL_HEIGHT).append("x").append(CELL_WIDTH)
@@ -150,7 +167,7 @@ class TerrainWallScan {
                 .append(System.lineSeparator())
                 .append("thickness = width in blocks of the solid band around a corner, from the linear crossing")
                 .append(" to its two neighbours along one axis; a blade is under ")
-                .append(String.format("%.1f", BLADE_BLOCKS))
+                .append(String.format(Locale.ROOT, "%.1f", BLADE_BLOCKS))
                 .append(" blocks across one axis while at least ").append(RIDGE_CORNERS)
                 .append(" corners stay solid along the other.").append(System.lineSeparator())
                 .append("Levels: ").append(LEVELS_BELOW_SEA).append(" below and ").append(LEVELS_ABOVE_SEA)
@@ -162,19 +179,49 @@ class TerrainWallScan {
                 .append(" world - the same seed, the same coordinates, no fold.").append(System.lineSeparator())
                 .append("Jaggedness is not a member of NoiseRouter and is not reported.")
                 .append(System.lineSeparator())
-                .append("Criterion: the per-site-count clause. Every blade site below is a reading on one")
-                .append(" seed at one width, never a closing condition; the only assertion is a blindness")
-                .append(" guard on an all-water or all-land control window.")
+                .append("Criterion: the per-site-count clause. The table below is the sampled reading;")
+                .append(" the detailed block under it is the first seed alone, kept for comparison with")
+                .append(" earlier reports. No blade site is a closing condition; the only assertion is a")
+                .append(" blindness guard on an all-water or all-land control window, run on every seed.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
+        report.append(String.format(Locale.ROOT, "  %-22s %13s %11s %15s %13s%n",
+                "seed", "torus blades", "torus land", "control blades", "control land"));
+
+        for (int s = 0; s < WALL_SEEDS; s++) {
+            report.append(String.format(Locale.ROOT, "  %-22d %13d %11.3f %15d %13.3f%n",
+                    WALL_SEED + s * NEEDLE_SEED_STEP, torusPasses.get(s).blades().size(),
+                    torusPasses.get(s).landShare(), controlPasses.get(s).blades().size(),
+                    controlPasses.get(s).landShare()));
+        }
+
+        report.append(System.lineSeparator());
         for (Pass pass : List.of(folded, control)) {
             appendPass(report, pass);
         }
 
-        ScanReports.write(REPORT, report.toString());
+        List<String> blind = new ArrayList<>();
 
-        assertTrue(control.landShare() > 0.0 && control.landShare() < 1.0,
-                "the control window is all water or all land, so the scan measures nothing: " + control.landShare());
+        for (int s = 0; s < WALL_SEEDS; s++) {
+            double share = controlPasses.get(s).landShare();
+            if (share <= 0.0 || share >= 1.0) {
+                blind.add(Long.toString(WALL_SEED + s * NEEDLE_SEED_STEP));
+            }
+        }
+
+        report.append("Blind control windows - all water or all land, so that seed measures nothing: ")
+                .append(blind.isEmpty() ? "none" : String.join(", ", blind))
+                .append(System.lineSeparator())
+                .append("A seed's land share is its own luck, from 0.00 to 0.85, so one blind window is a")
+                .append(" reading and not a fault; the guard closes only when every seed is blind.")
+                .append(System.lineSeparator());
+
+        ScanReports.write(REPORT, ScanReports.population(WALL_SEEDS, WALL_SEED, NEEDLE_SEED_STEP,
+                "the whole lattice of a lap per seed, so ten at one width is what the set affords"),
+                report.toString());
+
+        assertTrue(blind.size() < WALL_SEEDS,
+                "every control window is all water or all land, so the scan measures nothing");
     }
 
     @Test
@@ -206,7 +253,8 @@ class TerrainWallScan {
             appendField(report, key, xDomain, zDomain, fold);
         }
 
-        ScanReports.write(OCTAVE_REPORT, report.toString());
+        ScanReports.write(OCTAVE_REPORT, ScanReports.noPopulation(
+                "the router's own amplitude weights, read without a world"), report.toString());
     }
 
     @Test
@@ -245,8 +293,8 @@ class TerrainWallScan {
                 .append(" counts, which are readings.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
-        report.append(String.format("    %-8s %-14s %29s %29s%n", "", "", "torus", "control"));
-        report.append(String.format("    %-8s %-14s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s%n",
+        report.append(String.format(Locale.ROOT, "    %-8s %-14s %29s %29s%n", "", "", "torus", "control"));
+        report.append(String.format(Locale.ROOT, "    %-8s %-14s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s%n",
                 "preset", "blocks", "p50", "p90", "p99", "p999", "max", "p50", "p90", "p99", "p999", "max"));
 
         List<Spike> sites = new ArrayList<>();
@@ -262,7 +310,7 @@ class TerrainWallScan {
             controlRows.add(control);
             widened.addAll(overrun(preset.id(), torus.jumps(), control.jumps()));
 
-            report.append(String.format("    %-8s %-14s %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d%n",
+            report.append(String.format(Locale.ROOT, "    %-8s %-14s %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d%n",
                     preset.id(), widthBlocks + " blocks",
                     torus.jumps().p50(), torus.jumps().p90(), torus.jumps().p99(), torus.jumps().p999(),
                     torus.jumps().max(),
@@ -273,15 +321,15 @@ class TerrainWallScan {
         report.append(System.lineSeparator())
                 .append("Outliers of the same windows, ").append(NEEDLE_SEEDS).append(" seeds per preset:")
                 .append(System.lineSeparator());
-        report.append(String.format("    %-8s %-14s %23s %23s%n", "", "", "torus", "control"));
-        report.append(String.format("    %-8s %-14s %5s %7s %5s %6s %5s %7s %5s %6s%n",
+        report.append(String.format(Locale.ROOT, "    %-8s %-14s %23s %23s%n", "", "", "torus", "control"));
+        report.append(String.format(Locale.ROOT, "    %-8s %-14s %5s %7s %5s %6s %5s %7s %5s %6s%n",
                 "preset", "blocks", "seeds", "needles", "worst", "pits", "seeds", "needles", "worst", "pits"));
 
         int row = 0;
         for (WorldLoopPresets preset : WorldLoopPresets.values()) {
             NeedleRow torus = torusRows.get(row);
             NeedleRow control = controlRows.get(row++);
-            report.append(String.format("    %-8s %-14s %5d %7d %5d %6d %5d %7d %5d %6d%n",
+            report.append(String.format(Locale.ROOT, "    %-8s %-14s %5d %7d %5d %6d %5d %7d %5d %6d%n",
                     preset.id(), preset.blockWidth() + " blocks",
                     torus.seedsWithNeedle(), torus.needles(), torus.worstDrop(), torus.pits(),
                     control.seedsWithNeedle(), control.needles(), control.worstDrop(), control.pits()));
@@ -293,7 +341,9 @@ class TerrainWallScan {
                 .append(System.lineSeparator());
 
         appendSites(report, sites);
-        ScanReports.write(NEEDLE_REPORT, report.toString());
+        ScanReports.write(NEEDLE_REPORT, ScanReports.population(NEEDLE_SEEDS, SEED_BASE, NEEDLE_SEED_STEP,
+                "seconds per seed, so ten is the ceiling the set affords over ten preset rows"),
+                report.toString());
 
         assertTrue(widened.isEmpty(), "a folded lap steps higher between neighbours than its control: " + widened);
     }
@@ -331,11 +381,11 @@ class TerrainWallScan {
         }
 
         report.append(System.lineSeparator()).append(title).append(System.lineSeparator());
-        report.append(String.format("    %-16s %-18s %5s %10s %9s %9s %9s %22s%n",
+        report.append(String.format(Locale.ROOT, "    %-16s %-18s %5s %10s %9s %9s %9s %22s%n",
                 "lap", "x y z", "drop", "continents", "erosion", "ridges", "depth", "seed"));
 
         for (Spike spike : ofKind) {
-            report.append(String.format("    %-16s %-18s %5d %10.4f %9.4f %9.4f %9.4f %22d%n",
+            report.append(String.format(Locale.ROOT, "    %-16s %-18s %5d %10.4f %9.4f %9.4f %9.4f %22d%n",
                     spike.lap(), spike.blockX() + " " + spike.blockY() + " " + spike.blockZ(),
                     spike.drop(), spike.continents(), spike.erosion(), spike.ridges(), spike.depth(),
                     spike.seed()));
@@ -362,6 +412,8 @@ class TerrainWallScan {
             needles += found.needles();
             worstDrop = Math.max(worstDrop, found.worstDrop());
             sunkenColumns += found.pits();
+            ScanReports.note(SCAN, "needle", "preset=" + presetId + " folded=" + folded + " width=" + widthBlocks
+                    + " seed=" + seed + " needles=" + found.needles());
         }
 
         return new NeedleRow(seedsWithNeedle, needles, worstDrop, sunkenColumns, Jumps.of(steps));
@@ -473,15 +525,15 @@ class TerrainWallScan {
                 lowestFreqInputFactor, CLIMATE_XZ_SCALE, HORIZONTAL_SHARE);
 
         report.append("  ").append(key.identifier().getPath())
-                .append(String.format(", first octave %d, compression %.3f%n",
+                .append(String.format(Locale.ROOT, ", first octave %d, compression %.3f%n",
                         parameters.firstOctave(), compression));
-        report.append(String.format("    %-7s %10s %9s %8s %7s %7s%n",
+        report.append(String.format(Locale.ROOT, "    %-7s %10s %9s %8s %7s %7s%n",
                 "octave", "amplitude", "cells", "period", "damp", "gain"));
 
         for (int i = 0; i < amplitudes.size(); i++) {
             double scale = CLIMATE_XZ_SCALE * compression * lowestFreqInputFactor * Math.pow(2.0, i);
             long natural = Math.round(WIDTH_BLOCKS * scale);
-            report.append(String.format("    %-7d %10.3f %9.4f %8s %7.3f %7.3f%n",
+            report.append(String.format(Locale.ROOT, "    %-7d %10.3f %9.4f %8s %7.3f %7.3f%n",
                     i, amplitudes.getDouble(i), WIDTH_BLOCKS * scale,
                     natural < 2L ? natural + " floored" : Long.toString(natural),
                     OctaveVarianceCorrection.factor(xDomain, zDomain, scale, HORIZONTAL_SHARE),
@@ -493,26 +545,26 @@ class TerrainWallScan {
 
     private static void appendPass(StringBuilder report, Pass pass) {
         report.append("  ").append(pass.name()).append(System.lineSeparator());
-        report.append(String.format("    land share %.3f, blades %d, per level %s%n",
+        report.append(String.format(Locale.ROOT, "    land share %.3f, blades %d, per level %s%n",
                 pass.landShare(), pass.blades().size(), levels(pass.bladesPerLevel())));
-        report.append(String.format("    %-16s %9s %9s %9s %9s %10s %10s%n",
+        report.append(String.format(Locale.ROOT, "    %-16s %9s %9s %9s %9s %10s %10s%n",
                 "field", "mean", "spread", "min", "max", "grad mean", "grad max"));
 
         for (Field field : pass.fields()) {
-            report.append(String.format("    %-16s %9.4f %9.4f %9.4f %9.4f %10.4f %10.4f%n",
+            report.append(String.format(Locale.ROOT, "    %-16s %9.4f %9.4f %9.4f %9.4f %10.4f %10.4f%n",
                     field.name(), field.mean(), field.spread(), field.min(), field.max(),
                     field.gradientMean(), field.gradientMax()));
         }
 
         if (!pass.blades().isEmpty()) {
-            report.append(String.format("    %-22s %9s %9s %10s %9s %9s %9s%n",
+            report.append(String.format(Locale.ROOT, "    %-22s %9s %9s %10s %9s %9s %9s%n",
                     "thinnest blades", "thick", "density", "continents", "erosion", "ridges", "depth"));
 
             for (Site site : pass.blades().stream()
                     .sorted(Comparator.comparingDouble(Site::thickness))
                     .limit(WORST_SITES)
                     .toList()) {
-                report.append(String.format("    %-22s %9.2f %9.4f %10.4f %9.4f %9.4f %9.4f%n",
+                report.append(String.format(Locale.ROOT, "    %-22s %9.2f %9.4f %10.4f %9.4f %9.4f %9.4f%n",
                         site.blockX() + " " + site.blockY() + " " + site.blockZ(),
                         site.thickness(), site.density(), site.continents(), site.erosion(), site.ridges(),
                         site.depth()));
@@ -522,8 +574,8 @@ class TerrainWallScan {
         report.append(System.lineSeparator());
     }
 
-    private static Pass pass(String name, WorldType type, WorldFold fold) {
-        RandomState randomState = randomState(type, fold, WALL_SEED);
+    private static Pass pass(String name, WorldType type, WorldFold fold, long seed) {
+        RandomState randomState = randomState(type, fold, seed);
         NoiseRouter router = randomState.router();
         int seaLevel = settingsOf(type).seaLevel();
         int corners = WIDTH_BLOCKS / CELL_WIDTH;

@@ -34,7 +34,9 @@ class TerrainCeilingScan {
 
     private static final int GRID = 64;
 
-    private static final int SEEDS = 4;
+    private static final String SCAN = "terrain-ceiling";
+
+    private static final int SEEDS = 10;
 
     private static final int SEARCH_FLOOR_Y = -64;
 
@@ -119,7 +121,8 @@ class TerrainCeilingScan {
             report.add("");
         }
 
-        ScanReports.write(REPORT, report);
+        ScanReports.write(REPORT, ScanReports.population(SEEDS, SuspendedLand.seed(0), SuspendedLand.SEED_STEP,
+                "seconds per seed, so ten is the ceiling the set affords"), report);
 
         for (Bucket bucket : flatBuckets) {
             assertTrue(bucket.overshootShare() <= OVERSHOOT_SHARE_CEILING,
@@ -178,6 +181,7 @@ class TerrainCeilingScan {
         double step = WIDTH_BLOCKS / (double) GRID;
 
         for (int s = 0; s < SEEDS; s++) {
+            int before = columns.size();
             RandomState randomState = randomState(probe, fold, SuspendedLand.seed(s));
             NoiseRouter router = randomState.router();
             DensityFunction ceiling = router.barrierNoise();
@@ -200,6 +204,8 @@ class TerrainCeilingScan {
                     }
                 }
             });
+            ScanReports.note(SCAN, "ceiling", "type=" + type.name() + " width=" + WIDTH_BLOCKS
+                    + " seed=" + SuspendedLand.seed(s) + " columns=" + (columns.size() - before));
         }
 
         return columns;
@@ -298,7 +304,9 @@ class TerrainCeilingScan {
                     + " blocks");
         }
 
-        ScanReports.write(ISLAND_REPORT, report);
+        ScanReports.write(ISLAND_REPORT, ScanReports.noPopulation(
+                "one site, taken from the suspended-land search, which stops at the first island it finds"),
+                report);
         assertTrue(deep >= SuspendedLand.SITE_COLUMNS,
                 "the ceiling stopped cutting: " + deep + " columns lost " + SuspendedLand.SUSPENDED_BLOCKS
                         + " blocks or more, floor " + SuspendedLand.SITE_COLUMNS + " — at " + site.describe());
