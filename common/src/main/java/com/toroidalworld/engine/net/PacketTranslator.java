@@ -13,6 +13,7 @@ import java.util.function.UnaryOperator;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.ChunkPacketPosition;
+import com.toroidalworld.api.v1.net.ParticleRewriter;
 import com.toroidalworld.core.StartupRegistry;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
@@ -161,10 +162,6 @@ public final class PacketTranslator {
     private static <P extends CustomPacketPayload> BiFunction<CustomPacketPayload, TranslationContext, CustomPacketPayload>
             castingRewriter(Class<P> payloadType, BiFunction<P, TranslationContext, CustomPacketPayload> payloadRewriter) {
         return (payload, context) -> payloadRewriter.apply(payloadType.cast(payload), context);
-    }
-
-    public interface ParticleRewriter<P extends ParticleOptions> {
-        ParticleOptions rewrite(P particle, TranslationContext context, Vec3 clientOrigin);
     }
 
     private static final StartupRegistry<Class<?>, ParticleRewriter<ParticleOptions>> PARTICLE_REWRITERS =
@@ -390,7 +387,7 @@ public final class PacketTranslator {
     }
 
     private static ClientboundBlockUpdatePacket blockUpdate(ClientboundBlockUpdatePacket packet, TranslationContext context) {
-        return new ClientboundBlockUpdatePacket(toClientBlock(context, packet.getPos()), packet.getBlockState());
+        return new ClientboundBlockUpdatePacket(context.toClient(packet.getPos()), packet.getBlockState());
     }
 
     private static ClientboundSectionBlocksUpdatePacket sectionBlocksUpdate(ClientboundSectionBlocksUpdatePacket packet, TranslationContext context) {
@@ -403,17 +400,17 @@ public final class PacketTranslator {
 
     private static ClientboundBlockEntityDataPacket blockEntityData(ClientboundBlockEntityDataPacket packet, TranslationContext context) {
         return BlockEntityDataPacketAccessor.toroidal$create(
-                toClientBlock(context, packet.getPos()), packet.getType(), packet.getTag());
+                context.toClient(packet.getPos()), packet.getType(), packet.getTag());
     }
 
     private static ClientboundBlockDestructionPacket blockDestruction(ClientboundBlockDestructionPacket packet, TranslationContext context) {
         return new ClientboundBlockDestructionPacket(
-                packet.getId(), toClientBlock(context, packet.getPos()), packet.getProgress());
+                packet.getId(), context.toClient(packet.getPos()), packet.getProgress());
     }
 
     private static ClientboundLevelEventPacket levelEvent(ClientboundLevelEventPacket packet, TranslationContext context) {
         return new ClientboundLevelEventPacket(
-                packet.getType(), toClientBlock(context, packet.getPos()), packet.getData(), packet.isGlobalEvent());
+                packet.getType(), context.toClient(packet.getPos()), packet.getData(), packet.isGlobalEvent());
     }
 
     private static ClientboundSetEntityDataPacket setEntityData(ClientboundSetEntityDataPacket packet, TranslationContext context) {
@@ -460,11 +457,11 @@ public final class PacketTranslator {
 
     private static ClientboundBlockEventPacket blockEvent(ClientboundBlockEventPacket packet, TranslationContext context) {
         return new ClientboundBlockEventPacket(
-                toClientBlock(context, packet.getPos()), packet.getBlock(), packet.getB0(), packet.getB1());
+                context.toClient(packet.getPos()), packet.getBlock(), packet.getB0(), packet.getB1());
     }
 
     private static ClientboundOpenSignEditorPacket openSignEditor(ClientboundOpenSignEditorPacket packet, TranslationContext context) {
-        return new ClientboundOpenSignEditorPacket(toClientBlock(context, packet.getPos()), packet.isFrontText());
+        return new ClientboundOpenSignEditorPacket(context.toClient(packet.getPos()), packet.isFrontText());
     }
 
     private static ClientboundSoundPacket sound(ClientboundSoundPacket packet, TranslationContext context) {
@@ -708,10 +705,6 @@ public final class PacketTranslator {
     private static ServerboundTestInstanceBlockActionPacket testInstanceBlockAction(ServerboundTestInstanceBlockActionPacket packet, TranslationContext context) {
         return new ServerboundTestInstanceBlockActionPacket(
                 context.toServer(packet.pos()), packet.action(), packet.data());
-    }
-
-    static BlockPos toClientBlock(TranslationContext context, BlockPos pos) {
-        return context.transformer().reseat(pos, context.toClient(ChunkPos.containing(pos)));
     }
 
     private static BlockPos nearestCopyBlock(TranslationContext context, BlockPos pos) {
