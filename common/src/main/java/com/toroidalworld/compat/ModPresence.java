@@ -1,5 +1,6 @@
 package com.toroidalworld.compat;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 public final class ModPresence {
@@ -7,12 +8,17 @@ public final class ModPresence {
     private final ClassLoader classLoader;
     private final String resource;
     private final String gateLabel;
+    private final @Nullable ModSymbol required;
 
     private boolean probed;
     private boolean present;
 
     public static ModPresence of(Logger logger, String resource, String gateLabel) {
-        return new ModPresence(logger, ModPresence.class.getClassLoader(), resource, gateLabel);
+        return new ModPresence(logger, ModPresence.class.getClassLoader(), resource, gateLabel, null);
+    }
+
+    public static ModPresence of(Logger logger, String resource, String gateLabel, ModSymbol required) {
+        return new ModPresence(logger, ModPresence.class.getClassLoader(), resource, gateLabel, required);
     }
 
     public static boolean probe(String resource) {
@@ -23,20 +29,41 @@ public final class ModPresence {
         return classLoader.getResource(resource) != null;
     }
 
-    ModPresence(Logger logger, ClassLoader classLoader, String resource, String gateLabel) {
+    ModPresence(Logger logger, ClassLoader classLoader, String resource, String gateLabel,
+            @Nullable ModSymbol required) {
         this.logger = logger;
         this.classLoader = classLoader;
         this.resource = resource;
         this.gateLabel = gateLabel;
+        this.required = required;
     }
 
     public synchronized boolean present() {
         if (!this.probed) {
-            this.present = probe(this.classLoader, this.resource);
+            this.present = resolve();
             this.probed = true;
-            this.logger.info("{}={}", this.gateLabel, this.present);
         }
 
         return this.present;
+    }
+
+    private boolean resolve() {
+        if (!probe(this.classLoader, this.resource)) {
+            this.logger.info("{}=false", this.gateLabel);
+            return false;
+        }
+
+        if (this.required == null) {
+            this.logger.info("{}=true", this.gateLabel);
+            return true;
+        }
+
+        if (!this.required.carriedBy(this.classLoader)) {
+            this.logger.warn("{}=true symbol_present=false symbol={}", this.gateLabel, this.required);
+            return false;
+        }
+
+        this.logger.info("{}=true symbol_present=true symbol={}", this.gateLabel, this.required);
+        return true;
     }
 }
