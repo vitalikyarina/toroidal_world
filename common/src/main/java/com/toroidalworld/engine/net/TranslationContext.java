@@ -8,7 +8,10 @@ import java.util.function.IntPredicate;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
+import com.toroidalworld.api.v1.ToroidalShape;
+import com.toroidalworld.api.v1.net.SeamContext;
 import com.toroidalworld.core.CoordinateConstants;
+import com.toroidalworld.core.ToroidalShapeView;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.core.WrapDomain;
@@ -38,7 +41,7 @@ public record TranslationContext(
         int heldViewDistance,
         IntPredicate ownVehicle,
         IntFunction<@Nullable Vec3> entityPosition,
-        Runnable rebase) {
+        Runnable rebase) implements SeamContext {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -89,6 +92,17 @@ public record TranslationContext(
         return entity == null ? null : entity.position();
     }
 
+    @Override
+    public ToroidalShape shape() {
+        return new ToroidalShapeView(transformer);
+    }
+
+    @Override
+    public BlockPos toClient(BlockPos pos) {
+        return transformer.reseat(pos, toClient(ChunkPos.containing(pos)));
+    }
+
+    @Override
     public ChunkPos toClient(ChunkPos chunkPos) {
         ChunkPos anchor = chunkAnchor();
         ChunkPos clientPos = transformer.nearestCopy(anchor, chunkPos);
@@ -220,6 +234,11 @@ public record TranslationContext(
                 reach.blocks(), reach.slackBlocks());
     }
 
+    @Override
+    public Vec3 toClient(Vec3 position) {
+        return toClient(position, trackedReach());
+    }
+
     public Vec3 toClient(Vec3 position, PacketReach reach) {
         Vec3 clientPos = nearestCopy(position);
         guardReach(reach, Direction.Axis.X, position.x, clientPos.x, clientPosition.x());
@@ -231,6 +250,7 @@ public record TranslationContext(
         return transformer.nearestCopy(new Vec3(clientPosition.x(), position.y, clientPosition.z()), position);
     }
 
+    @Override
     public BlockPos toServer(BlockPos pos) {
         return transformer.fold(pos);
     }
@@ -239,6 +259,7 @@ public record TranslationContext(
         return transformer.foldOriented(pos);
     }
 
+    @Override
     public Vec3 toServer(Vec3 position) {
         return transformer.fold(position);
     }

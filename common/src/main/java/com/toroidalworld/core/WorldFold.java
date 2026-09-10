@@ -86,7 +86,6 @@ public interface WorldFold {
 
     DeckTransformation deckTransformation(ChunkPos chunk, ChunkPos copy);
 
-    // mc/1.21: calls the pair, unused on main.
     DeckTransformation nearestCopyTransformation(Vec3 ref, Vec3 target);
 
     DeckTransformation nearestCopyTransformation(BlockPos ref, BlockPos target);
