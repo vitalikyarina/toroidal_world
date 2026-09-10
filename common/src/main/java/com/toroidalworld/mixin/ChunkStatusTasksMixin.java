@@ -60,7 +60,21 @@ public class ChunkStatusTasksMixin {
             ChunkAccess chunk) {
         return original.thenApply(carved -> {
             FloatingCrumbs.sweep(context.level(), carved);
+            FloatingCrumbs.registerMask(context.level(), carved);
             return carved;
+        });
+    }
+
+    @ModifyReturnValue(method = "light", at = @At("RETURN"))
+    private static CompletableFuture<ChunkAccess> toroidal$sweepBorderCrumbs(
+            CompletableFuture<ChunkAccess> original,
+            WorldGenContext context,
+            ChunkStep step,
+            StaticCache2D<GenerationChunkHolder> chunks,
+            ChunkAccess chunk) {
+        return original.thenApply(lit -> {
+            FloatingCrumbs.sweepAcross(context.level(), lit, chunks);
+            return lit;
         });
     }
 }
