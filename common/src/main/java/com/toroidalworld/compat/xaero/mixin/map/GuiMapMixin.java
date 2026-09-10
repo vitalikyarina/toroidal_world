@@ -5,7 +5,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import org.joml.Matrix4f;
@@ -136,72 +135,75 @@ public abstract class GuiMapMixin {
         this.toroidal$cursorLapZ = rawZ - this.mouseBlockPosZ;
     }
 
-    @Redirect(
+    @WrapOperation(
             method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/MapProcessor;getLeveledRegion(IIII)Lxaero/map/region/LeveledRegion;"))
-    private LeveledRegion<?> toroidal$fetchLeveledRegion(MapProcessor processor, int caveLayer, int regX, int regZ, int level) {
+    private LeveledRegion<?> toroidal$fetchLeveledRegion(MapProcessor processor, int caveLayer, int regX, int regZ,
+            int level, Operation<LeveledRegion<?>> original) {
         this.toroidal$processor = processor;
         this.toroidal$viewLeveledRegX = regX;
         this.toroidal$viewLeveledRegZ = regZ;
         this.toroidal$viewLevel = level;
         this.toroidal$viewCaveLayer = caveLayer;
         this.toroidal$leveledCandidate = null;
-        LeveledRegion<?> original = processor.getLeveledRegion(caveLayer, regX, regZ, level);
-        if (original != null || !XaeroWorldMapFold.active() || !XaeroWorldMapFold.glueableAt(64 << level)) {
-            return original;
+        LeveledRegion<?> existing = original.call(processor, caveLayer, regX, regZ, level);
+        if (existing != null || !XaeroWorldMapFold.active() || !XaeroWorldMapFold.glueableAt(64 << level)) {
+            return existing;
         }
 
         // A candidate value only, so the draw block runs at all; the texture redirect re-resolves each slot precisely.
         int side = XaeroWorldMapFold.REGION_BLOCKS << level;
         int foldedOriginX = XaeroWorldMapFold.foldBlock(Direction.Axis.X, regX * side);
         int foldedOriginZ = XaeroWorldMapFold.foldBlock(Direction.Axis.Z, regZ * side);
-        LeveledRegion<?> candidate = processor.getLeveledRegion(
-                caveLayer, Math.floorDiv(foldedOriginX, side), Math.floorDiv(foldedOriginZ, side), level);
+        LeveledRegion<?> candidate = original.call(
+                processor, caveLayer, Math.floorDiv(foldedOriginX, side), Math.floorDiv(foldedOriginZ, side), level);
         this.toroidal$leveledCandidate = candidate;
         return candidate;
     }
 
     // An origin-fold substitute, so the block runs even where the cell has no LEAF region of its own.
-    @Redirect(
+    @WrapOperation(
             method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "INVOKE",
                     target = XaeroInjectionTargets.MAP_PROCESSOR_GET_LEAF_MAP_REGION))
-    private xaero.map.region.MapRegion toroidal$fetchLeafRegion(MapProcessor processor, int caveLayer, int regX, int regZ, boolean create) {
-        xaero.map.region.MapRegion original = processor.getLeafMapRegion(caveLayer, regX, regZ, create);
-        if (original != null || !XaeroWorldMapFold.active()) {
-            return original;
+    private xaero.map.region.MapRegion toroidal$fetchLeafRegion(MapProcessor processor, int caveLayer, int regX,
+            int regZ, boolean create, Operation<xaero.map.region.MapRegion> original) {
+        xaero.map.region.MapRegion existing = original.call(processor, caveLayer, regX, regZ, create);
+        if (existing != null || !XaeroWorldMapFold.active()) {
+            return existing;
         }
 
         int foldedOriginX =
                 XaeroWorldMapFold.foldBlock(Direction.Axis.X, regX * XaeroWorldMapFold.REGION_BLOCKS);
         int foldedOriginZ =
                 XaeroWorldMapFold.foldBlock(Direction.Axis.Z, regZ * XaeroWorldMapFold.REGION_BLOCKS);
-        return processor.getLeafMapRegion(
-                caveLayer, Math.floorDiv(foldedOriginX, XaeroWorldMapFold.REGION_BLOCKS),
+        return original.call(
+                processor, caveLayer, Math.floorDiv(foldedOriginX, XaeroWorldMapFold.REGION_BLOCKS),
                 Math.floorDiv(foldedOriginZ, XaeroWorldMapFold.REGION_BLOCKS), false);
     }
 
-    @Redirect(
+    @WrapOperation(
             method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(value = "INVOKE", target = "Lxaero/map/region/LeveledRegion;hasTextures()Z"))
-    private boolean toroidal$candidateHasTextures(LeveledRegion<?> region) {
+    private boolean toroidal$candidateHasTextures(LeveledRegion<?> region, Operation<Boolean> original) {
         if (XaeroWorldMapFold.active() && region != null && region == this.toroidal$leveledCandidate) {
             return true;
         }
 
-        return region.hasTextures();
+        return original.call(region);
     }
 
-    @Redirect(
+    @WrapOperation(
             method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/region/LeveledRegion;getTexture(II)Lxaero/map/region/texture/RegionTexture;",
                     ordinal = 1))
-    private RegionTexture<?> toroidal$foldLeafTexture(LeveledRegion<?> region, int slotX, int slotZ) {
+    private RegionTexture<?> toroidal$foldLeafTexture(LeveledRegion<?> region, int slotX, int slotZ,
+            Operation<RegionTexture<?>> original) {
         this.toroidal$slotFolded = false;
         boolean isCandidate = region == this.toroidal$leveledCandidate;
         int level = this.toroidal$viewLevel;
@@ -212,13 +214,13 @@ public abstract class GuiMapMixin {
         this.toroidal$slotViewBlockX = viewBlockX;
         this.toroidal$slotViewBlockZ = viewBlockZ;
         if (!XaeroWorldMapFold.active() || !XaeroWorldMapFold.glueableAt(slotSize)) {
-            return isCandidate ? null : region.getTexture(slotX, slotZ);
+            return isCandidate ? null : original.call(region, slotX, slotZ);
         }
 
         int foldedBlockX = XaeroWorldMapFold.foldBlock(Direction.Axis.X, viewBlockX);
         int foldedBlockZ = XaeroWorldMapFold.foldBlock(Direction.Axis.Z, viewBlockZ);
         if (foldedBlockX == viewBlockX && foldedBlockZ == viewBlockZ) {
-            return isCandidate ? null : region.getTexture(slotX, slotZ);
+            return isCandidate ? null : original.call(region, slotX, slotZ);
         }
 
         this.toroidal$slotFolded = true;
@@ -233,18 +235,19 @@ public abstract class GuiMapMixin {
         return canonical.getTexture((foldedBlockX - canonicalRegX * side) / slotSize, (foldedBlockZ - canonicalRegZ * side) / slotSize);
     }
 
-    @Redirect(
+    @WrapOperation(
             method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/region/LeveledRegion;getTexture(II)Lxaero/map/region/texture/RegionTexture;",
                     ordinal = 2))
-    private RegionTexture<?> toroidal$suppressFoldedRootTexture(LeveledRegion<?> region, int textureX, int textureZ) {
+    private RegionTexture<?> toroidal$suppressFoldedRootTexture(LeveledRegion<?> region, int textureX, int textureZ,
+            Operation<RegionTexture<?>> original) {
         if (XaeroWorldMapFold.active() && this.toroidal$slotFolded) {
             return null;
         }
 
-        return region.getTexture(textureX, textureZ);
+        return original.call(region, textureX, textureZ);
     }
 
     @WrapOperation(
