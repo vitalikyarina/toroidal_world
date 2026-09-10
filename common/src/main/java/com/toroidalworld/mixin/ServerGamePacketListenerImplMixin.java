@@ -61,7 +61,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
     @Inject(method = "<init>", at = @At("TAIL"))
     private void toroidal$seedMirror(MinecraftServer server, Connection connection, ServerPlayer player,
             CommonListenerCookie cookie, CallbackInfo ci) {
-        WorldLoopAttachments.rebaseClientPositionOf(player);
+        ClientPosition.rebase(player);
     }
 
     @ModifyVariable(
@@ -100,7 +100,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             return;
         }
 
-        ClientPosition mirror = WorldLoopAttachments.clientPositionOf(this.player);
+        ClientPosition mirror = ClientPosition.of(this.player);
         if (!mirror.describes(this.player.level().dimension())) {
             stormWholeView.set(true);
             resender.toroidal$dropTrackedChunks(this.player);
@@ -274,7 +274,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             return clamped;
         }
 
-        WorldLoopAttachments.clientPositionOf(this.player).setX(clamped, MirrorWriter.VEHICLE_MOVE);
+        ClientPosition.of(this.player).setX(clamped, MirrorWriter.VEHICLE_MOVE);
         return transformer.blockDomain(Direction.Axis.X).unwrapAround(this.player.getRootVehicle().getX(), clamped);
     }
 
@@ -291,7 +291,7 @@ public class ServerGamePacketListenerImplMixin implements ClientPositionHolder {
             return clamped;
         }
 
-        WorldLoopAttachments.clientPositionOf(this.player).setZ(clamped, MirrorWriter.VEHICLE_MOVE);
+        ClientPosition.of(this.player).setZ(clamped, MirrorWriter.VEHICLE_MOVE);
         return transformer.blockDomain(Direction.Axis.Z).unwrapAround(this.player.getRootVehicle().getZ(), clamped);
     }
 

@@ -17,6 +17,7 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.CircumnavigationTracker;
+import com.toroidalworld.engine.seam.ClientPosition;
 import com.toroidalworld.engine.seam.SeamAim;
 import com.toroidalworld.engine.seam.VehicleDismountResync;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
@@ -156,7 +157,7 @@ public class EntityMixin implements TransformerSource {
     @Inject(method = "snapTo(DDDFF)V", at = @At("TAIL"))
     private void toroidal$rebaseMirrorOnPlacement(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
         if ((Object) this instanceof ServerPlayer player) {
-            WorldLoopAttachments.rebaseClientPositionOf(player);
+            ClientPosition.rebase(player);
         }
     }
 
