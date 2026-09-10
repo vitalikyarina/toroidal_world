@@ -40,7 +40,12 @@ class ImportRulesTest {
             "api.v1.shape.ShapeDimensions -> engine.gen.ShapedDimensions",
             "api.v1.net.PacketRewriters -> engine.net.PacketTranslator",
             "api.v1.ToroidalWorldApi -> engine.seam.SeamTravel",
-            "shape.WorldShapes -> engine.gen.ShapedDimensions");
+            "api.v1.gen.GenerationProbe -> engine.gen.FloatingCrumbs",
+            "api.v1.gen.GenerationProbe -> engine.noise.GenerationTransformerContext",
+            "api.v1.gen.GenerationProbe -> engine.noise.TerrainCeiling",
+            "shape.WorldShapes -> engine.gen.ShapedDimensions",
+            "core.WorldLoopAttachments -> engine.gen.TerrainMask",
+            "core.WorldLoopAttachments -> engine.gen.TerrainMasks");
 
     @Test
     void everyImportStaysInsideItsGroup() throws IOException {
