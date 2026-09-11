@@ -15,7 +15,6 @@ import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.ToroidalShapeView;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
-import com.toroidalworld.engine.LogRateGate;
 import com.toroidalworld.engine.seam.ClientPosition;
 import com.toroidalworld.platform.Platforms;
 import com.mojang.logging.LogUtils;
@@ -53,8 +52,6 @@ public record TranslationContext(
 
     private static final double REACH_MARGIN_BLOCKS =
             (double) CoordinateConstants.VIEW_DISTANCE_MARGIN * CoordinateConstants.CHUNK_WIDTH;
-
-    private static final LogRateGate WARN_GATE = new LogRateGate();
 
     public static TranslationContext of(ServerPlayer player, WorldFold transformer) {
         int trackedViewDistance = trackedViewDistanceOf(player, transformer);
@@ -212,8 +209,22 @@ public record TranslationContext(
         return transformer.blockDomain(Direction.Axis.Z).unwrapAround(clientPosition.z(), z);
     }
 
+    private enum Warning {
+        CHUNK_FAR_FROM_ANCHOR,
+        COORD_FAR_FROM_ANCHOR_X,
+        COORD_FAR_FROM_ANCHOR_Z;
+
+        static Warning coord(Direction.Axis axis) {
+            return switch (axis) {
+                case X -> COORD_FAR_FROM_ANCHOR_X;
+                case Z -> COORD_FAR_FROM_ANCHOR_Z;
+                case Y -> throw new IllegalArgumentException("A packet's reach is never guarded on the Y axis");
+            };
+        }
+    }
+
     private void warnChunkFarFromAnchor(ChunkPos serverPos, ChunkPos clientPos, ChunkPos anchor, int viewReach) {
-        if (!WARN_GATE.tryPass()) {
+        if (!clientPosition.translationWarnGates().tryPass(Warning.CHUNK_FAR_FROM_ANCHOR)) {
             return;
         }
 
@@ -224,7 +235,7 @@ public record TranslationContext(
 
     private void warnCoordFarFromAnchor(PacketReach reach, Direction.Axis axis,
             double serverValue, double clientValue, double anchor) {
-        if (!WARN_GATE.tryPass()) {
+        if (!clientPosition.translationWarnGates().tryPass(Warning.coord(axis))) {
             return;
         }
 
