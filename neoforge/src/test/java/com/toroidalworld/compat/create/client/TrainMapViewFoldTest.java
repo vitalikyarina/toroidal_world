@@ -17,6 +17,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
+import com.toroidalworld.compat.create.client.TrainMapViewFold.NearestNodeKey;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.SeamTransform;
 import com.toroidalworld.core.WorldFold;
@@ -24,6 +26,7 @@ import com.toroidalworld.engine.seam.MapSurfaceCopies.Copies;
 
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 class TrainMapViewFoldTest {
@@ -33,6 +36,10 @@ class TrainMapViewFoldTest {
     private static final int SURFACE_REACH = 5;
     private static final int MANY_WORLDS = 40;
     private static final int CLEAR_OF_THE_BOUND_BLOCKS = 100;
+    private static final int NODE_KEY_UNITS_PER_BLOCK = 2;
+    private static final int NODE_KEY_Y = 200;
+    private static final double NODE_ROW_BLOCKS = 0.5;
+    private static final double RAIL_END_BLOCKS = 240.0;
 
     private static final List<WorldFold> TORI = List.of(PER_AXIS, DECK_TORUS, SKEWED, MIRRORED);
     private static final List<WorldFold> PLAIN_TORI = List.of(PER_AXIS, DECK_TORUS);
@@ -251,6 +258,53 @@ class TrainMapViewFoldTest {
                 TrainMapViewFold.copiesDrawnFor(DECK_CYLINDER, EVERYWHERE, ENDING_ON_THE_X_BOUND));
         assertEquals(List.of(DeckTransformation.IDENTITY),
                 TrainMapViewFold.copiesDrawnFor(DECK_CYLINDER, EVERYWHERE, alongTheUnboundedAxis));
+    }
+
+    @Test
+    void aSecondAnchorSharingTheKeyIsFoldedForItself() {
+        for (WorldFold fold : PLAIN_TORI) {
+            Vec3i shared = keyAt(-WORLD_BLOCKS / 2.0, NODE_ROW_BLOCKS);
+            Memo memo = new Memo();
+
+            NearestNodeKey acrossTheSeam =
+                    TrainMapViewFold.nearestNodeKey(fold, keyAt(RAIL_END_BLOCKS, NODE_ROW_BLOCKS), shared, memo);
+            NearestNodeKey besideIt =
+                    TrainMapViewFold.nearestNodeKey(fold, keyAt(-RAIL_END_BLOCKS, NODE_ROW_BLOCKS), shared, memo);
+
+            assertEquals(keyAt(WORLD_BLOCKS / 2.0, NODE_ROW_BLOCKS), acrossTheSeam.nearest(), "in " + fold);
+            assertSame(shared, besideIt.nearest(), "in " + fold);
+        }
+    }
+
+    @Test
+    void theSameAnchorAndKeyAreAnsweredFromTheMemo() {
+        Vec3i anchor = keyAt(RAIL_END_BLOCKS, NODE_ROW_BLOCKS);
+        Vec3i shared = keyAt(-WORLD_BLOCKS / 2.0, NODE_ROW_BLOCKS);
+        Memo memo = new Memo();
+
+        NearestNodeKey first = TrainMapViewFold.nearestNodeKey(PER_AXIS, anchor, shared, memo);
+        NearestNodeKey again = TrainMapViewFold.nearestNodeKey(PER_AXIS, anchor, shared, memo);
+
+        assertSame(first, again);
+    }
+
+    private static Vec3i keyAt(double x, double z) {
+        return new Vec3i((int) Math.round(x * NODE_KEY_UNITS_PER_BLOCK), NODE_KEY_Y,
+                (int) Math.round(z * NODE_KEY_UNITS_PER_BLOCK));
+    }
+
+    private static final class Memo implements LocalRef<NearestNodeKey> {
+        private NearestNodeKey value;
+
+        @Override
+        public NearestNodeKey get() {
+            return value;
+        }
+
+        @Override
+        public void set(NearestNodeKey value) {
+            this.value = value;
+        }
     }
 
     private static BoundingBox box(Rect2i view) {

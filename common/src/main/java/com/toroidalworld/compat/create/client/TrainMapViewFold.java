@@ -21,7 +21,7 @@ public final class TrainMapViewFold {
     // Create's TrainMapManager.renderAndPick grows the rect it is handed by this margin before it draws anything.
     private static final int OFF_SCREEN_MARGIN = 32;
 
-    public record NearestNodeKey(Vec3i raw, Vec3i nearest) {
+    public record NearestNodeKey(Vec3i anchor, Vec3i raw, Vec3i nearest) {
     }
 
     public static @Nullable WorldFold transformer() {
@@ -29,13 +29,17 @@ public final class TrainMapViewFold {
     }
 
     public static NearestNodeKey nearestNodeKey(Vec3i anchor, Vec3i key, LocalRef<NearestNodeKey> memo) {
+        return nearestNodeKey(transformer(), anchor, key, memo);
+    }
+
+    public static NearestNodeKey nearestNodeKey(@Nullable WorldFold transformer, Vec3i anchor, Vec3i key,
+            LocalRef<NearestNodeKey> memo) {
         NearestNodeKey known = memo.get();
-        if (known != null && known.raw() == key) {
+        if (known != null && known.anchor() == anchor && known.raw() == key) {
             return known;
         }
 
-        WorldFold transformer = transformer();
-        NearestNodeKey folded = new NearestNodeKey(key,
+        NearestNodeKey folded = new NearestNodeKey(anchor, key,
                 transformer == null ? key : CreateTrackFold.nearestNodeKey(transformer, anchor, key));
         memo.set(folded);
         return folded;
