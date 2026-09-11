@@ -54,6 +54,7 @@
     "CommandCoordinatesMixin",
     "CommandSourceStackMixin",
     "ConnectionMixin",
+    "CreakingMixin",
     "CrossbowItemAimMixin",
     "DefaultRandomPosMixin",
     "DensityFunctionsEndIslandMixin",
