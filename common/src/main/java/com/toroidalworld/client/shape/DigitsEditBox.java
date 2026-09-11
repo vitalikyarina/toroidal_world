@@ -1,4 +1,4 @@
-package com.toroidalworld.client.screen;
+package com.toroidalworld.client.shape;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.EditBox;

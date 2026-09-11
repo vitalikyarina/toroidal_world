@@ -7,7 +7,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.api.v1.client.WorldOptionContext;
 import com.toroidalworld.api.v1.client.WorldOptionControl;
-import com.toroidalworld.client.screen.DigitsEditBox;
+import com.toroidalworld.client.shape.DigitsEditBox;
 import com.toroidalworld.client.shape.LoopSizeControls;
 import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.shape.torus.ClimateScale;
