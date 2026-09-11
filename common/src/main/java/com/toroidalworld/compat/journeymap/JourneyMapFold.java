@@ -1,5 +1,6 @@
 package com.toroidalworld.compat.journeymap;
 
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 
 import org.jspecify.annotations.Nullable;
@@ -16,6 +17,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
 
+import journeymap.api.v2.common.Context;
+
 public final class JourneyMapFold {
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -27,6 +30,11 @@ public final class JourneyMapFold {
 
     public static final String WORLD_CHANGED = "world";
     public static final String DIMENSION_CHANGED = "dimension";
+
+    private static int fullscreenRangeX;
+    private static int fullscreenRangeZ;
+    private static int minimapRangeX;
+    private static int minimapRangeZ;
 
     public static int foldRegionChunk(Direction.Axis axis, int chunk) {
         ToroidalShape shape = ClientShapes.current();
@@ -126,6 +134,77 @@ public final class JourneyMapFold {
 
     private static int copiesToCover(double periodPixels, int viewportPixels) {
         return periodPixels <= 0.0 ? 0 : (int) Math.ceil(viewportPixels * VIEWPORT_COVER / periodPixels);
+    }
+
+    public static void recordCopyRange(Context.UI ui, int rangeX, int rangeZ) {
+        if (ui == Context.UI.Fullscreen) {
+            fullscreenRangeX = rangeX;
+            fullscreenRangeZ = rangeZ;
+        } else if (ui == Context.UI.Minimap) {
+            minimapRangeX = rangeX;
+            minimapRangeZ = rangeZ;
+        }
+    }
+
+    public static double[][] copyOffsets(Context.UI ui, int zoom, Rectangle2D.Double bounds, Rectangle2D.Double screen) {
+        int rangeX = ui == Context.UI.Fullscreen ? fullscreenRangeX : ui == Context.UI.Minimap ? minimapRangeX : 0;
+        int rangeZ = ui == Context.UI.Fullscreen ? fullscreenRangeZ : ui == Context.UI.Minimap ? minimapRangeZ : 0;
+        return copyOffsets(rangeX, rangeZ, worldPixelPeriod(Direction.Axis.X, zoom),
+                worldPixelPeriod(Direction.Axis.Z, zoom), bounds, screen);
+    }
+
+    static double[][] copyOffsets(int rangeX, int rangeZ, double periodX, double periodZ, Rectangle2D.Double bounds,
+            Rectangle2D.Double screen) {
+        int[] lapsX = visibleLaps(rangeX, periodX, bounds.getMinX(), bounds.getMaxX(), screen.getMinX(), screen.getMaxX());
+        int[] lapsZ = visibleLaps(rangeZ, periodZ, bounds.getMinY(), bounds.getMaxY(), screen.getMinY(), screen.getMaxY());
+        double[][] offsets = new double[lapsX.length * lapsZ.length][];
+        int i = 0;
+        for (int lapX : lapsX) {
+            for (int lapZ : lapsZ) {
+                offsets[i++] = new double[] {lapX * periodX, lapZ * periodZ};
+            }
+        }
+
+        return offsets;
+    }
+
+    public static double[][] nearestCopyOffset(double[][] offsets, Rectangle2D.Double bounds, Rectangle2D.Double screen) {
+        if (offsets.length <= 1) {
+            return offsets;
+        }
+
+        double[] nearest = offsets[0];
+        double nearestDistance = Double.MAX_VALUE;
+        for (double[] offset : offsets) {
+            double dx = bounds.getCenterX() + offset[0] - screen.getCenterX();
+            double dz = bounds.getCenterY() + offset[1] - screen.getCenterY();
+            double distance = dx * dx + dz * dz;
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearest = offset;
+            }
+        }
+
+        return new double[][] {nearest};
+    }
+
+    private static int[] visibleLaps(int range, double period, double min, double max, double screenMin, double screenMax) {
+        if (period <= 0.0) {
+            return max >= screenMin && min <= screenMax ? new int[] {0} : new int[0];
+        }
+
+        int first = Math.max(-range, (int) Math.ceil((screenMin - max) / period));
+        int last = Math.min(range, (int) Math.floor((screenMax - min) / period));
+        if (last < first) {
+            return new int[0];
+        }
+
+        int[] laps = new int[last - first + 1];
+        for (int i = 0; i < laps.length; i++) {
+            laps[i] = first + i;
+        }
+
+        return laps;
     }
 
     public static <D> @Nullable String staleGridReason(@Nullable D lastDimension, @Nullable D dimension,

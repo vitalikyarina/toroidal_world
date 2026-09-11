@@ -48,6 +48,7 @@ public abstract class RegionTileMixin {
         int tiles = JourneyMapFold.tilesWithContent(this.zoom, viewportX, viewportZ);
         int rangeX = JourneyMapFold.copyRange(loopedAxes, tiles, periodX, viewportX);
         int rangeZ = JourneyMapFold.copyRange(loopedAxes, tiles, periodZ, viewportZ);
+        JourneyMapFold.recordCopyRange(context, rangeX, rangeZ);
         if (rangeX == 0 && rangeZ == 0) {
             return;
         }
