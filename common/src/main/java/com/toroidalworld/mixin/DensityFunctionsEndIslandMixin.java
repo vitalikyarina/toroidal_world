@@ -13,7 +13,8 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.synth.SimplexNoise;
 
-@Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$EndIslandDensityFunction")
+// C2ME @Overwrites compute at priority 1100; applying below that loses this wrap under C2ME.
+@Mixin(targets = "net.minecraft.world.level.levelgen.DensityFunctions$EndIslandDensityFunction", priority = 1200)
 public class DensityFunctionsEndIslandMixin {
     @Shadow
     @Final
