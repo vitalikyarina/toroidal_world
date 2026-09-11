@@ -1,4 +1,4 @@
-package com.toroidalworld.engine.seam;
+package com.toroidalworld.engine.seam.circumnavigation;
 
 import com.toroidalworld.core.WorldLoopAttachments;
 

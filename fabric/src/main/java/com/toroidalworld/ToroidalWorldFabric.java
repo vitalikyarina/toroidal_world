@@ -1,6 +1,5 @@
 package com.toroidalworld;
 
-import com.toroidalworld.engine.seam.WorldLoopCriteria;
 import com.toroidalworld.compat.aeronautics.AeronauticsTranslation;
 import com.toroidalworld.compat.create.CreateTranslation;
 import com.toroidalworld.compat.aeronautics.AeronauticsMod;
@@ -11,6 +10,7 @@ import com.toroidalworld.engine.gen.WorldLoopGenerators;
 import com.toroidalworld.engine.net.OpenMenuTranslation;
 import com.toroidalworld.engine.net.WrappingSettingsPayload;
 import com.toroidalworld.engine.noise.GenerationHookSetup;
+import com.toroidalworld.engine.seam.circumnavigation.WorldLoopCriteria;
 import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.platform.FabricPlatform;
 import com.toroidalworld.platform.Platforms;

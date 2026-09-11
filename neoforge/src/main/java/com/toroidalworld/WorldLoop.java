@@ -1,6 +1,5 @@
 package com.toroidalworld;
 
-import com.toroidalworld.engine.seam.WorldLoopCriteria;
 import com.toroidalworld.compat.aeronautics.AeronauticsTranslation;
 import com.toroidalworld.compat.create.CreateTranslation;
 import com.toroidalworld.compat.aeronautics.AeronauticsMod;
@@ -13,6 +12,7 @@ import com.toroidalworld.engine.net.AuxiliaryLightTranslation;
 import com.toroidalworld.engine.net.BlockParticleTranslation;
 import com.toroidalworld.engine.noise.GenerationHookSetup;
 import com.toroidalworld.engine.net.SpawnBufferTranslation;
+import com.toroidalworld.engine.seam.circumnavigation.WorldLoopCriteria;
 import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.platform.NeoForgePlatform;
 import com.toroidalworld.platform.Platforms;
