@@ -1,4 +1,4 @@
-package com.toroidalworld.engine.seam;
+package com.toroidalworld.engine.seam.circumnavigation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

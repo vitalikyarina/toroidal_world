@@ -6,7 +6,7 @@ import java.util.OptionalDouble;
 import com.toroidalworld.core.ToroidalShapeView;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
-import com.toroidalworld.engine.seam.SeamTravel;
+import com.toroidalworld.engine.seam.circumnavigation.SeamTravel;
 
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;

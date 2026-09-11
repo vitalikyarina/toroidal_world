@@ -8,7 +8,7 @@ import com.toroidalworld.engine.gen.WorldLoopTicketTypes;
 import com.toroidalworld.engine.net.AuxiliaryLightTranslation;
 import com.toroidalworld.engine.net.BlockParticleTranslation;
 import com.toroidalworld.engine.noise.GenerationHookSetup;
-import com.toroidalworld.engine.seam.WorldLoopCriteria;
+import com.toroidalworld.engine.seam.circumnavigation.WorldLoopCriteria;
 import com.toroidalworld.platform.NeoForgePlatform;
 import com.toroidalworld.platform.Platforms;
 import com.toroidalworld.shape.WorldOptionSetup;
