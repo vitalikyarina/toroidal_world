@@ -11,11 +11,11 @@ import org.slf4j.Logger;
 import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.api.v1.net.SeamContext;
 import com.toroidalworld.core.CoordinateConstants;
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.ToroidalShapeView;
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.core.WrapDomain;
-import com.toroidalworld.engine.fold.LogRateGate;
+import com.toroidalworld.engine.LogRateGate;
 import com.toroidalworld.engine.seam.ClientPosition;
 import com.toroidalworld.platform.Platforms;
 import com.mojang.logging.LogUtils;
@@ -60,14 +60,14 @@ public record TranslationContext(
         int trackedViewDistance = trackedViewDistanceOf(player, transformer);
         return new TranslationContext(
                 transformer,
-                WorldLoopAttachments.clientPositionOf(player),
+                ClientPosition.of(player),
                 Platforms.get().packetBuffers(player),
                 player.level().dimension(),
                 trackedViewDistance,
                 heldViewDistanceOf(player, trackedViewDistance),
                 entityId -> isControlledVehicle(player, entityId),
                 entityId -> positionOf(player, entityId),
-                () -> WorldLoopAttachments.rebaseClientPositionOf(player));
+                () -> ClientPosition.rebase(player));
     }
 
     private static int trackedViewDistanceOf(ServerPlayer player, WorldFold transformer) {
@@ -248,6 +248,12 @@ public record TranslationContext(
 
     public Vec3 nearestCopy(Vec3 position) {
         return transformer.nearestCopy(new Vec3(clientPosition.x(), position.y, clientPosition.z()), position);
+    }
+
+    // mc/1.21: calls the transformation form, unused on main.
+    public DeckTransformation nearestCopyTransformation(Vec3 position) {
+        return transformer.nearestCopyTransformation(
+                new Vec3(clientPosition.x(), position.y, clientPosition.z()), position);
     }
 
     @Override

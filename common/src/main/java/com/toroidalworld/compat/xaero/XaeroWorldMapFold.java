@@ -23,8 +23,9 @@ public final class XaeroWorldMapFold {
     public static final int REGION_BLOCKS = 512;
     public static final int SLOT_BLOCKS = 64;
 
+    public static final int REGION_TILE_CHUNKS = 8;
+
     private static final int TILE_CHUNK_CHUNKS = 4;
-    private static final int REGION_TILE_CHUNKS = 8;
 
     private static final int COMPARISON_CHUNK_OFFSET = 16;
 
@@ -72,6 +73,16 @@ public final class XaeroWorldMapFold {
 
     public static int foldRegion(Direction.Axis axis, int region) {
         return regionOfTileChunk(foldTileChunk(axis, firstTileChunkOfRegion(region)));
+    }
+
+    public static boolean regionCrossesSeam(Direction.Axis axis, int region) {
+        return regionCrossesSeam(copies(axis), region);
+    }
+
+    static boolean regionCrossesSeam(AxisCopies copies, int region) {
+        int first = region * REGION_BLOCKS;
+        int end = first + REGION_BLOCKS;
+        return copies.clipMin(first) != first || copies.clipMax(end) != end;
     }
 
     public static int foldChunk(Direction.Axis axis, int chunk) {
@@ -125,6 +136,11 @@ public final class XaeroWorldMapFold {
     public static AxisCopies copies(Direction.Axis axis) {
         ToroidalShape shape = browsedShape();
         return shape == null ? AxisCopies.UNBOUNDED : AxisCopies.of(shape, axis);
+    }
+
+    public static AxisCopies chunkCopies(Direction.Axis axis) {
+        ToroidalShape shape = browsedShape();
+        return shape == null ? AxisCopies.UNBOUNDED : AxisCopies.ofChunks(shape, axis);
     }
 
     public static double zoomFloorScale(double scaleMultiplier) {

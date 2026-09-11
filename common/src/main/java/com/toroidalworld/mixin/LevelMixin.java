@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.toroidalworld.accessors.CrumbSweepCache;
 import com.toroidalworld.accessors.RelocatableBlockEntity;
+import com.toroidalworld.accessors.TerrainMaskCache;
 import com.toroidalworld.accessors.TransformerCache;
 import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.core.WorldFold;
@@ -17,6 +18,7 @@ import com.toroidalworld.core.WorldFold.Folded;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.engine.gen.FloatingCrumbs;
+import com.toroidalworld.engine.gen.TerrainMasks;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -44,12 +46,15 @@ import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraft.world.phys.AABB;
 
 @Mixin(Level.class)
-public class LevelMixin implements TransformerCache, CrumbSweepCache {
+public class LevelMixin implements TransformerCache, CrumbSweepCache, TerrainMaskCache {
     @Unique
     private WorldFold toroidal$transformer;
 
     @Unique
     private @Nullable Boolean toroidal$sweepsCrumbs;
+
+    @Unique
+    private @Nullable TerrainMasks toroidal$terrainMasks;
 
     @WrapOperation(
             method = "getChunk(IILnet/minecraft/world/level/chunk/status/ChunkStatus;Z)Lnet/minecraft/world/level/chunk/ChunkAccess;",
@@ -185,6 +190,15 @@ public class LevelMixin implements TransformerCache, CrumbSweepCache {
         }
 
         return this.toroidal$sweepsCrumbs;
+    }
+
+    @Override
+    public TerrainMasks toroidal$terrainMasks() {
+        if (this.toroidal$terrainMasks == null) {
+            this.toroidal$terrainMasks = new TerrainMasks();
+        }
+
+        return this.toroidal$terrainMasks;
     }
 
     @Unique

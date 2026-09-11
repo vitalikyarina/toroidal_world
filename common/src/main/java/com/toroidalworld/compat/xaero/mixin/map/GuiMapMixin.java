@@ -19,6 +19,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.toroidalworld.compat.AxisCopies;
 import com.toroidalworld.compat.xaero.XaeroInjectionTargets;
 import com.toroidalworld.compat.xaero.XaeroWorldMapFold;
+import com.toroidalworld.core.CoordinateConstants;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
@@ -31,6 +32,7 @@ import xaero.map.MapProcessor;
 import xaero.map.graphics.MapRenderHelper;
 import xaero.map.graphics.renderer.multitexture.MultiTextureRenderTypeRenderer;
 import xaero.map.gui.GuiMap;
+import xaero.map.gui.MapTileSelection;
 import xaero.map.region.LeveledRegion;
 import xaero.map.region.texture.RegionTexture;
 
@@ -78,6 +80,16 @@ public abstract class GuiMapMixin {
     private int toroidal$cursorLapX;
     @Unique
     private int toroidal$cursorLapZ;
+    @Unique
+    private int toroidal$selectionLapX;
+    @Unique
+    private int toroidal$selectionLapZ;
+    @Unique
+    private MapTileSelection toroidal$trackedSelection;
+    @Unique
+    private int toroidal$selectionEndX;
+    @Unique
+    private int toroidal$selectionEndZ;
 
     @Inject(method = "extractRenderState", at = @At("HEAD"))
     private void toroidal$beginFrame(CallbackInfo ci) {
@@ -145,6 +157,25 @@ public abstract class GuiMapMixin {
 
     @WrapOperation(
             method = "extractRenderState",
+            at = @At(value = "INVOKE", target = "Lxaero/map/gui/MapTileSelection;setEnd(II)V"))
+    private void toroidal$unwrapSelectionEnd(MapTileSelection selection, int endX, int endZ, Operation<Void> original) {
+        boolean fresh = selection != this.toroidal$trackedSelection;
+        this.toroidal$trackedSelection = selection;
+        AxisCopies copiesX = XaeroWorldMapFold.chunkCopies(Direction.Axis.X);
+        AxisCopies copiesZ = XaeroWorldMapFold.chunkCopies(Direction.Axis.Z);
+        int startX = selection.getStartX();
+        int startZ = selection.getStartZ();
+        int unwrappedX = copiesX.nearest(fresh ? startX : this.toroidal$selectionEndX, endX);
+        int unwrappedZ = copiesZ.nearest(fresh ? startZ : this.toroidal$selectionEndZ, endZ);
+        this.toroidal$selectionEndX = unwrappedX;
+        this.toroidal$selectionEndZ = unwrappedZ;
+        this.toroidal$selectionLapX = this.toroidal$cursorLapX - (unwrappedX - endX) * CoordinateConstants.CHUNK_WIDTH;
+        this.toroidal$selectionLapZ = this.toroidal$cursorLapZ - (unwrappedZ - endZ) * CoordinateConstants.CHUNK_WIDTH;
+        original.call(selection, copiesX.withinOneLap(startX, unwrappedX), copiesZ.withinOneLap(startZ, unwrappedZ));
+    }
+
+    @WrapOperation(
+            method = "extractRenderState",
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/MapProcessor;getLeveledRegion(IIII)Lxaero/map/region/LeveledRegion;"))
@@ -202,6 +233,21 @@ public abstract class GuiMapMixin {
         }
 
         return original.call(region);
+    }
+
+    @WrapOperation(
+            method = "extractRenderState",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lxaero/map/region/LeveledRegion;getTexture(II)Lxaero/map/region/texture/RegionTexture;",
+                    ordinal = 0))
+    private RegionTexture<?> toroidal$foldHoverTexture(LeveledRegion<?> region, int textureX, int textureZ,
+            Operation<RegionTexture<?>> original) {
+        if (!XaeroWorldMapFold.active()) {
+            return original.call(region, textureX, textureZ);
+        }
+
+        return toroidal$canonicalRegionTexture(this.mouseBlockPosX, this.mouseBlockPosZ);
     }
 
     @WrapOperation(
@@ -373,7 +419,7 @@ public abstract class GuiMapMixin {
             method = "extractRenderState",
             at = @At(
                     value = "INVOKE",
-                    target = "Lxaero/map/graphics/MapRenderHelper;renderDynamicHighlight(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIIIIIFFFFFFFF)V",
+                    target = XaeroInjectionTargets.MAP_RENDER_HELPER_RENDER_DYNAMIC_HIGHLIGHT,
                     ordinal = 0))
     private void toroidal$drawSeamGrid(
             PoseStack matrixStack, VertexConsumer overlayBuffer, int flooredCameraX, int flooredCameraZ,
@@ -414,5 +460,23 @@ public abstract class GuiMapMixin {
                     spanX[1] - flooredCameraX, lineZ - flooredCameraZ + thickness,
                     1.0F, 1.0F, 1.0F, 0.8F);
         }
+    }
+
+    @WrapOperation(
+            method = "extractRenderState",
+            at = @At(
+                    value = "INVOKE",
+                    target = XaeroInjectionTargets.MAP_RENDER_HELPER_RENDER_DYNAMIC_HIGHLIGHT,
+                    ordinal = 1))
+    private void toroidal$drawSelectionInCursorCopy(
+            PoseStack matrixStack, VertexConsumer overlayBuffer, int flooredCameraX, int flooredCameraZ,
+            int leftX, int rightX, int topZ, int bottomZ,
+            float sideR, float sideG, float sideB, float sideA, float centerR, float centerG, float centerB, float centerA,
+            Operation<Void> original) {
+        int lapX = this.toroidal$selectionLapX;
+        int lapZ = this.toroidal$selectionLapZ;
+        original.call(matrixStack, overlayBuffer, flooredCameraX, flooredCameraZ,
+                leftX + lapX, rightX + lapX, topZ + lapZ, bottomZ + lapZ,
+                sideR, sideG, sideB, sideA, centerR, centerG, centerB, centerA);
     }
 }

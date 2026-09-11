@@ -1,4 +1,4 @@
-package com.toroidalworld.engine.seam;
+package com.toroidalworld.engine.seam.circumnavigation;
 
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -9,11 +9,13 @@ import org.jspecify.annotations.Nullable;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.toroidalworld.accessors.SeamTravelHolder;
 import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.WorldFold;
 
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -53,6 +55,10 @@ public final class SeamTravel {
 
     private SeamTravel(Map<ResourceKey<Level>, Lap> laps) {
         this.laps = new HashMap<>(laps);
+    }
+
+    public static SeamTravel of(ServerPlayer player) {
+        return ((SeamTravelHolder) player).toroidal$travel();
     }
 
     public Lap in(ResourceKey<Level> space) {

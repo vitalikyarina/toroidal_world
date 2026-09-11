@@ -16,9 +16,10 @@ import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.engine.fold.NearestCopy;
-import com.toroidalworld.engine.seam.CircumnavigationTracker;
+import com.toroidalworld.engine.seam.ClientPosition;
 import com.toroidalworld.engine.seam.SeamAim;
 import com.toroidalworld.engine.seam.VehicleDismountResync;
+import com.toroidalworld.engine.seam.circumnavigation.CircumnavigationTracker;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -99,13 +100,13 @@ public class EntityMixin implements TransformerSource {
     }
 
     @ModifyVariable(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("STORE"), ordinal = 0)
-    private double toroidal$pushDeltaX(double deltaX, @Local(argsOnly = true) Entity other) {
-        return SeamAim.deltaTo((Entity) (Object) this, other.position()).x;
+    private double toroidal$pushDeltaX(double deltaX) {
+        return SeamAim.foldX((Entity) (Object) this, deltaX);
     }
 
     @ModifyVariable(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("STORE"), ordinal = 1)
-    private double toroidal$pushDeltaZ(double deltaZ, @Local(argsOnly = true) Entity other) {
-        return SeamAim.deltaTo((Entity) (Object) this, other.position()).z;
+    private double toroidal$pushDeltaZ(double deltaZ) {
+        return SeamAim.foldZ((Entity) (Object) this, deltaZ);
     }
 
     @ModifyArg(
@@ -156,7 +157,7 @@ public class EntityMixin implements TransformerSource {
     @Inject(method = "snapTo(DDDFF)V", at = @At("TAIL"))
     private void toroidal$rebaseMirrorOnPlacement(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
         if ((Object) this instanceof ServerPlayer player) {
-            WorldLoopAttachments.rebaseClientPositionOf(player);
+            ClientPosition.rebase(player);
         }
     }
 

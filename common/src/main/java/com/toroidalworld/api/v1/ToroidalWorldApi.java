@@ -6,6 +6,7 @@ import java.util.OptionalDouble;
 import com.toroidalworld.core.ToroidalShapeView;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.seam.circumnavigation.SeamTravel;
 
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,7 +45,7 @@ public final class ToroidalWorldApi {
         }
 
         return OptionalDouble.of(
-                WorldLoopAttachments.travelOf(player).in(player.level().dimension()).on(axis));
+                SeamTravel.of(player).in(player.level().dimension()).on(axis));
     }
 
     private ToroidalWorldApi() {

@@ -18,6 +18,15 @@ public record DeckTransformation(SeamTransform blocks) {
         return this.blocks.orientation();
     }
 
+    // mc/1.21: calls the inverse, unused on main.
+    public DeckTransformation inverse() {
+        if (isIdentity()) {
+            return this;
+        }
+
+        return new DeckTransformation(this.blocks.inverse());
+    }
+
     public Vec3 apply(Vec3 pos) {
         if (isIdentity()) {
             return pos;

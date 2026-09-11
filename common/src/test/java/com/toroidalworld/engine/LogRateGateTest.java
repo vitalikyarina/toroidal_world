@@ -1,4 +1,4 @@
-package com.toroidalworld.engine.fold;
+package com.toroidalworld.engine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,9 +46,13 @@ import net.minecraft.world.level.levelgen.RandomState;
 class ClimateScan {
     private static final int GRID = 64;
     private static final int LAND_GRID = 32;
-    private static final int SEEDS = 3;
+    private static final String SCAN = "climate";
+
+    private static final int SEEDS = 10;
     private static final int AXIS_SEEDS = 16;
     private static final int LAND_SEEDS = 32;
+
+    private static final int LAP_SEEDS = 16;
     private static final long SEED_STEP = 0x9E3779B97F4A7C15L;
 
     private static final double MAX_TOP_SHARE = 0.45;
@@ -139,15 +144,20 @@ class ClimateScan {
                 .append(" surface there stands above the water rather than under it.")
                 .append(System.lineSeparator())
                 .append("That column is a sanity reading over these ").append(SEEDS)
-                .append(" seeds, not a measurement of land: a single seed runs from 0.00 to 0.85, so a mean of")
-                .append(" three lands anywhere. The land measure is the land scan, over ").append(LAND_SEEDS)
-                .append(" seeds.").append(System.lineSeparator())
+                .append(" seeds, not a measurement of land: a single seed runs from 0.00 to 0.85, so a mean")
+                .append(" this size lands anywhere. The land measure is the land scan, over ").append(LAND_SEEDS)
+                .append(" seeds, and the two are put side by side in its own cross-check row.")
+                .append(System.lineSeparator())
                 .append("min is the narrowest world the game will create; the nether is the overworld width")
                 .append(" divided by the nether scale that width allows, and carries five biomes in all, so it is")
                 .append(" reported and not gated.").append(System.lineSeparator())
                 .append("A torus that declined compression and a cylinder are never compressed, so one lap of")
                 .append(" either is vanilla's own window of that size; the one-biome gate applies to the")
                 .append(" compressed torus alone.")
+                .append(System.lineSeparator())
+                .append("Criterion: the distribution clause. The empty-control check is a blindness guard and")
+                .append(" the one-biome check a feature gate on compression; every number in the table is a")
+                .append(" reading.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         List<String> thin = new ArrayList<>();
@@ -160,7 +170,7 @@ class ClimateScan {
             for (Shape shape : SHAPES) {
                 report.append("  ").append(type.name()).append(", ").append(shape.name())
                         .append(System.lineSeparator());
-                report.append(String.format("    %-8s %-14s %33s %33s%n", "width", "blocks", "folded", "control"));
+                report.append(String.format(Locale.ROOT, "    %-8s %-14s %33s %33s%n", "width", "blocks", "folded", "control"));
 
                 for (Width width : WIDTHS) {
                     int widthBlocks = width.widthBlocks(type);
@@ -168,7 +178,7 @@ class ClimateScan {
                     Scan control = controls.computeIfAbsent(widthBlocks,
                             blocks -> meanScan(type, source, blocks, WorldFolds.NOOP));
 
-                    report.append(String.format(
+                    report.append(String.format(Locale.ROOT, 
                             "    %-8s %-14s %6.1f biomes %5.2f %6.3f %6.2f %6.1f biomes %5.2f %6.3f %6.2f%n",
                             width.id(), widthBlocks + " blocks",
                             folded.distinctBiomes(), folded.topShare(), folded.temperatureSpread(),
@@ -181,7 +191,7 @@ class ClimateScan {
                     }
 
                     if (type.gated() && shape.compressed() && folded.topShare() > MAX_TOP_SHARE) {
-                        dominated.add(String.format("%s %s %s at %.2f",
+                        dominated.add(String.format(Locale.ROOT, "%s %s %s at %.2f",
                                 type.name(), shape.name(), width.id(), folded.topShare()));
                     }
                 }
@@ -190,7 +200,9 @@ class ClimateScan {
             }
         }
 
-        ScanReports.write(REPORT, report.toString());
+        ScanReports.write(REPORT, ScanReports.population(SEEDS, SEED_BASE, SEED_STEP,
+                "a biome lookup per grid point is the cost here, so ten is what the set affords beside the"
+                        + " land scan"), report.toString());
 
         assertTrue(thin.isEmpty(),
                 "the control window itself carries no biome spread, so the scan measures nothing: " + thin);
@@ -204,17 +216,29 @@ class ClimateScan {
                 .append(" no chunk generation.").append(System.lineSeparator())
                 .append("Grid ").append(LAND_GRID).append("x").append(LAND_GRID).append(" points over one lap, ")
                 .append(LAND_SEEDS).append(" seeds per row.").append(System.lineSeparator())
+                .append("mean64 = the climate scan's own land reading of the same rows - the mean over ")
+                .append(SEEDS).append(" seeds on its ").append(GRID).append("x").append(GRID)
+                .append(" grid, against this scan's median over ").append(LAND_SEEDS).append(" on ")
+                .append(LAND_GRID).append("x").append(LAND_GRID).append(". gap is the distance between them,")
+                .append(" and a gap wider than this row's own spread (med - min) is listed under the table.")
+                .append(" Same criterion, same sea level, two populations and two resolutions: the listed rows")
+                .append(" are where one of the two must not be quoted alone. Reported, never gated - a scan")
+                .append(" measures.").append(System.lineSeparator())
                 .append("land = area fraction standing above the water; a cave at sea level reads as water, so")
                 .append(" the share is the low estimate.").append(System.lineSeparator())
                 .append("The control binds WorldFolds.NOOP, so it measures the same window of an unbounded")
                 .append(" vanilla world - the nether has no sea level to stand on and is left out.")
                 .append(System.lineSeparator())
                 .append("under = seeds whose land share falls below ")
-                .append(String.format("%.0f%%", USABLE_LAND_SHARE * 100))
+                .append(String.format(Locale.ROOT, "%.0f%%", USABLE_LAND_SHARE * 100))
                 .append("; best seed is the one to hand a round that needs land.")
+                .append(System.lineSeparator())
+                .append("Criterion: the distribution clause. The only assertion is a blindness guard - no")
+                .append(" median, minimum or under-count here is a gate.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         List<String> blind = new ArrayList<>();
+        List<String> apart = new ArrayList<>();
 
         for (WorldType type : TYPES) {
             if (type.nether()) {
@@ -222,30 +246,48 @@ class ClimateScan {
             }
 
             report.append("  ").append(type.name()).append(System.lineSeparator());
-            report.append(String.format("    %-8s %-14s %17s %17s%n", "", "", "torus", "control"));
-            report.append(String.format("    %-8s %-14s %5s %5s %5s %5s %5s %5s %20s%n",
-                    "width", "blocks", "med", "min", "under", "med", "min", "under", "best seed"));
+            report.append(String.format(Locale.ROOT, "    %-8s %-14s %17s %17s%n", "", "", "torus", "control"));
+            report.append(String.format(Locale.ROOT, "    %-8s %-14s %5s %5s %5s %5s %5s %5s %6s %5s %20s%n",
+                    "width", "blocks", "med", "min", "under", "med", "min", "under", "mean64", "gap",
+                    "best seed"));
 
             for (Width width : WIDTHS) {
                 int widthBlocks = width.widthBlocks(type);
                 Land torus = landDistribution(type, widthBlocks, torusOfWidth(widthBlocks));
                 Land control = landDistribution(type, widthBlocks, WorldFolds.NOOP);
 
-                report.append(String.format("    %-8s %-14s %5.2f %5.2f %5d %5.2f %5.2f %5d %20d%n",
+                double mean = meanLandShare(type, torusOfWidth(widthBlocks), widthBlocks);
+                double spread = torus.median() - torus.min();
+                double gap = Math.abs(mean - torus.median());
+
+                report.append(String.format(Locale.ROOT, "    %-8s %-14s %5.2f %5.2f %5d %5.2f %5.2f %5d %6.2f %5.2f %20d%n",
                         width.id(), widthBlocks + " blocks",
                         torus.median(), torus.min(), torus.under(),
                         control.median(), control.min(), control.under(),
-                        torus.bestSeed()));
+                        mean, gap, torus.bestSeed()));
 
                 if (control.under() == LAND_SEEDS) {
                     blind.add(type.name() + " " + width.id());
+                }
+
+                if (gap > spread) {
+                    apart.add(String.format(Locale.ROOT, "%s %s: mean64 %.2f against median %.2f, spread %.2f",
+                            type.name(), width.id(), mean, torus.median(), spread));
                 }
             }
 
             report.append(System.lineSeparator());
         }
 
-        ScanReports.write(LAND_REPORT, report.toString());
+        report.append("Cross-check: ").append(apart.isEmpty()
+                ? "every row's two readings agree inside the torus spread."
+                : "rows whose two readings fall further apart than the torus spread - "
+                        + String.join("; ", apart))
+                .append(System.lineSeparator());
+
+        ScanReports.write(LAND_REPORT, ScanReports.population(LAND_SEEDS, SEED_BASE, SEED_STEP,
+                "the cheapest reading per seed in the set, so it carries the largest sample"),
+                report.toString());
 
         assertTrue(blind.isEmpty(),
                 "no control seed clears the land floor, so the scan measures nothing: " + blind);
@@ -262,7 +304,9 @@ class ClimateScan {
 
         for (int s = 0; s < LAND_SEEDS; s++) {
             long seed = SEED_BASE + s * SEED_STEP;
-            shares[s] = landShare(type, fold, widthBlocks, seed);
+            shares[s] = landShare(type, fold, widthBlocks, seed, LAND_GRID);
+            ScanReports.note(SCAN, "land", "type=" + type.name() + " width=" + widthBlocks + " seed=" + seed
+                    + " share=" + ScanReports.value(shares[s]));
             if (shares[s] > best) {
                 best = shares[s];
                 bestSeed = seed;
@@ -279,15 +323,29 @@ class ClimateScan {
         return new Land(median, sorted[0], under, bestSeed);
     }
 
-    private static double landShare(WorldType type, WorldFold fold, int widthBlocks, long seed) {
+    private static double meanLandShare(WorldType type, WorldFold fold, int widthBlocks) {
+        double total = 0.0;
+
+        for (int s = 0; s < SEEDS; s++) {
+            long seed = SEED_BASE + s * SEED_STEP;
+            double share = landShare(type, fold, widthBlocks, seed, GRID);
+            total += share;
+            ScanReports.note(SCAN, "cross", "type=" + type.name() + " width=" + widthBlocks + " seed=" + seed
+                    + " share=" + ScanReports.value(share));
+        }
+
+        return total / SEEDS;
+    }
+
+    private static double landShare(WorldType type, WorldFold fold, int widthBlocks, long seed, int grid) {
         DensityFunction density = randomState(type, fold, seed).router().finalDensity();
         int seaLevel = settingsOf(type).seaLevel();
-        double step = widthBlocks / (double) LAND_GRID;
+        double step = widthBlocks / (double) grid;
         int[] land = new int[1];
 
         GenerationTransformerContext.runWithTransformer(fold, () -> {
-            for (int ix = 0; ix < LAND_GRID; ix++) {
-                for (int iz = 0; iz < LAND_GRID; iz++) {
+            for (int ix = 0; ix < grid; ix++) {
+                for (int iz = 0; iz < grid; iz++) {
                     if (isLand(density, (int) Math.round(ix * step), seaLevel, (int) Math.round(iz * step))) {
                         land[0]++;
                     }
@@ -295,7 +353,7 @@ class ClimateScan {
             }
         });
 
-        return land[0] / (double) (LAND_GRID * LAND_GRID);
+        return land[0] / (double) (grid * grid);
     }
 
     @Test
@@ -307,7 +365,7 @@ class ClimateScan {
                 .append("Sampled every ").append(PATCH_STRIDE_BLOCKS).append(" blocks up to a ")
                 .append(PATCH_GRID_CAP).append("x").append(PATCH_GRID_CAP)
                 .append(" grid, so the step is one chunk while it fits and coarser above; ")
-                .append(LAND_SEEDS).append(" seeds per row, torus only.").append(System.lineSeparator())
+                .append(LAP_SEEDS).append(" seeds per row, torus only.").append(System.lineSeparator())
                 .append("Areas are blocks squared; empty = seeds whose lap carries no land at all.")
                 .append(System.lineSeparator())
                 .append("Widths past ").append(PATCH_MAX_WIDTH_BLOCKS)
@@ -319,6 +377,10 @@ class ClimateScan {
                 .append(" they bracket the mean a lift has to reach; vanilla puts ocean under ")
                 .append(OCEAN_CONTINENTALNESS).append(".").append(System.lineSeparator())
                 .append("spread = mean of the per-seed standard deviation of continentalness over the lap.")
+                .append(System.lineSeparator())
+                .append("Criterion: the distribution clause. The empty-lap check is a blindness guard and the")
+                .append(" floor check a feature gate on the land guarantee; the medians, minima and")
+                .append(" correlation are readings.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         List<String> blind = new ArrayList<>();
@@ -330,8 +392,8 @@ class ClimateScan {
             }
 
             report.append("  ").append(type.name()).append(System.lineSeparator());
-            report.append(String.format("    %-8s %-14s %25s %25s %7s%n", "", "", "off", "on", ""));
-            report.append(String.format("    %-8s %-14s %12s %10s %4s %12s %10s %4s %7s%n",
+            report.append(String.format(Locale.ROOT, "    %-8s %-14s %25s %25s %7s%n", "", "", "off", "on", ""));
+            report.append(String.format(Locale.ROOT, "    %-8s %-14s %12s %10s %4s %12s %10s %4s %7s%n",
                     "width", "blocks", "med", "min", "bad", "med", "min", "bad", "corr"));
 
             for (Width width : WIDTHS) {
@@ -343,7 +405,7 @@ class ClimateScan {
                 Patch off = patchOf(probeLaps(type, widthBlocks, torusOfWidth(widthBlocks)));
                 Patch on = patchOf(probeLaps(type, widthBlocks, guaranteedTorusOfWidth(widthBlocks)));
 
-                report.append(String.format("    %-8s %-14s %12.0f %10d %4d %12.0f %10d %4d %7s%n",
+                report.append(String.format(Locale.ROOT, "    %-8s %-14s %12.0f %10d %4d %12.0f %10d %4d %7s%n",
                         width.id(), widthBlocks + " blocks",
                         off.median(), off.min(), off.bad(),
                         on.median(), on.min(), on.bad(),
@@ -354,14 +416,16 @@ class ClimateScan {
                 }
 
                 if (on.bad() > 0) {
-                    unguarded.add(String.format("%s %s %d/%d", type.name(), width.id(), on.bad(), LAND_SEEDS));
+                    unguarded.add(String.format(Locale.ROOT, "%s %s %d/%d", type.name(), width.id(), on.bad(), LAP_SEEDS));
                 }
             }
 
             report.append(System.lineSeparator());
         }
 
-        ScanReports.write(PATCH_REPORT, report.toString());
+        ScanReports.write(PATCH_REPORT, ScanReports.population(LAP_SEEDS, SEED_BASE, SEED_STEP,
+                "the most expensive reading per seed in this scan, so it carries the smallest sample"),
+                report.toString());
 
         assertTrue(blind.isEmpty(), "no seed of a row carries any land, so the scan measures nothing: " + blind);
         assertTrue(unguarded.isEmpty(),
@@ -395,10 +459,13 @@ class ClimateScan {
     }
 
     private static LapProbe[] probeLaps(WorldType type, int widthBlocks, WorldFold fold) {
-        LapProbe[] probes = new LapProbe[LAND_SEEDS];
+        LapProbe[] probes = new LapProbe[LAP_SEEDS];
 
-        for (int s = 0; s < LAND_SEEDS; s++) {
-            probes[s] = probeLap(type, fold, widthBlocks, SEED_BASE + s * SEED_STEP);
+        for (int s = 0; s < LAP_SEEDS; s++) {
+            long seed = SEED_BASE + s * SEED_STEP;
+            probes[s] = probeLap(type, fold, widthBlocks, seed);
+            ScanReports.note(SCAN, "lap", "type=" + type.name() + " width=" + widthBlocks + " seed=" + seed
+                    + " continentalness=" + ScanReports.value(probes[s].continentalnessMean()));
         }
 
         return probes;
@@ -431,7 +498,7 @@ class ClimateScan {
     }
 
     private static String cell(double value, String format) {
-        return Double.isNaN(value) ? "n/a" : String.format(format, value);
+        return Double.isNaN(value) ? "n/a" : String.format(Locale.ROOT, format, value);
     }
 
     private static double correlation(double[] xs, double[] ys) {
@@ -501,10 +568,13 @@ class ClimateScan {
                 .append(" against the same measure taken on an unbounded vanilla world.")
                 .append(System.lineSeparator())
                 .append("Zones per line is the scale measure and is gated at ")
-                .append(String.format("%.0f%%", MAX_ZONE_DRIFT * 100))
-                .append("; the spread is gated at ").append(String.format("%.0f%%", MAX_SPREAD_DRIFT * 100))
+                .append(String.format(Locale.ROOT, "%.0f%%", MAX_ZONE_DRIFT * 100))
+                .append("; the spread is gated at ").append(String.format(Locale.ROOT, "%.0f%%", MAX_SPREAD_DRIFT * 100))
                 .append(" - the ring's rule cannot move a line, so this is the estimator's own floor and")
                 .append(" catches a compression-class regression, not the ring.")
+                .append(System.lineSeparator())
+                .append("Criterion: the distribution clause. Both drift checks are distribution gates - the")
+                .append(" folded reading against the unbounded control.")
                 .append(System.lineSeparator()).append(System.lineSeparator());
 
         List<String> off = new ArrayList<>();
@@ -512,14 +582,14 @@ class ClimateScan {
         for (WorldType type : TYPES) {
             MultiNoiseBiomeSource source = biomeSource(type);
             report.append("  ").append(type.name()).append(System.lineSeparator());
-            report.append(String.format("    %-8s %-14s %22s %22s%n", "width", "blocks", "cylinder", "control"));
+            report.append(String.format(Locale.ROOT, "    %-8s %-14s %22s %22s%n", "width", "blocks", "cylinder", "control"));
 
             for (Width width : WIDTHS) {
                 int widthBlocks = width.widthBlocks(type);
                 AxisScan folded = meanAlongZ(type, source, widthBlocks, cylinderOfWidth(widthBlocks));
                 AxisScan control = meanAlongZ(type, source, CONTROL_LINE_SPREAD_BLOCKS, WorldFolds.NOOP);
 
-                report.append(String.format("    %-8s %-14s %6.2f biomes %8.4f %6.2f biomes %8.4f%n",
+                report.append(String.format(Locale.ROOT, "    %-8s %-14s %6.2f biomes %8.4f %6.2f biomes %8.4f%n",
                         width.id(), widthBlocks + " blocks",
                         folded.distinctBiomes(), folded.temperatureSpread(),
                         control.distinctBiomes(), control.temperatureSpread()));
@@ -527,20 +597,22 @@ class ClimateScan {
                 double drift = Math.abs(folded.distinctBiomes() - control.distinctBiomes())
                         / control.distinctBiomes();
                 if (drift > MAX_ZONE_DRIFT) {
-                    off.add(String.format("%s %s zones off by %.0f%%", type.name(), width.id(), drift * 100));
+                    off.add(String.format(Locale.ROOT, "%s %s zones off by %.0f%%", type.name(), width.id(), drift * 100));
                 }
 
                 double spreadDrift = Math.abs(folded.temperatureSpread() - control.temperatureSpread())
                         / control.temperatureSpread();
                 if (spreadDrift > MAX_SPREAD_DRIFT) {
-                    off.add(String.format("%s %s spread off by %.0f%%", type.name(), width.id(), spreadDrift * 100));
+                    off.add(String.format(Locale.ROOT, "%s %s spread off by %.0f%%", type.name(), width.id(), spreadDrift * 100));
                 }
             }
 
             report.append(System.lineSeparator());
         }
 
-        ScanReports.write(AXIS_REPORT, report.toString());
+        ScanReports.write(AXIS_REPORT, ScanReports.population(AXIS_SEEDS, SEED_BASE, SEED_STEP,
+                "cheap per seed, but the axis is walked once per width and per world type"),
+                report.toString());
 
         assertTrue(off.isEmpty(), "the unbounded axis does not carry vanilla's zone size or spread: " + off);
     }
@@ -551,9 +623,12 @@ class ClimateScan {
         double spread = 0.0;
 
         for (int s = 0; s < AXIS_SEEDS; s++) {
-            AxisScan scan = alongZ(type, source, lineSpreadBlocks, fold, SEED_BASE + s * SEED_STEP);
+            long seed = SEED_BASE + s * SEED_STEP;
+            AxisScan scan = alongZ(type, source, lineSpreadBlocks, fold, seed);
             distinct += scan.distinctBiomes();
             spread += scan.temperatureSpread();
+            ScanReports.note(SCAN, "axis", "type=" + type.name() + " spread=" + lineSpreadBlocks + " seed=" + seed
+                    + " biomes=" + ScanReports.value(scan.distinctBiomes()));
         }
 
         return new AxisScan(distinct / AXIS_SEEDS, spread / AXIS_SEEDS);
@@ -595,11 +670,14 @@ class ClimateScan {
         double landShare = 0.0;
 
         for (int s = 0; s < SEEDS; s++) {
-            Scan scan = scan(type, source, widthBlocks, fold, SEED_BASE + s * SEED_STEP);
+            long seed = SEED_BASE + s * SEED_STEP;
+            Scan scan = scan(type, source, widthBlocks, fold, seed);
             distinct += scan.distinctBiomes();
             topShare += scan.topShare();
             temperatureSpread += scan.temperatureSpread();
             landShare += scan.landShare();
+            ScanReports.note(SCAN, "mean", "type=" + type.name() + " width=" + widthBlocks + " seed=" + seed
+                    + " land=" + ScanReports.value(scan.landShare()));
         }
 
         return new Scan(distinct / SEEDS, topShare / SEEDS, temperatureSpread / SEEDS, landShare / SEEDS);

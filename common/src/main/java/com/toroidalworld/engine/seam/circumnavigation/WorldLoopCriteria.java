@@ -1,4 +1,4 @@
-package com.toroidalworld.engine.seam;
+package com.toroidalworld.engine.seam.circumnavigation;
 
 public final class WorldLoopCriteria {
     public static final String CIRCUMNAVIGATE_ID = "circumnavigate";

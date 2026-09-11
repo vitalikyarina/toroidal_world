@@ -26,7 +26,7 @@ public final class WaypointLapGate {
             return distance;
         }
 
-        ClientPosition mirror = WorldLoopAttachments.clientPositionOf(receiver);
+        ClientPosition mirror = ClientPosition.of(receiver);
         if (!mirror.describes(receiver.level().dimension())) {
             return distance;
         }

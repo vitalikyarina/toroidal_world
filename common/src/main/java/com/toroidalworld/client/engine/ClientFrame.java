@@ -2,6 +2,7 @@ package com.toroidalworld.client.engine;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.engine.fold.NearestCopy;
@@ -57,6 +58,16 @@ public final class ClientFrame {
     public static @Nullable ChunkPos nearestToPlayer(@Nullable ChunkPos target) {
         LocalPlayer player = Minecraft.getInstance().player;
         return nearestCopy(player == null ? null : player.chunkPosition(), target);
+    }
+
+    // mc/1.21: calls the transformation form, unused on main.
+    public static DeckTransformation nearestCopyTransformation(BlockPos target) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) {
+            return DeckTransformation.IDENTITY;
+        }
+
+        return NearestCopy.transformationToward(fold(), player.blockPosition(), target);
     }
 
     public static @Nullable Vec3 nearestToCamera(@Nullable Vec3 target) {

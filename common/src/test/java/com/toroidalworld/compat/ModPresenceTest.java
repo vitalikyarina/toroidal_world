@@ -17,6 +17,30 @@ class ModPresenceTest {
     private static final String SHIPPED_CLASS = "com/toroidalworld/compat/ModPresence.class";
     private static final String ABSENT_CLASS = "com/toroidalworld/compat/NoSuchModEntryPoint.class";
 
+    private static final ModSymbol CARRIED_SYMBOL =
+            new ModSymbol("com/toroidalworld/compat/ModPresence", "probe", "(Ljava/lang/String;)Z");
+
+    private static final ModSymbol MOVED_SYMBOL =
+            new ModSymbol("com/toroidalworld/compat/ModPresence", "probe", "(I)Z");
+
+    @Test
+    void aGateWhoseModCarriesTheSymbolOpens() {
+        assertTrue(ModPresence.of(LOGGER, SHIPPED_CLASS, "[test-compat] gate carried_present", CARRIED_SYMBOL)
+                .present(), "the class is on the classpath and declares the member the gate names");
+    }
+
+    @Test
+    void aGateWhoseModLostTheSymbolCloses() {
+        assertFalse(ModPresence.of(LOGGER, SHIPPED_CLASS, "[test-compat] gate moved_present", MOVED_SYMBOL).present(),
+                "the mod is installed, but this build no longer carries the member the mixins need");
+    }
+
+    @Test
+    void aGateWhoseModIsAbsentClosesWithoutLookingForTheSymbol() {
+        assertFalse(ModPresence.of(LOGGER, ABSENT_CLASS, "[test-compat] gate uninstalled_present", CARRIED_SYMBOL)
+                .present(), "no jar on the classpath carries the mod the gate stands in front of");
+    }
+
     @Test
     void aResourceOnTheClasspathReadsAsPresent() {
         assertTrue(ModPresence.of(LOGGER, SHIPPED_CLASS, "[test-compat] gate shipped_present").present(),
@@ -38,7 +62,7 @@ class ModPresenceTest {
     @Test
     void theProbeAsksTheClassLoaderOnce() {
         CountingLoader loader = new CountingLoader(SHIPPED_CLASS);
-        ModPresence gate = new ModPresence(LOGGER, loader, SHIPPED_CLASS, "[test-compat] gate once_present");
+        ModPresence gate = new ModPresence(LOGGER, loader, SHIPPED_CLASS, "[test-compat] gate once_present", null);
 
         assertTrue(gate.present());
         assertTrue(gate.present());
