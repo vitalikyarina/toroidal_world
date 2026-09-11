@@ -142,11 +142,31 @@ var aeronauticsModJars = tasks.register('unpackAeronautics', Sync) {
     into layout.buildDirectory.dir('aeronautics')
 }
 
+// Xaero's World Map keeps its own library jar-in-jar on this game line, and the export fold names a config option
+// declared there, so the nested jar is unpacked at build time and rides compileOnly beside the mod jar.
+configurations {
+    xaeroLibJarJar
+}
+
+dependencies {
+    xaeroLibJarJar "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
+}
+
+var xaeroLibJars = tasks.register('unpackXaeroLib', Sync) {
+    from(zipTree(configurations.xaeroLibJarJar.singleFile)) {
+        include 'META-INF/jarjar/xaerolib-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('xaero-lib')
+}
+
 dependencies {
     compileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     compileOnly files(createBundledJars).asFileTree.matching { include '*.jar' }
     compileOnly files(sableCompanionJars).asFileTree.matching { include '*.jar' }
     compileOnly files(aeronauticsModJars).asFileTree.matching { include '*.jar' }
+    compileOnly files(xaeroLibJars).asFileTree.matching { include '*.jar' }
     compileOnly "net.fabricmc:sponge-mixin:${mixin_version}"
     compileOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
     compileOnly "org.jspecify:jspecify:${jspecify_version}"

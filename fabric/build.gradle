@@ -155,11 +155,31 @@ var aeronauticsModJars = tasks.register('unpackAeronautics', Sync) {
     into layout.buildDirectory.dir('aeronautics')
 }
 
+// Xaero's World Map keeps its own library jar-in-jar on this game line, and the export fold names a config option
+// declared there, so the nested jar is unpacked at build time and rides compileOnly beside the mod jar.
+configurations {
+    xaeroLibJarJar
+}
+
+dependencies {
+    xaeroLibJarJar "maven.modrinth:xaeros-world-map:${xaero_worldmap_fabric_version}"
+}
+
+var xaeroLibJars = tasks.register('unpackXaeroLib', Sync) {
+    from(zipTree(configurations.xaeroLibJarJar.singleFile)) {
+        include 'META-INF/jars/xaerolib-*.jar'
+        eachFile { it.relativePath = new RelativePath(true, it.name) }
+    }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir('xaero-lib')
+}
+
 dependencies {
     compileOnly files(c2meModuleJars).asFileTree.matching { include '*.jar' }
     compileOnly files(createBundledJars).asFileTree.matching { include '*.jar' }
     compileOnly files(sableCompanionJars).asFileTree.matching { include '*.jar' }
     compileOnly files(aeronauticsModJars).asFileTree.matching { include '*.jar' }
+    compileOnly files(xaeroLibJars).asFileTree.matching { include '*.jar' }
     minecraft "com.mojang:minecraft:${minecraft_version}"
     // Mojmap on both sides: the mixins and the accesswidener are written against the same names NeoForge uses,
     // so common's sources compile unchanged for either loader.
