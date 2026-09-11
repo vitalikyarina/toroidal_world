@@ -222,8 +222,6 @@ dependencies {
     testRuntimeOnly "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
     testRuntimeOnly "maven.modrinth:xaeros-world-map:${xaero_worldmap_version}"
     testRuntimeOnly "net.fabricmc:sponge-mixin:${mixin_version}"
-    // Mixin brings ASM, which the natives_math test writes its entry-point class file with.
-    testCompileOnly "net.fabricmc:sponge-mixin:${mixin_version}"
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.junit.platform:junit-platform-launcher'
