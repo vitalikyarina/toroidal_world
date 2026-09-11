@@ -10,7 +10,7 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
-import com.toroidalworld.engine.fold.LogRateGate;
+import com.toroidalworld.engine.LogRateGate;
 import com.toroidalworld.engine.fold.SeamDelta;
 import com.mojang.logging.LogUtils;
 
