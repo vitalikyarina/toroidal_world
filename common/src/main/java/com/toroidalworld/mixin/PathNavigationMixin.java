@@ -1,7 +1,5 @@
 package com.toroidalworld.mixin;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -27,7 +25,6 @@ import net.minecraft.core.Position;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 
@@ -99,21 +96,8 @@ public class PathNavigationMixin implements NavigationShifter {
         }
 
         if (this.path != null && !this.path.isDone()) {
-            this.path = toroidal$shifted(this.path, shiftX, shiftZ);
+            ((NavigationShifter) (Object) this.path).toroidal$shiftBy(shiftX, shiftZ);
         }
-    }
-
-    @Unique
-    private static Path toroidal$shifted(Path path, int shiftX, int shiftZ) {
-        List<Node> nodes = new ArrayList<>(path.getNodeCount());
-        for (int i = 0; i < path.getNodeCount(); i++) {
-            Node node = path.getNode(i);
-            nodes.add(node.cloneAndMove(node.x + shiftX, node.y, node.z + shiftZ));
-        }
-
-        Path shifted = new Path(nodes, path.getTarget().offset(shiftX, 0, shiftZ), path.canReach());
-        shifted.setNextNodeIndex(path.getNextNodeIndex());
-        return shifted;
     }
 
     @Unique
