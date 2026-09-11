@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.api.v1.net.SeamContext;
 import com.toroidalworld.core.CoordinateConstants;
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.ToroidalShapeView;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
@@ -247,6 +248,12 @@ public record TranslationContext(
 
     public Vec3 nearestCopy(Vec3 position) {
         return transformer.nearestCopy(new Vec3(clientPosition.x(), position.y, clientPosition.z()), position);
+    }
+
+    // mc/1.21: calls the transformation form, unused on main.
+    public DeckTransformation nearestCopyTransformation(Vec3 position) {
+        return transformer.nearestCopyTransformation(
+                new Vec3(clientPosition.x(), position.y, clientPosition.z()), position);
     }
 
     @Override
