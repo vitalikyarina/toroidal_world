@@ -28,6 +28,7 @@ Toroidal World ships for Minecraft 26.2, 26.1.2 and 1.21.1, on NeoForge and Fabr
 | [Xaero's World Map](https://modrinth.com/mod/xaeros-world-map) | All | NeoForge, Fabric | Supported | |
 | FTB Chunks x Xaero's Map Compat | 1.21.1 | NeoForge | Supported | |
 | FTB Chunks | 1.21.1 | NeoForge, Fabric | Supported | |
+| JourneyMap Integration | 1.21.1 | NeoForge, Fabric | Supported | |
 
 ## Machines and vehicles
 
