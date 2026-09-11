@@ -13,6 +13,7 @@
     "map.MapProcessorMixin",
     "map.MapWriterMixin",
     "map.MinimapElementReaderWrapperMixin",
+    "map.PNGExporterMixin",
     "map.SupportXaeroWorldmapMixin",
     "map.WaypointWrapperMixin"
   ],
