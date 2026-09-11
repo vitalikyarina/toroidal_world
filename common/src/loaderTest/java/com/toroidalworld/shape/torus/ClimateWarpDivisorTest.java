@@ -1,4 +1,4 @@
-package com.toroidalworld.engine.noise;
+package com.toroidalworld.shape.torus;
 
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_AMPLITUDES;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_FIRST_OCTAVE;
@@ -17,11 +17,11 @@ class ClimateWarpDivisorTest {
 
     @Test
     void aCompactedFieldWarpsAgainstItsOwnLattice() {
-        double factor = ClimateScaleCompression.factor(SQUARE, CLIMATE_FIELD, CLIMATE_AMPLITUDES,
+        double factor = ClimateCompression.factor(SQUARE, CLIMATE_FIELD, CLIMATE_AMPLITUDES,
                 Math.pow(2.0, CLIMATE_FIRST_OCTAVE), CLIMATE_XZ_SCALE, HORIZONTAL_SHARE);
 
         assertTrue(factor > 1.0, "the fixture sits outside the compressed regime, so the case proves nothing");
         assertEquals(CLIMATE_XZ_SCALE * factor,
-                DomainWarp.divisor(CLIMATE_NOISE, SQUARE, CLIMATE_XZ_SCALE, HORIZONTAL_SHARE));
+                ClimateCompression.warpDivisor(CLIMATE_NOISE, SQUARE, CLIMATE_XZ_SCALE, HORIZONTAL_SHARE));
     }
 }

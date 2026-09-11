@@ -7,6 +7,7 @@ import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.shape.GenerationHookSetup;
 import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.shape.torus.ClimateScale;
 import com.toroidalworld.shape.torus.CompactBiomes;

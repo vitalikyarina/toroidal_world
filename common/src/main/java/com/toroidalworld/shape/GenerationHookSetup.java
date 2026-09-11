@@ -1,4 +1,6 @@
-package com.toroidalworld.engine.noise;
+package com.toroidalworld.shape;
+
+import com.toroidalworld.shape.torus.CoastFieldLift;
 
 public final class GenerationHookSetup {
 

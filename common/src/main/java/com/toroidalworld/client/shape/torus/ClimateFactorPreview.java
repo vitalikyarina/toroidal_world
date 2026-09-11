@@ -8,8 +8,8 @@ import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopBounds;
-import com.toroidalworld.engine.noise.ClimateFields;
-import com.toroidalworld.engine.noise.ClimateScaleCompression;
+import com.toroidalworld.shape.torus.ClimateCompression;
+import com.toroidalworld.shape.torus.ClimateFields;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
@@ -34,7 +34,7 @@ final class ClimateFactorPreview {
 
         NormalNoise.NoiseParameters parameters = temperature.noiseData().value();
         boolean climateField = temperature.noiseData().unwrapKey().filter(ClimateFields::isClimate).isPresent();
-        return OptionalDouble.of(ClimateScaleCompression.factor(
+        return OptionalDouble.of(ClimateCompression.factor(
                 WorldFolds.of(FlatShape.torus(WorldLoopBounds.ofWidth(chunkWidth)), generationOptions),
                 climateField,
                 parameters.amplitudes(),

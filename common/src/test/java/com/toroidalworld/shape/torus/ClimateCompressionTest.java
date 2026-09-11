@@ -1,4 +1,4 @@
-package com.toroidalworld.engine.noise;
+package com.toroidalworld.shape.torus;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,15 +12,15 @@ import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopBounds;
-import com.toroidalworld.engine.noise.ClimateCompressionCacheFixture.Storing;
-import com.toroidalworld.shape.torus.ClimateScale;
-import com.toroidalworld.shape.torus.CompactBiomes;
+import com.toroidalworld.engine.noise.ClimateScaleCompression;
+import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.shape.torus.ClimateCompressionCacheFixture.Storing;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.core.Direction;
 
-class ClimateScaleCompressionTest {
+class ClimateCompressionTest {
     private static final double XZ_SCALE = 0.25;
 
     private static final double HORIZONTAL = 0.0;
@@ -81,13 +81,13 @@ class ClimateScaleCompressionTest {
     }
 
     private static double actual(Field field, WorldFold fold, double verticalShare) {
-        return ClimateScaleCompression.factor(fold, field.climate(), field.amplitudes(),
+        return ClimateCompression.factor(fold, field.climate(), field.amplitudes(),
                 Math.pow(2.0, field.firstOctave()), XZ_SCALE, verticalShare);
     }
 
     private static double resolved(Storing cache, Field field, WorldFold fold, double xzScale,
             double verticalShare) {
-        return ClimateScaleCompression.resolve(cache, fold, field.climate(), field.amplitudes(),
+        return ClimateCompression.resolve(cache, fold, field.climate(), field.amplitudes(),
                 Math.pow(2.0, field.firstOctave()), xzScale, verticalShare);
     }
 
@@ -214,7 +214,7 @@ class ClimateScaleCompressionTest {
         assertEquals(3, cache.stores, "stores after the share changed");
 
         double halfScale = XZ_SCALE / 2.0;
-        assertEquals(ClimateScaleCompression.factor(large, TEMPERATURE.climate(), TEMPERATURE.amplitudes(),
+        assertEquals(ClimateCompression.factor(large, TEMPERATURE.climate(), TEMPERATURE.amplitudes(),
                 Math.pow(2.0, TEMPERATURE.firstOctave()), halfScale, 0.5),
                 resolved(cache, TEMPERATURE, large, halfScale, 0.5), 0.0, "changed scale");
         assertEquals(4, cache.stores, "stores after the scale changed");

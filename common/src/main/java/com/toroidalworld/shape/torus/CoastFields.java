@@ -1,4 +1,4 @@
-package com.toroidalworld.engine.noise;
+package com.toroidalworld.shape.torus;
 
 import java.util.Set;
 
