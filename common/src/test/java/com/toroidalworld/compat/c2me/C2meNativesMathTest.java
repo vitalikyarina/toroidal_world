@@ -3,21 +3,21 @@ package com.toroidalworld.compat.c2me;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.lang.classfile.ClassFile;
-import java.lang.classfile.attribute.ConstantValueAttribute;
-import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDescs;
-
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 
 class C2meNativesMathTest {
     private static final String ENTRY_POINT_CLASS = "com.ishland.c2me.opts.natives_math.ModuleEntryPoint";
-    private static final ClassDesc ENTRY_POINT = ClassDesc.of(ENTRY_POINT_CLASS);
+    private static final String ENTRY_POINT = ENTRY_POINT_CLASS.replace('.', '/');
+    private static final String OBJECT = "java/lang/Object";
+    private static final String BOOLEAN_DESCRIPTOR = "Z";
 
     private static final String ENABLED_FIELD = "enabled";
     private static final String RENAMED_FIELD = "active";
 
-    private static final int LOADABLE_MAJOR = ClassFile.latestMajorVersion();
+    private static final int MAJOR_OVER_FEATURE = 44;
+    private static final int LOADABLE_MAJOR = Runtime.version().feature() + MAJOR_OVER_FEATURE;
     private static final int NEWER_JAVA_MAJOR = LOADABLE_MAJOR + 1;
 
     @Test
@@ -51,12 +51,12 @@ class C2meNativesMathTest {
     }
 
     private static byte[] entryPoint(String switchField, boolean value, int major) {
-        return ClassFile.of().build(ENTRY_POINT, entry -> entry
-                .withVersion(major, 0)
-                .withFlags(ClassFile.ACC_PUBLIC | ClassFile.ACC_FINAL)
-                .withField(switchField, ConstantDescs.CD_boolean, field -> field
-                        .withFlags(ClassFile.ACC_PUBLIC | ClassFile.ACC_STATIC | ClassFile.ACC_FINAL)
-                        .with(ConstantValueAttribute.of(value ? 1 : 0))));
+        ClassWriter entry = new ClassWriter(0);
+        entry.visit(major, Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, ENTRY_POINT, null, OBJECT, null);
+        entry.visitField(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL, switchField,
+                BOOLEAN_DESCRIPTOR, null, value ? 1 : 0).visitEnd();
+        entry.visitEnd();
+        return entry.toByteArray();
     }
 
     private static ClassLoader carrying(byte[] entryPoint) {
