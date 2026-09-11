@@ -12,6 +12,7 @@ import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.engine.LogRateGate;
+import com.toroidalworld.engine.LogRateGates;
 import com.toroidalworld.engine.fold.SeamDelta;
 import com.mojang.logging.LogUtils;
 
@@ -46,6 +47,12 @@ public final class ClientPosition {
     private volatile @Nullable ChunkPos heldCacheCenter;
 
     private final LogRateGate warnGate = new LogRateGate();
+
+    private final LogRateGates translationWarnGates = new LogRateGates();
+
+    public LogRateGates translationWarnGates() {
+        return translationWarnGates;
+    }
 
     public static ClientPosition of(ServerPlayer player) {
         return ((ClientPositionHolder) player.connection).toroidal$clientPosition();
