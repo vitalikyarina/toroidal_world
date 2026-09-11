@@ -43,9 +43,7 @@ class ImportRulesTest {
             "api.v1.gen.GenerationProbe -> engine.gen.FloatingCrumbs",
             "api.v1.gen.GenerationProbe -> engine.noise.GenerationTransformerContext",
             "api.v1.gen.GenerationProbe -> engine.noise.TerrainCeiling",
-            "shape.WorldShapes -> engine.gen.ShapedDimensions",
-            "core.WorldLoopAttachments -> engine.gen.TerrainMask",
-            "core.WorldLoopAttachments -> engine.gen.TerrainMasks");
+            "shape.WorldShapes -> engine.gen.ShapedDimensions");
 
     @Test
     void everyImportStaysInsideItsGroup() throws IOException {
