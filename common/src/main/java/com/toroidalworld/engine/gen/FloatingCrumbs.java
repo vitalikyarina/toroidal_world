@@ -7,6 +7,7 @@ import java.util.function.IntConsumer;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.accessors.CrumbSweepCache;
 import com.toroidalworld.api.v1.gen.TerrainSnapshot;
 import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.core.WorldLoopAttachments;
@@ -82,8 +83,12 @@ public final class FloatingCrumbs {
                 && TerrainCeiling.ceiling(noise.generatorSettings().value()) != null;
     }
 
+    private static boolean sweepsCrumbs(ServerLevel level) {
+        return ((CrumbSweepCache) level).toroidal$sweepsCrumbs();
+    }
+
     public static void sweep(ServerLevel level, ChunkAccess chunk) {
-        if (!WorldLoopAttachments.sweepsCrumbs(level)) {
+        if (!sweepsCrumbs(level)) {
             return;
         }
 
@@ -111,7 +116,7 @@ public final class FloatingCrumbs {
 
     public static void sweepAcross(ServerLevel level, ChunkAccess chunk,
             StaticCache2D<GenerationChunkHolder> chunks) {
-        if (!WorldLoopAttachments.sweepsCrumbs(level)) {
+        if (!sweepsCrumbs(level)) {
             return;
         }
 
