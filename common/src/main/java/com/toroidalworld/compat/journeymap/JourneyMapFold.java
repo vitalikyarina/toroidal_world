@@ -17,7 +17,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
 
-import journeymap.api.v2.common.Context;
+import journeymap.api.v2.client.display.Context;
 
 public final class JourneyMapFold {
     private static final Logger LOGGER = LogUtils.getLogger();
