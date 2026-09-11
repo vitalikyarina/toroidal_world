@@ -1,6 +1,7 @@
 package com.toroidalworld.compat;
 
 import com.toroidalworld.api.v1.ToroidalShape;
+import com.toroidalworld.core.WrapDomain;
 
 import net.minecraft.core.Direction;
 
@@ -9,6 +10,10 @@ public record AxisCopies(boolean loops, int min, int width) {
 
     public static AxisCopies of(ToroidalShape shape, Direction.Axis axis) {
         return shape.loops(axis) ? looped(shape.minBlock(axis), shape.widthBlocks(axis)) : UNBOUNDED;
+    }
+
+    public static AxisCopies ofChunks(ToroidalShape shape, Direction.Axis axis) {
+        return shape.loops(axis) ? looped(shape.minChunk(axis), shape.widthChunks(axis)) : UNBOUNDED;
     }
 
     public static AxisCopies looped(int min, int width) {
@@ -73,6 +78,19 @@ public record AxisCopies(boolean loops, int min, int width) {
 
     public int offset(int lap) {
         return lap * this.width;
+    }
+
+    public int nearest(int reference, int coord) {
+        return this.loops ? new WrapDomain(this.min, max()).unwrapAround(reference, coord) : coord;
+    }
+
+    public int withinOneLap(int anchor, int coord) {
+        if (!this.loops) {
+            return coord;
+        }
+
+        int reach = this.width - 1;
+        return Math.max(anchor - reach, Math.min(anchor + reach, coord));
     }
 
     public int clipMin(int spanMin) {

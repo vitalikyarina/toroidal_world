@@ -18,6 +18,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.toroidalworld.compat.AxisCopies;
 import com.toroidalworld.compat.xaero.XaeroInjectionTargets;
 import com.toroidalworld.compat.xaero.XaeroWorldMapFold;
+import com.toroidalworld.core.CoordinateConstants;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
@@ -75,6 +76,12 @@ public abstract class GuiMapMixin {
     private int toroidal$selectionLapX;
     @Unique
     private int toroidal$selectionLapZ;
+    @Unique
+    private MapTileSelection toroidal$trackedSelection;
+    @Unique
+    private int toroidal$selectionEndX;
+    @Unique
+    private int toroidal$selectionEndZ;
 
     @Shadow
     private static double destScale;
@@ -143,10 +150,20 @@ public abstract class GuiMapMixin {
     @WrapOperation(
             method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(value = "INVOKE", target = "Lxaero/map/gui/MapTileSelection;setEnd(II)V"))
-    private void toroidal$recordSelectionLap(MapTileSelection selection, int endX, int endZ, Operation<Void> original) {
-        this.toroidal$selectionLapX = this.toroidal$cursorLapX;
-        this.toroidal$selectionLapZ = this.toroidal$cursorLapZ;
-        original.call(selection, endX, endZ);
+    private void toroidal$unwrapSelectionEnd(MapTileSelection selection, int endX, int endZ, Operation<Void> original) {
+        boolean fresh = selection != this.toroidal$trackedSelection;
+        this.toroidal$trackedSelection = selection;
+        AxisCopies copiesX = XaeroWorldMapFold.chunkCopies(Direction.Axis.X);
+        AxisCopies copiesZ = XaeroWorldMapFold.chunkCopies(Direction.Axis.Z);
+        int startX = selection.getStartX();
+        int startZ = selection.getStartZ();
+        int unwrappedX = copiesX.nearest(fresh ? startX : this.toroidal$selectionEndX, endX);
+        int unwrappedZ = copiesZ.nearest(fresh ? startZ : this.toroidal$selectionEndZ, endZ);
+        this.toroidal$selectionEndX = unwrappedX;
+        this.toroidal$selectionEndZ = unwrappedZ;
+        this.toroidal$selectionLapX = this.toroidal$cursorLapX - (unwrappedX - endX) * CoordinateConstants.CHUNK_WIDTH;
+        this.toroidal$selectionLapZ = this.toroidal$cursorLapZ - (unwrappedZ - endZ) * CoordinateConstants.CHUNK_WIDTH;
+        original.call(selection, copiesX.withinOneLap(startX, unwrappedX), copiesZ.withinOneLap(startZ, unwrappedZ));
     }
 
     @WrapOperation(
@@ -215,6 +232,21 @@ public abstract class GuiMapMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/region/LeveledRegion;getTexture(II)Lxaero/map/region/texture/RegionTexture;",
+                    ordinal = 0))
+    private RegionTexture<?> toroidal$foldHoverTexture(LeveledRegion<?> region, int textureX, int textureZ,
+            Operation<RegionTexture<?>> original) {
+        if (!XaeroWorldMapFold.active()) {
+            return original.call(region, textureX, textureZ);
+        }
+
+        return toroidal$canonicalRegionTexture(this.mouseBlockPosX, this.mouseBlockPosZ);
+    }
+
+    @WrapOperation(
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lxaero/map/region/LeveledRegion;getTexture(II)Lxaero/map/region/texture/RegionTexture;",
                     ordinal = 1))
     private RegionTexture<?> toroidal$foldLeafTexture(LeveledRegion<?> region, int slotX, int slotZ,
             Operation<RegionTexture<?>> original) {
@@ -238,15 +270,24 @@ public abstract class GuiMapMixin {
         }
 
         this.toroidal$slotFolded = true;
-        int canonicalRegX = Math.floorDiv(foldedBlockX, side);
-        int canonicalRegZ = Math.floorDiv(foldedBlockZ, side);
+        return toroidal$canonicalRegionTexture(foldedBlockX, foldedBlockZ);
+    }
+
+    @Unique
+    private RegionTexture<?> toroidal$canonicalRegionTexture(int canonicalBlockX, int canonicalBlockZ) {
+        int level = this.toroidal$viewLevel;
+        int slotSize = XaeroWorldMapFold.SLOT_BLOCKS << level;
+        int side = XaeroWorldMapFold.REGION_BLOCKS << level;
+        int canonicalRegX = Math.floorDiv(canonicalBlockX, side);
+        int canonicalRegZ = Math.floorDiv(canonicalBlockZ, side);
         LeveledRegion<?> canonical = this.toroidal$processor
                 .getLeveledRegion(this.toroidal$viewCaveLayer, canonicalRegX, canonicalRegZ, level);
         if (canonical == null || !canonical.hasTextures()) {
             return null;
         }
 
-        return canonical.getTexture((foldedBlockX - canonicalRegX * side) / slotSize, (foldedBlockZ - canonicalRegZ * side) / slotSize);
+        return canonical.getTexture((canonicalBlockX - canonicalRegX * side) / slotSize,
+                (canonicalBlockZ - canonicalRegZ * side) / slotSize);
     }
 
     @WrapOperation(

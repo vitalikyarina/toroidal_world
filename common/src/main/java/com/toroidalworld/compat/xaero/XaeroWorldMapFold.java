@@ -134,6 +134,11 @@ public final class XaeroWorldMapFold {
         return shape == null ? AxisCopies.UNBOUNDED : AxisCopies.of(shape, axis);
     }
 
+    public static AxisCopies chunkCopies(Direction.Axis axis) {
+        ToroidalShape shape = browsedShape();
+        return shape == null ? AxisCopies.UNBOUNDED : AxisCopies.ofChunks(shape, axis);
+    }
+
     public static double zoomFloorScale(double scaleMultiplier) {
         ToroidalShape shape = browsedShape();
         return shape == null ? 0.0 : FullscreenZoomFloor.xaeroScale(shape, scaleMultiplier);

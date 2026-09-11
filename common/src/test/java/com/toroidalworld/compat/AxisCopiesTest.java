@@ -92,4 +92,25 @@ class AxisCopiesTest {
     void aLoopedAxisNeedsAWidth() {
         assertThrows(IllegalArgumentException.class, () -> AxisCopies.looped(MIN, 0), "a zero width was accepted");
     }
+
+    @Test
+    void theNearestCopyIsTheOneWithinHalfAWidthOfTheReference() {
+        AxisCopies axis = AxisCopies.looped(MIN, WIDTH);
+        assertEquals(500, axis.nearest(400, 500), "a copy within half a width moved");
+        assertEquals(1000, axis.nearest(900, -24), "-24 seen from 900 is not the copy at 1000");
+        assertEquals(500 - WIDTH, axis.nearest(-400, 500), "500 seen from -400 is not the copy a lap back");
+        assertEquals(WIDTH / 2, axis.nearest(0, WIDTH / 2), "the exact half-width tie moved");
+        assertEquals(-WIDTH / 2, axis.nearest(0, -WIDTH / 2), "the exact half-width tie moved");
+        assertEquals(5000, AxisCopies.UNBOUNDED.nearest(0, 5000), "an unbounded axis has copies");
+    }
+
+    @Test
+    void withinOneLapStopsTheCoordinateAWorldShortOfLappingTheAnchor() {
+        AxisCopies axis = AxisCopies.looped(MIN, WIDTH);
+        assertEquals(100, axis.withinOneLap(0, 100), "a coordinate inside one lap moved");
+        assertEquals(WIDTH - 1, axis.withinOneLap(0, WIDTH - 1), "the last coordinate of the lap moved");
+        assertEquals(WIDTH - 1, axis.withinOneLap(0, 3000), "a coordinate past the lap is not stopped at width - 1");
+        assertEquals(-(WIDTH - 1), axis.withinOneLap(0, -3000), "a coordinate a lap back is not stopped at -(width - 1)");
+        assertEquals(5000, AxisCopies.UNBOUNDED.withinOneLap(0, 5000), "an unbounded axis has laps");
+    }
 }
