@@ -27,6 +27,7 @@ import xaero.map.MapProcessor;
 import xaero.map.graphics.MapRenderHelper;
 import xaero.map.graphics.renderer.multitexture.MultiTextureRenderTypeRenderer;
 import xaero.map.gui.GuiMap;
+import xaero.map.gui.MapTileSelection;
 import xaero.map.region.LeveledRegion;
 import xaero.map.region.texture.RegionTexture;
 
@@ -70,6 +71,10 @@ public abstract class GuiMapMixin {
     private int toroidal$cursorLapX;
     @Unique
     private int toroidal$cursorLapZ;
+    @Unique
+    private int toroidal$selectionLapX;
+    @Unique
+    private int toroidal$selectionLapZ;
 
     @Shadow
     private static double destScale;
@@ -133,6 +138,15 @@ public abstract class GuiMapMixin {
         this.mouseBlockPosZ = XaeroWorldMapFold.foldBlock(Direction.Axis.Z, rawZ);
         this.toroidal$cursorLapX = rawX - this.mouseBlockPosX;
         this.toroidal$cursorLapZ = rawZ - this.mouseBlockPosZ;
+    }
+
+    @WrapOperation(
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
+            at = @At(value = "INVOKE", target = "Lxaero/map/gui/MapTileSelection;setEnd(II)V"))
+    private void toroidal$recordSelectionLap(MapTileSelection selection, int endX, int endZ, Operation<Void> original) {
+        this.toroidal$selectionLapX = this.toroidal$cursorLapX;
+        this.toroidal$selectionLapZ = this.toroidal$cursorLapZ;
+        original.call(selection, endX, endZ);
     }
 
     @WrapOperation(
@@ -307,7 +321,7 @@ public abstract class GuiMapMixin {
             method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
             at = @At(
                     value = "INVOKE",
-                    target = "Lxaero/map/graphics/MapRenderHelper;renderDynamicHighlight(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIIIIIFFFFFFFF)V",
+                    target = XaeroInjectionTargets.MAP_RENDER_HELPER_RENDER_DYNAMIC_HIGHLIGHT,
                     ordinal = 0))
     private void toroidal$drawSeamGrid(
             PoseStack matrixStack, VertexConsumer overlayBuffer, int flooredCameraX, int flooredCameraZ,
@@ -348,5 +362,23 @@ public abstract class GuiMapMixin {
                     spanX[1] - flooredCameraX, lineZ - flooredCameraZ + thickness,
                     1.0F, 1.0F, 1.0F, 0.8F);
         }
+    }
+
+    @WrapOperation(
+            method = {"render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", "method_25394(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"},
+            at = @At(
+                    value = "INVOKE",
+                    target = XaeroInjectionTargets.MAP_RENDER_HELPER_RENDER_DYNAMIC_HIGHLIGHT,
+                    ordinal = 1))
+    private void toroidal$drawSelectionInCursorCopy(
+            PoseStack matrixStack, VertexConsumer overlayBuffer, int flooredCameraX, int flooredCameraZ,
+            int leftX, int rightX, int topZ, int bottomZ,
+            float sideR, float sideG, float sideB, float sideA, float centerR, float centerG, float centerB, float centerA,
+            Operation<Void> original) {
+        int lapX = this.toroidal$selectionLapX;
+        int lapZ = this.toroidal$selectionLapZ;
+        original.call(matrixStack, overlayBuffer, flooredCameraX, flooredCameraZ,
+                leftX + lapX, rightX + lapX, topZ + lapZ, bottomZ + lapZ,
+                sideR, sideG, sideB, sideA, centerR, centerG, centerB, centerA);
     }
 }
