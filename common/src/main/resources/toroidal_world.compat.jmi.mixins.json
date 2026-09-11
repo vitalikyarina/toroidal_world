@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.toroidalworld.compat.jmi.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "com.toroidalworld.compat.jmi.JmiMixinPlugin",
+  "client": [
+    "ClaimingModeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

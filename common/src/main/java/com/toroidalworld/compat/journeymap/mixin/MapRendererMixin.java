@@ -191,10 +191,7 @@ public abstract class MapRendererMixin {
         int tiles = JourneyMapFold.tilesWithContent(this.zoom, window.getWidth(), window.getHeight());
         int rangeX = MapCopyBudget.copyRange(loopedAxes, tiles, periodX, window.getWidth());
         int rangeZ = MapCopyBudget.copyRange(loopedAxes, tiles, periodZ, window.getHeight());
-        if (this.contextUi == Context.UI.Fullscreen) {
-            JourneyMapFold.recordFullscreenCopyRange(rangeX, rangeZ);
-        }
-
+        JourneyMapFold.recordCopyRange(this.contextUi, rangeX, rangeZ);
         if (rangeX == 0 && rangeZ == 0) {
             return;
         }

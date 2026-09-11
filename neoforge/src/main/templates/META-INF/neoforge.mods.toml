@@ -95,6 +95,9 @@ config="toroidal_world.compat.ftbchunks.mixins.json"
 config="toroidal_world.compat.ftbxaerocompat.mixins.json"
 
 [[mixins]]
+config="toroidal_world.compat.jmi.mixins.json"
+
+[[mixins]]
 config="toroidal_world.compat.c2me.mixins.json"
 
 [[mixins]]

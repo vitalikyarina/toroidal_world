@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 
 import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.compat.AxisCopies;
-import com.toroidalworld.compat.FullscreenZoomFloor;
 import com.toroidalworld.ToroidalWorld;
 import com.mojang.logging.LogUtils;
 
@@ -27,27 +26,23 @@ public final class SeamOverlays {
     private static final float STROKE_OPACITY = 0.35f;
     private static final float STROKE_WIDTH = 1.5f;
 
-    private static final int COVERED_WINDOW_PIXELS = 8192;
-    private static final int SEAM_LAPS_EACH_SIDE = COVERED_WINDOW_PIXELS / FullscreenZoomFloor.MIN_WORLD_PIXELS / 2;
-
+    // One strip per looped axis, at the world's own seam: the copies the map draws repeat it on every other lap.
     public static List<PolygonOverlay> build(ResourceKey<Level> dimension, ToroidalShape shape) {
         AxisCopies x = AxisCopies.of(shape, Direction.Axis.X);
         AxisCopies z = AxisCopies.of(shape, Direction.Axis.Z);
         int[] spanX = span(x);
         int[] spanZ = span(z);
-        int[] seamsX = x.seams(spanX[0], spanX[1]);
-        int[] seamsZ = z.seams(spanZ[0], spanZ[1]);
-        List<PolygonOverlay> overlays = new ArrayList<>(seamsX.length + seamsZ.length);
-        for (int seam : seamsX) {
-            overlays.add(line(dimension, seam, spanZ[0], seam + 1, spanZ[1]));
+        List<PolygonOverlay> overlays = new ArrayList<>(2);
+        if (x.loops()) {
+            overlays.add(line(dimension, x.min(), spanZ[0], x.min() + 1, spanZ[1]));
         }
 
-        for (int seam : seamsZ) {
-            overlays.add(line(dimension, spanX[0], seam, spanX[1], seam + 1));
+        if (z.loops()) {
+            overlays.add(line(dimension, spanX[0], z.min(), spanX[1], z.min() + 1));
         }
 
         LOGGER.info("[jm-compat] seam_overlays dim={} {} {} overlays={}",
-                dimension.location(), describe("x", x, seamsX), describe("z", z, seamsZ), overlays.size());
+                dimension.location(), describe("x", x), describe("z", z), overlays.size());
         return overlays;
     }
 
@@ -56,17 +51,15 @@ public final class SeamOverlays {
             return new int[] {-Level.MAX_LEVEL_SIZE, Level.MAX_LEVEL_SIZE};
         }
 
-        int reach = SEAM_LAPS_EACH_SIDE * copies.width();
-        return new int[] {copies.min() - reach, copies.max() + reach};
+        return new int[] {copies.min(), copies.max()};
     }
 
-    private static String describe(String axis, AxisCopies copies, int[] seams) {
+    private static String describe(String axis, AxisCopies copies) {
         if (!copies.loops()) {
             return axis + "_loops=false";
         }
 
-        return axis + "_loops=true " + axis + "_seams=" + seams.length
-                + " " + axis + "_min=" + copies.min() + " " + axis + "_width_blocks=" + copies.width();
+        return axis + "_loops=true " + axis + "_min=" + copies.min() + " " + axis + "_width_blocks=" + copies.width();
     }
 
     private static PolygonOverlay line(ResourceKey<Level> dimension, int minX, int minZ, int maxX, int maxZ) {
