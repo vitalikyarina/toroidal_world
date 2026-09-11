@@ -1,5 +1,8 @@
 package com.toroidalworld.compat.c2me;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -15,21 +18,22 @@ public final class C2meAquifer {
             "com/ishland/c2me/opts/worldgen/vanilla/mixin/aquifer/MixinAquiferSamplerImpl", "onInit",
             "(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V");
 
-    private static final boolean OPTIMIZED = readOptimizeAquifer();
+    private static final boolean OPTIMIZED = readOptimizeAquifer(C2meAquifer.class.getClassLoader());
 
     public static boolean optimizesAquifer() {
         return OPTIMIZED;
     }
 
-    private static boolean readOptimizeAquifer() {
+    static boolean readOptimizeAquifer(ClassLoader classLoader) {
         try {
-            boolean optimized = Class.forName(CONFIG_CLASS).getField(OPTIMIZE_AQUIFER_FIELD).getBoolean(null);
+            boolean optimized = readSwitch(
+                    Class.forName(CONFIG_CLASS, true, classLoader).getField(OPTIMIZE_AQUIFER_FIELD));
             if (!optimized) {
                 LOGGER.info("[c2me-compat] gate c2me_present=true optimize_aquifer=false");
                 return false;
             }
 
-            if (!SAMPLER_INIT_HANDLER.carriedBy(C2meAquifer.class.getClassLoader())) {
+            if (!SAMPLER_INIT_HANDLER.carriedBy(classLoader)) {
                 LOGGER.warn("[c2me-compat] gate c2me_present=true optimize_aquifer=true symbol_present=false symbol={}",
                         SAMPLER_INIT_HANDLER);
                 return false;
@@ -46,6 +50,18 @@ public final class C2meAquifer {
                     CONFIG_CLASS, OPTIMIZE_AQUIFER_FIELD, changed);
             return true;
         }
+    }
+
+    private static boolean readSwitch(Field switchField) throws ReflectiveOperationException {
+        if (switchField.getType() != boolean.class) {
+            throw new NoSuchFieldException(switchField + " is no longer boolean");
+        }
+
+        if (!Modifier.isStatic(switchField.getModifiers())) {
+            throw new NoSuchFieldException(switchField + " is no longer static");
+        }
+
+        return switchField.getBoolean(null);
     }
 
     private C2meAquifer() {
