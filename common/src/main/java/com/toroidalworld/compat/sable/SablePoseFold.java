@@ -40,10 +40,11 @@ public final class SablePoseFold {
 
         PhysicsPipeline pipeline = system.getPipeline();
         List<PhysicsPipelineBody> group = SableConstraintGraph.groupOf(pipeline, subLevel);
+        List<SableMemberPose> members = SableMemberPose.substep(pipeline, group, subLevel, readback);
         Vector3d centroid = new Vector3d();
         int counted = 0;
-        for (PhysicsPipelineBody body : group) {
-            Pose3dc pose = poseOf(body, subLevel, readback);
+        for (SableMemberPose member : members) {
+            Pose3dc pose = member.pose();
             if (pose != null) {
                 centroid.add(pose.position());
                 counted++;
@@ -56,30 +57,31 @@ public final class SablePoseFold {
             return;
         }
 
-        shiftGroup(system, group, lapOf(fold.foldTransformation(centre)), subLevel, readback);
+        shiftGroup(system, members, lapOf(fold.foldTransformation(centre)), subLevel, readback);
     }
 
     static Vector3d lapOf(DeckTransformation seat) {
         return new Vector3d(seat.blocks().xShift(), 0.0, seat.blocks().zShift());
     }
 
-    static void shiftGroup(SubLevelPhysicsSystem system, List<PhysicsPipelineBody> group, Vector3dc lap,
+    static void shiftGroup(SubLevelPhysicsSystem system, List<SableMemberPose> members, Vector3dc lap,
             @Nullable ServerSubLevel self, @Nullable Pose3d readback) {
         PhysicsPipeline pipeline = system.getPipeline();
-        for (PhysicsPipelineBody body : group) {
-            shift(system, pipeline, body, self, readback, lap);
+        for (SableMemberPose member : members) {
+            shift(system, pipeline, member, self, readback, lap);
         }
 
-        SableBodyShift.fire(system.getLevel(), group, lap);
+        SableBodyShift.fire(system.getLevel(), SableMemberPose.bodies(members), lap);
     }
 
-    private static void shift(SubLevelPhysicsSystem system, PhysicsPipeline pipeline, PhysicsPipelineBody body,
+    private static void shift(SubLevelPhysicsSystem system, PhysicsPipeline pipeline, SableMemberPose member,
             @Nullable ServerSubLevel self, @Nullable Pose3d readback, Vector3dc lap) {
-        Pose3dc pose = poseOf(body, self, readback);
+        Pose3dc pose = member.pose();
         if (pose == null) {
             return;
         }
 
+        PhysicsPipelineBody body = member.body();
         Vector3d target = new Vector3d(pose.position()).add(lap);
         Vector3d linearBefore = pipeline.getLinearVelocity(body, new Vector3d());
         Vector3d angularBefore = pipeline.getAngularVelocity(body, new Vector3d());
@@ -121,11 +123,6 @@ public final class SablePoseFold {
                 }
             }
         }
-    }
-
-    private static @Nullable Pose3dc poseOf(PhysicsPipelineBody body, @Nullable ServerSubLevel self,
-            @Nullable Pose3d readback) {
-        return body == self ? readback : SableBodyPose.of(body);
     }
 
     private SablePoseFold() {

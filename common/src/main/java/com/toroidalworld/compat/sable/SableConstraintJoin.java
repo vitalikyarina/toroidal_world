@@ -102,8 +102,8 @@ public final class SableConstraintJoin {
             return;
         }
 
-        List<PhysicsPipelineBody> groupA = SableConstraintGraph.groupOf(pipeline, bodyA);
-        List<PhysicsPipelineBody> groupB = SableConstraintGraph.groupOf(pipeline, bodyB);
+        List<SableMemberPose> groupA = SableMemberPose.logical(SableConstraintGraph.groupOf(pipeline, bodyA));
+        List<SableMemberPose> groupB = SableMemberPose.logical(SableConstraintGraph.groupOf(pipeline, bodyB));
         List<Vec3> positionsA = positionsOf(groupA);
         List<Vec3> positionsB = positionsOf(groupB);
         SableJoinDirection.Choice choice = SableJoinDirection.choose(fold, lapForB, positionsA, positionsB);
@@ -111,10 +111,10 @@ public final class SableConstraintJoin {
                 SablePoseFold.lapOf(choice.lap()), null, null);
     }
 
-    private static List<Vec3> positionsOf(List<PhysicsPipelineBody> group) {
+    private static List<Vec3> positionsOf(List<SableMemberPose> group) {
         List<Vec3> positions = new ArrayList<>(group.size());
-        for (PhysicsPipelineBody body : group) {
-            Pose3dc pose = SableBodyPose.of(body);
+        for (SableMemberPose member : group) {
+            Pose3dc pose = member.pose();
             if (pose != null) {
                 positions.add(JomlVectors.read(pose.position()));
             }
