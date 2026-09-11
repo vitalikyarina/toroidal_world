@@ -149,7 +149,7 @@ public abstract class GuiMapMixin {
         this.toroidal$viewCaveLayer = caveLayer;
         this.toroidal$leveledCandidate = null;
         LeveledRegion<?> existing = original.call(processor, caveLayer, regX, regZ, level);
-        if (existing != null || !XaeroWorldMapFold.active() || !XaeroWorldMapFold.glueableAt(64 << level)) {
+        if (existing != null || !XaeroWorldMapFold.active() || !XaeroWorldMapFold.glueableAt(XaeroWorldMapFold.SLOT_BLOCKS << level)) {
             return existing;
         }
 
