@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.core.CoordinateConstants;
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
@@ -74,6 +75,39 @@ class NearestCopyTest {
                 NearestCopy.toward(CYLINDER, ANCHOR_BLOCK_ACROSS_THE_SEAM, TARGET_BLOCK));
         assertEquals(new ChunkPos(TARGET_CHUNK.x - WIDTH_IN_CHUNKS, TARGET_CHUNK.z),
                 NearestCopy.toward(CYLINDER, ANCHOR_CHUNK_ACROSS_THE_SEAM, TARGET_CHUNK));
+    }
+
+    @Test
+    void theTransformationTowardANullFoldIsTheIdentityItself() {
+        assertSame(DeckTransformation.IDENTITY,
+                NearestCopy.transformationToward(null, ANCHOR_ACROSS_THE_SEAM, TARGET));
+        assertSame(DeckTransformation.IDENTITY,
+                NearestCopy.transformationToward(null, ANCHOR_BLOCK_ACROSS_THE_SEAM, TARGET_BLOCK));
+    }
+
+    @Test
+    void theTransformationTowardAFoldThatWrapsNothingIsTheIdentityItself() {
+        assertSame(DeckTransformation.IDENTITY,
+                NearestCopy.transformationToward(WorldFolds.NOOP, ANCHOR_ACROSS_THE_SEAM, TARGET));
+        assertSame(DeckTransformation.IDENTITY,
+                NearestCopy.transformationToward(WorldFolds.NOOP, ANCHOR_BLOCK_ACROSS_THE_SEAM, TARGET_BLOCK));
+    }
+
+    @Test
+    void theTransformationTowardAnAnchorBesideTheTargetIsTheIdentityItself() {
+        assertSame(DeckTransformation.IDENTITY,
+                NearestCopy.transformationToward(CYLINDER, ANCHOR_BESIDE_THE_TARGET, TARGET));
+        assertSame(DeckTransformation.IDENTITY,
+                NearestCopy.transformationToward(CYLINDER, ANCHOR_BLOCK_BESIDE_THE_TARGET, TARGET_BLOCK));
+    }
+
+    @Test
+    void theTransformationTowardAnAnchorAcrossTheSeamSeatsThePointInTheLappedCopy() {
+        assertEquals(TARGET.subtract(WIDTH, 0.0, 0.0),
+                NearestCopy.transformationToward(CYLINDER, ANCHOR_ACROSS_THE_SEAM, TARGET).apply(TARGET));
+        assertEquals(TARGET_BLOCK.offset(-WIDTH, 0, 0),
+                NearestCopy.transformationToward(CYLINDER, ANCHOR_BLOCK_ACROSS_THE_SEAM, TARGET_BLOCK)
+                        .apply(TARGET_BLOCK));
     }
 
     @Test

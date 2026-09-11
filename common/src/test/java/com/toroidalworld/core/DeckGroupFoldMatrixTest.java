@@ -2,6 +2,7 @@ package com.toroidalworld.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -544,6 +545,47 @@ class DeckGroupFoldMatrixTest {
                     "the lap vector no longer seats the neighbour on the unmirrored side");
             assertEquals(fold.nearestCopy(ref, neighbour), move.apply(neighbour),
                     "the seated neighbour is not the copy the fold names for it");
+        }
+
+        @Test
+        void theInverseUndoesTheTransformation() {
+            for (Subject subject : subjects()) {
+                WorldFold fold = subject.fold();
+                Random random = new Random(SEED + 13);
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    BlockPos ref = new BlockPos(sample(random), 64, sample(random));
+                    BlockPos target = new BlockPos(sample(random), 64, sample(random));
+                    DeckTransformation move = fold.nearestCopyTransformation(ref, target);
+                    assertEquals(target, move.inverse().apply(move.apply(target)),
+                            subject.name() + ": the inverse did not undo the block transformation");
+
+                    Vec3 refPoint = new Vec3(sample(random) + 0.25, 64.0, sample(random) + 0.75);
+                    Vec3 targetPoint = new Vec3(sample(random) + 0.5, 64.0, sample(random) + 0.5);
+                    DeckTransformation pointMove = fold.nearestCopyTransformation(refPoint, targetPoint);
+                    assertEquals(targetPoint, pointMove.inverse().apply(pointMove.apply(targetPoint)),
+                            subject.name() + ": the inverse did not undo the coordinate transformation");
+                }
+            }
+        }
+
+        @Test
+        void theInverseUndoesATransformationAcrossAMirror() {
+            DeckGroupFold fold = MOBIUS.fold();
+            BlockPos ref = new BlockPos(UPPER - 1, 64, 100);
+            BlockPos target = new BlockPos(LOWER + 1, 64, -100);
+            DeckTransformation move = fold.nearestCopyTransformation(ref, target);
+            assertNotEquals(FoldOrientation.IDENTITY, move.orientation(),
+                    "the block transformation across the mirror carries no flip");
+            assertEquals(target, move.inverse().apply(move.apply(target)),
+                    "the inverse did not undo the mirrored block transformation");
+
+            Vec3 refPoint = new Vec3(UPPER - 0.5, 64.0, 100.5);
+            Vec3 targetPoint = new Vec3(LOWER + 1.5, 64.0, -100.25);
+            DeckTransformation pointMove = fold.nearestCopyTransformation(refPoint, targetPoint);
+            assertNotEquals(FoldOrientation.IDENTITY, pointMove.orientation(),
+                    "the coordinate transformation across the mirror carries no flip");
+            assertEquals(targetPoint, pointMove.inverse().apply(pointMove.apply(targetPoint)),
+                    "the inverse did not undo the mirrored coordinate transformation");
         }
     }
 
