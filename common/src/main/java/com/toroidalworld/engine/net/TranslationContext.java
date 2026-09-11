@@ -14,7 +14,7 @@ import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.ToroidalShapeView;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
-import com.toroidalworld.engine.fold.LogRateGate;
+import com.toroidalworld.engine.LogRateGate;
 import com.toroidalworld.engine.seam.ClientPosition;
 import com.toroidalworld.platform.Platforms;
 import com.mojang.logging.LogUtils;

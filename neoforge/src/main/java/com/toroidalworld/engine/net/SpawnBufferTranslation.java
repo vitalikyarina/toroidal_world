@@ -3,7 +3,7 @@ package com.toroidalworld.engine.net;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
-import com.toroidalworld.engine.fold.LogRateGate;
+import com.toroidalworld.engine.LogRateGate;
 
 import io.netty.buffer.Unpooled;
 
