@@ -1,10 +1,10 @@
 package com.toroidalworld.compat.c2me;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.engine.noise.ClimateScaleCompression;
 import com.toroidalworld.engine.noise.ContextScaledNoise;
 import com.toroidalworld.engine.noise.DomainWarp;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.shape.torus.ClimateCompression;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_AMPLITUDES;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_FIRST_OCTAVE;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_NOISE_DATA;
@@ -183,7 +183,7 @@ class C2meDfcAstTest {
     }
 
     private static void assertCorrectionIsLive(WorldFold fold) {
-        double compression = ClimateScaleCompression.factor(fold, CLIMATE_FIELD, CLIMATE_AMPLITUDES,
+        double compression = ClimateCompression.factor(fold, CLIMATE_FIELD, CLIMATE_AMPLITUDES,
                 Math.pow(2.0, CLIMATE_FIRST_OCTAVE), CLIMATE_XZ_SCALE, FLAT_Y_SCALE / CLIMATE_XZ_SCALE);
 
         assertTrue(compression > 1.0,

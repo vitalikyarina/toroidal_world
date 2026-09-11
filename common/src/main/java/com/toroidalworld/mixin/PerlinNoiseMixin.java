@@ -8,10 +8,11 @@ import org.spongepowered.asm.mixin.Unique;
 
 import com.toroidalworld.accessors.ClimateCompressionCache;
 import com.toroidalworld.accessors.ClimateFieldMark;
-import com.toroidalworld.engine.noise.ClimateScaleCompression.Resolved;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.engine.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.engine.noise.PeriodicOctaveSampler;
+import com.toroidalworld.shape.torus.ClimateCompression;
+import com.toroidalworld.shape.torus.ClimateCompression.Resolved;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
@@ -51,9 +52,12 @@ public class PerlinNoiseMixin implements ClimateCompressionCache, ClimateFieldMa
             return original.call(x, y, z, yScale, yFudge, useNoiseOrigin);
         }
 
-        return PeriodicOctaveSampler.sample(generation, this, this.toroidal$climateField, this.noiseLevels,
-                this.amplitudes, this.lowestFreqInputFactor, this.lowestFreqValueFactor, x, y, z, yScale, yFudge,
-                useNoiseOrigin);
+        double declaredScale = generation.horizontalScale();
+        double baseScale = declaredScale * ClimateCompression.resolve(this, generation.transformer(),
+                this.toroidal$climateField, this.amplitudes, this.lowestFreqInputFactor, declaredScale,
+                generation.verticalShare());
+        return PeriodicOctaveSampler.sample(generation, baseScale, this.noiseLevels, this.amplitudes,
+                this.lowestFreqInputFactor, this.lowestFreqValueFactor, x, y, z, yScale, yFudge, useNoiseOrigin);
     }
 
     @Override

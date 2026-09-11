@@ -3,13 +3,13 @@ package com.toroidalworld.scan;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WrapDomain;
-import com.toroidalworld.engine.noise.ClimateFields;
-import com.toroidalworld.engine.noise.ClimateScaleCompression;
 import com.toroidalworld.engine.noise.ClimateScanFixture;
 import com.toroidalworld.engine.noise.ClimateScanFixture.WorldType;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.engine.noise.OctaveVarianceCorrection;
 import com.toroidalworld.shape.WorldLoopPresets;
+import com.toroidalworld.shape.torus.ClimateCompression;
+import com.toroidalworld.shape.torus.ClimateFields;
 import static com.toroidalworld.engine.noise.ClimateScanFixture.SEED_BASE;
 import static com.toroidalworld.engine.noise.ClimateScanFixture.TYPES;
 import static com.toroidalworld.engine.noise.ClimateScanFixture.noiseParameters;
@@ -237,7 +237,7 @@ class TerrainWallScan {
                 .append("Every field reaches the sampler as a shifted_noise at xz scale ").append(CLIMATE_XZ_SCALE)
                 .append(" with no vertical share, so the octave scale is ").append(CLIMATE_XZ_SCALE)
                 .append(" x compression x 2^firstOctave x 2^octave.").append(System.lineSeparator())
-                .append("compression = ClimateScaleCompression.factor under Compact biomes Auto.")
+                .append("compression = ClimateCompression.factor under Compact biomes Auto.")
                 .append(System.lineSeparator())
                 .append("cells = cells the octave carries over one lap; period = the lattice it closes on, marked")
                 .append(" floored where the natural one falls under 2 and LapFloor hands out its own.")
@@ -521,7 +521,7 @@ class TerrainWallScan {
         NormalNoise.NoiseParameters parameters = noiseParameters(key);
         DoubleList amplitudes = parameters.amplitudes();
         double lowestFreqInputFactor = Math.pow(2.0, parameters.firstOctave());
-        double compression = ClimateScaleCompression.factor(fold, ClimateFields.isClimate(key), amplitudes,
+        double compression = ClimateCompression.factor(fold, ClimateFields.isClimate(key), amplitudes,
                 lowestFreqInputFactor, CLIMATE_XZ_SCALE, HORIZONTAL_SHARE);
 
         report.append("  ").append(key.location().getPath())

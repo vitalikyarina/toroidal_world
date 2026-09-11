@@ -18,6 +18,7 @@ import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.shape.GenerationHookSetup;
 import com.toroidalworld.shape.WorldOptionSetup;
 
 import net.minecraft.SharedConstants;

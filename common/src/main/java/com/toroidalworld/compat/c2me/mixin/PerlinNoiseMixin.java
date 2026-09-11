@@ -9,6 +9,7 @@ import com.toroidalworld.accessors.ClimateFieldMark;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.engine.noise.GenerationTransformerContext.Context;
 import com.toroidalworld.engine.noise.PeriodicOctaveSampler;
+import com.toroidalworld.shape.torus.ClimateCompression;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
@@ -46,9 +47,12 @@ public class PerlinNoiseMixin {
             return original.call(x, y, z);
         }
 
+        double declaredScale = generation.horizontalScale();
+        double baseScale = declaredScale * ClimateCompression.resolve((ClimateCompressionCache) (Object) this,
+                generation.transformer(), ((ClimateFieldMark) (Object) this).toroidal$climateField(),
+                this.amplitudes, this.lowestFreqInputFactor, declaredScale, generation.verticalShare());
         // The zeros are what C2ME's loop passes every octave, kept so the two walks differ in nothing but the fold.
-        return PeriodicOctaveSampler.sample(generation, (ClimateCompressionCache) (Object) this,
-                ((ClimateFieldMark) (Object) this).toroidal$climateField(), this.noiseLevels, this.amplitudes,
+        return PeriodicOctaveSampler.sample(generation, baseScale, this.noiseLevels, this.amplitudes,
                 this.lowestFreqInputFactor, this.lowestFreqValueFactor, x, y, z, 0.0, 0.0, false);
     }
 }

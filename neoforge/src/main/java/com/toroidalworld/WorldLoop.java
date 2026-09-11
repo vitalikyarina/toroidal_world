@@ -10,12 +10,12 @@ import com.toroidalworld.engine.gen.LoopedFlatChunkGenerator;
 import com.toroidalworld.engine.gen.WorldLoopGenerators;
 import com.toroidalworld.engine.net.AuxiliaryLightTranslation;
 import com.toroidalworld.engine.net.BlockParticleTranslation;
-import com.toroidalworld.engine.noise.GenerationHookSetup;
 import com.toroidalworld.engine.net.SpawnBufferTranslation;
 import com.toroidalworld.engine.seam.circumnavigation.WorldLoopCriteria;
 import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.platform.NeoForgePlatform;
 import com.toroidalworld.platform.Platforms;
+import com.toroidalworld.shape.GenerationHookSetup;
 import com.toroidalworld.shape.WorldShapeSetup;
 import com.mojang.serialization.MapCodec;
 

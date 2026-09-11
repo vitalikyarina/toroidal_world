@@ -32,11 +32,8 @@ class ImportRulesTest {
             Set.of("WorldLoop", "WorldLoopNetwork", "ToroidalWorldNeoForge", "ToroidalWorldFabric",
                     "ToroidalWorldFabricClient", "VanillaBootstrapListener");
     private static final Set<String> EXCEPTIONS = Set.of(
-            "engine.noise.ClimateScaleCompression -> shape.torus.ClimateScale",
-            "engine.noise.ClimateScaleCompression -> shape.torus.CompactBiomes",
-            "engine.noise.CoastFieldLift -> shape.torus.GuaranteedLand",
-            "client.shape.torus.ClimateFactorPreview -> engine.noise.ClimateFields",
-            "client.shape.torus.ClimateFactorPreview -> engine.noise.ClimateScaleCompression",
+            "shape.torus.ClimateCompression -> engine.noise.ClimateScaleCompression",
+            "shape.torus.CoastFieldLift -> engine.noise.GenerationTransformerContext",
             "api.v1.shape.ShapeDimensions -> engine.gen.ShapedDimensions",
             "api.v1.net.PacketRewriters -> engine.net.PacketTranslator",
             "api.v1.ToroidalWorldApi -> engine.seam.circumnavigation.SeamTravel",

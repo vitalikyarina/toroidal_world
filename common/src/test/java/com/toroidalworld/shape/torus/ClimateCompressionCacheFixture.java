@@ -1,9 +1,9 @@
-package com.toroidalworld.engine.noise;
+package com.toroidalworld.shape.torus;
 
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.ClimateCompressionCache;
-import com.toroidalworld.engine.noise.ClimateScaleCompression.Resolved;
+import com.toroidalworld.shape.torus.ClimateCompression.Resolved;
 
 final class ClimateCompressionCacheFixture {
     static final class Storing implements ClimateCompressionCache {

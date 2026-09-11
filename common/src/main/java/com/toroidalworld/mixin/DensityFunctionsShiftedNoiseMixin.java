@@ -12,6 +12,7 @@ import com.toroidalworld.engine.noise.DomainWarp;
 import com.toroidalworld.engine.noise.DomainWarp.Divisor;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.engine.noise.GenerationTransformerContext.Context;
+import com.toroidalworld.shape.torus.ClimateCompression;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
@@ -74,8 +75,8 @@ public class DensityFunctionsShiftedNoiseMixin {
     private double toroidal$warpDivisor(WorldFold transformer) {
         Divisor divisor = this.toroidal$warpDivisor;
         if (divisor == null || divisor.fold() != transformer) {
-            divisor = new Divisor(transformer, DomainWarp.divisor(this.noise, transformer, this.xzScale,
-                    GenerationTransformerContext.verticalShare(this.xzScale, this.yScale)));
+            divisor = new Divisor(transformer, ClimateCompression.warpDivisor(this.noise, transformer,
+                    this.xzScale, GenerationTransformerContext.verticalShare(this.xzScale, this.yScale)));
             this.toroidal$warpDivisor = divisor;
         }
 
