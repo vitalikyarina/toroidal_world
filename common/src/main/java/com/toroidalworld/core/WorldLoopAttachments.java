@@ -3,7 +3,6 @@ package com.toroidalworld.core;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.ClientBoundsHolder;
-import com.toroidalworld.accessors.CrumbSweepCache;
 import com.toroidalworld.accessors.TerrainMaskCache;
 import com.toroidalworld.accessors.TerrainMaskHolder;
 import com.toroidalworld.accessors.TransformerCache;
@@ -21,10 +20,6 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 public final class WorldLoopAttachments {
     public static WorldFold transformerOf(Level level) {
         return ((TransformerCache) level).toroidal$transformer();
-    }
-
-    public static boolean sweepsCrumbs(Level level) {
-        return ((CrumbSweepCache) level).toroidal$sweepsCrumbs();
     }
 
     public static TerrainMasks terrainMasksOf(Level level) {
