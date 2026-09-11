@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.toroidalworld.compat.ftbxaerocompat.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "com.toroidalworld.compat.ftbxaerocompat.FtbXaeroMixinPlugin",
+  "client": [
+    "ClaimsHighlighterMixin",
+    "FtbClaimMenuMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

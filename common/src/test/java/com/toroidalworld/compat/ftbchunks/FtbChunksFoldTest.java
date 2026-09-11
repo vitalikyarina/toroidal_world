@@ -72,6 +72,60 @@ class FtbChunksFoldTest {
                 "an unbounded axis has no seam");
     }
 
+    @Test
+    void aPlayerALapOutComesBackBesideTheSelection() {
+        assertEquals(15, FtbChunksFold.nearestChunk(torus(512), Direction.Axis.X, 14, 47),
+                "chunk 47 is chunk 15 one lap out of a 32-chunk world, and 15 is what sits beside 14");
+        assertEquals(15, FtbChunksFold.nearestChunk(torus(512), Direction.Axis.X, 14, 15),
+                "a chunk already nearest the reference is itself");
+    }
+
+    @Test
+    void theCopyAcrossTheSeamIsTheNearOne() {
+        assertEquals(-17, FtbChunksFold.nearestChunk(torus(512), Direction.Axis.X, -16, 15),
+                "chunk 15 is one chunk west of chunk -16 through the seam, so it reads as -17 beside it");
+    }
+
+    @Test
+    void anAxisThatDoesNotLoopKeepsTheChunk() {
+        assertEquals(47, FtbChunksFold.nearestChunk(cylinder(512), Direction.Axis.X, 14, 47),
+                "an unbounded axis has no other copy to come back from");
+        assertEquals(47, FtbChunksFold.nearestChunk(null, Direction.Axis.X, 14, 47),
+                "an unwrapped world has no other copy to come back from");
+    }
+
+    @Test
+    void aRegionInsideTheWorldIsItself() {
+        assertArrayEquals(new int[] {0}, FtbChunksFold.canonicalRegions(torus(1024), Direction.Axis.X, 0),
+                "chunks 0..31 of a 64-chunk world are region 0");
+        assertArrayEquals(new int[] {1}, FtbChunksFold.canonicalRegions(torus(1024), Direction.Axis.X, 1),
+                "chunks 32..63 of a 64-chunk world are region 1");
+    }
+
+    @Test
+    void aRegionAWholeLapOutFoldsOntoTheOneItMirrors() {
+        assertArrayEquals(new int[] {0}, FtbChunksFold.canonicalRegions(torus(1024), Direction.Axis.X, 2),
+                "chunks 64..95 wrap onto 0..31");
+        assertArrayEquals(new int[] {1}, FtbChunksFold.canonicalRegions(torus(1024), Direction.Axis.X, -1),
+                "chunks -32..-1 wrap onto 32..63");
+    }
+
+    @Test
+    void aRegionSplitsWhereTheWorldIsNotAWholeNumberOfRegions() {
+        assertArrayEquals(new int[] {1, 0}, FtbChunksFold.canonicalRegions(torus(768), Direction.Axis.X, 1),
+                "a 48-chunk world leaves chunks 32..47 in region 1 and wraps 48..63 onto region 0");
+        assertArrayEquals(new int[] {0}, FtbChunksFold.canonicalRegions(torus(768), Direction.Axis.X, 0),
+                "chunks 0..31 of a 48-chunk world stay in region 0");
+    }
+
+    @Test
+    void anAxisThatDoesNotLoopKeepsTheRegion() {
+        assertArrayEquals(new int[] {7}, FtbChunksFold.canonicalRegions(cylinder(512), Direction.Axis.X, 7),
+                "an unbounded axis has nothing to fold onto");
+        assertArrayEquals(new int[] {7}, FtbChunksFold.canonicalRegions(null, Direction.Axis.X, 7),
+                "an unwrapped world has nothing to fold onto");
+    }
+
     private static ToroidalShape torus(int widthBlocks) {
         return shape(looped(widthBlocks), looped(widthBlocks));
     }

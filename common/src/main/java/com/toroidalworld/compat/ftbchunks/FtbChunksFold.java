@@ -1,6 +1,8 @@
 package com.toroidalworld.compat.ftbchunks;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
@@ -279,6 +281,49 @@ public final class FtbChunksFold {
 
     private static int regionOf(int chunk) {
         return Math.floorDiv(chunk, REGION_CHUNKS);
+    }
+
+    public static int nearestChunk(Direction.Axis axis, int refChunk, int chunk) {
+        return nearestChunk(ClientShapes.current(), axis, refChunk, chunk);
+    }
+
+    static int nearestChunk(@Nullable ToroidalShape shape, Direction.Axis axis, int refChunk, int chunk) {
+        if (shape == null || !shape.loops(axis) || !shape.decomposesPerAxis()) {
+            return chunk;
+        }
+
+        double nearest = shape.nearestCoord(axis, chunkCentre(refChunk), chunkCentre(chunk));
+        return Math.floorDiv((int) Math.floor(nearest), CHUNK_BLOCKS);
+    }
+
+    private static double chunkCentre(int chunk) {
+        return chunk * (double) CHUNK_BLOCKS + CHUNK_BLOCKS / 2.0;
+    }
+
+    public static int[] canonicalRegions(Direction.Axis axis, int region) {
+        return canonicalRegions(ClientShapes.current(), axis, region);
+    }
+
+    static int[] canonicalRegions(@Nullable ToroidalShape shape, Direction.Axis axis, int region) {
+        if (shape == null || !shape.loops(axis)) {
+            return new int[] {region};
+        }
+
+        List<Integer> canonical = new ArrayList<>();
+        int firstChunk = region * REGION_CHUNKS;
+        for (int chunk = firstChunk; chunk < firstChunk + REGION_CHUNKS; chunk++) {
+            int folded = regionOf(shape.foldChunk(axis, chunk));
+            if (!canonical.contains(folded)) {
+                canonical.add(folded);
+            }
+        }
+
+        int[] result = new int[canonical.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = canonical.get(i);
+        }
+
+        return result;
     }
 
     private FtbChunksFold() {
