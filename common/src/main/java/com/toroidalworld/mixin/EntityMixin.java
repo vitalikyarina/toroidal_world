@@ -100,13 +100,13 @@ public class EntityMixin implements TransformerSource {
     }
 
     @ModifyVariable(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("STORE"), ordinal = 0)
-    private double toroidal$pushDeltaX(double deltaX, @Local(argsOnly = true) Entity other) {
-        return SeamAim.deltaTo((Entity) (Object) this, other.position()).x;
+    private double toroidal$pushDeltaX(double deltaX) {
+        return SeamAim.foldX((Entity) (Object) this, deltaX);
     }
 
     @ModifyVariable(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("STORE"), ordinal = 1)
-    private double toroidal$pushDeltaZ(double deltaZ, @Local(argsOnly = true) Entity other) {
-        return SeamAim.deltaTo((Entity) (Object) this, other.position()).z;
+    private double toroidal$pushDeltaZ(double deltaZ) {
+        return SeamAim.foldZ((Entity) (Object) this, deltaZ);
     }
 
     @ModifyArg(
