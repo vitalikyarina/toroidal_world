@@ -9,7 +9,6 @@
     "AquiferSeamMixin",
     "BytecodeGenRegistryMixin",
     "DotGenRegistryMixin",
-    "EndIslandSeamMixin",
     "McToAstMixin",
     "NewChunkHolderVanillaInterfaceMixin",
     "NewChunkStatusMixin",
