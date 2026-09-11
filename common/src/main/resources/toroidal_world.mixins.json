@@ -149,6 +149,7 @@
     "PerlinSimplexNoiseMixin",
     "PhantomMoveControlMixin",
     "PhantomMoveTargetGoalMixin",
+    "PhantomSweepAttackGoalMixin",
     "PlaceCommandMixin",
     "PlaySoundCommandMixin",
     "PlayerChunkSenderMixin",
