@@ -5,11 +5,17 @@
   "compatibilityLevel": "JAVA_25",
   "plugin": "com.toroidalworld.compat.journeymap.JourneyMapMixinPlugin",
   "client": [
+    "BaseOverlayDrawStepMixin",
     "ClientWaypointImplMixin",
+    "DrawImageStepMixin",
+    "DrawMarkerStepMixin",
+    "DrawPolygonStepMixin",
     "LayerDelegateMixin",
     "LocationFormatMixin",
+    "MapRendererAccessor",
     "MapRendererMixin",
     "MapStateMixin",
+    "ModOverlayLayerMixin",
     "PolygonGeometryDrawPassMixin",
     "RegionCoordMixin",
     "RegionTileMixin"
