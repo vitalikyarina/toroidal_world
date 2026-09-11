@@ -8,8 +8,6 @@ import com.toroidalworld.MixinGatePlugin;
 public class C2meMixinPlugin extends MixinGatePlugin {
     private static final String AQUIFER_MIXIN = "AquiferSeamMixin";
 
-    private static final String END_ISLAND_MIXIN = "EndIslandSeamMixin";
-
     private static final String OCTAVE_NOISE_MIXIN = "PerlinNoiseMixin";
 
     private static final String[] NO_TICK_VD_MIXINS = {
@@ -33,10 +31,6 @@ public class C2meMixinPlugin extends MixinGatePlugin {
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         if (mixinClassName.endsWith(AQUIFER_MIXIN)) {
             return C2meAquifer.optimizesAquifer();
-        }
-
-        if (mixinClassName.endsWith(END_ISLAND_MIXIN)) {
-            return C2meNativesMath.enabled();
         }
 
         if (mixinClassName.endsWith(OCTAVE_NOISE_MIXIN)) {
