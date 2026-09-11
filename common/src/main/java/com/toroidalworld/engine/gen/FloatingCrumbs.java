@@ -8,9 +8,10 @@ import java.util.function.IntConsumer;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.CrumbSweepCache;
+import com.toroidalworld.accessors.TerrainMaskCache;
+import com.toroidalworld.accessors.TerrainMaskHolder;
 import com.toroidalworld.api.v1.gen.TerrainSnapshot;
 import com.toroidalworld.core.ShapedChunkGenerator;
-import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.engine.noise.TerrainCeiling;
 
 import net.minecraft.core.BlockPos;
@@ -87,6 +88,20 @@ public final class FloatingCrumbs {
         return ((CrumbSweepCache) level).toroidal$sweepsCrumbs();
     }
 
+    private static TerrainMasks terrainMasksOf(ServerLevel level) {
+        return ((TerrainMaskCache) level).toroidal$terrainMasks();
+    }
+
+    private static @Nullable TerrainMask terrainMaskOf(ChunkAccess chunk) {
+        return chunk instanceof TerrainMaskHolder holder ? holder.toroidal$terrainMask() : null;
+    }
+
+    private static void attachTerrainMask(ChunkAccess chunk, TerrainMask mask) {
+        if (chunk instanceof TerrainMaskHolder holder) {
+            holder.toroidal$terrainMask(mask);
+        }
+    }
+
     public static void sweep(ServerLevel level, ChunkAccess chunk) {
         if (!sweepsCrumbs(level)) {
             return;
@@ -104,13 +119,13 @@ public final class FloatingCrumbs {
                     cell -> write(chunk, cursor, cell, minY, blockOf(fluids, fluid[cell])));
         }
 
-        WorldLoopAttachments.attachTerrainMask(chunk, TerrainMask.of(solid, chunk.getPos(), minY, height));
+        attachTerrainMask(chunk, TerrainMask.of(solid, chunk.getPos(), minY, height));
     }
 
     public static void registerMask(ServerLevel level, ChunkAccess chunk) {
-        TerrainMask mask = WorldLoopAttachments.terrainMaskOf(chunk);
+        TerrainMask mask = terrainMaskOf(chunk);
         if (mask != null) {
-            WorldLoopAttachments.terrainMasksOf(level).put(chunk.getPos(), mask);
+            terrainMasksOf(level).put(chunk.getPos(), mask);
         }
     }
 
@@ -120,7 +135,7 @@ public final class FloatingCrumbs {
             return;
         }
 
-        TerrainMasks masks = WorldLoopAttachments.terrainMasksOf(level);
+        TerrainMasks masks = terrainMasksOf(level);
         ChunkPos centre = chunk.getPos();
         long[] keys = new long[WINDOW_CHUNKS * WINDOW_CHUNKS];
         TerrainMask[] window = new TerrainMask[keys.length];
@@ -157,7 +172,7 @@ public final class FloatingCrumbs {
     }
 
     public static @Nullable TerrainSnapshot snapshotOf(ChunkAccess chunk) {
-        return WorldLoopAttachments.terrainMaskOf(chunk);
+        return terrainMaskOf(chunk);
     }
 
     public static long[] crumbPositions(TerrainSnapshot[] window) {

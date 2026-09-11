@@ -3,11 +3,7 @@ package com.toroidalworld.core;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.accessors.ClientBoundsHolder;
-import com.toroidalworld.accessors.TerrainMaskCache;
-import com.toroidalworld.accessors.TerrainMaskHolder;
 import com.toroidalworld.accessors.TransformerCache;
-import com.toroidalworld.engine.gen.TerrainMask;
-import com.toroidalworld.engine.gen.TerrainMasks;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -15,25 +11,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.chunk.ChunkAccess;
 
 public final class WorldLoopAttachments {
     public static WorldFold transformerOf(Level level) {
         return ((TransformerCache) level).toroidal$transformer();
-    }
-
-    public static TerrainMasks terrainMasksOf(Level level) {
-        return ((TerrainMaskCache) level).toroidal$terrainMasks();
-    }
-
-    public static @Nullable TerrainMask terrainMaskOf(ChunkAccess chunk) {
-        return chunk instanceof TerrainMaskHolder holder ? holder.toroidal$terrainMask() : null;
-    }
-
-    public static void attachTerrainMask(ChunkAccess chunk, TerrainMask mask) {
-        if (chunk instanceof TerrainMaskHolder holder) {
-            holder.toroidal$terrainMask(mask);
-        }
     }
 
     public static @Nullable WorldFold wrappedTransformerOf(@Nullable Level level) {
