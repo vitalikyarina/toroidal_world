@@ -20,7 +20,6 @@ import com.toroidalworld.compat.create.CarriageEntityFrame;
 import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.core.DeckTransformation;
-import com.toroidalworld.core.SeamTransform;
 import com.toroidalworld.engine.seam.SeamSnap;
 
 import net.minecraft.resources.ResourceKey;
@@ -144,15 +143,12 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
 
     @Unique
     private void toroidal$carryAboard(Entity carriage, Vec3 written) {
-        Vec3 standing = carriage.position();
-        Vec3 renamed = CreateSeamFold.nearestCopy(carriage.level(), written, standing);
-        if (renamed.equals(standing)) {
+        DeckTransformation lap = CreateSeamFold.nearestCopyTransformation(carriage.level(), written,
+                carriage.position());
+        if (lap.isIdentity()) {
             return;
         }
 
-        Vec3 shift = renamed.subtract(standing);
-        DeckTransformation lap = new DeckTransformation(
-                SeamTransform.translation((int) Math.round(shift.x), (int) Math.round(shift.z)));
         for (Entity passenger : carriage.getPassengers()) {
             SeamSnap.withPassengers(passenger, lap);
         }

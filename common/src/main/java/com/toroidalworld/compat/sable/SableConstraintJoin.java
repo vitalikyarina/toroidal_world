@@ -7,6 +7,7 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
@@ -96,8 +97,8 @@ public final class SableConstraintJoin {
             return;
         }
 
-        Vec3 lapForB = SableJoinDirection.lapOnto(fold, worldA, worldB);
-        if (lapForB.x == 0.0 && lapForB.z == 0.0) {
+        DeckTransformation lapForB = SableJoinDirection.lapOnto(fold, worldA, worldB);
+        if (lapForB.isIdentity()) {
             return;
         }
 
@@ -106,9 +107,8 @@ public final class SableConstraintJoin {
         List<Vec3> positionsA = positionsOf(groupA);
         List<Vec3> positionsB = positionsOf(groupB);
         SableJoinDirection.Choice choice = SableJoinDirection.choose(fold, lapForB, positionsA, positionsB);
-        Vec3 lap = choice.lap();
         SablePoseFold.shiftGroup(system, choice.movingIsB() ? groupB : groupA,
-                new Vector3d(lap.x, 0.0, lap.z), null, null);
+                SablePoseFold.lapOf(choice.lap()), null, null);
     }
 
     private static List<Vec3> positionsOf(List<PhysicsPipelineBody> group) {

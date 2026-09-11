@@ -16,13 +16,11 @@ public final class SableSeamQuery {
         AABB subLevelAabb = new AABB(subLevelBox.minX(), subLevelBox.minY(), subLevelBox.minZ(),
                 subLevelBox.maxX(), subLevelBox.maxY(), subLevelBox.maxZ());
         AABB nearest = fold.foldBox(queryCentre, subLevelAabb).value();
-        double shiftX = nearest.minX - subLevelAabb.minX;
-        double shiftZ = nearest.minZ - subLevelAabb.minZ;
-        if (shiftX == 0.0 && shiftZ == 0.0) {
+        if (nearest == subLevelAabb) {
             return subLevelBox.intersects(query);
         }
 
-        return subLevelBox.move(shiftX, 0.0, shiftZ, new BoundingBox3d()).intersects(query);
+        return new BoundingBox3d(nearest).intersects(query);
     }
 
     private SableSeamQuery() {

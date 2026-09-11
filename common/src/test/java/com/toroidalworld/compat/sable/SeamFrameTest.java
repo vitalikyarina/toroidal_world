@@ -14,6 +14,8 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.junit.jupiter.api.Test;
 
+import com.toroidalworld.core.DeckTransformation;
+import com.toroidalworld.core.SeamTransform;
 import com.toroidalworld.core.WorldFold;
 
 import net.minecraft.world.level.Level;
@@ -23,36 +25,36 @@ class SeamFrameTest {
     private static final Vector3dc POSE_NEAR_SEAM = new Vector3d(254.5, 70.0, 3.5);
     private static final Vec3 ENTITY_ON_FAR_HALF = new Vec3(-253.5, 71.0, 3.5);
     private static final Vec3 ENTITY_ON_NEAR_HALF = new Vec3(252.0, 71.0, 3.5);
+    private static final DeckTransformation LAP_BACK =
+            new DeckTransformation(SeamTransform.translation(-WORLD_BLOCKS, 0));
 
     @Test
     void unboundPoseKeepsItsPlace() {
-        assertTrue(SeamFrame.isNoShift(SeamFrame.shiftOf(POSE_NEAR_SEAM)));
+        assertTrue(SeamFrame.shiftOf(POSE_NEAR_SEAM).isIdentity());
         assertFalse(SeamFrame.isBound());
     }
 
     @Test
     void entityOnTheFarHalfPullsThePoseOneLapBack() {
-        Vector3dc shift = SeamFrame.with(PER_AXIS, (Level) null, () -> ENTITY_ON_FAR_HALF,
+        DeckTransformation seat = SeamFrame.with(PER_AXIS, (Level) null, () -> ENTITY_ON_FAR_HALF,
                 () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));
-        assertEquals(-WORLD_BLOCKS, shift.x(), 0.0);
-        assertEquals(0.0, shift.y(), 0.0);
-        assertEquals(0.0, shift.z(), 0.0);
+        assertEquals(LAP_BACK, seat);
     }
 
     @Test
     void entityOnTheNearHalfLeavesThePoseAlone() {
-        Vector3dc shift = SeamFrame.with(PER_AXIS, (Level) null, () -> ENTITY_ON_NEAR_HALF,
+        DeckTransformation seat = SeamFrame.with(PER_AXIS, (Level) null, () -> ENTITY_ON_NEAR_HALF,
                 () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));
-        assertTrue(SeamFrame.isNoShift(shift));
+        assertTrue(seat.isIdentity());
     }
 
     @Test
     void theBindingIsScopedAndRestoresTheOuterOne() {
         SeamFrame.with(PER_AXIS, (Level) null, () -> ENTITY_ON_FAR_HALF, () -> {
-            Vector3dc inner = SeamFrame.with(PER_AXIS, (Level) null, () -> ENTITY_ON_NEAR_HALF,
+            DeckTransformation inner = SeamFrame.with(PER_AXIS, (Level) null, () -> ENTITY_ON_NEAR_HALF,
                     () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));
-            assertTrue(SeamFrame.isNoShift(inner));
-            assertEquals(-WORLD_BLOCKS, SeamFrame.shiftOf(POSE_NEAR_SEAM).x(), 0.0);
+            assertTrue(inner.isIdentity());
+            assertEquals(LAP_BACK, SeamFrame.shiftOf(POSE_NEAR_SEAM));
             return null;
         });
         assertFalse(SeamFrame.isBound());
@@ -74,7 +76,7 @@ class SeamFrameTest {
                     () -> SeamFrame.with(PER_AXIS, (Level) null, () -> ENTITY_ON_NEAR_HALF, () -> {
                         throw new IllegalStateException("the inner body");
                     }));
-            assertEquals(-WORLD_BLOCKS, SeamFrame.shiftOf(POSE_NEAR_SEAM).x(), 0.0);
+            assertEquals(LAP_BACK, SeamFrame.shiftOf(POSE_NEAR_SEAM));
             return null;
         });
         assertFalse(SeamFrame.isBound());
@@ -83,10 +85,10 @@ class SeamFrameTest {
     @Test
     void anUnboundScopeReadsThePoseRawAndHandsTheOuterBindingBack() {
         SeamFrame.with(PER_AXIS, (Level) null, () -> ENTITY_ON_FAR_HALF, () -> {
-            assertTrue(SeamFrame.isNoShift(SeamFrame.unbound(() -> SeamFrame.shiftOf(POSE_NEAR_SEAM))));
+            assertTrue(SeamFrame.unbound(() -> SeamFrame.shiftOf(POSE_NEAR_SEAM)).isIdentity());
             assertFalse(SeamFrame.unbound(SeamFrame::isBound));
             assertTrue(SeamFrame.isBound());
-            assertEquals(-WORLD_BLOCKS, SeamFrame.shiftOf(POSE_NEAR_SEAM).x(), 0.0);
+            assertEquals(LAP_BACK, SeamFrame.shiftOf(POSE_NEAR_SEAM));
             return null;
         });
         assertFalse(SeamFrame.isBound());
@@ -94,9 +96,9 @@ class SeamFrameTest {
 
     @Test
     void anUnwrappedLevelBindsNothing() {
-        Vector3dc shift = SeamFrame.with((WorldFold) null, (Level) null, () -> ENTITY_ON_FAR_HALF,
+        DeckTransformation seat = SeamFrame.with((WorldFold) null, (Level) null, () -> ENTITY_ON_FAR_HALF,
                 () -> SeamFrame.shiftOf(POSE_NEAR_SEAM));
-        assertTrue(SeamFrame.isNoShift(shift));
+        assertTrue(seat.isIdentity());
     }
 
     @Test

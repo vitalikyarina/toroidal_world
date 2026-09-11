@@ -6,6 +6,7 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 
@@ -124,13 +125,12 @@ public final class SableMotorGoal {
             Vector3d goal = this.staticOrientation
                     .transform(new Vector3d(this.targets[0], this.targets[1], this.targets[2]))
                     .add(this.staticAnchor);
-            Vec3 raw = JomlVectors.read(goal);
-            Vec3 seated = this.fold.nearestCopy(anchor, raw);
-            if (seated == raw) {
+            DeckTransformation seat = this.fold.nearestCopyTransformation(anchor, JomlVectors.read(goal));
+            if (seat.isIdentity()) {
                 return null;
             }
 
-            return this.staticOrientation.transformInverse(new Vector3d(seated.x - raw.x, 0.0, seated.z - raw.z));
+            return this.staticOrientation.transformInverse(SablePoseFold.lapOf(seat));
         });
     }
 }

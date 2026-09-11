@@ -7,6 +7,8 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.toroidalworld.compat.sable.SeamFrame;
+import com.toroidalworld.core.DeckTransformation;
+import com.toroidalworld.core.JomlVectors;
 
 import dev.ryanhcode.sable.companion.math.Pose3dc;
 
@@ -20,7 +22,11 @@ public interface Pose3dcMixin {
             },
             at = @At(value = "INVOKE", target = "Ldev/ryanhcode/sable/companion/math/Pose3dc;position()Lorg/joml/Vector3dc;"))
     private static Vector3dc toroidal$positionInTheEntityFrame(Vector3dc position) {
-        Vector3dc shift = SeamFrame.shiftOf(position);
-        return SeamFrame.isNoShift(shift) ? position : new Vector3d(position).add(shift);
+        DeckTransformation seat = SeamFrame.shiftOf(position);
+        if (seat.isIdentity()) {
+            return position;
+        }
+
+        return JomlVectors.write(seat.apply(JomlVectors.read(position)), new Vector3d());
     }
 }

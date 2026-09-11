@@ -158,8 +158,7 @@ public final class AeronauticsTranslation {
 
     private static AABB seat(TranslationContext context, AABB bounds) {
         Vec3 corner = new Vec3(bounds.minX, bounds.minY, bounds.minZ);
-        Vec3 seated = context.nearestCopy(corner);
-        return seated == corner ? bounds : bounds.move(seated.x - corner.x, 0.0, seated.z - corner.z);
+        return context.nearestCopyTransformation(corner).apply(bounds);
     }
 
     private AeronauticsTranslation() {

@@ -7,6 +7,7 @@ import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.compat.sable.mixin.SubLevelAccessor;
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
@@ -51,14 +52,15 @@ public final class SablePoseFold {
 
         centroid.div(counted);
         Vec3 centre = JomlVectors.read(centroid);
-        boolean centroidOverBounds = fold.isOver(centre);
-        if (!centroidOverBounds) {
+        if (!fold.isOver(centre)) {
             return;
         }
 
-        Vec3 folded = fold.fold(centre);
-        Vector3d lap = new Vector3d(folded.x - centre.x, 0.0, folded.z - centre.z);
-        shiftGroup(system, group, lap, subLevel, readback);
+        shiftGroup(system, group, lapOf(fold.foldTransformation(centre)), subLevel, readback);
+    }
+
+    static Vector3d lapOf(DeckTransformation seat) {
+        return new Vector3d(seat.blocks().xShift(), 0.0, seat.blocks().zShift());
     }
 
     static void shiftGroup(SubLevelPhysicsSystem system, List<PhysicsPipelineBody> group, Vector3dc lap,

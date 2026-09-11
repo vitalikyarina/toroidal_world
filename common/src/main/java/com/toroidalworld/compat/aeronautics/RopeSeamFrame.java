@@ -9,6 +9,7 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
@@ -101,15 +102,13 @@ public final class RopeSeamFrame {
         }
 
         Vector3d ownEnd = ownEndOf(points, attachment);
-        Vec3 raw = JomlVectors.read(ownEnd);
-        Vec3 seated = fold.nearestCopy(anchor, raw);
-        if (seated == raw) {
+        DeckTransformation seat = fold.nearestCopyTransformation(anchor, JomlVectors.read(ownEnd));
+        if (seat.isIdentity()) {
             return false;
         }
 
-        Vector3d delta = new Vector3d(seated.x - raw.x, 0.0, seated.z - raw.z);
         for (Vector3d point : points) {
-            point.add(delta);
+            JomlVectors.write(seat.apply(JomlVectors.read(point)), point);
         }
 
         return true;

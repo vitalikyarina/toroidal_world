@@ -2,6 +2,7 @@ package com.toroidalworld.compat.create;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.ForeignFrames;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.engine.fold.NearestCopy;
@@ -99,6 +100,10 @@ public final class CreateSeamFold {
 
     public static BlockPos nearestCopy(@Nullable WorldFold transformer, BlockPos anchor, BlockPos target) {
         return nearest(transformer, anchor, target);
+    }
+
+    public static DeckTransformation nearestCopyTransformation(@Nullable Level level, Vec3 anchor, Vec3 target) {
+        return NearestCopy.transformationToward(transformerOf(level, null), anchor, target);
     }
 
     public static BlockPos foldPositionToBox(@Nullable Level level, BoundingBox box, BlockPos position) {

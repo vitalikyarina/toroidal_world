@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.toroidalworld.core.DeckTransformation;
+import com.toroidalworld.core.SeamTransform;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopBounds;
@@ -16,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
 
 class SableJoinDirectionTest {
     private static final int HALF_WIDTH_CHUNKS = 16;
-    private static final double WIDTH_BLOCKS = HALF_WIDTH_CHUNKS * 2 * 16;
+    private static final int WIDTH_BLOCKS = HALF_WIDTH_CHUNKS * 2 * 16;
     private static final WorldFold TORUS = WorldFolds.of(FlatShape.torus(new WorldLoopBounds(
             -HALF_WIDTH_CHUNKS, HALF_WIDTH_CHUNKS, -HALF_WIDTH_CHUNKS, HALF_WIDTH_CHUNKS)));
     private static final WorldFold CYLINDER = WorldFolds.of(FlatShape.cylinder(new WorldLoopBounds(
@@ -24,12 +26,15 @@ class SableJoinDirectionTest {
 
     private static final Vec3 NEAR_UPPER = new Vec3(250.0, 64.0, 0.0);
     private static final Vec3 NEAR_LOWER = new Vec3(-240.0, 64.0, 0.0);
-    private static final Vec3 LAP_UP = new Vec3(WIDTH_BLOCKS, 0.0, 0.0);
-    private static final Vec3 LAP_DOWN = new Vec3(-WIDTH_BLOCKS, 0.0, 0.0);
+    private static final DeckTransformation LAP_UP =
+            new DeckTransformation(SeamTransform.translation(WIDTH_BLOCKS, 0));
+    private static final DeckTransformation LAP_DOWN =
+            new DeckTransformation(SeamTransform.translation(-WIDTH_BLOCKS, 0));
 
     @Test
     void twoAnchorsInOneCopyDecideNoLap() {
-        assertEquals(Vec3.ZERO, SableJoinDirection.lapOnto(TORUS, NEAR_UPPER, new Vec3(240.0, 64.0, 0.0)),
+        assertEquals(DeckTransformation.IDENTITY,
+                SableJoinDirection.lapOnto(TORUS, NEAR_UPPER, new Vec3(240.0, 64.0, 0.0)),
                 "250 and 240 are 10 blocks apart the direct way, so no copy of the second is nearer");
     }
 
@@ -74,7 +79,7 @@ class SableJoinDirectionTest {
 
     @Test
     void anAxisThatDoesNotLoopTakesNoLap() {
-        assertEquals(new Vec3(WIDTH_BLOCKS, 0.0, 0.0),
+        assertEquals(LAP_UP,
                 SableJoinDirection.lapOnto(CYLINDER, new Vec3(250.0, 64.0, 900.0), new Vec3(-240.0, 64.0, -900.0)),
                 "x loops over 512 blocks, z is unbounded on a cylinder and reaches no copy");
     }

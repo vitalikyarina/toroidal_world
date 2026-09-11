@@ -8,6 +8,7 @@ import com.toroidalworld.client.engine.ClientFrame;
 import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.engine.fold.FoldedBoxQuery;
 import com.toroidalworld.engine.fold.FoldedCopies;
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.WorldFold;
 
 import net.minecraft.client.Minecraft;
@@ -28,6 +29,10 @@ public final class CreateClientFrame {
 
     public static BlockPos inViewerFrame(BlockPos canonical) {
         return ClientFrame.nearestToPlayer(canonical);
+    }
+
+    public static DeckTransformation inViewerFrameTransformation(BlockPos canonical) {
+        return ClientFrame.nearestCopyTransformation(canonical);
     }
 
     public static @Nullable BlockPos heldInViewerFrame(BlockPos canonical) {

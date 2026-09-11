@@ -2,10 +2,10 @@ package com.toroidalworld.compat.sable;
 
 import java.util.function.Supplier;
 
-import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.ForeignFrames;
 import com.toroidalworld.core.JomlVectors;
 import com.toroidalworld.core.WorldFold;
@@ -16,8 +16,6 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.phys.Vec3;
 
 public final class SeamFrame {
-    private static final Vector3dc NO_SHIFT = new Vector3d();
-
     private static final ThreadLocal<@Nullable Binding> BOUND = new ThreadLocal<>();
 
     private static final class Binding {
@@ -83,21 +81,13 @@ public final class SeamFrame {
         return BOUND.get() != null;
     }
 
-    public static Vector3dc shiftOf(Vector3dc posePosition) {
+    public static DeckTransformation shiftOf(Vector3dc posePosition) {
         Binding binding = BOUND.get();
         if (binding == null || binding.seating) {
-            return NO_SHIFT;
+            return DeckTransformation.IDENTITY;
         }
 
-        Vec3 raw = JomlVectors.read(posePosition);
-        Vec3 nearest = binding.fold.nearestCopy(binding.anchor(), raw);
-        double shiftX = nearest.x - raw.x;
-        double shiftZ = nearest.z - raw.z;
-        return shiftX == 0.0 && shiftZ == 0.0 ? NO_SHIFT : new Vector3d(shiftX, 0.0, shiftZ);
-    }
-
-    public static boolean isNoShift(Vector3dc shift) {
-        return shift == NO_SHIFT;
+        return binding.fold.nearestCopyTransformation(binding.anchor(), JomlVectors.read(posePosition));
     }
 
     private static <R> R scoped(@Nullable Binding binding, Supplier<R> body) {

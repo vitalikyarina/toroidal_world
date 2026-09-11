@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.simibubi.create.content.schematics.client.SchematicTransformation;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
+import com.toroidalworld.core.DeckTransformation;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
@@ -31,14 +32,13 @@ public class SchematicTransformationMixin {
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void toroidal$reanchorOnViewer(CallbackInfo ci) {
-        BlockPos nearest = CreateClientFrame.inViewerFrame(target);
-        if (nearest.equals(target)) {
+        DeckTransformation seat = CreateClientFrame.inViewerFrameTransformation(target);
+        if (seat.isIdentity()) {
             return;
         }
 
-        Vec3 shift = Vec3.atLowerCornerOf(nearest.subtract(target));
-        target = nearest;
-        chasingPos = chasingPos.add(shift);
-        prevChasingPos = prevChasingPos.add(shift);
+        target = seat.apply(target);
+        chasingPos = seat.apply(chasingPos);
+        prevChasingPos = seat.apply(prevChasingPos);
     }
 }
