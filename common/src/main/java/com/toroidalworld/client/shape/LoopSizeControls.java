@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
-import com.toroidalworld.client.screen.DigitsEditBox;
 import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.NetherScales;
 import com.toroidalworld.core.WorldLoopSizes;
