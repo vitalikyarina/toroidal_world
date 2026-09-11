@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
 import com.toroidalworld.api.v1.TestShapes;
@@ -16,6 +18,8 @@ import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 
 import net.minecraft.core.Direction;
+
+import dev.ftb.mods.ftblibrary.math.XZ;
 
 class FtbChunksFoldTest {
     private static final int[] ONE_PIECE = {0, 15};
@@ -124,6 +128,40 @@ class FtbChunksFoldTest {
                 "an unbounded axis has nothing to fold onto");
         assertArrayEquals(new int[] {7}, FtbChunksFold.canonicalRegions(null, Direction.Axis.X, 7),
                 "an unwrapped world has nothing to fold onto");
+    }
+
+    @Test
+    void aSelectionInsideTheWorldKeepsItsChunks() {
+        assertEquals(Set.of(XZ.of(3, 4), XZ.of(5, 6)),
+                FtbChunksFold.foldedChunks(torus(1024), Set.of(XZ.of(3, 4), XZ.of(5, 6))),
+                "chunks 0..63 of a 64-chunk world are already canonical");
+    }
+
+    @Test
+    void aSelectionAcrossTheSeamFoldsChunkByChunk() {
+        assertEquals(Set.of(XZ.of(63, 0), XZ.of(0, 0), XZ.of(63, 5)),
+                FtbChunksFold.foldedChunks(torus(1024), Set.of(XZ.of(63, 0), XZ.of(64, 0), XZ.of(-1, 5))),
+                "a window straddling chunk 64 wraps its far half onto 0, one chunk at a time");
+    }
+
+    @Test
+    void aSelectionOnALappedClientComesBackInsideTheWorld() {
+        assertEquals(Set.of(XZ.of(7, 9)),
+                FtbChunksFold.foldedChunks(torus(1024), Set.of(XZ.of(7 + 64 * 3, 9 - 64 * 2))),
+                "three laps out on x and two back on z is the same chunk");
+    }
+
+    @Test
+    void anAxisThatDoesNotLoopKeepsItsHalfOfTheKey() {
+        assertEquals(Set.of(XZ.of(9000, 1)),
+                FtbChunksFold.foldedChunks(cylinder(512), Set.of(XZ.of(9000, 33))),
+                "an unbounded x is carried through while z folds onto a 32-chunk world");
+    }
+
+    @Test
+    void anUnwrappedWorldKeepsTheSelectionItself() {
+        Set<XZ> selection = Set.of(XZ.of(9000, 33));
+        assertSame(selection, FtbChunksFold.foldedChunks(null, selection), "an unwrapped world was rebuilt");
     }
 
     private static ToroidalShape torus(int widthBlocks) {

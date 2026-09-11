@@ -2,7 +2,9 @@ package com.toroidalworld.compat.ftbchunks;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
@@ -53,6 +55,24 @@ public final class FtbChunksFold {
 
     public static XZ chunkOf(XZ chunk) {
         return chunkOf(chunk.x(), chunk.z());
+    }
+
+    public static Set<XZ> foldedChunks(Set<XZ> chunks) {
+        return foldedChunks(ClientShapes.current(), chunks);
+    }
+
+    static Set<XZ> foldedChunks(@Nullable ToroidalShape shape, Set<XZ> chunks) {
+        if (shape == null) {
+            return chunks;
+        }
+
+        Set<XZ> folded = new HashSet<>(chunks.size());
+        for (XZ chunk : chunks) {
+            folded.add(XZ.of(shape.foldChunk(Direction.Axis.X, chunk.x()),
+                    shape.foldChunk(Direction.Axis.Z, chunk.z())));
+        }
+
+        return folded;
     }
 
     public static XZ regionOfChunk(int chunkX, int chunkZ) {

@@ -193,6 +193,9 @@ dependencies {
     testRuntimeOnly "io.github.llamalad7:mixinextras-common:${mixinextras_version}"
     testCompileOnly "maven.modrinth:distanthorizons:${distanthorizons_version}"
     testRuntimeOnly "maven.modrinth:distanthorizons:${distanthorizons_version}"
+    // The claim-request fold takes and returns FTB Library's own XZ keys, so the tests build them.
+    testCompileOnly("dev.ftb.mods:ftb-library-neoforge:${ftblibrary_version}") { transitive = false }
+    testRuntimeOnly("dev.ftb.mods:ftb-library-neoforge:${ftblibrary_version}") { transitive = false }
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.junit.platform:junit-platform-launcher'

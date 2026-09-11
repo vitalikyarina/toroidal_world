@@ -1,8 +1,10 @@
 package com.toroidalworld.compat.ftbchunks.mixin;
 
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.toroidalworld.compat.ftbchunks.FtbChunksFold;
@@ -24,5 +26,12 @@ public abstract class ChunkButtonMixin {
             at = @At(value = "INVOKE", target = FtbChunksInjectionTargets.MAP_REGION_DATA_GET_CHUNK))
     private MapChunk toroidal$foldChunkKey(MapRegionData data, XZ chunk, Operation<MapChunk> original) {
         return original.call(data, FtbChunksFold.chunkOf(chunk));
+    }
+
+    @ModifyExpressionValue(method = "tick",
+            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
+                    target = FtbChunksInjectionTargets.CHUNK_BUTTON_CHUNK_POS))
+    private XZ toroidal$foldExpiryKey(XZ original) {
+        return FtbChunksFold.chunkOf(original);
     }
 }

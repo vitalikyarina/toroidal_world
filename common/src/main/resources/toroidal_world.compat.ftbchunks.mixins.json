@@ -6,6 +6,7 @@
   "plugin": "com.toroidalworld.compat.ftbchunks.FtbChunksMixinPlugin",
   "client": [
     "ChunkButtonMixin",
+    "ChunkScreenPanelMixin",
     "ChunkUpdateTaskMixin",
     "FTBChunksClientMixin",
     "LargeMapScreenMixin",
