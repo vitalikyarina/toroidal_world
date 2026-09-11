@@ -7,11 +7,11 @@ import com.mojang.logging.LogUtils;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.engine.noise.DensityFunctionSlotAxes;
-import com.toroidalworld.engine.noise.DomainWarp;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.engine.noise.NoiseConstants;
 import com.toroidalworld.engine.noise.SlotAxes;
 import com.toroidalworld.engine.noise.SlotAxis;
+import com.toroidalworld.shape.torus.ClimateCompression;
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
 import com.ishland.c2me.opts.dfc.common.ast.binary.AddNode;
 import com.ishland.c2me.opts.dfc.common.ast.binary.MulNode;
@@ -93,7 +93,7 @@ public final class C2meDfcAst {
         AstNode foldedX = slotNode(axes.x(), noise.inputX);
         AstNode foldedZ = slotNode(axes.z(), noise.inputZ);
         if (fold.warped()) {
-            double divisor = DomainWarp.divisor(noise.noise, transformer, fold.horizontalScale(),
+            double divisor = ClimateCompression.warpDivisor(noise.noise, transformer, fold.horizontalScale(),
                     fold.verticalShare());
             foldedX = warpedSlot(source, CoordinateNode.Axis.X, axes.x().domainOf(transformer), noise.inputX,
                     divisor);

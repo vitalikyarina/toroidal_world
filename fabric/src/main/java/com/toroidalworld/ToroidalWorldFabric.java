@@ -6,10 +6,10 @@ import com.toroidalworld.engine.gen.WorldLoopGenerators;
 import com.toroidalworld.engine.gen.WorldLoopTicketTypes;
 import com.toroidalworld.engine.net.OpenMenuTranslation;
 import com.toroidalworld.engine.net.WrappingSettingsPayload;
-import com.toroidalworld.engine.noise.GenerationHookSetup;
 import com.toroidalworld.engine.seam.circumnavigation.WorldLoopCriteria;
 import com.toroidalworld.platform.FabricPlatform;
 import com.toroidalworld.platform.Platforms;
+import com.toroidalworld.shape.GenerationHookSetup;
 import com.toroidalworld.shape.WorldOptionSetup;
 import com.toroidalworld.shape.WorldShapeSetup;
 
