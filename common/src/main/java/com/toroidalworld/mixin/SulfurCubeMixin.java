@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.engine.seam.SeamAim;
+import com.toroidalworld.engine.seam.SeamSteering;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.cubemob.SulfurCube;
@@ -33,7 +34,7 @@ public class SulfurCubeMixin {
             at = @At(value = "INVOKE",
                     target = InjectionTargets.ENTITY_GET_EYE_POSITION))
     private Vec3 toroidal$attackerEyeThroughSeam(Vec3 attackerEye) {
-        return SeamAim.nearestTo((Entity) (Object) this, attackerEye);
+        return SeamSteering.nearestCopy((Entity) (Object) this, attackerEye);
     }
 
     @ModifyExpressionValue(
@@ -41,6 +42,6 @@ public class SulfurCubeMixin {
             at = @At(value = "INVOKE",
                     target = InjectionTargets.ENTITY_POSITION))
     private Vec3 toroidal$attackerFeetThroughSeam(Vec3 attackerFeet) {
-        return SeamAim.nearestTo((Entity) (Object) this, attackerFeet);
+        return SeamSteering.nearestCopy((Entity) (Object) this, attackerFeet);
     }
 }

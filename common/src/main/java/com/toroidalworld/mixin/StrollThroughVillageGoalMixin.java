@@ -6,8 +6,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.InjectionTargets;
-import com.toroidalworld.engine.seam.SeamAim;
 import com.toroidalworld.engine.seam.SeamRange;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -38,6 +38,6 @@ public class StrollThroughVillageGoalMixin {
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/phys/Vec3;atBottomCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"))
     private Vec3 toroidal$strollTargetThroughSeam(Vec3 strollTarget) {
-        return SeamAim.nearestTo(this.mob, strollTarget);
+        return SeamSteering.nearestCopy(this.mob, strollTarget);
     }
 }

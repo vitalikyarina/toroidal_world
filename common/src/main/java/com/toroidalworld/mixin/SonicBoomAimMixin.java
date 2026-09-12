@@ -3,7 +3,7 @@ package com.toroidalworld.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.engine.seam.SeamAim;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
@@ -19,6 +19,6 @@ public class SonicBoomAimMixin {
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/LivingEntity;getEyePosition()Lnet/minecraft/world/phys/Vec3;"))
     private static Vec3 toroidal$boomTargetThroughSeam(Vec3 eyePosition, @Local(argsOnly = true) Warden body) {
-        return SeamAim.nearestTo(body, eyePosition);
+        return SeamSteering.nearestCopy(body, eyePosition);
     }
 }
