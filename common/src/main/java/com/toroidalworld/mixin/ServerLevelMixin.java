@@ -5,6 +5,7 @@ import java.util.List;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -14,17 +15,20 @@ import com.toroidalworld.accessors.LevelBindable;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.engine.net.ListenerCopies;
+import com.toroidalworld.engine.net.MeasuredReach;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.engine.seam.SeamSnap;
 import com.toroidalworld.engine.level.SeamRespawnData;
 import com.toroidalworld.core.WorldLoopAttachments;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
@@ -32,6 +36,15 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(ServerLevel.class)
 public class ServerLevelMixin {
+    @Unique
+    private static final double PARTICLE_RANGE = 32.0;
+
+    @Unique
+    private static final double OVERRIDDEN_PARTICLE_RANGE = 512.0;
+
+    @Unique
+    private static final double EXPLOSION_RANGE = 64.0;
+
     @Shadow
     @Final
     private PersistentEntitySectionManager<Entity> entityManager;
@@ -75,8 +88,24 @@ public class ServerLevelMixin {
             return original.call(player, overrideLimiter, x, y, z, packet);
         }
 
+        double range = overrideLimiter ? OVERRIDDEN_PARTICLE_RANGE : PARTICLE_RANGE;
         Vec3 nearest = transformer.nearestCopy(player.position(), new Vec3(x, y, z));
-        return original.call(player, overrideLimiter, nearest.x, nearest.y, nearest.z, packet);
+        try (MeasuredReach ignored = MeasuredReach.measuring(range)) {
+            return original.call(player, overrideLimiter, nearest.x, nearest.y, nearest.z, packet);
+        }
+    }
+
+    @WrapOperation(
+            method = "explode",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;"
+                            + "send(Lnet/minecraft/network/protocol/Packet;)V"))
+    private void toroidal$measureExplosionReach(ServerGamePacketListenerImpl connection, Packet<?> packet,
+            Operation<Void> original) {
+        try (MeasuredReach ignored = MeasuredReach.measuring(EXPLOSION_RANGE)) {
+            original.call(connection, packet);
+        }
     }
 
     @WrapMethod(method = "destroyBlockProgress")

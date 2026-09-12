@@ -34,6 +34,14 @@ class TranslationContextWarningTest {
     private static final double COORD_PAST_THE_REACH = 100.0;
     private static final Vec3 POSITION_PAST_THE_REACH = new Vec3(COORD_PAST_THE_REACH, 64.0, COORD_PAST_THE_REACH);
 
+    private static final String PARTICLE_KIND = "particle";
+    private static final double PARTICLE_RADIUS = 32.0;
+    private static final PacketReach PARTICLE = PacketReach.measured(PARTICLE_KIND, PARTICLE_RADIUS);
+
+    private static final double ANCHOR_NEAR_THE_SEAM = 250.0;
+    private static final Vec3 POSITION_ACROSS_THE_SEAM = new Vec3(-200.0, 64.0, -200.0);
+    private static final Vec3 ITS_NEAREST_COPY = new Vec3(312.0, 64.0, 312.0);
+
     private static final String CHUNK_WARNING = "A mod_rewriter chunk lands farther from the client anchor";
     private static final String COORD_WARNING_X = "packet's x lands farther from the client anchor";
     private static final String COORD_WARNING_Z = "packet's z lands farther from the client anchor";
@@ -58,7 +66,7 @@ class TranslationContextWarningTest {
         TranslationContext context = contextAtTheOrigin();
 
         context.toClient(CHUNK_PAST_THE_VIEW);
-        context.toClientX(COORD_PAST_THE_REACH, PacketReach.PARTICLE);
+        context.toClientX(COORD_PAST_THE_REACH, PARTICLE);
 
         assertEquals(2, warnings.size(), warnings.toString());
         assertTrue(warnings.get(0).startsWith(CHUNK_WARNING), warnings.toString());
@@ -69,7 +77,7 @@ class TranslationContextWarningTest {
     void bothAxesOfOnePositionReachTheLog() {
         TranslationContext context = contextAtTheOrigin();
 
-        context.toClient(POSITION_PAST_THE_REACH, PacketReach.PARTICLE);
+        context.toClient(POSITION_PAST_THE_REACH, PARTICLE);
 
         assertEquals(2, warnings.size(), warnings.toString());
         assertTrue(warnings.get(0).contains(COORD_WARNING_X), warnings.toString());
@@ -80,8 +88,8 @@ class TranslationContextWarningTest {
     void theSameWarningTwiceInOneSecondIsWrittenOnce() {
         TranslationContext context = contextAtTheOrigin();
 
-        context.toClientX(COORD_PAST_THE_REACH, PacketReach.PARTICLE);
-        context.toClientX(COORD_PAST_THE_REACH, PacketReach.PARTICLE);
+        context.toClientX(COORD_PAST_THE_REACH, PARTICLE);
+        context.toClientX(COORD_PAST_THE_REACH, PARTICLE);
 
         assertEquals(1, warnings.size(), warnings.toString());
     }
@@ -91,15 +99,52 @@ class TranslationContextWarningTest {
         TranslationContext context = contextAtTheOrigin();
         TranslationContext otherContext = contextAtTheOrigin();
 
-        context.toClientX(COORD_PAST_THE_REACH, PacketReach.PARTICLE);
-        otherContext.toClientX(COORD_PAST_THE_REACH, PacketReach.PARTICLE);
+        context.toClientX(COORD_PAST_THE_REACH, PARTICLE);
+        otherContext.toClientX(COORD_PAST_THE_REACH, PARTICLE);
 
         assertEquals(2, warnings.size(), warnings.toString());
     }
 
+    @Test
+    void aSendThatMeasuredItsRadiusIsJudgedAgainstIt() {
+        TranslationContext context = contextAnchoredAt(ANCHOR_NEAR_THE_SEAM);
+
+        try (MeasuredReach ignored = MeasuredReach.measuring(PARTICLE_RADIUS)) {
+            assertEquals(ITS_NEAREST_COPY, context.toClientMeasured(POSITION_ACROSS_THE_SEAM, PARTICLE_KIND));
+        }
+
+        assertEquals(2, warnings.size(), warnings.toString());
+    }
+
+    @Test
+    void aSendThatMeasuredNothingIsCarriedTheSameWayAndJudgedNotAtAll() {
+        TranslationContext context = contextAnchoredAt(ANCHOR_NEAR_THE_SEAM);
+
+        assertEquals(ITS_NEAREST_COPY, context.toClientMeasured(POSITION_ACROSS_THE_SEAM, PARTICLE_KIND));
+
+        assertTrue(warnings.isEmpty(), warnings.toString());
+    }
+
+    @Test
+    void theRadiusDoesNotOutliveTheSendThatMeasuredIt() {
+        TranslationContext context = contextAnchoredAt(ANCHOR_NEAR_THE_SEAM);
+        try (MeasuredReach ignored = MeasuredReach.measuring(PARTICLE_RADIUS)) {
+            context.toClientMeasured(POSITION_ACROSS_THE_SEAM, PARTICLE_KIND);
+        }
+
+        warnings.clear();
+        context.toClientMeasured(POSITION_ACROSS_THE_SEAM, PARTICLE_KIND);
+
+        assertTrue(warnings.isEmpty(), warnings.toString());
+    }
+
     private static TranslationContext contextAtTheOrigin() {
+        return contextAnchoredAt(0.0);
+    }
+
+    private static TranslationContext contextAnchoredAt(double anchor) {
         ClientPosition clientPosition = new ClientPosition();
-        clientPosition.rebase(0.0, 0.0, Level.OVERWORLD, null, TORUS);
+        clientPosition.rebase(anchor, anchor, Level.OVERWORLD, null, TORUS);
         return new TranslationContext(
                 TORUS,
                 clientPosition,

@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.engine.net.ListenerCopies;
+import com.toroidalworld.engine.net.MeasuredReach;
 import com.toroidalworld.engine.net.WorldShapeSync;
 import com.toroidalworld.engine.seam.ClientPosition;
 import com.toroidalworld.core.WorldLoopAttachments;
@@ -60,7 +61,9 @@ public class PlayerListMixin {
         List<Vec3> copies = ListenerCopies.nearestTo(transformer, this.players,
                 player -> player != except && player.level().dimension() == dimension, source);
         for (Vec3 copy : copies) {
-            original.call(except, copy.x, copy.y, copy.z, range, dimension, packet);
+            try (MeasuredReach ignored = MeasuredReach.measuring(range)) {
+                original.call(except, copy.x, copy.y, copy.z, range, dimension, packet);
+            }
         }
     }
 

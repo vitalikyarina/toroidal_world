@@ -282,6 +282,13 @@ public record TranslationContext(
         return toClient(position, trackedReach());
     }
 
+    public Vec3 toClientMeasured(Vec3 position, String kind) {
+        double blocks = MeasuredReach.blocks();
+        return blocks == MeasuredReach.UNMEASURED
+                ? nearestCopy(position)
+                : toClient(position, PacketReach.measured(kind, blocks));
+    }
+
     public Vec3 toClient(Vec3 position, PacketReach reach) {
         Vec3 clientPos = nearestCopy(position);
         guardReach(reach, Direction.Axis.X, position.x, clientPos.x, clientPosition.x());
