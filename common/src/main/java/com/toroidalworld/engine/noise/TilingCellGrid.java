@@ -2,6 +2,7 @@ package com.toroidalworld.engine.noise;
 
 import org.jspecify.annotations.Nullable;
 
+import com.toroidalworld.core.Divisors;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 
@@ -40,13 +41,8 @@ public record TilingCellGrid(WorldFold transformer, int xCellWidth, int zCellWid
         double vanillaCellCount = (double) width / vanillaCellWidth;
         int cellCount = SMALLEST_CELL_COUNT;
 
-        for (int candidate = 1; (long) candidate * candidate <= width; candidate++) {
-            if (width % candidate != 0) {
-                continue;
-            }
-
-            cellCount = nearer(cellCount, candidate, vanillaCellCount);
-            cellCount = nearer(cellCount, width / candidate, vanillaCellCount);
+        for (int divisor : Divisors.of(width)) {
+            cellCount = nearer(cellCount, divisor, vanillaCellCount);
         }
 
         return width / cellCount;

@@ -49,14 +49,6 @@ public class WrapDomain {
         return anchor + Math.floorMod(coord - anchor, domainLength);
     }
 
-    public double unwrap(double anchor, double wrapped) {
-        return unwrapAround(anchor, wrapped);
-    }
-
-    public int unwrap(int anchor, int wrapped) {
-        return unwrapAround(anchor, wrapped);
-    }
-
     public double unwrapAround(double refCoord, double coord) {
         double laps = lapsToward(refCoord, coord);
         return laps == 0.0 ? coord : coord - laps * domainLength;
@@ -269,16 +261,6 @@ public class WrapDomain {
         @Override
         public int wrapFrom(int anchor, int coord) {
             return coord;
-        }
-
-        @Override
-        public double unwrap(double anchor, double wrapped) {
-            return wrapped;
-        }
-
-        @Override
-        public int unwrap(int anchor, int wrapped) {
-            return wrapped;
         }
 
         @Override

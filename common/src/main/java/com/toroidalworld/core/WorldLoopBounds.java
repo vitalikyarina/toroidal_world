@@ -257,13 +257,6 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
                 && xLooped.chunkWidth() > 0;
     }
 
-    public int chunkWidth() {
-        return switch (x) {
-            case AxisBounds.Looped looped -> looped.chunkWidth();
-            case AxisBounds.Unbounded() -> throw new IllegalStateException("chunkWidth() of an unbounded axis");
-        };
-    }
-
     public int maxViewDistance() {
         return Math.min(x.maxViewDistance(), z.maxViewDistance());
     }

@@ -136,15 +136,17 @@ public final class PeriodicNoiseSampler {
     }
 
     static double foldAndScale(WrapDomain domain, long period, double scale, double coord) {
-        if (period == HELD_PERIOD) {
-            return 0.0;
-        }
+        return period == UNBOUNDED_PERIOD
+                ? PerlinNoise.wrap(coord * scale)
+                : folded(domain, period, coord);
+    }
 
-        if (period == UNBOUNDED_PERIOD) {
-            return PerlinNoise.wrap(coord * scale);
-        }
+    static double foldAndScaleSimplex(WrapDomain domain, long period, double scale, double coord) {
+        return period == UNBOUNDED_PERIOD ? coord * scale : folded(domain, period, coord);
+    }
 
-        return domain.wrap(coord) * ((double) period / domain.domainLength);
+    private static double folded(WrapDomain domain, long period, double coord) {
+        return period == HELD_PERIOD ? 0.0 : domain.wrap(coord) * ((double) period / domain.domainLength);
     }
 
     private static double sampleAndLerp(byte[] permutations, int xCell, int yCell, int zCell,

@@ -407,8 +407,8 @@ public final class DeckGroupFold implements WorldFold {
     }
 
     private static boolean horizontallyIntersects(BoundingBox first, BoundingBox second) {
-        return first.minX() <= second.maxX() && second.minX() <= first.maxX()
-                && first.minZ() <= second.maxZ() && second.minZ() <= first.maxZ();
+        return Lattice.meets(first.minX(), first.maxX(), second.minX(), second.maxX())
+                && Lattice.meets(first.minZ(), first.maxZ(), second.minZ(), second.maxZ());
     }
 
     private record CoordPiece(double minX, double maxX, double minZ, double maxZ, SeamTransform applied) {}

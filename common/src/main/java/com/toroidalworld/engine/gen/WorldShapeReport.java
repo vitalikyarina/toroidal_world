@@ -152,23 +152,19 @@ public final class WorldShapeReport {
 
     private static String widths(WorldLoopBounds bounds) {
         if (bounds.isSquare()) {
-            return "width " + widthToken(bounds.chunkWidth());
+            return "width " + WorldLoopSizes.describe(bounds.chunkWidth(Direction.Axis.X));
         }
 
         StringBuilder widths = new StringBuilder("width");
         if (bounds.x() instanceof AxisBounds.Looped xLooped) {
-            widths.append(" x=").append(widthToken(xLooped.chunkWidth()));
+            widths.append(" x=").append(WorldLoopSizes.describe(xLooped.chunkWidth()));
         }
 
         if (bounds.z() instanceof AxisBounds.Looped zLooped) {
-            widths.append(" z=").append(widthToken(zLooped.chunkWidth()));
+            widths.append(" z=").append(WorldLoopSizes.describe(zLooped.chunkWidth()));
         }
 
         return widths.toString();
-    }
-
-    private static String widthToken(int chunkWidth) {
-        return WorldLoopSizes.describe(chunkWidth);
     }
 
     private static Note netherScale(MinecraftServer server, ServerLevel level, WorldLoopBounds bounds) {
