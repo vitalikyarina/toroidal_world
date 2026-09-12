@@ -18,6 +18,7 @@ import com.toroidalworld.core.WorldLoopAttachments;
 import com.toroidalworld.engine.fold.NearestCopy;
 import com.toroidalworld.engine.seam.ClientPosition;
 import com.toroidalworld.engine.seam.SeamAim;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.toroidalworld.engine.seam.VehicleDismountResync;
 import com.toroidalworld.engine.seam.circumnavigation.CircumnavigationTracker;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
@@ -96,7 +97,7 @@ public class EntityMixin implements TransformerSource {
     @ModifyVariable(method = "lookAt(Lnet/minecraft/commands/arguments/EntityAnchorArgument$Anchor;Lnet/minecraft/world/phys/Vec3;)V",
             at = @At("HEAD"), argsOnly = true)
     private Vec3 toroidal$lookAtNearestCopy(Vec3 pos) {
-        return SeamAim.nearestTo((Entity) (Object) this, pos);
+        return SeamSteering.nearestCopy((Entity) (Object) this, pos);
     }
 
     @ModifyVariable(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("STORE"), ordinal = 0)
@@ -155,15 +156,9 @@ public class EntityMixin implements TransformerSource {
     }
 
     @Inject(method = "snapTo(DDDFF)V", at = @At("TAIL"))
-    private void toroidal$rebaseMirrorOnPlacement(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
+    private void toroidal$followPlayerPlacement(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
         if ((Object) this instanceof ServerPlayer player) {
             ClientPosition.rebase(player);
-        }
-    }
-
-    @Inject(method = "snapTo(DDDFF)V", at = @At("TAIL"))
-    private void toroidal$sampleTravelOnPlacement(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
-        if ((Object) this instanceof ServerPlayer player) {
             CircumnavigationTracker.sample(player);
         }
     }

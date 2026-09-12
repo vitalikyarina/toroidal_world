@@ -18,15 +18,13 @@ public class RavagerKnockbackMixin {
             method = "strongKnockback(Lnet/minecraft/world/entity/Entity;)V",
             at = @At(value = "INVOKE", target = InjectionTargets.ENTITY_GET_X))
     private double toroidal$shoveTargetNearX(Entity target, Operation<Double> original) {
-        return SeamAim.nearestTo((Entity) (Object) this,
-                target.position().with(Direction.Axis.X, original.call(target))).x;
+        return SeamAim.nearestCoord((Entity) (Object) this, target, Direction.Axis.X, original.call(target));
     }
 
     @WrapOperation(
             method = "strongKnockback(Lnet/minecraft/world/entity/Entity;)V",
             at = @At(value = "INVOKE", target = InjectionTargets.ENTITY_GET_Z))
     private double toroidal$shoveTargetNearZ(Entity target, Operation<Double> original) {
-        return SeamAim.nearestTo((Entity) (Object) this,
-                target.position().with(Direction.Axis.Z, original.call(target))).z;
+        return SeamAim.nearestCoord((Entity) (Object) this, target, Direction.Axis.Z, original.call(target));
     }
 }

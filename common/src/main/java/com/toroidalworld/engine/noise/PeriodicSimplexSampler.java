@@ -23,8 +23,8 @@ public final class PeriodicSimplexSampler {
         LapFloor floor = LapFloor.of(transformer);
         long xPeriod = PeriodicNoiseSampler.period(xDomain, scale, floor);
         long zPeriod = PeriodicNoiseSampler.period(zDomain, scale, floor);
-        double xs = foldAndScale(xDomain, xPeriod, scale, x) + xOffset;
-        double zs = foldAndScale(zDomain, zPeriod, scale, z) + zOffset;
+        double xs = PeriodicNoiseSampler.foldAndScaleSimplex(xDomain, xPeriod, scale, x) + xOffset;
+        double zs = PeriodicNoiseSampler.foldAndScaleSimplex(zDomain, zPeriod, scale, z) + zOffset;
         long xLattice = lattice(xPeriod);
         long zLattice = lattice(zPeriod);
         long denominator = skewDenominator(xLattice, zLattice);
@@ -107,18 +107,6 @@ public final class PeriodicSimplexSampler {
 
     private static long lattice(long period) {
         return PeriodicNoiseSampler.closes(period) ? period : PeriodicNoiseSampler.UNBOUNDED_PERIOD;
-    }
-
-    private static double foldAndScale(WrapDomain domain, long period, double scale, double coord) {
-        if (period == PeriodicNoiseSampler.HELD_PERIOD) {
-            return 0.0;
-        }
-
-        if (period == PeriodicNoiseSampler.UNBOUNDED_PERIOD) {
-            return coord * scale;
-        }
-
-        return domain.wrap(coord) * ((double) period / domain.domainLength);
     }
 
     private static int gradient(int[] permutations, long u, long v,

@@ -3,6 +3,7 @@ package com.toroidalworld.client.shape;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntPredicate;
 
 import org.jspecify.annotations.Nullable;
 
@@ -13,7 +14,6 @@ import com.toroidalworld.shape.WorldLoopPresets;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.layouts.CommonLayouts;
 import net.minecraft.client.gui.layouts.LinearLayout;
@@ -54,28 +54,25 @@ public final class LoopSizeControls {
 
     private final Runnable onChange;
 
-    private String sizeText;
-    private @Nullable Integer effectiveSize;
-
-    private String endSizeText;
-    private @Nullable Integer effectiveEndSize;
+    private final SizeField size;
+    private final SizeField endSize;
 
     private int netherScale;
     private int wantedNetherScale;
     private int scalePickedForSize;
 
     private final Map<WorldLoopPresets, Button> presetButtons = new EnumMap<>(WorldLoopPresets.class);
-    private EditBox sizeEdit;
     private Button netherScaleButton;
-    private EditBox endSizeEdit;
 
     public LoopSizeControls(int chunkWidth, int netherScale, int endChunkWidth, Runnable onChange) {
         this.onChange = onChange;
-        this.sizeText = String.valueOf(chunkWidth);
+        this.size = new SizeField(SIZE_LABEL_KEY, EFFECTIVE_KEY, HINT,
+                WorldLoopSizes.MIN_CHUNK_WIDTH, WorldLoopSizes::isInRange, chunkWidth);
+        this.endSize = new SizeField(END_SIZE_LABEL_KEY, END_EFFECTIVE_KEY, END_HINT,
+                WorldLoopSizes.END_MIN_CHUNK_WIDTH, WorldLoopSizes::isEndInRange, endChunkWidth);
         this.netherScale = netherScale;
         this.wantedNetherScale = netherScale;
         this.scalePickedForSize = chunkWidth;
-        this.endSizeText = String.valueOf(endChunkWidth);
     }
 
     public void addPresets(LinearLayout contents) {
@@ -85,11 +82,11 @@ public final class LoopSizeControls {
                     .width(PRESET_WIDTH)
                     .build());
             presetButton.setTooltip(Tooltip.create(
-                    effectiveLine(preset.chunkWidth()).copy()
+                    this.size.effectiveLine(preset.chunkWidth()).copy()
                             .append(CommonComponents.NEW_LINE)
                             .append(netherScaleLine(preset.netherScale()))
                             .append(CommonComponents.NEW_LINE)
-                            .append(endEffectiveLine(preset.endChunkWidth()))
+                            .append(this.endSize.effectiveLine(preset.endChunkWidth()))
                             .append(CommonComponents.NEW_LINE)
                             .append(Component.translatable(structureRoomKey(preset.chunkWidth())))));
             this.presetButtons.put(preset, presetButton);
@@ -97,27 +94,13 @@ public final class LoopSizeControls {
     }
 
     public void addFields(Font font, LinearLayout contents) {
-        this.sizeEdit = new DigitsEditBox(font, FIELD_WIDTH, FIELD_HEIGHT, sizeLabel());
-        this.sizeEdit.setMaxLength(FIELD_MAX_LENGTH);
-        this.sizeEdit.setValue(this.sizeText);
-        this.sizeEdit.setResponder(value -> {
-            this.sizeText = value;
-            this.onSizeChanged();
-        });
-        contents.addChild(CommonLayouts.labeledElement(font, this.sizeEdit, sizeLabel()));
+        this.size.add(font, contents, this::onSizeChanged);
 
         this.netherScaleButton = contents.addChild(Button.builder(Component.empty(), button -> this.cycleNetherScale())
                 .width(FIELD_WIDTH)
                 .build());
 
-        this.endSizeEdit = new DigitsEditBox(font, FIELD_WIDTH, FIELD_HEIGHT, endSizeLabel());
-        this.endSizeEdit.setMaxLength(FIELD_MAX_LENGTH);
-        this.endSizeEdit.setValue(this.endSizeText);
-        this.endSizeEdit.setResponder(value -> {
-            this.endSizeText = value;
-            this.onEndSizeChanged();
-        });
-        contents.addChild(CommonLayouts.labeledElement(font, this.endSizeEdit, endSizeLabel()));
+        this.endSize.add(font, contents, this::onEndSizeChanged);
     }
 
     public void refresh() {
@@ -126,7 +109,7 @@ public final class LoopSizeControls {
     }
 
     public @Nullable Integer effectiveSize() {
-        return this.effectiveSize;
+        return this.size.effective();
     }
 
     public int netherScale() {
@@ -134,24 +117,26 @@ public final class LoopSizeControls {
     }
 
     public @Nullable Integer effectiveEndSize() {
-        return this.effectiveEndSize;
+        return this.endSize.effective();
     }
 
     public boolean isComplete() {
-        return this.effectiveSize != null && this.effectiveEndSize != null;
+        return this.size.effective() != null && this.endSize.effective() != null;
     }
 
     private void apply(WorldLoopPresets preset) {
         this.netherScale = preset.netherScale();
         this.wantedNetherScale = preset.netherScale();
-        this.sizeEdit.setValue(String.valueOf(preset.chunkWidth()));
-        this.endSizeEdit.setValue(String.valueOf(preset.endChunkWidth()));
+        this.size.setValue(preset.chunkWidth());
+        this.endSize.setValue(preset.endChunkWidth());
     }
 
     private boolean matchesPreset(WorldLoopPresets preset) {
-        return this.effectiveSize != null && this.effectiveSize == preset.chunkWidth()
+        Integer effectiveSize = this.size.effective();
+        Integer effectiveEndSize = this.endSize.effective();
+        return effectiveSize != null && effectiveSize == preset.chunkWidth()
                 && this.netherScale == preset.netherScale()
-                && this.effectiveEndSize != null && this.effectiveEndSize == preset.endChunkWidth();
+                && effectiveEndSize != null && effectiveEndSize == preset.endChunkWidth();
     }
 
     private void changed() {
@@ -163,25 +148,24 @@ public final class LoopSizeControls {
     }
 
     private void onSizeChanged() {
-        Integer sizeChunks = parseSizeChunks(this.sizeEdit.getValue());
-        this.effectiveSize = sizeChunks != null && WorldLoopSizes.isInRange(sizeChunks) ? sizeChunks : null;
+        this.size.update();
 
-        if (this.effectiveSize == null) {
-            this.sizeEdit.setTooltip(Tooltip.create(sizeHint(sizeChunks, WorldLoopSizes.MIN_CHUNK_WIDTH, HINT)));
+        if (this.size.effective() == null) {
             this.netherScaleButton.active = false;
-            this.changed();
-            return;
+        } else {
+            this.refreshNetherScale();
         }
 
-        this.sizeEdit.setTooltip(Tooltip.create(
-                effectiveLine(this.effectiveSize).copy().append(CommonComponents.NEW_LINE).append(HINT)));
+        this.changed();
+    }
 
-        this.refreshNetherScale();
+    private void onEndSizeChanged() {
+        this.endSize.update();
         this.changed();
     }
 
     private void refreshNetherScale() {
-        int sizeChunks = this.effectiveSize;
+        int sizeChunks = this.size.effective();
         List<Integer> allowed = NetherScales.allowedFor(sizeChunks);
         boolean sizeChanged = sizeChunks != this.scalePickedForSize;
         this.netherScale = NetherScales.normalize(sizeChanged ? this.wantedNetherScale : this.netherScale, allowed);
@@ -197,29 +181,14 @@ public final class LoopSizeControls {
     }
 
     private void cycleNetherScale() {
-        if (this.effectiveSize == null) {
+        Integer effectiveSize = this.size.effective();
+        if (effectiveSize == null) {
             return;
         }
 
-        this.netherScale = NetherScales.next(this.netherScale, this.effectiveSize);
+        this.netherScale = NetherScales.next(this.netherScale, effectiveSize);
         this.wantedNetherScale = this.netherScale;
         this.refreshNetherScale();
-        this.changed();
-    }
-
-    private void onEndSizeChanged() {
-        Integer sizeChunks = parseSizeChunks(this.endSizeEdit.getValue());
-        this.effectiveEndSize = sizeChunks != null && WorldLoopSizes.isEndInRange(sizeChunks) ? sizeChunks : null;
-
-        if (this.effectiveEndSize == null) {
-            this.endSizeEdit.setTooltip(Tooltip.create(
-                    sizeHint(sizeChunks, WorldLoopSizes.END_MIN_CHUNK_WIDTH, END_HINT)));
-            this.changed();
-            return;
-        }
-
-        this.endSizeEdit.setTooltip(Tooltip.create(
-                endEffectiveLine(this.effectiveEndSize).copy().append(CommonComponents.NEW_LINE).append(END_HINT)));
         this.changed();
     }
 
@@ -243,42 +212,75 @@ public final class LoopSizeControls {
         return STRUCTURES_ALL_KEY;
     }
 
-    private static Component effectiveLine(int chunkWidth) {
-        return Component.translatable(EFFECTIVE_KEY, chunkWidth, chunkWidth * CoordinateConstants.CHUNK_WIDTH);
-    }
-
     private static Component netherScaleLine(int scale) {
         return Component.translatable(NETHER_SCALE_KEY, scale);
     }
 
-    private static Component endEffectiveLine(int endChunkWidth) {
-        return Component.translatable(END_EFFECTIVE_KEY, endChunkWidth, endChunkWidth * CoordinateConstants.CHUNK_WIDTH);
-    }
+    private static final class SizeField {
+        private final String labelKey;
+        private final String effectiveKey;
+        private final Component hint;
+        private final int minChunks;
+        private final IntPredicate inRange;
 
-    private static Component sizeLabel() {
-        return Component.translatable(SIZE_LABEL_KEY, WorldLoopSizes.MIN_CHUNK_WIDTH, WorldLoopSizes.MAX_CHUNK_WIDTH);
-    }
+        private String text;
+        private @Nullable Integer effective;
+        private DigitsEditBox edit;
 
-    private static Component endSizeLabel() {
-        return Component.translatable(END_SIZE_LABEL_KEY, WorldLoopSizes.END_MIN_CHUNK_WIDTH, WorldLoopSizes.MAX_CHUNK_WIDTH);
-    }
-
-    private static Component sizeHint(@Nullable Integer sizeChunks, int minChunks, Component hint) {
-        if (sizeChunks == null) {
-            return hint;
+        private SizeField(String labelKey, String effectiveKey, Component hint, int minChunks, IntPredicate inRange,
+                int chunkWidth) {
+            this.labelKey = labelKey;
+            this.effectiveKey = effectiveKey;
+            this.hint = hint;
+            this.minChunks = minChunks;
+            this.inRange = inRange;
+            this.text = String.valueOf(chunkWidth);
         }
 
-        Component bound = sizeChunks < minChunks
-                ? Component.translatable(TOO_SMALL_KEY, minChunks)
-                : Component.translatable(TOO_LARGE_KEY, WorldLoopSizes.MAX_CHUNK_WIDTH);
-        return bound.copy().append(CommonComponents.NEW_LINE).append(hint);
-    }
+        private void add(Font font, LinearLayout contents, Runnable onEdited) {
+            this.edit = new DigitsEditBox(font, FIELD_WIDTH, FIELD_HEIGHT, this.label());
+            this.edit.setMaxLength(FIELD_MAX_LENGTH);
+            this.edit.setValue(this.text);
+            this.edit.setResponder(value -> {
+                this.text = value;
+                onEdited.run();
+            });
+            contents.addChild(CommonLayouts.labeledElement(font, this.edit, this.label()));
+        }
 
-    private static @Nullable Integer parseSizeChunks(String value) {
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException ignored) {
-            return null;
+        private void update() {
+            Integer sizeChunks = this.edit.number();
+            this.effective = sizeChunks != null && this.inRange.test(sizeChunks) ? sizeChunks : null;
+            this.edit.setTooltip(Tooltip.create(this.effective != null
+                    ? this.effectiveLine(this.effective).copy().append(CommonComponents.NEW_LINE).append(this.hint)
+                    : this.boundHint(sizeChunks)));
+        }
+
+        private void setValue(int chunkWidth) {
+            this.edit.setValue(String.valueOf(chunkWidth));
+        }
+
+        private @Nullable Integer effective() {
+            return this.effective;
+        }
+
+        private Component effectiveLine(int chunkWidth) {
+            return Component.translatable(this.effectiveKey, chunkWidth, chunkWidth * CoordinateConstants.CHUNK_WIDTH);
+        }
+
+        private Component label() {
+            return Component.translatable(this.labelKey, this.minChunks, WorldLoopSizes.MAX_CHUNK_WIDTH);
+        }
+
+        private Component boundHint(@Nullable Integer sizeChunks) {
+            if (sizeChunks == null) {
+                return this.hint;
+            }
+
+            Component bound = sizeChunks < this.minChunks
+                    ? Component.translatable(TOO_SMALL_KEY, this.minChunks)
+                    : Component.translatable(TOO_LARGE_KEY, WorldLoopSizes.MAX_CHUNK_WIDTH);
+            return bound.copy().append(CommonComponents.NEW_LINE).append(this.hint);
         }
     }
 }

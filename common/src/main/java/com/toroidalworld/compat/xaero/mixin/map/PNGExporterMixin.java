@@ -1,5 +1,6 @@
 package com.toroidalworld.compat.xaero.mixin.map;
 
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -92,7 +93,7 @@ public abstract class PNGExporterMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/region/ExportMapRegion;getChunk(II)Lxaero/map/region/ExportMapTileChunk;"))
-    private ExportMapTileChunk toroidal$resolveSlot(ExportMapRegion region, int slotX, int slotZ,
+    private @Nullable ExportMapTileChunk toroidal$resolveSlot(ExportMapRegion region, int slotX, int slotZ,
             Operation<ExportMapTileChunk> original) {
         if (!this.toroidal$assembly.assembling()) {
             return original.call(region, slotX, slotZ);

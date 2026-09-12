@@ -2,6 +2,8 @@ package com.toroidalworld.engine.noise;
 
 import com.toroidalworld.core.WrapDomain;
 
+import net.minecraft.util.Mth;
+
 public final class OctaveVarianceCorrection {
     private static final double[] CELLS_PER_LAP = {
             0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.625, 0.75, 0.875, 1.0, 1.125, 1.25, 1.375, 1.4375
@@ -89,12 +91,12 @@ public final class OctaveVarianceCorrection {
         int row = upperIndex(LIVENESS_CELLS_PER_LAP, cellsPerLap);
         double atLowerRow = interpolate(LIVENESS_VERTICAL_CELLS, LIVENESS[row - 1], verticalCells);
         double atUpperRow = interpolate(LIVENESS_VERTICAL_CELLS, LIVENESS[row], verticalCells);
-        return lerp(atLowerRow, atUpperRow, blend(LIVENESS_CELLS_PER_LAP, row, cellsPerLap));
+        return Mth.lerp(blend(LIVENESS_CELLS_PER_LAP, row, cellsPerLap), atLowerRow, atUpperRow);
     }
 
     private static double interpolate(double[] axis, double[] values, double value) {
         int upper = upperIndex(axis, value);
-        return lerp(values[upper - 1], values[upper], blend(axis, upper, value));
+        return Mth.lerp(blend(axis, upper, value), values[upper - 1], values[upper]);
     }
 
     private static int upperIndex(double[] axis, double value) {
@@ -111,10 +113,6 @@ public final class OctaveVarianceCorrection {
         double span = axis[upper] - lower;
         double t = (value - lower) / span;
         return Math.max(0.0, Math.min(1.0, t));
-    }
-
-    private static double lerp(double from, double to, double t) {
-        return from + t * (to - from);
     }
 
     private OctaveVarianceCorrection() {

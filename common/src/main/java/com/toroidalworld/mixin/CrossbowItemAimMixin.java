@@ -20,7 +20,7 @@ public class CrossbowItemAimMixin {
             at = @At(value = "INVOKE", target = InjectionTargets.LIVING_ENTITY_GET_X, ordinal = 0))
     private double toroidal$aimTargetX(LivingEntity target, Operation<Double> original,
             @Local(argsOnly = true, ordinal = 0) LivingEntity shooter) {
-        return SeamAim.nearestTo(shooter, target.position().with(Direction.Axis.X, original.call(target))).x;
+        return SeamAim.nearestCoord(shooter, target, Direction.Axis.X, original.call(target));
     }
 
     @WrapOperation(
@@ -28,6 +28,6 @@ public class CrossbowItemAimMixin {
             at = @At(value = "INVOKE", target = InjectionTargets.LIVING_ENTITY_GET_Z, ordinal = 0))
     private double toroidal$aimTargetZ(LivingEntity target, Operation<Double> original,
             @Local(argsOnly = true, ordinal = 0) LivingEntity shooter) {
-        return SeamAim.nearestTo(shooter, target.position().with(Direction.Axis.Z, original.call(target))).z;
+        return SeamAim.nearestCoord(shooter, target, Direction.Axis.Z, original.call(target));
     }
 }

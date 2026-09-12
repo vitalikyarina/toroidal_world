@@ -4,7 +4,6 @@ import java.sql.PreparedStatement;
 import java.util.ArrayList;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 
 import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.compat.AxisCopies;
@@ -20,31 +19,26 @@ import net.minecraft.core.Direction;
 
 @Mixin(BeaconBeamRepo.class)
 public class BeaconBeamRepoMixin {
-    @Unique
-    private ToroidalShape toroidal$shape() {
-        return ((DhRepoLevel) this).toroidal$shape();
-    }
-
     @WrapMethod(method = "setPreparedStatementWhereClause(Ljava/sql/PreparedStatement;ILcom/seibel/distanthorizons/core/pos/blockPos/DhBlockPos;)I")
     private int toroidal$foldWhereKey(PreparedStatement statement, int index, DhBlockPos pos,
             Operation<Integer> original) {
-        return original.call(statement, index, DhKeys.foldBlock(toroidal$shape(), pos));
+        return original.call(statement, index, DhKeys.foldBlock(DhRepoLevel.shapeOf(this), pos));
     }
 
     @WrapMethod(method = "createInsertStatement(Lcom/seibel/distanthorizons/core/sql/dto/BeaconBeamDTO;)Ljava/sql/PreparedStatement;")
     private PreparedStatement toroidal$foldInsert(BeaconBeamDTO dto, Operation<PreparedStatement> original) {
-        return DhKeys.withFoldedKey(toroidal$shape(), dto, () -> original.call(dto));
+        return DhKeys.withFoldedKey(DhRepoLevel.shapeOf(this), dto, () -> original.call(dto));
     }
 
     @WrapMethod(method = "createUpdateStatement(Lcom/seibel/distanthorizons/core/sql/dto/BeaconBeamDTO;)Ljava/sql/PreparedStatement;")
     private PreparedStatement toroidal$foldUpdate(BeaconBeamDTO dto, Operation<PreparedStatement> original) {
-        return DhKeys.withFoldedKey(toroidal$shape(), dto, () -> original.call(dto));
+        return DhKeys.withFoldedKey(DhRepoLevel.shapeOf(this), dto, () -> original.call(dto));
     }
 
     @WrapMethod(method = "getAllBeamsInBlockPosRange")
     private ArrayList<BeaconBeamDTO> toroidal$foldRange(int minBlockX, int maxBlockX, int minBlockZ, int maxBlockZ,
             Operation<ArrayList<BeaconBeamDTO>> original) {
-        ToroidalShape shape = toroidal$shape();
+        ToroidalShape shape = DhRepoLevel.shapeOf(this);
         if (shape == null) {
             return original.call(minBlockX, maxBlockX, minBlockZ, maxBlockZ);
         }

@@ -67,10 +67,8 @@ public final class C2meDfcAst {
             case DensityFunctions.ShiftedNoise shifted -> new Fold(SlotAxes.DEFAULT, shifted.xzScale(),
                     GenerationTransformerContext.verticalShare(shifted.xzScale(), shifted.yScale()), false,
                     shifted.xzScale() != 0.0);
-            case DensityFunctions.Shift _ -> new Fold(SlotAxes.DEFAULT, NoiseConstants.SHIFT_SCALE,
-                    GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE, true, false);
-            case DensityFunctions.ShiftA _ -> new Fold(SlotAxes.DEFAULT, NoiseConstants.SHIFT_SCALE,
-                    GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE, true, false);
+            case DensityFunctions.Shift _, DensityFunctions.ShiftA _ -> new Fold(SlotAxes.DEFAULT,
+                    NoiseConstants.SHIFT_SCALE, GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE, true, false);
             case DensityFunctions.ShiftB _ -> new Fold(DensityFunctionSlotAxes.SHIFT_B, NoiseConstants.SHIFT_SCALE,
                     GenerationTransformerContext.UNDECLARED_VERTICAL_SHARE, true, false);
             default -> null;

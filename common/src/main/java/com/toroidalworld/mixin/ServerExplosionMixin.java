@@ -8,6 +8,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.engine.seam.SeamAim;
+import com.toroidalworld.engine.seam.SeamSteering;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ServerExplosion;
@@ -19,7 +20,7 @@ public class ServerExplosionMixin {
             method = "getSeenPercent(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/Entity;)F",
             at = @At("HEAD"), argsOnly = true)
     private static Vec3 toroidal$exposureCentreThroughSeam(Vec3 centre, @Local(argsOnly = true) Entity entity) {
-        return SeamAim.nearestTo(entity, centre);
+        return SeamSteering.nearestCopy(entity, centre);
     }
 
     @ModifyExpressionValue(

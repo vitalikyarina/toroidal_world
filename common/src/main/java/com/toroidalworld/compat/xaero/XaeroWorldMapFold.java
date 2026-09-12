@@ -3,6 +3,8 @@ package com.toroidalworld.compat.xaero;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.api.v1.ToroidalWorldClientApi;
 import com.toroidalworld.compat.AxisCopies;
@@ -29,7 +31,7 @@ public final class XaeroWorldMapFold {
 
     private static final int COMPARISON_CHUNK_OFFSET = 16;
 
-    private static ToroidalShape browsedShape() {
+    private static @Nullable ToroidalShape browsedShape() {
         WorldMapSession session = WorldMapSession.getCurrentSession();
         MapProcessor processor = session == null ? null : session.getMapProcessor();
         MapWorld mapWorld = processor == null ? null : processor.getMapWorld();

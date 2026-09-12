@@ -24,6 +24,19 @@ public record AxisCopies(boolean loops, int min, int width) {
         return new AxisCopies(true, min, width);
     }
 
+    public static int[] lapRange(int first, int last) {
+        if (last < first) {
+            return new int[0];
+        }
+
+        int[] laps = new int[last - first + 1];
+        for (int i = 0; i < laps.length; i++) {
+            laps[i] = first + i;
+        }
+
+        return laps;
+    }
+
     @Override
     public int min() {
         return looped().min;
@@ -40,16 +53,7 @@ public record AxisCopies(boolean loops, int min, int width) {
 
         int first = Math.floorDiv(spanMin - this.min, this.width);
         int last = Math.floorDiv(spanMax - 1 - this.min, this.width);
-        if (last < first) {
-            return new int[0];
-        }
-
-        int[] laps = new int[last - first + 1];
-        for (int i = 0; i < laps.length; i++) {
-            laps[i] = first + i;
-        }
-
-        return laps;
+        return lapRange(first, last);
     }
 
     public int[] seams(int spanMin, int spanMax) {

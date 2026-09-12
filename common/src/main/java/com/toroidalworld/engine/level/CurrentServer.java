@@ -4,7 +4,6 @@ import org.jspecify.annotations.Nullable;
 
 import net.minecraft.server.MinecraftServer;
 
-// Published from the server thread's entry point and read by callers that are handed no level to ask.
 public final class CurrentServer {
     private static volatile @Nullable MinecraftServer current;
 

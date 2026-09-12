@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.CrumbSweepCache;
 import com.toroidalworld.accessors.RelocatableBlockEntity;
 import com.toroidalworld.accessors.TerrainMaskCache;
@@ -17,6 +18,7 @@ import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFold.Folded;
 import com.toroidalworld.core.WorldFolds;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.fold.FoldedBoxQuery;
 import com.toroidalworld.engine.gen.FloatingCrumbs;
 import com.toroidalworld.engine.gen.TerrainMasks;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
@@ -133,7 +135,17 @@ public class LevelMixin implements TransformerCache, CrumbSweepCache, TerrainMas
     }
 
     @WrapOperation(
-            method = "getEntities(Lnet/minecraft/world/level/entity/EntityTypeTest;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;Ljava/util/List;I)V",
+            method = "getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;",
+            at = @At(value = "INVOKE", target = InjectionTargets.AABB_INTERSECTS))
+    private boolean toroidal$partBoxTowardQuery(AABB query, AABB part, Operation<Boolean> original) {
+        return original.call(query, FoldedBoxQuery.toward(toroidal$transformer(), query.getCenter(), part));
+    }
+
+    @WrapOperation(
+            method = {
+                    "getEntities(Lnet/minecraft/world/level/entity/EntityTypeTest;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;Ljava/util/List;I)V",
+                    "hasEntities(Lnet/minecraft/world/level/entity/EntityTypeTest;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Z"
+            },
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/entity/LevelEntityGetter;get(Lnet/minecraft/world/level/entity/EntityTypeTest;Lnet/minecraft/world/phys/AABB;Lnet/minecraft/util/AbortableIterationConsumer;)V"))

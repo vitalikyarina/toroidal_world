@@ -1,6 +1,6 @@
 package com.toroidalworld.engine.net;
 
-import java.util.Arrays;
+import com.toroidalworld.engine.DoubleStack;
 
 public final class MeasuredReach implements AutoCloseable {
     public static final double UNMEASURED = -1.0;
@@ -9,9 +9,7 @@ public final class MeasuredReach implements AutoCloseable {
 
     private double blocks = UNMEASURED;
 
-    private double[] previous = new double[8];
-
-    private int depth;
+    private final DoubleStack previous = new DoubleStack();
 
     public static double blocks() {
         return CURRENT.get().blocks;
@@ -24,17 +22,13 @@ public final class MeasuredReach implements AutoCloseable {
     }
 
     private void push(double measured) {
-        if (this.depth == this.previous.length) {
-            this.previous = Arrays.copyOf(this.previous, this.depth * 2);
-        }
-
-        this.previous[this.depth++] = this.blocks;
+        this.previous.push(this.blocks);
         this.blocks = measured;
     }
 
     @Override
     public void close() {
-        this.blocks = this.previous[--this.depth];
+        this.blocks = this.previous.pop();
     }
 
     private MeasuredReach() {

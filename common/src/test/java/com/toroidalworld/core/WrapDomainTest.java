@@ -175,8 +175,8 @@ class WrapDomainTest {
                 assertFalse(noop.isOver(coord));
                 assertFalse(noop.isOver(coord + 0.5));
                 assertEquals(0, noop.overshoot(coord));
-                assertEquals(coord, noop.unwrap(7, coord));
-                assertEquals(coord + 0.5, noop.unwrap(7.0, coord + 0.5));
+                assertEquals(coord, noop.unwrapAround(7, coord));
+                assertEquals(coord + 0.5, noop.unwrapAround(7.0, coord + 0.5));
                 assertEquals(coord, (int) noop.unwrapAround(7.0, coord));
                 assertEquals(coord, noop.foldDelta(coord));
                 assertEquals(coord + 0.5, noop.foldDelta(coord + 0.5));
@@ -331,10 +331,10 @@ class WrapDomainTest {
         @Test
         void theAntipodeResolvesTheSameWhateverTheBoundsAre() {
             for (WrapDomain domain : List.of(new WrapDomain(-32, 32), new WrapDomain(-48, 16))) {
-                assertEquals(-12, domain.unwrap(20, -12), in(domain));
-                assertEquals(-12.0, domain.unwrap(20.0, -12.0), 0.0, in(domain));
-                assertEquals(-12, domain.unwrap(-44, -12), in(domain));
-                assertEquals(-12.0, domain.unwrap(-44.0, -12.0), 0.0, in(domain));
+                assertEquals(-12, domain.unwrapAround(20, -12), in(domain));
+                assertEquals(-12.0, domain.unwrapAround(20.0, -12.0), 0.0, in(domain));
+                assertEquals(-12, domain.unwrapAround(-44, -12), in(domain));
+                assertEquals(-12.0, domain.unwrapAround(-44.0, -12.0), 0.0, in(domain));
 
                 assertEquals(52, domain.unwrapAround(20, 52), in(domain));
                 assertEquals(52.0, domain.unwrapAround(20.0, 52.0), 0.0, in(domain));
@@ -490,8 +490,8 @@ class WrapDomainTest {
 
                     int ref = sampleCoord(random, domain);
                     int wrapped = domain.wrap(coord);
-                    assertEquals(domain.unwrap(ref, wrapped), domain.unwrap((double) ref, (double) wrapped), 0.0,
-                            () -> "unwrap(" + ref + ", " + wrapped + ") " + in(domain));
+                    assertEquals(domain.unwrapAround(ref, wrapped), domain.unwrapAround((double) ref, (double) wrapped), 0.0,
+                            () -> "unwrapAround(" + ref + ", " + wrapped + ") " + in(domain));
 
                     int delta = random.nextInt(2 * domain.domainLength - 1) - (domain.domainLength - 1);
                     assertEquals(domain.foldDelta(delta), domain.foldDelta((double) delta), 0.0,

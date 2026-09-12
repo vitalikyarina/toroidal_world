@@ -46,11 +46,6 @@ public class ChunkTrackerMixin implements LevelBindable {
 
     @Unique
     private WorldFold toroidal$transformer() {
-        return this.toroidal$resolvedTransformer();
-    }
-
-    @Unique
-    private WorldFold toroidal$resolvedTransformer() {
         WorldFold transformer = this.toroidal$boundTransformer;
         if (transformer != null) {
             return transformer;

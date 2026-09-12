@@ -41,18 +41,12 @@ public final class C2meWarpedAxisNode implements AstNode {
         }
 
         C2meWarpedAxisNode that = (C2meWarpedAxisNode) o;
-        return this.axis == that.axis
-                && this.domain == that.domain
-                && Double.compare(this.divisor, that.divisor) == 0
-                && this.shift.equals(that.shift);
+        return sameFields(that) && this.shift.equals(that.shift);
     }
 
     @Override
     public int hashCode() {
-        int result = this.axis.hashCode();
-        result = 31 * result + System.identityHashCode(this.domain);
-        result = 31 * result + Double.hashCode(this.divisor);
-        return 31 * result + this.shift.hashCode();
+        return 31 * fieldHash() + this.shift.hashCode();
     }
 
     @Override
@@ -62,17 +56,23 @@ public final class C2meWarpedAxisNode implements AstNode {
         }
 
         C2meWarpedAxisNode that = (C2meWarpedAxisNode) o;
-        return this.axis == that.axis
-                && this.domain == that.domain
-                && Double.compare(this.divisor, that.divisor) == 0
-                && this.shift.relaxedEquals(that.shift);
+        return sameFields(that) && this.shift.relaxedEquals(that.shift);
     }
 
     @Override
     public int relaxedHashCode() {
+        return 31 * fieldHash() + this.shift.relaxedHashCode();
+    }
+
+    private boolean sameFields(C2meWarpedAxisNode that) {
+        return this.axis == that.axis
+                && this.domain == that.domain
+                && Double.compare(this.divisor, that.divisor) == 0;
+    }
+
+    private int fieldHash() {
         int result = this.axis.hashCode();
         result = 31 * result + System.identityHashCode(this.domain);
-        result = 31 * result + Double.hashCode(this.divisor);
-        return 31 * result + this.shift.relaxedHashCode();
+        return 31 * result + Double.hashCode(this.divisor);
     }
 }

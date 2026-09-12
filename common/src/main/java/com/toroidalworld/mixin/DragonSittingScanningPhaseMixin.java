@@ -18,15 +18,15 @@ public class DragonSittingScanningPhaseMixin {
             method = "doServerTick",
             at = @At(value = "INVOKE", target = InjectionTargets.LIVING_ENTITY_GET_X))
     private double toroidal$scanTargetX(LivingEntity target, Operation<Double> original) {
-        return SeamAim.nearestTo(((DragonPhaseAccessor) this).toroidal$dragon(),
-                target.position().with(Direction.Axis.X, original.call(target))).x;
+        return SeamAim.nearestCoord(((DragonPhaseAccessor) this).toroidal$dragon(),
+                target, Direction.Axis.X, original.call(target));
     }
 
     @WrapOperation(
             method = "doServerTick",
             at = @At(value = "INVOKE", target = InjectionTargets.LIVING_ENTITY_GET_Z))
     private double toroidal$scanTargetZ(LivingEntity target, Operation<Double> original) {
-        return SeamAim.nearestTo(((DragonPhaseAccessor) this).toroidal$dragon(),
-                target.position().with(Direction.Axis.Z, original.call(target))).z;
+        return SeamAim.nearestCoord(((DragonPhaseAccessor) this).toroidal$dragon(),
+                target, Direction.Axis.Z, original.call(target));
     }
 }

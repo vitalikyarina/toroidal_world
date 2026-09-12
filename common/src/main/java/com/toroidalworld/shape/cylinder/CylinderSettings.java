@@ -1,7 +1,6 @@
 package com.toroidalworld.shape.cylinder;
 
 import com.toroidalworld.api.v1.shape.LoopSpans;
-import com.toroidalworld.core.FlatShape;
 import com.toroidalworld.core.NetherScales;
 import com.toroidalworld.core.WorldLoopSizes;
 
@@ -40,10 +39,6 @@ public record CylinderSettings(LoopSpans overworld, int netherScale, LoopSpans e
 
     public static boolean isCylinder(LoopSpans spans) {
         return spans.loops(Direction.Axis.X) != spans.loops(Direction.Axis.Z);
-    }
-
-    public static boolean isCylinder(FlatShape shape) {
-        return shape.identification() == FlatShape.Identification.CYLINDER;
     }
 
     public static Direction.Axis loopedAxis(LoopSpans spans) {

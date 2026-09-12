@@ -22,7 +22,6 @@ import journeymap.api.v2.common.Context;
 public final class JourneyMapFold {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private static final int REGION_BLOCKS = 512;
     private static final int REGION_CHUNKS = 32;
 
     private static final int MAX_TILE_BLITS = 16_384;
@@ -80,7 +79,7 @@ public final class JourneyMapFold {
             return 0.0;
         }
 
-        return shape.widthBlocks(axis) * (zoom / (double) REGION_BLOCKS);
+        return shape.widthBlocks(axis) * (zoom / (double) FullscreenZoomFloor.JOURNEYMAP_REGION_BLOCKS);
     }
 
     public static int loopedAxes() {
@@ -98,7 +97,7 @@ public final class JourneyMapFold {
     }
 
     public static int[] viewSpan(double centerBlock, int windowPixels, int zoom) {
-        double halfSpanBlocks = windowPixels / 2.0 * REGION_BLOCKS / zoom;
+        double halfSpanBlocks = windowPixels / 2.0 * FullscreenZoomFloor.JOURNEYMAP_REGION_BLOCKS / zoom;
         return new int[] {(int) Math.floor(centerBlock - halfSpanBlocks), (int) Math.ceil(centerBlock + halfSpanBlocks)};
     }
 
@@ -195,16 +194,7 @@ public final class JourneyMapFold {
 
         int first = Math.max(-range, (int) Math.ceil((screenMin - max) / period));
         int last = Math.min(range, (int) Math.floor((screenMax - min) / period));
-        if (last < first) {
-            return new int[0];
-        }
-
-        int[] laps = new int[last - first + 1];
-        for (int i = 0; i < laps.length; i++) {
-            laps[i] = first + i;
-        }
-
-        return laps;
+        return AxisCopies.lapRange(first, last);
     }
 
     public static <D> @Nullable String staleGridReason(@Nullable D lastDimension, @Nullable D dimension,

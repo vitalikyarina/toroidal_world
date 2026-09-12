@@ -4,17 +4,13 @@ import com.toroidalworld.accessors.TransformerSource;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.engine.fold.SeamDelta;
 
-import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 public final class SeamAim {
-    public static Vec3 nearestTo(Entity viewer, Vec3 point) {
-        return SeamSteering.nearestCopy(viewer, point);
-    }
-
-    public static BlockPos nearestTo(Entity viewer, BlockPos block) {
-        return SeamSteering.nearestCopy(viewer, block);
+    public static double nearestCoord(Entity viewer, Entity target, Direction.Axis axis, double coord) {
+        return SeamSteering.nearestCopy(viewer, target.position().with(axis, coord)).get(axis);
     }
 
     public static Vec3 deltaTo(Entity viewer, Vec3 point) {

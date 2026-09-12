@@ -1,12 +1,13 @@
 package com.toroidalworld.engine.noise;
 
-import java.util.Arrays;
 import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldFolds;
+import com.toroidalworld.engine.DoubleStack;
+import com.toroidalworld.engine.ObjectStack;
 
 public final class GenerationTransformerContext {
     public static final double UNDECLARED_VERTICAL_SHARE = -1.0;
@@ -95,60 +96,44 @@ public final class GenerationTransformerContext {
         }
 
         public final class BindingScope implements AutoCloseable {
-            private WorldFold[] previousTransformers = new WorldFold[8];
-            private SlotAxes[] previousAxes = new SlotAxes[8];
-            private double[] previousScales = new double[8];
-            private double[] previousShares = new double[8];
-            private int depth;
+            private final ObjectStack<WorldFold> previousTransformers = new ObjectStack<>();
+            private final ObjectStack<SlotAxes> previousAxes = new ObjectStack<>();
+            private final DoubleStack previousScales = new DoubleStack();
+            private final DoubleStack previousShares = new DoubleStack();
 
             private BindingScope() {
             }
 
             private void push() {
-                if (this.depth == this.previousTransformers.length) {
-                    this.previousTransformers = Arrays.copyOf(this.previousTransformers, this.depth * 2);
-                    this.previousAxes = Arrays.copyOf(this.previousAxes, this.depth * 2);
-                    this.previousScales = Arrays.copyOf(this.previousScales, this.depth * 2);
-                    this.previousShares = Arrays.copyOf(this.previousShares, this.depth * 2);
-                }
-
-                this.previousTransformers[this.depth] = transformer;
-                this.previousAxes[this.depth] = slotAxes;
-                this.previousScales[this.depth] = horizontalScale;
-                this.previousShares[this.depth] = verticalShare;
-                this.depth++;
+                this.previousTransformers.push(transformer);
+                this.previousAxes.push(slotAxes);
+                this.previousScales.push(horizontalScale);
+                this.previousShares.push(verticalShare);
             }
 
             @Override
             public void close() {
-                this.depth--;
-                transformer = this.previousTransformers[this.depth];
-                slotAxes = this.previousAxes[this.depth];
-                horizontalScale = this.previousScales[this.depth];
-                verticalShare = this.previousShares[this.depth];
+                transformer = this.previousTransformers.pop();
+                slotAxes = this.previousAxes.pop();
+                horizontalScale = this.previousScales.pop();
+                verticalShare = this.previousShares.pop();
             }
         }
 
         public final class ScaleScope implements AutoCloseable {
-            private double[] previousScales = new double[8];
-            private double[] previousShares = new double[8];
-            private int depth;
+            private final DoubleStack previousScales = new DoubleStack();
+            private final DoubleStack previousShares = new DoubleStack();
 
             private ScaleScope() {
             }
 
             private void push() {
-                if (this.depth == this.previousScales.length) {
-                    this.previousScales = Arrays.copyOf(this.previousScales, this.depth * 2);
-                    this.previousShares = Arrays.copyOf(this.previousShares, this.depth * 2);
-                }
-
-                this.previousScales[this.depth] = horizontalScale;
-                this.previousShares[this.depth++] = verticalShare;
+                this.previousScales.push(horizontalScale);
+                this.previousShares.push(verticalShare);
             }
 
             public void rescale(double scale) {
-                if (this.depth == 0) {
+                if (this.previousScales.isEmpty()) {
                     throw new IllegalStateException("rescale with no scale scope open");
                 }
 
@@ -157,35 +142,27 @@ public final class GenerationTransformerContext {
 
             @Override
             public void close() {
-                horizontalScale = this.previousScales[--this.depth];
-                verticalShare = this.previousShares[this.depth];
+                horizontalScale = this.previousScales.pop();
+                verticalShare = this.previousShares.pop();
             }
         }
 
         public final class DivisorScope implements AutoCloseable {
-            private double[] previousXDivisors = new double[8];
-            private double[] previousZDivisors = new double[8];
-            private int depth;
+            private final DoubleStack previousXDivisors = new DoubleStack();
+            private final DoubleStack previousZDivisors = new DoubleStack();
 
             private DivisorScope() {
             }
 
             private void push() {
-                if (this.depth == this.previousXDivisors.length) {
-                    this.previousXDivisors = Arrays.copyOf(this.previousXDivisors, this.depth * 2);
-                    this.previousZDivisors = Arrays.copyOf(this.previousZDivisors, this.depth * 2);
-                }
-
-                this.previousXDivisors[this.depth] = xDivisor;
-                this.previousZDivisors[this.depth] = zDivisor;
-                this.depth++;
+                this.previousXDivisors.push(xDivisor);
+                this.previousZDivisors.push(zDivisor);
             }
 
             @Override
             public void close() {
-                this.depth--;
-                xDivisor = this.previousXDivisors[this.depth];
-                zDivisor = this.previousZDivisors[this.depth];
+                xDivisor = this.previousXDivisors.pop();
+                zDivisor = this.previousZDivisors.pop();
             }
         }
     }

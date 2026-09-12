@@ -8,7 +8,7 @@ import net.minecraft.core.Direction;
 public final class FullscreenZoomFloor {
     public static final int MIN_WORLD_PIXELS = 64;
 
-    private static final int JOURNEYMAP_REGION_BLOCKS = 512;
+    public static final int JOURNEYMAP_REGION_BLOCKS = 512;
 
     public static int journeyMapZoom(ToroidalShape shape) {
         int floor = 0;

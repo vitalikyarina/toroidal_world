@@ -11,9 +11,10 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.lighting.BlockLightEngine;
+import net.minecraft.world.level.lighting.SkyLightEngine;
 
-@Mixin(BlockLightEngine.class)
-public abstract class BlockLightEngineMixin {
+@Mixin({BlockLightEngine.class, SkyLightEngine.class})
+public abstract class LightNodeStepMixin {
     @WrapOperation(
             method = {"propagateIncrease", "propagateDecrease"},
             at = @At(value = "INVOKE", target = InjectionTargets.BLOCK_POS_OFFSET_PACKED),

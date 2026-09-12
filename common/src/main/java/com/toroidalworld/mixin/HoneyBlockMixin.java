@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import com.toroidalworld.engine.seam.SeamAim;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import net.minecraft.core.BlockPos;
@@ -18,6 +18,6 @@ public abstract class HoneyBlockMixin {
             at = @At("HEAD"),
             argsOnly = true)
     private BlockPos toroidal$slideAgainstNearestCopy(BlockPos pos, @Local(argsOnly = true) Entity entity) {
-        return SeamAim.nearestTo(entity, pos);
+        return SeamSteering.nearestCopy(entity, pos);
     }
 }

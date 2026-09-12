@@ -116,8 +116,8 @@ final class WorldLoopTransformer implements WorldFold {
         }
 
         private ChunkPos unwrap(ChunkPos anchor, ChunkPos wrapped) {
-            int unwrappedX = x.unwrap(anchor.x(), wrapped.x());
-            int unwrappedZ = z.unwrap(anchor.z(), wrapped.z());
+            int unwrappedX = x.unwrapAround(anchor.x(), wrapped.x());
+            int unwrappedZ = z.unwrapAround(anchor.z(), wrapped.z());
             if (unwrappedX == wrapped.x() && unwrappedZ == wrapped.z()) {
                 return wrapped;
             }
@@ -305,14 +305,7 @@ final class WorldLoopTransformer implements WorldFold {
 
     @Override
     public String toString() {
-        return "WorldLoopTransformer[x " + axisString(bounds.x()) + ", z " + axisString(bounds.z()) + "]";
-    }
-
-    private static String axisString(AxisBounds axis) {
-        return switch (axis) {
-            case AxisBounds.Looped looped -> looped.minChunk() + ".." + looped.maxChunk() + " chunks";
-            case AxisBounds.Unbounded() -> "unbounded";
-        };
+        return "WorldLoopTransformer[x=" + bounds.x().spanText() + ", z=" + bounds.z().spanText() + "]";
     }
 
     @Override
@@ -538,20 +531,17 @@ final class WorldLoopTransformer implements WorldFold {
 
     @Override
     public List<Folded<AABB>> split(AABB box) {
-        List<AABB> pieces = splitAcrossBounds(box);
-        List<Folded<AABB>> oriented = new ArrayList<>(pieces.size());
-        for (AABB piece : pieces) {
-            oriented.add(Folded.of(piece));
-        }
-
-        return oriented;
+        return foldedAll(splitAcrossBounds(box));
     }
 
     @Override
     public List<Folded<BoundingBox>> split(BoundingBox region) {
-        List<BoundingBox> pieces = splitAcrossBounds(region);
-        List<Folded<BoundingBox>> oriented = new ArrayList<>(pieces.size());
-        for (BoundingBox piece : pieces) {
+        return foldedAll(splitAcrossBounds(region));
+    }
+
+    private static <T> List<Folded<T>> foldedAll(List<T> pieces) {
+        List<Folded<T>> oriented = new ArrayList<>(pieces.size());
+        for (T piece : pieces) {
             oriented.add(Folded.of(piece));
         }
 

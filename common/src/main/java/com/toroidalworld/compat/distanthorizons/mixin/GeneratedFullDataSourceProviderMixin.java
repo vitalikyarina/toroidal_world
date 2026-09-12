@@ -18,6 +18,6 @@ public class GeneratedFullDataSourceProviderMixin {
     private CompletableFuture<DataSourceRetrievalResult> toroidal$retrieveTheOneSection(Long genPos,
             Operation<CompletableFuture<DataSourceRetrievalResult>> original) {
         return original.call(DhKeys.foldSection(
-                ((DhRepoLevel) ((FullDataSourceProviderV2) (Object) this).repo).toroidal$shape(), genPos));
+                DhRepoLevel.shapeOf(((FullDataSourceProviderV2) (Object) this).repo), genPos));
     }
 }

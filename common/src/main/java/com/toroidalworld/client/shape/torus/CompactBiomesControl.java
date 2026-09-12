@@ -44,7 +44,7 @@ public final class CompactBiomesControl implements WorldOptionControl {
     private ClimateScale climateScale;
     private String factorText;
     private @Nullable Integer effectiveFactor;
-    private EditBox factorEdit;
+    private DigitsEditBox factorEdit;
 
     public CompactBiomesControl(WorldOptionContext context) {
         this.context = context;
@@ -95,7 +95,9 @@ public final class CompactBiomesControl implements WorldOptionControl {
         if (custom) {
             this.factorEdit.setResponder(value -> {
                 this.factorText = value;
-                this.effectiveFactor = parseFactor(value);
+                Integer factor = this.factorEdit.number();
+                this.effectiveFactor = factor != null
+                        && factor >= ClimateScale.CUSTOM_MIN && factor <= ClimateScale.CUSTOM_MAX ? factor : null;
                 this.context.onChanged();
             });
         }
@@ -137,14 +139,5 @@ public final class CompactBiomesControl implements WorldOptionControl {
         return mode == ClimateScale.Mode.OFF
                 ? hint
                 : hint.copy().append(CommonComponents.NEW_LINE).append(KEEPS);
-    }
-
-    private static @Nullable Integer parseFactor(String value) {
-        try {
-            int factor = Integer.parseInt(value);
-            return factor >= ClimateScale.CUSTOM_MIN && factor <= ClimateScale.CUSTOM_MAX ? factor : null;
-        } catch (NumberFormatException ignored) {
-            return null;
-        }
     }
 }

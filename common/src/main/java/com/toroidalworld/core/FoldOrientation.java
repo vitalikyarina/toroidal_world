@@ -41,14 +41,6 @@ public enum FoldOrientation {
         return this.flipsX == this.flipsZ;
     }
 
-    public int signX() {
-        return this.flipsX ? -1 : 1;
-    }
-
-    public int signZ() {
-        return this.flipsZ ? -1 : 1;
-    }
-
     public FoldOrientation compose(FoldOrientation next) {
         return of(this.flipsX ^ next.flipsX, this.flipsZ ^ next.flipsZ);
     }

@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.toroidalworld.InjectionTargets;
-import com.toroidalworld.engine.seam.SeamAim;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
 import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
@@ -18,6 +18,6 @@ public class ThrownTridentMixin {
                     value = "INVOKE",
                     target = InjectionTargets.ENTITY_GET_EYE_POSITION))
     private Vec3 toroidal$ownerEyeThroughSeam(Vec3 ownerEye) {
-        return SeamAim.nearestTo((ThrownTrident) (Object) this, ownerEye);
+        return SeamSteering.nearestCopy((ThrownTrident) (Object) this, ownerEye);
     }
 }

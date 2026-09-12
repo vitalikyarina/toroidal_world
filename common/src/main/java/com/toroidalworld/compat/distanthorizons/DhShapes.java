@@ -1,5 +1,7 @@
 package com.toroidalworld.compat.distanthorizons;
 
+import org.jspecify.annotations.Nullable;
+
 import com.toroidalworld.api.v1.ToroidalShape;
 import com.toroidalworld.api.v1.ToroidalWorldApi;
 import com.toroidalworld.compat.ClientShapes;
@@ -9,24 +11,24 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import net.minecraft.world.level.Level;
 
 public final class DhShapes {
-    public static ToroidalShape of(IDhLevel level) {
+    public static @Nullable ToroidalShape of(IDhLevel level) {
         return level == null ? null : of(level.getLevelWrapper());
     }
 
-    public static ToroidalShape of(ILevelWrapper wrapper) {
+    public static @Nullable ToroidalShape of(ILevelWrapper wrapper) {
         return shapeOf(mcLevel(wrapper));
     }
 
-    public static ToroidalShape clientFrame(ILevelWrapper wrapper) {
+    public static @Nullable ToroidalShape clientFrame(ILevelWrapper wrapper) {
         Level mcLevel = mcLevel(wrapper);
         return mcLevel != null && mcLevel.isClientSide() ? shapeOf(mcLevel) : null;
     }
 
-    private static Level mcLevel(ILevelWrapper wrapper) {
+    private static @Nullable Level mcLevel(ILevelWrapper wrapper) {
         return wrapper != null && wrapper.getWrappedMcObject() instanceof Level mcLevel ? mcLevel : null;
     }
 
-    private static ToroidalShape shapeOf(Level mcLevel) {
+    private static @Nullable ToroidalShape shapeOf(Level mcLevel) {
         if (mcLevel == null) {
             return null;
         }

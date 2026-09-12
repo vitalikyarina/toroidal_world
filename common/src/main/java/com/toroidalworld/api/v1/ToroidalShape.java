@@ -1,5 +1,7 @@
 package com.toroidalworld.api.v1;
 
+import com.toroidalworld.core.FoldOrientation;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.ChunkPos;
@@ -190,7 +192,7 @@ public interface ToroidalShape {
 
         /** Whether the fold kept handedness: a reversal on both axes is a half turn, not a mirror. */
         public boolean preservesHandedness() {
-            return this.flipsX == this.flipsZ;
+            return fold().preservesHandedness();
         }
 
         /**
@@ -198,11 +200,11 @@ public interface ToroidalShape {
          * with the folded position, or it will point the wrong way on the far side of a mirrored seam.
          */
         public Vec3 applyToDelta(Vec3 delta) {
-            if (isIdentity()) {
-                return delta;
-            }
+            return fold().applyToDelta(delta);
+        }
 
-            return new Vec3(this.flipsX ? -delta.x : delta.x, delta.y, this.flipsZ ? -delta.z : delta.z);
+        private FoldOrientation fold() {
+            return FoldOrientation.of(this.flipsX, this.flipsZ);
         }
     }
 

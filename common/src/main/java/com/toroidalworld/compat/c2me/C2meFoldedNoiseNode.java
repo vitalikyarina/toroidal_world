@@ -71,10 +71,7 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
         }
 
         C2meFoldedNoiseNode that = (C2meFoldedNoiseNode) o;
-        return Double.compare(this.horizontalScale, that.horizontalScale) == 0
-                && Double.compare(this.verticalShare, that.verticalShare) == 0
-                && this.transformer == that.transformer
-                && this.slotAxes.equals(that.slotAxes)
+        return sameFields(that)
                 && this.foldedX.equals(that.foldedX)
                 && this.foldedY.equals(that.foldedY)
                 && this.foldedZ.equals(that.foldedZ);
@@ -86,10 +83,7 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
         result = 31 * result + this.foldedX.hashCode();
         result = 31 * result + this.foldedY.hashCode();
         result = 31 * result + this.foldedZ.hashCode();
-        result = 31 * result + this.slotAxes.hashCode();
-        result = 31 * result + Double.hashCode(this.horizontalScale);
-        result = 31 * result + Double.hashCode(this.verticalShare);
-        return 31 * result + System.identityHashCode(this.transformer);
+        return fieldHash(result);
     }
 
     @Override
@@ -99,10 +93,7 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
         }
 
         C2meFoldedNoiseNode that = (C2meFoldedNoiseNode) o;
-        return Double.compare(this.horizontalScale, that.horizontalScale) == 0
-                && Double.compare(this.verticalShare, that.verticalShare) == 0
-                && this.transformer == that.transformer
-                && this.slotAxes.equals(that.slotAxes)
+        return sameFields(that)
                 && this.foldedX.relaxedEquals(that.foldedX)
                 && this.foldedY.relaxedEquals(that.foldedY)
                 && this.foldedZ.relaxedEquals(that.foldedZ);
@@ -114,7 +105,18 @@ public final class C2meFoldedNoiseNode extends GenericShiftedNoiseNode {
         result = 31 * result + this.foldedX.relaxedHashCode();
         result = 31 * result + this.foldedY.relaxedHashCode();
         result = 31 * result + this.foldedZ.relaxedHashCode();
-        result = 31 * result + this.slotAxes.hashCode();
+        return fieldHash(result);
+    }
+
+    private boolean sameFields(C2meFoldedNoiseNode that) {
+        return Double.compare(this.horizontalScale, that.horizontalScale) == 0
+                && Double.compare(this.verticalShare, that.verticalShare) == 0
+                && this.transformer == that.transformer
+                && this.slotAxes.equals(that.slotAxes);
+    }
+
+    private int fieldHash(int seed) {
+        int result = 31 * seed + this.slotAxes.hashCode();
         result = 31 * result + Double.hashCode(this.horizontalScale);
         result = 31 * result + Double.hashCode(this.verticalShare);
         return 31 * result + System.identityHashCode(this.transformer);

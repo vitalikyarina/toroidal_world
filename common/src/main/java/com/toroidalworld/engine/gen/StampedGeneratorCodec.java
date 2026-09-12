@@ -26,15 +26,7 @@ public final class StampedGeneratorCodec {
         return new StampCarrying(dispatch);
     }
 
-    private static @Nullable CarriedShape carriedToWrite(ChunkGenerator generator) {
-        if (generator instanceof ShapedChunkGenerator) {
-            return null;
-        }
-
-        return generator instanceof ShapeStamp stamp ? stamp.toroidal$carriedShape() : null;
-    }
-
-    private static @Nullable ShapeStamp stampToFill(ChunkGenerator generator) {
+    private static @Nullable ShapeStamp stampOf(ChunkGenerator generator) {
         if (generator instanceof ShapedChunkGenerator) {
             return null;
         }
@@ -46,7 +38,8 @@ public final class StampedGeneratorCodec {
         @Override
         public <T> DataResult<T> encode(ChunkGenerator input, DynamicOps<T> ops, T prefix) {
             DataResult<T> encoded = this.dispatch.encode(input, ops, prefix);
-            CarriedShape carried = carriedToWrite(input);
+            ShapeStamp stamp = stampOf(input);
+            CarriedShape carried = stamp == null ? null : stamp.toroidal$carriedShape();
             if (carried == null) {
                 return encoded;
             }
@@ -61,7 +54,7 @@ public final class StampedGeneratorCodec {
 
         private static <T> DataResult<Pair<ChunkGenerator, T>> fillStamp(DynamicOps<T> ops, T input,
                 Pair<ChunkGenerator, T> decoded) {
-            ShapeStamp stamp = stampToFill(decoded.getFirst());
+            ShapeStamp stamp = stampOf(decoded.getFirst());
             MapLike<T> map = ops.getMap(input).result().orElse(null);
             if (stamp == null || map == null || map.get(SHAPE_KEY) == null) {
                 return DataResult.success(decoded);

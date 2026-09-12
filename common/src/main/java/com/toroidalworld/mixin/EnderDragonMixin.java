@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.engine.seam.SeamAim;
 import com.toroidalworld.engine.seam.SeamRange;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -28,7 +29,7 @@ public class EnderDragonMixin {
                             + "getFlyTargetLocation()Lnet/minecraft/world/phys/Vec3;"))
     private @Nullable Vec3 toroidal$flyTargetThroughSeam(@Nullable Vec3 targetLocation) {
         EnderDragon self = (EnderDragon) (Object) this;
-        return targetLocation == null ? null : SeamAim.nearestTo(self, targetLocation);
+        return targetLocation == null ? null : SeamSteering.nearestCopy(self, targetLocation);
     }
 
     @WrapOperation(
@@ -43,15 +44,13 @@ public class EnderDragonMixin {
             method = "knockBack",
             at = @At(value = "INVOKE", target = InjectionTargets.ENTITY_GET_X))
     private double toroidal$shovedEntityX(Entity target, Operation<Double> original) {
-        return SeamAim.nearestTo((EnderDragon) (Object) this,
-                target.position().with(Direction.Axis.X, original.call(target))).x;
+        return SeamAim.nearestCoord((EnderDragon) (Object) this, target, Direction.Axis.X, original.call(target));
     }
 
     @WrapOperation(
             method = "knockBack",
             at = @At(value = "INVOKE", target = InjectionTargets.ENTITY_GET_Z))
     private double toroidal$shovedEntityZ(Entity target, Operation<Double> original) {
-        return SeamAim.nearestTo((EnderDragon) (Object) this,
-                target.position().with(Direction.Axis.Z, original.call(target))).z;
+        return SeamAim.nearestCoord((EnderDragon) (Object) this, target, Direction.Axis.Z, original.call(target));
     }
 }

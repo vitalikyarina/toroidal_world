@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.toroidalworld.engine.seam.SeamAim;
+import com.toroidalworld.engine.seam.SeamSteering;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
@@ -26,7 +26,7 @@ public class FollowMobGoalMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;getX()D"))
     private double toroidal$followedXThroughSeam(Mob read, Operation<Double> original) {
         double x = original.call(read);
-        return read == this.mob ? x : SeamAim.nearestTo(this.mob, read.position()).x;
+        return read == this.mob ? x : SeamSteering.nearestCopy(this.mob, read.position()).x;
     }
 
     @WrapOperation(
@@ -34,7 +34,7 @@ public class FollowMobGoalMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;getZ()D"))
     private double toroidal$followedZThroughSeam(Mob read, Operation<Double> original) {
         double z = original.call(read);
-        return read == this.mob ? z : SeamAim.nearestTo(this.mob, read.position()).z;
+        return read == this.mob ? z : SeamSteering.nearestCopy(this.mob, read.position()).z;
     }
 
     @WrapOperation(
@@ -55,6 +55,6 @@ public class FollowMobGoalMixin {
 
     @Unique
     private Vec3 toroidal$wantedNearTheMob(double wantedX, double wantedZ) {
-        return SeamAim.nearestTo(this.mob, new Vec3(wantedX, this.mob.getY(), wantedZ));
+        return SeamSteering.nearestCopy(this.mob, new Vec3(wantedX, this.mob.getY(), wantedZ));
     }
 }

@@ -49,11 +49,9 @@ final class SuspendedLand {
 
     private static final int COARSE_STEP_BLOCKS = 4;
 
-    private static @Nullable Site found;
+    private static final List<Outcome> OUTCOMES = new ArrayList<>();
 
     private static @Nullable String swept;
-
-    private static @Nullable String closest;
 
     record Site(WorldType type, long seed, int blockX, int blockZ, int columns) {
         String describe() {
@@ -69,16 +67,45 @@ final class SuspendedLand {
     private record Sweep(@Nullable Site site, @Nullable Hit highest) {
     }
 
-    static synchronized Site requireSite() {
+    private record Outcome(String type, @Nullable Site site, String closest) {
+        String describe() {
+            return this.site == null ? this.type + " — no site: " + this.closest : this.site.describe();
+        }
+    }
+
+    static synchronized List<Site> requireSites() {
+        List<Site> sites = new ArrayList<>();
+        for (Outcome outcome : searched()) {
+            if (outcome.site() != null) {
+                sites.add(outcome.site());
+            }
+        }
+
+        assertTrue(!sites.isEmpty(), "no land stands " + SUSPENDED_BLOCKS + " blocks above the ceiling: "
+                + swept + " searched, " + closestOfAll() + " — the ceiling has nothing to cut here, so this"
+                + " scan cannot tell a working ceiling from a broken one");
+        return sites;
+    }
+
+    static synchronized List<String> outcomes() {
+        return searched().stream().map(Outcome::describe).toList();
+    }
+
+    private static List<Outcome> searched() {
         if (swept == null) {
             search();
         }
 
-        Site site = found;
-        assertTrue(site != null, "no land stands " + SUSPENDED_BLOCKS + " blocks above the ceiling: "
-                + swept + " searched, " + closest + " — the ceiling has nothing to cut here, so this scan"
-                + " cannot tell a working ceiling from a broken one");
-        return site;
+        return OUTCOMES;
+    }
+
+    private static String closestOfAll() {
+        List<String> reaches = new ArrayList<>();
+        for (Outcome outcome : OUTCOMES) {
+            reaches.add(outcome.type() + ": " + outcome.closest());
+        }
+
+        return String.join("; ", reaches);
     }
 
     static long seed(int index) {
@@ -146,8 +173,6 @@ final class SuspendedLand {
 
     private static void search() {
         List<String> types = new ArrayList<>();
-        Hit highest = null;
-        String highestAt = "";
         for (WorldType type : ClimateScanFixture.TYPES) {
             NoiseGeneratorSettings vanilla = settingsOf(type);
             DensityFunction rawCeiling = TerrainCeiling.ceiling(vanilla);
@@ -158,7 +183,10 @@ final class SuspendedLand {
             types.add(type.name());
             NoiseGeneratorSettings probe = withCeilingParked(vanilla, rawCeiling);
             WorldFold fold = torusOfWidth(WIDTH_BLOCKS);
-            for (int index = 0; index < SEEDS && found == null; index++) {
+            Site site = null;
+            Hit highest = null;
+            String highestAt = "";
+            for (int index = 0; index < SEEDS && site == null; index++) {
                 long seed = seed(index);
                 RandomState state = randomState(probe, fold, seed);
                 DensityFunction ceiling = state.router().barrierNoise();
@@ -166,24 +194,24 @@ final class SuspendedLand {
                 Sweep[] result = new Sweep[1];
                 GenerationTransformerContext.runWithTransformer(fold,
                         () -> result[0] = sweep(type, seed, ceiling, density, vanilla.seaLevel()));
-                found = result[0].site();
+                site = result[0].site();
                 Hit reach = result[0].highest();
                 ScanReports.note(SCAN, "suspended", "type=" + type.name() + " width=" + WIDTH_BLOCKS
-                        + " seed=" + seed + " site=" + (found != null));
+                        + " seed=" + seed + " site=" + (site != null));
                 if (reach != null && (highest == null || reach.overshoot() > highest.overshoot())) {
                     highest = reach;
-                    highestAt = type.name() + " seed " + seed + " x=" + reach.blockX()
-                            + " z=" + reach.blockZ();
+                    highestAt = "seed " + seed + " x=" + reach.blockX() + " z=" + reach.blockZ();
                 }
             }
+
+            OUTCOMES.add(new Outcome(type.name(), site, highest == null
+                    ? "no column stands above the ceiling at all"
+                    : "the highest column the sweep found stood " + highest.overshoot()
+                            + " blocks above it, at " + highestAt));
         }
 
         swept = SEEDS + " seeds of " + String.join(" and ", types) + ", one column every "
                 + SWEEP_STEP_BLOCKS + " blocks over a " + WIDTH_BLOCKS + "-block lap";
-        closest = highest == null
-                ? "no column stands above the ceiling at all"
-                : "the highest column the sweep found stood " + highest.overshoot()
-                        + " blocks above it, at " + highestAt;
     }
 
     private static Sweep sweep(WorldType type, long seed, DensityFunction ceiling, DensityFunction density,

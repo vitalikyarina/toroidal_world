@@ -1,7 +1,6 @@
 package com.toroidalworld.core;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public final class NetherScales {
@@ -16,22 +15,14 @@ public final class NetherScales {
         }
 
         List<Integer> scales = new ArrayList<>();
-        for (int candidate = 1; (long) candidate * candidate <= overworldChunkWidth; candidate++) {
-            if (overworldChunkWidth % candidate != 0) {
-                continue;
+        for (int divisor : Divisors.of(overworldChunkWidth)) {
+            if (divisor > maxScale) {
+                break;
             }
 
-            if (candidate <= maxScale) {
-                scales.add(candidate);
-            }
-
-            int paired = overworldChunkWidth / candidate;
-            if (paired != candidate && paired <= maxScale) {
-                scales.add(paired);
-            }
+            scales.add(divisor);
         }
 
-        Collections.sort(scales);
         return scales;
     }
 

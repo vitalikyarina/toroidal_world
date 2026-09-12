@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.world.level.biome.Biome;
@@ -113,7 +115,7 @@ public final class XaeroExportAssembly {
         }
     }
 
-    public ExportMapTileChunk chunk(int slotX, int slotZ) {
+    public @Nullable ExportMapTileChunk chunk(int slotX, int slotZ) {
         this.tileChunkX = XaeroWorldMapFold.firstTileChunkOfRegion(this.rawRegionX) + slotX;
         this.tileChunkZ = XaeroWorldMapFold.firstTileChunkOfRegion(this.rawRegionZ) + slotZ;
         int canonicalX = XaeroWorldMapFold.foldTileChunk(Direction.Axis.X, this.tileChunkX);
@@ -173,7 +175,7 @@ public final class XaeroExportAssembly {
         return dimension().getLayeredMapRegions().getLayer(caveLayer);
     }
 
-    private ExportMapRegion load(int regionX, int regionZ) {
+    private @Nullable ExportMapRegion load(int regionX, int regionZ) {
         if (this.updateConfig == null) {
             this.updateConfig = new MapUpdateFastConfig(this.processor);
             this.includingHighlights = (Boolean) WorldMap.INSTANCE.getConfigs().getClientConfigManager()
