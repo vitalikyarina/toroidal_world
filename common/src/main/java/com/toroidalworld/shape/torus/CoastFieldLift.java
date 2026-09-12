@@ -13,7 +13,6 @@ import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunction.NoiseHolder;
-import net.minecraft.world.level.levelgen.DensityFunction.Visitor;
 import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.RandomState;
 
@@ -80,22 +79,11 @@ public final class CoastFieldLift {
 
     private static List<CoastLiftCache> coastNoises(NoiseRouter router) {
         List<CoastLiftCache> coasts = new ArrayList<>();
-        router.continents().mapAll(new Visitor() {
-            @Override
-            public DensityFunction apply(DensityFunction input) {
-                return input;
+        for (NoiseHolder noise : DensityNoises.matching(router.continents(), CoastFields::isCoast)) {
+            if (noise.noise() instanceof CoastLiftCache coast) {
+                coasts.add(coast);
             }
-
-            @Override
-            public NoiseHolder visitNoise(NoiseHolder noise) {
-                if (noise.noise() instanceof CoastLiftCache coast
-                        && noise.noiseData().unwrapKey().filter(CoastFields::isCoast).isPresent()) {
-                    coasts.add(coast);
-                }
-
-                return noise;
-            }
-        });
+        }
 
         return coasts;
     }

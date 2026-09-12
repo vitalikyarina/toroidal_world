@@ -1,5 +1,7 @@
 package com.toroidalworld.client.shape;
 
+import org.jspecify.annotations.Nullable;
+
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
@@ -16,6 +18,14 @@ public class DigitsEditBox extends EditBox {
                 .toString();
         if (!digits.isEmpty() || text.isEmpty()) {
             super.insertText(digits);
+        }
+    }
+
+    public @Nullable Integer number() {
+        try {
+            return Integer.parseInt(this.getValue());
+        } catch (NumberFormatException ignored) {
+            return null;
         }
     }
 }
