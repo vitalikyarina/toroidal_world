@@ -14,7 +14,20 @@ public final class DhShapes {
     }
 
     public static ToroidalShape of(ILevelWrapper wrapper) {
-        if (wrapper == null || !(wrapper.getWrappedMcObject() instanceof Level mcLevel)) {
+        return shapeOf(mcLevel(wrapper));
+    }
+
+    public static ToroidalShape clientFrame(ILevelWrapper wrapper) {
+        Level mcLevel = mcLevel(wrapper);
+        return mcLevel != null && mcLevel.isClientSide() ? shapeOf(mcLevel) : null;
+    }
+
+    private static Level mcLevel(ILevelWrapper wrapper) {
+        return wrapper != null && wrapper.getWrappedMcObject() instanceof Level mcLevel ? mcLevel : null;
+    }
+
+    private static ToroidalShape shapeOf(Level mcLevel) {
+        if (mcLevel == null) {
             return null;
         }
 

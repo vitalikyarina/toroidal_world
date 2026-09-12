@@ -1,15 +1,16 @@
 package com.toroidalworld.compat.c2me;
 
 import com.toroidalworld.core.WorldFold;
-import com.toroidalworld.engine.noise.ClimateScaleCompression;
 import com.toroidalworld.engine.noise.ContextScaledNoise;
 import com.toroidalworld.engine.noise.DomainWarp;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.shape.torus.ClimateCompression;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_AMPLITUDES;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_FIRST_OCTAVE;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_NOISE_DATA;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.CLIMATE_XZ_SCALE;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.NOISE_DATA;
+import static com.toroidalworld.engine.noise.DensityFunctionFixture.RECTANGULAR;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.SEED;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.SQUARE;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.WORLDS;
@@ -182,8 +183,47 @@ class C2meDfcAstTest {
                 "a router built for a generator that wraps nothing must carry no toroidal node");
     }
 
+    @Test
+    void blendDensityOverAFoldedNoiseIsNotReported() {
+        DensityFunction source = DensityFunctions.blendDensity(
+                withLiveNoise(DensityFunctions.noise(NOISE_DATA, XZ_SCALE, Y_SCALE)));
+
+        AstNode produced = GenerationTransformerContext.withRouterBuild(SQUARE, () -> McToAst.toAst(source));
+
+        assertInstanceOf(C2meFoldedNoiseNode.class, produced,
+                "blend_density hands its input's node straight back, so the fixture proves nothing otherwise");
+        assertFalse(C2meDfcAst.reportsMiss(source, produced, SQUARE));
+    }
+
+    @Test
+    void unknownSourceIsReportedOnce() {
+        DensityFunction source = DensityFunctions.constant(1.0);
+        AstNode produced = unfoldedNoiseNode();
+
+        assertTrue(C2meDfcAst.reportsMiss(source, produced, SQUARE));
+        assertFalse(C2meDfcAst.reportsMiss(source, produced, SQUARE));
+    }
+
+    @Test
+    void routerThatFoldsNothingReportsNothing() {
+        assertFalse(C2meDfcAst.reportsMiss(DensityFunctions.blendAlpha(), unfoldedNoiseNode(), null));
+    }
+
+    @Test
+    void newRouterReportsTheSourceAgain() {
+        DensityFunction source = DensityFunctions.yClampedGradient(0, 1, 0.0, 1.0);
+        AstNode produced = unfoldedNoiseNode();
+
+        assertTrue(C2meDfcAst.reportsMiss(source, produced, SQUARE));
+        assertTrue(C2meDfcAst.reportsMiss(source, produced, RECTANGULAR));
+    }
+
+    private static AstNode unfoldedNoiseNode() {
+        return McToAst.toAst(withLiveNoise(DensityFunctions.noise(NOISE_DATA, XZ_SCALE, Y_SCALE)));
+    }
+
     private static void assertCorrectionIsLive(WorldFold fold) {
-        double compression = ClimateScaleCompression.factor(fold, CLIMATE_FIELD, CLIMATE_AMPLITUDES,
+        double compression = ClimateCompression.factor(fold, CLIMATE_FIELD, CLIMATE_AMPLITUDES,
                 Math.pow(2.0, CLIMATE_FIRST_OCTAVE), CLIMATE_XZ_SCALE, FLAT_Y_SCALE / CLIMATE_XZ_SCALE);
 
         assertTrue(compression > 1.0,

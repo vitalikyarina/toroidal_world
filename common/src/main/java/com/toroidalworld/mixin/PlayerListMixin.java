@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
+import com.toroidalworld.engine.net.MeasuredReach;
 import com.toroidalworld.engine.net.WorldShapeSync;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -51,7 +52,9 @@ public class PlayerListMixin {
                     : player.distanceToSqr(x, y, z);
 
             if (distanceSqr < range * range) {
-                player.connection.send(packet);
+                try (MeasuredReach ignored = MeasuredReach.measuring(range)) {
+                    player.connection.send(packet);
+                }
             }
         }
     }

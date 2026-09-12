@@ -1,5 +1,8 @@
 package com.toroidalworld.compat.c2me;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -7,11 +10,11 @@ import com.mojang.logging.LogUtils;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
 import com.toroidalworld.engine.noise.DensityFunctionSlotAxes;
-import com.toroidalworld.engine.noise.DomainWarp;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.engine.noise.NoiseConstants;
 import com.toroidalworld.engine.noise.SlotAxes;
 import com.toroidalworld.engine.noise.SlotAxis;
+import com.toroidalworld.shape.torus.ClimateCompression;
 import com.ishland.c2me.opts.dfc.common.ast.AstNode;
 import com.ishland.c2me.opts.dfc.common.ast.binary.AddNode;
 import com.ishland.c2me.opts.dfc.common.ast.binary.MulNode;
@@ -24,17 +27,21 @@ import net.minecraft.world.level.levelgen.DensityFunctions;
 public final class C2meDfcAst {
     private static final Logger LOGGER = LogUtils.getLogger();
 
+    private static final Set<String> REPORTED_MISSES = new HashSet<>();
+
+    private static @Nullable WorldFold reportedMissesFor;
+
     public static AstNode fold(DensityFunction source, AstNode produced) {
+        WorldFold transformer = GenerationTransformerContext.context().routerBuildTransformer();
         Fold fold = foldOf(source);
         if (fold == null) {
-            if (produced instanceof GenericShiftedNoiseNode && !delegatesToItsInput(source)) {
+            if (reportsMiss(source, produced, transformer)) {
                 LOGGER.warn("[c2me-compat] dfc_ast noise_not_folded type={}", source.getClass().getName());
             }
 
             return produced;
         }
 
-        WorldFold transformer = GenerationTransformerContext.context().routerBuildTransformer();
         if (transformer == null) {
             return produced;
         }
@@ -74,6 +81,26 @@ public final class C2meDfcAst {
         return source instanceof DensityFunctions.HolderHolder;
     }
 
+    static boolean reportsMiss(DensityFunction source, AstNode produced, @Nullable WorldFold transformer) {
+        if (transformer == null
+                || !(produced instanceof GenericShiftedNoiseNode)
+                || produced instanceof C2meFoldedNoiseNode
+                || delegatesToItsInput(source)) {
+            return false;
+        }
+
+        return firstMissOf(transformer, source.getClass().getName());
+    }
+
+    private static synchronized boolean firstMissOf(WorldFold transformer, String type) {
+        if (transformer != reportedMissesFor) {
+            REPORTED_MISSES.clear();
+            reportedMissesFor = transformer;
+        }
+
+        return REPORTED_MISSES.add(type);
+    }
+
     @SuppressWarnings("deprecation")
     private static Fold noiseFold(DensityFunctions.Noise noise) {
         return new Fold(SlotAxes.DEFAULT, noise.xzScale(),
@@ -86,7 +113,7 @@ public final class C2meDfcAst {
         AstNode foldedX = slotNode(axes.x(), noise.inputX);
         AstNode foldedZ = slotNode(axes.z(), noise.inputZ);
         if (fold.warped()) {
-            double divisor = DomainWarp.divisor(noise.noise, transformer, fold.horizontalScale(),
+            double divisor = ClimateCompression.warpDivisor(noise.noise, transformer, fold.horizontalScale(),
                     fold.verticalShare());
             foldedX = warpedSlot(source, CoordinateNode.Axis.X, axes.x().domainOf(transformer), noise.inputX,
                     divisor);

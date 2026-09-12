@@ -1,76 +1,27 @@
 package com.toroidalworld.engine.noise;
 
-import com.toroidalworld.accessors.ClimateCompressionCache;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WrapDomain;
-import com.toroidalworld.shape.torus.ClimateScale;
-import com.toroidalworld.shape.torus.CompactBiomes;
 
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.levelgen.DensityFunction;
-import net.minecraft.world.level.levelgen.synth.NormalNoise;
 
 public final class ClimateScaleCompression {
-    static final double CELLS_PER_LAP = 1.5;
+    public static final double NO_COMPRESSION = 1.0;
+
+    public static final double CELLS_PER_LAP = 1.5;
 
     private static final double HORIZONTAL_SHARE = 0.0;
 
-    private static final double NO_COMPRESSION = 1.0;
-
     private static final int UNBOUNDED_LAP = 0;
 
-    public record Resolved(WorldFold fold, double baseScale, double verticalShare, double factor) {
-        boolean covers(WorldFold fold, double baseScale, double verticalShare) {
-            return this.fold == fold && this.baseScale == baseScale && this.verticalShare == verticalShare;
-        }
+    public static boolean compressible(WorldFold fold, double verticalShare) {
+        return verticalShare == HORIZONTAL_SHARE && lapBlocks(fold) != UNBOUNDED_LAP;
     }
 
-    public static double resolve(ClimateCompressionCache cache, WorldFold fold, boolean climateField,
-            DoubleList amplitudes, double lowestFreqInputFactor, double baseScale, double verticalShare) {
-        Resolved resolved = cache.toroidal$climateCompression();
-        if (resolved == null || !resolved.covers(fold, baseScale, verticalShare)) {
-            resolved = new Resolved(fold, baseScale, verticalShare,
-                    factor(fold, climateField, amplitudes, lowestFreqInputFactor, baseScale, verticalShare));
-            cache.toroidal$climateCompression(resolved);
-        }
-
-        return resolved.factor();
-    }
-
-    public static double factorOf(DensityFunction.NoiseHolder noise, WorldFold fold, double baseScale,
-            double verticalShare) {
-        NormalNoise.NoiseParameters parameters = noise.noiseData().value();
-        boolean climateField = noise.noiseData().unwrapKey().filter(ClimateFields::isClimate).isPresent();
-
-        return factor(fold, climateField, parameters.amplitudes(), Math.pow(2.0, parameters.firstOctave()),
-                baseScale, verticalShare);
-    }
-
-    public static double factor(WorldFold fold, boolean climateField, DoubleList amplitudes,
-            double lowestFreqInputFactor, double baseScale, double verticalShare) {
-        ClimateScale scale = fold.generationOptions().get(CompactBiomes.OPTION);
-        if (scale.mode() == ClimateScale.Mode.OFF || verticalShare != HORIZONTAL_SHARE) {
-            return NO_COMPRESSION;
-        }
-
-        if (scale.isFixed() && !climateField) {
-            return NO_COMPRESSION;
-        }
-
-        int lap = lapBlocks(fold);
-        if (lap == UNBOUNDED_LAP) {
-            return NO_COMPRESSION;
-        }
-
-        if (scale.mode() == ClimateScale.Mode.CUSTOM) {
-            return scale.factor();
-        }
-
-        double fitted = fittedFactor(amplitudes, lap * baseScale * lowestFreqInputFactor);
-        return scale.mode() == ClimateScale.Mode.STRONG
-                ? Math.max(fitted, ClimateScale.STRONG_FACTOR)
-                : fitted;
+    public static double fitted(WorldFold fold, DoubleList amplitudes, double lowestFreqInputFactor,
+            double baseScale) {
+        return fittedFactor(amplitudes, lapBlocks(fold) * baseScale * lowestFreqInputFactor);
     }
 
     private static int lapBlocks(WorldFold fold) {

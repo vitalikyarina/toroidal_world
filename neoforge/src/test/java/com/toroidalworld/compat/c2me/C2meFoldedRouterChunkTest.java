@@ -1,7 +1,7 @@
 package com.toroidalworld.compat.c2me;
 
-import com.toroidalworld.engine.noise.GenerationHookSetup;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
+import com.toroidalworld.shape.GenerationHookSetup;
 import com.toroidalworld.shape.WorldOptionSetup;
 import static com.toroidalworld.engine.noise.DensityFunctionFixture.SQUARE;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;

@@ -15,6 +15,12 @@ class ReachSlackTest {
 
     private static final double ENTITY_DRIFT_BLOCKS = SECTION_BLOCKS;
 
+    private static final PacketReach PARTICLE = PacketReach.measured("particle", 32.0);
+
+    private static final PacketReach FORCED_PARTICLE = PacketReach.measured("forced_particle", 512.0);
+
+    private static final PacketReach EXPLOSION = PacketReach.measured("explosion", 64.0);
+
     private static final double ANCHOR = 0.0;
 
     private static final double PAST_THE_BOUND_BLOCKS = 1.0;
@@ -49,7 +55,7 @@ class ReachSlackTest {
             assertFalse(TranslationContext.withinReach(
                     32.0 + MIRROR_GAP_BLOCKS + ENTITY_DRIFT_BLOCKS,
                     ANCHOR,
-                    PacketReach.PARTICLE));
+                    PARTICLE));
         }
     }
 
@@ -57,19 +63,19 @@ class ReachSlackTest {
     class GatedAtTheSend {
         @Test
         void particlesReachOneSectionPastTheirRadius() {
-            assertBound(PacketReach.PARTICLE, 32.0 + MIRROR_GAP_BLOCKS);
-            assertBound(PacketReach.FORCED_PARTICLE, 512.0 + MIRROR_GAP_BLOCKS);
+            assertBound(PARTICLE, 32.0 + MIRROR_GAP_BLOCKS);
+            assertBound(FORCED_PARTICLE, 512.0 + MIRROR_GAP_BLOCKS);
         }
 
         @Test
         void explosionsReachOneSectionPastTheirRadius() {
-            assertBound(PacketReach.EXPLOSION, 64.0 + MIRROR_GAP_BLOCKS);
+            assertBound(EXPLOSION, 64.0 + MIRROR_GAP_BLOCKS);
         }
 
         @Test
         void soundsReachOneSectionPastTheRangeTheyCarry() {
-            assertBound(PacketReach.sound(16.0F), 16.0 + MIRROR_GAP_BLOCKS);
-            assertBound(PacketReach.sound(256.0F), 256.0 + MIRROR_GAP_BLOCKS);
+            assertBound(PacketReach.measured("sound", 16.0), 16.0 + MIRROR_GAP_BLOCKS);
+            assertBound(PacketReach.measured("sound", 256.0), 256.0 + MIRROR_GAP_BLOCKS);
         }
     }
 
@@ -95,7 +101,7 @@ class ReachSlackTest {
         @Test
         void anUnboundedAxisCarriesEveryReach() {
             assertTrue(TranslationContext.carriesReach(UNBOUNDED_AXIS, PacketReach.tracked(13)));
-            assertTrue(TranslationContext.carriesReach(UNBOUNDED_AXIS, PacketReach.FORCED_PARTICLE));
+            assertTrue(TranslationContext.carriesReach(UNBOUNDED_AXIS, FORCED_PARTICLE));
         }
 
         @Test
