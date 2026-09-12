@@ -89,7 +89,7 @@ public final class TerrainCeiling {
         DensityFunction aboveCeiling = DensityFunctions.add(worldY(),
                 DensityFunctions.mul(DensityFunctions.constant(-1.0), ceiling));
         DensityFunction ramp = DensityFunctions
-                .mul(aboveCeiling, DensityFunctions.constant(1.0 / RAMP_BLOCKS))
+                .mul(DensityFunctions.interpolated(aboveCeiling), DensityFunctions.constant(1.0 / RAMP_BLOCKS))
                 .clamp(0.0, 1.0);
 
         return withFinalDensity(source, DensityFunctions.add(source.finalDensity(),
