@@ -18,13 +18,13 @@ import com.simibubi.create.compat.trainmap.TrainMapSync;
 import com.simibubi.create.content.trains.graph.TrackEdge;
 import com.simibubi.create.content.trains.graph.TrackGraph;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
+import com.toroidalworld.compat.create.CreateInjectionTargets;
 import com.toroidalworld.compat.create.client.CarriageBogeyFrame;
 import com.toroidalworld.compat.create.client.TrainMapFrame;
 import com.toroidalworld.compat.create.client.TrainMapViewFold;
 import com.toroidalworld.compat.create.client.TrainMapViewFold.NearestNodeKey;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.SeamTransform;
-
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.GuiGraphics;
@@ -61,8 +61,7 @@ public abstract class TrainMapManagerMixin {
 
     @WrapOperation(method = "drawPoints",
             at = @At(value = "INVOKE",
-                    target = "Lcom/simibubi/create/content/trains/graph/TrackEdge;getPosition"
-                            + "(Lcom/simibubi/create/content/trains/graph/TrackGraph;D)Lnet/minecraft/world/phys/Vec3;"))
+                    target = CreateInjectionTargets.TRACK_EDGE_GET_POSITION))
     private static Vec3 toroidal$canonicaliseStation(TrackEdge edge, TrackGraph graph, double t,
             Operation<Vec3> original) {
         return TrainMapViewFold.canonical(original.call(edge, graph, t));

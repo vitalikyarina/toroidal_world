@@ -7,6 +7,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.AllDataComponents;
 import com.simibubi.create.content.trains.track.TrackTargetingBlockItem;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.core.BlockPos;
@@ -18,7 +19,7 @@ import net.minecraft.world.item.context.UseOnContext;
 public class TrackTargetingBlockItemMixin {
     @WrapOperation(method = "useOn",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/item/ItemStack;get(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;"))
+                    target = InjectionTargets.ITEM_STACK_GET))
     private Object toroidal$foldSelectedTrack(ItemStack stack, DataComponentType<?> component,
             Operation<Object> original, UseOnContext context) {
         Object value = original.call(stack, component);

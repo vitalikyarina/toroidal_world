@@ -9,6 +9,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelBehaviour;
 import com.simibubi.create.content.logistics.factoryBoard.FactoryPanelBlockEntity;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.core.BlockPos;
@@ -21,7 +22,7 @@ public abstract class FactoryPanelBehaviourMixin {
     public abstract FactoryPanelBlockEntity panelBE();
 
     @WrapOperation(method = "moveTo",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;closerThan(Lnet/minecraft/core/Vec3i;D)Z"))
+            at = @At(value = "INVOKE", target = InjectionTargets.BLOCK_POS_CLOSER_THAN))
     private boolean toroidal$foldRelocationRange(BlockPos stored, Vec3i destination, double range,
             Operation<Boolean> original) {
         @Nullable Level level = panelBE().getLevel();

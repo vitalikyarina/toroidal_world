@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.kinetics.belt.item.BeltConnectorHandler;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
 import net.minecraft.core.BlockPos;
@@ -14,7 +15,7 @@ public class BeltConnectorHandlerMixin {
     @ModifyExpressionValue(
             method = "tick",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/item/ItemStack;get(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;"))
+                    target = InjectionTargets.ITEM_STACK_GET))
     private static Object toroidal$foldStoredPulley(Object stored) {
         if (!(stored instanceof BlockPos storedPulley)) {
             return stored;

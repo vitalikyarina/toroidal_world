@@ -7,6 +7,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.schematics.SchematicPrinter;
 import com.simibubi.create.content.schematics.cannon.SchematicannonBlockEntity;
+import com.toroidalworld.compat.create.CreateInjectionTargets;
 import com.toroidalworld.compat.create.CreateSchematicFold;
 
 import net.minecraft.world.item.ItemStack;
@@ -18,8 +19,7 @@ public class SchematicannonPrinterMixin {
     @WrapOperation(
             method = "initializePrinter",
             at = @At(value = "INVOKE",
-                    target = "Lcom/simibubi/create/content/schematics/SchematicPrinter;"
-                            + "loadSchematic(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Z)V"))
+                    target = CreateInjectionTargets.SCHEMATIC_PRINTER_LOAD_SCHEMATIC))
     private void toroidal$anchorPrinterOnCannon(SchematicPrinter printer, ItemStack blueprint, Level level,
             boolean processNBT, Operation<Void> original) {
         BlockEntity cannon = (BlockEntity) (Object) this;

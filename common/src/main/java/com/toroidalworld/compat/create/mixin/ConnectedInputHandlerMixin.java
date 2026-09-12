@@ -16,6 +16,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.kinetics.crafter.ConnectedInputHandler;
 import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlockEntity;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.compat.create.CrafterGroupFold;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
@@ -65,7 +66,7 @@ public abstract class ConnectedInputHandlerMixin {
 
     @WrapOperation(method = "toggleConnection",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/core/BlockPos;relative(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;"))
+                    target = InjectionTargets.BLOCK_POS_RELATIVE))
     private static BlockPos toroidal$floodStepInCanonicalFrame(BlockPos current, Direction direction,
             Operation<BlockPos> original, @Local(argsOnly = true) Level world) {
         return CreateSeamFold.canonical(world instanceof ServerLevel serverLevel ? serverLevel : null,

@@ -10,6 +10,8 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.trains.entity.CarriageBogey;
+import com.toroidalworld.InjectionTargets;
+import com.toroidalworld.compat.create.CreateInjectionTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.resources.ResourceKey;
@@ -23,14 +25,14 @@ public abstract class CarriageBogeyMixin {
 
     @WrapOperation(method = "getAnchorPosition(Z)Lnet/minecraft/world/phys/Vec3;",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;add(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"))
+                    target = InjectionTargets.VEC3_ADD))
     private Vec3 toroidal$foldAnchorMidpoint(Vec3 leading, Vec3 trailing, Operation<Vec3> original) {
         return original.call(leading, toroidal$nearest(leading, trailing));
     }
 
     @ModifyExpressionValue(method = "updateAngles",
             at = @At(value = "INVOKE",
-                    target = "Lcom/simibubi/create/content/trains/entity/TravellingPoint;getPosition(Lcom/simibubi/create/content/trains/graph/TrackGraph;)Lnet/minecraft/world/phys/Vec3;",
+                    target = CreateInjectionTargets.TRAVELLING_POINT_GET_POSITION,
                     ordinal = 1))
     private Vec3 toroidal$foldCoupledAngle(Vec3 trailing, @Local(ordinal = 0) Vec3 leading) {
         return toroidal$nearest(leading, trailing);
@@ -38,7 +40,7 @@ public abstract class CarriageBogeyMixin {
 
     @WrapOperation(method = "getStress",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
+                    target = InjectionTargets.VEC3_DISTANCE_TO))
     private double toroidal$foldStressSpan(Vec3 leading, Vec3 trailing, Operation<Double> original) {
         return original.call(leading, toroidal$nearest(leading, trailing));
     }

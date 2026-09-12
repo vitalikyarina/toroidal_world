@@ -16,8 +16,16 @@ public final class InjectionTargets {
     public static final String BLOCK_POS_DIST_TO_CENTER_SQR =
             "Lnet/minecraft/core/BlockPos;distToCenterSqr(Lnet/minecraft/core/Position;)D";
 
+    public static final String BLOCK_POS_EQUALS = "Lnet/minecraft/core/BlockPos;equals(Ljava/lang/Object;)Z";
+
     public static final String BLOCK_POS_OFFSET_PACKED =
             "Lnet/minecraft/core/BlockPos;offset(JLnet/minecraft/core/Direction;)J";
+
+    public static final String BLOCK_POS_RELATIVE =
+            "Lnet/minecraft/core/BlockPos;relative(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;";
+
+    public static final String BLOCK_POS_SUBTRACT =
+            "Lnet/minecraft/core/BlockPos;subtract(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos;";
 
     public static final String CHUNK_POS_AS_LONG = "Lnet/minecraft/world/level/ChunkPos;asLong(II)J";
 
@@ -36,6 +44,12 @@ public final class InjectionTargets {
 
     public static final String ENTITY_POSITION =
             "Lnet/minecraft/world/entity/Entity;position()Lnet/minecraft/world/phys/Vec3;";
+
+    public static final String ITEM_STACK_GET =
+            "Lnet/minecraft/world/item/ItemStack;get(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;";
+
+    public static final String LEVEL_GET_BLOCK_STATE =
+            "Lnet/minecraft/world/level/Level;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;";
 
     public static final String LIGHT_CHUNK_GETTER_GET_CHUNK_FOR_LIGHTING =
             "Lnet/minecraft/world/level/chunk/LightChunkGetter;getChunkForLighting(II)Lnet/minecraft/world/level/chunk/LightChunk;";
@@ -61,6 +75,12 @@ public final class InjectionTargets {
     public static final String STREAM_SORTED =
             "Ljava/util/stream/Stream;sorted(Ljava/util/Comparator;)Ljava/util/stream/Stream;";
 
+    public static final String VEC3_ADD =
+            "Lnet/minecraft/world/phys/Vec3;add(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;";
+
+    public static final String VEC3_ADD_SCALARS =
+            "Lnet/minecraft/world/phys/Vec3;add(DDD)Lnet/minecraft/world/phys/Vec3;";
+
     public static final String VEC3_AT_CENTER_OF =
             "Lnet/minecraft/world/phys/Vec3;atCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;";
 
@@ -69,6 +89,9 @@ public final class InjectionTargets {
 
     public static final String VEC3_DISTANCE_TO =
             "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D";
+
+    public static final String VEC3_DISTANCE_TO_SQR =
+            "Lnet/minecraft/world/phys/Vec3;distanceToSqr(Lnet/minecraft/world/phys/Vec3;)D";
 
     public static final String VEC3_NEW = "(DDD)Lnet/minecraft/world/phys/Vec3;";
 

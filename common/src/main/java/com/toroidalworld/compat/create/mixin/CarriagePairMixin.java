@@ -16,8 +16,9 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.TravellingPoint;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.compat.create.CarriageEntityFrame;
-import com.toroidalworld.compat.create.CreateInvokeTargets;
+import com.toroidalworld.compat.create.CreateInjectionTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.core.BlockPos;
@@ -39,7 +40,8 @@ public abstract class CarriagePairMixin {
     }
 
     @WrapOperation(method = "updateContraptionAnchors",
-            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = CreateInvokeTargets.CARRIAGE_POSITION_ANCHOR))
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD,
+                    target = CreateInjectionTargets.CARRIAGE_POSITION_ANCHOR))
     private void toroidal$storeAnchorInWorldFrame(Carriage.DimensionalCarriageEntity dce, Vec3 anchor,
             Operation<Void> original) {
         original.call(dce, anchor == null
@@ -49,7 +51,7 @@ public abstract class CarriagePairMixin {
 
     @WrapOperation(method = "getAnchorDiff",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;distanceTo(Lnet/minecraft/world/phys/Vec3;)D"))
+                    target = InjectionTargets.VEC3_DISTANCE_TO))
     private double toroidal$foldAnchorSpan(Vec3 leading, Vec3 trailing, Operation<Double> original) {
         return original.call(leading,
                 CreateSeamFold.nearestCopy(getLeadingPoint().node1.getLocation().dimension, leading, trailing));
@@ -63,7 +65,7 @@ public abstract class CarriagePairMixin {
 
     @ModifyExpressionValue(method = "pivoted",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;add(DDD)Lnet/minecraft/world/phys/Vec3;"))
+                    target = InjectionTargets.VEC3_ADD_SCALARS))
     private Vec3 toroidal$pivotInPointFrame(Vec3 portalVec,
             @Local(argsOnly = true) Carriage.DimensionalCarriageEntity dce,
             @Local(argsOnly = true) ResourceKey<Level> dimension,

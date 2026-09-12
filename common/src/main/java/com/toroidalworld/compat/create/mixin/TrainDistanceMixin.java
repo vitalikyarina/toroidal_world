@@ -9,6 +9,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.Train;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.compat.create.CarriageEntityFrame;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
@@ -19,17 +20,14 @@ import net.minecraft.world.phys.Vec3;
 public class TrainDistanceMixin {
     @Unique
     private static final String RANKED_METHOD = "distanceToLocationSqr";
-    @Unique
-    private static final String VEC3_DISTANCE_TO_SQR =
-            "Lnet/minecraft/world/phys/Vec3;distanceToSqr(Lnet/minecraft/world/phys/Vec3;)D";
 
-    @WrapOperation(method = RANKED_METHOD, at = @At(value = "INVOKE", target = VEC3_DISTANCE_TO_SQR))
+    @WrapOperation(method = RANKED_METHOD, at = @At(value = "INVOKE", target = InjectionTargets.VEC3_DISTANCE_TO_SQR))
     private double toroidal$rankAnchorTheShortWayRound(Vec3 anchor, Vec3 location, Operation<Double> original,
             @Local(argsOnly = true) Level level) {
         return original.call(CreateSeamFold.nearestCopy(level, location, anchor), location);
     }
 
-    @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = VEC3_DISTANCE_TO_SQR))
+    @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = InjectionTargets.VEC3_DISTANCE_TO_SQR))
     private double toroidal$spanCarriagesTheShortWayRound(Vec3 leading, Vec3 trailing, Operation<Double> original,
             @Local(ordinal = 0) Carriage.DimensionalCarriageEntity dimensional) {
         return original.call(leading, CreateSeamFold.nearestCopy(

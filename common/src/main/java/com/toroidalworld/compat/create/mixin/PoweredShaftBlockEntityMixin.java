@@ -9,8 +9,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.kinetics.steamEngine.PoweredShaftBlockEntity;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.accessors.SeamKeyedBlockEntity;
-import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.RelativeKeyFold;
 
 import net.minecraft.core.BlockPos;
@@ -21,12 +21,12 @@ import net.minecraft.server.level.ServerLevel;
 
 @Mixin(value = PoweredShaftBlockEntity.class, remap = false)
 public abstract class PoweredShaftBlockEntityMixin implements SeamKeyedBlockEntity {
-    @WrapOperation(method = "update", at = @At(value = "INVOKE", target = CreateInvokeTargets.BLOCK_POS_SUBTRACT))
+    @WrapOperation(method = "update", at = @At(value = "INVOKE", target = InjectionTargets.BLOCK_POS_SUBTRACT))
     private BlockPos toroidal$foldStoredKey(BlockPos worldPosition, Vec3i sourcePos, Operation<BlockPos> original) {
         return toroidal$fold(worldPosition, sourcePos, original.call(worldPosition, sourcePos));
     }
 
-    @WrapOperation(method = "isPoweredBy", at = @At(value = "INVOKE", target = CreateInvokeTargets.BLOCK_POS_SUBTRACT))
+    @WrapOperation(method = "isPoweredBy", at = @At(value = "INVOKE", target = InjectionTargets.BLOCK_POS_SUBTRACT))
     private BlockPos toroidal$foldComparedKey(BlockPos worldPosition, Vec3i globalPos, Operation<BlockPos> original) {
         return toroidal$fold(worldPosition, globalPos, original.call(worldPosition, globalPos));
     }

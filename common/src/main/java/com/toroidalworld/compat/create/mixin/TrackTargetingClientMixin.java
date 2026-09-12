@@ -7,6 +7,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.AllDataComponents;
 import com.simibubi.create.content.trains.track.TrackTargetingClient;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
 import net.minecraft.core.BlockPos;
@@ -17,7 +18,7 @@ import net.minecraft.world.item.ItemStack;
 public class TrackTargetingClientMixin {
     @WrapOperation(method = "clientTick",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/item/ItemStack;get(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;"))
+                    target = InjectionTargets.ITEM_STACK_GET))
     private static Object toroidal$foldHoveredTrack(ItemStack stack, DataComponentType<?> component,
             Operation<Object> original) {
         Object value = original.call(stack, component);

@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.content.kinetics.belt.item.BeltConnectorItem;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.core.BlockPos;
@@ -15,7 +16,7 @@ public class BeltConnectorItemMixin {
     @ModifyExpressionValue(
             method = "useOn",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/item/ItemStack;get(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;"))
+                    target = InjectionTargets.ITEM_STACK_GET))
     private Object toroidal$foldStoredPulley(Object stored, UseOnContext context) {
         if (!(stored instanceof BlockPos storedPulley)) {
             return stored;

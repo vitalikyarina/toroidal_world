@@ -9,6 +9,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.contraptions.glue.SuperGlueHandler;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import java.util.function.BiFunction;
@@ -42,7 +43,7 @@ public class SuperGlueHandlerMixin {
     }
 
     @WrapOperation(method = "glueInOffHandAppliesOnBlockPlace",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;equals(Ljava/lang/Object;)Z"))
+            at = @At(value = "INVOKE", target = InjectionTargets.BLOCK_POS_EQUALS))
     private static boolean toroidal$namesThePlacedBlock(BlockPos hitNeighbour, Object placed,
             Operation<Boolean> original, @Local(argsOnly = true) Player placer) {
         BlockPos namedNeighbour = placer.level() instanceof ServerLevel serverLevel

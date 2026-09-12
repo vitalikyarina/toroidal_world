@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.redstone.displayLink.ClickToLinkBlockItem;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
 import net.minecraft.core.BlockPos;
@@ -23,7 +24,7 @@ public class ClickToLinkBlockItemClientMixin {
     }
 
     @Inject(method = "clientTick", cancellable = true,
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;equals(Ljava/lang/Object;)Z"))
+            at = @At(value = "INVOKE", target = InjectionTargets.BLOCK_POS_EQUALS))
     private static void toroidal$skipOutlineWhileCopyUnheld(CallbackInfo callback, @Local BlockPos selected) {
         if (CreateClientFrame.heldInViewerFrame(selected) == null) {
             callback.cancel();

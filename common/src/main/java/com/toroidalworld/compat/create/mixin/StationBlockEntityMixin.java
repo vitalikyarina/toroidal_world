@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.trains.station.StationBlockEntity;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
 import net.minecraft.core.BlockPos;
@@ -31,7 +32,7 @@ public class StationBlockEntityMixin {
 
     @WrapOperation(method = "assemble",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;"))
+                    target = InjectionTargets.VEC3_SUBTRACT))
     private Vec3 toroidal$trackEndInTheAssemblingFrame(Vec3 end, Vec3 center, Operation<Vec3> original) {
         Level level = ((StationBlockEntity) (Object) this).getLevel();
         return original.call(end, CreateSeamFold.nearestCopy(level, end, center));

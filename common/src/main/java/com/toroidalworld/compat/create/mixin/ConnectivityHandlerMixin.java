@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.compat.create.CanonicalPositionKeys;
 import com.toroidalworld.compat.create.CreateSeamFold;
 
@@ -44,7 +45,7 @@ public class ConnectivityHandlerMixin {
     @ModifyExpressionValue(
             method = FORM_MULTI,
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/core/BlockPos;relative(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;"))
+                    target = InjectionTargets.BLOCK_POS_RELATIVE))
     private static BlockPos toroidal$foldFrontierStepIntoBoundFrame(BlockPos next,
             @Local(argsOnly = true) BlockGetter level, @Local(ordinal = 0) int minX, @Local(ordinal = 2) int minZ) {
         // Create arms minX/minZ only for a Y-axis multi and leaves them at MIN_VALUE otherwise, where folding the

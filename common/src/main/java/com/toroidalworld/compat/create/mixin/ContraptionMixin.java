@@ -17,6 +17,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.StructureTransform;
+import com.toroidalworld.compat.create.CatnipInjectionTargets;
 import com.toroidalworld.compat.create.ChassisWalkFrame;
 import com.toroidalworld.compat.create.CreateTranslation;
 import com.toroidalworld.compat.create.CreateSeamFold;
@@ -87,7 +88,7 @@ public class ContraptionMixin {
     @ModifyExpressionValue(
             method = "captureMultiblock",
             at = @At(value = "INVOKE",
-                    target = "Lnet/createmod/catnip/nbt/NBTHelper;readBlockPos(Lnet/minecraft/nbt/CompoundTag;Ljava/lang/String;)Lnet/minecraft/core/BlockPos;"))
+                    target = CatnipInjectionTargets.NBT_HELPER_READ_BLOCK_POS))
     private BlockPos toroidal$foldCapturedController(BlockPos stored, BlockPos localPos, StructureBlockInfo info,
             BlockEntity be) {
         return CreateSeamFold.nearestCopy(be.getLevel(), localPos.offset(anchor), stored);

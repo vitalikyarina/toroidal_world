@@ -17,9 +17,9 @@ import com.simibubi.create.content.trains.graph.TrackNode;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
 import com.simibubi.create.content.trains.track.BezierConnection;
 import com.simibubi.create.content.trains.track.TrackMaterial;
-import com.toroidalworld.compat.create.CreateInvokeTargets;
 import com.toroidalworld.compat.create.BezierCurveFold;
 import com.toroidalworld.compat.create.CreateFrameSeat;
+import com.toroidalworld.compat.create.CreateInjectionTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.core.WorldFold;
 
@@ -28,6 +28,9 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = TrackEdge.class, remap = false)
 public abstract class TrackEdgeMixin {
+    @Unique
+    private static final String BEZIER_CONNECTION_GET_BOUNDS =
+            "Lcom/simibubi/create/content/trains/track/BezierConnection;getBounds()Lnet/minecraft/world/phys/AABB;";
     @Unique
     private static final String FIRST_NODE_ANCHOR = "toroidal$firstNodeAnchor";
     @Unique
@@ -48,7 +51,7 @@ public abstract class TrackEdgeMixin {
 
     @WrapOperation(method = "getLength",
             at = @At(value = "INVOKE",
-                    target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
+                    target = CreateInjectionTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 1))
     private Vec3 toroidal$foldLengthTarget(TrackNodeLocation target, Operation<Vec3> original) {
         return toroidal$nearestToFirstNode(target, original.call(target));
@@ -56,7 +59,7 @@ public abstract class TrackEdgeMixin {
 
     @WrapOperation(method = "getPosition",
             at = @At(value = "INVOKE",
-                    target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
+                    target = CreateInjectionTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 1))
     private Vec3 toroidal$foldPositionTarget(TrackNodeLocation target, Operation<Vec3> original) {
         return toroidal$nearestToFirstNode(target, original.call(target));
@@ -75,7 +78,7 @@ public abstract class TrackEdgeMixin {
 
     @WrapOperation(method = "getIntersection",
             at = @At(value = "INVOKE",
-                    target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
+                    target = CreateInjectionTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 1))
     private Vec3 toroidal$foldIntersectionSecondEnd(TrackNodeLocation target, Operation<Vec3> original, TrackNode node1,
             TrackNode node2, TrackEdge other, TrackNode other1, TrackNode other2,
@@ -85,7 +88,7 @@ public abstract class TrackEdgeMixin {
 
     @WrapOperation(method = "getIntersection",
             at = @At(value = "INVOKE",
-                    target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
+                    target = CreateInjectionTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 2))
     private Vec3 toroidal$foldIntersectionOtherNearEnd(TrackNodeLocation target, Operation<Vec3> original,
             TrackNode node1, TrackNode node2, TrackEdge other, TrackNode other1, TrackNode other2,
@@ -109,7 +112,7 @@ public abstract class TrackEdgeMixin {
 
     @WrapOperation(method = "getIntersection",
             at = @At(value = "INVOKE",
-                    target = CreateInvokeTargets.BEZIER_CONNECTION_GET_BOUNDS,
+                    target = BEZIER_CONNECTION_GET_BOUNDS,
                     ordinal = 1))
     private AABB toroidal$foldIntersectionOtherBounds(BezierConnection turn, Operation<AABB> original,
             @Share(OTHER_SEAT) LocalRef<CreateFrameSeat> seatRef) {
@@ -120,7 +123,7 @@ public abstract class TrackEdgeMixin {
 
     @WrapOperation(method = "getIntersection",
             at = @At(value = "INVOKE",
-                    target = CreateInvokeTargets.TRACK_EDGE_GET_POSITION,
+                    target = CreateInjectionTargets.TRACK_EDGE_GET_POSITION,
                     ordinal = 2))
     private Vec3 toroidal$foldIntersectionOtherCurve(TrackEdge target, TrackGraph graph, double t,
             Operation<Vec3> original, @Share(OTHER_SEAT) LocalRef<CreateFrameSeat> seatRef) {
@@ -131,7 +134,7 @@ public abstract class TrackEdgeMixin {
 
     @WrapOperation(method = "getIntersection",
             at = @At(value = "INVOKE",
-                    target = CreateInvokeTargets.TRACK_NODE_LOCATION_GET_LOCATION,
+                    target = CreateInjectionTargets.TRACK_NODE_LOCATION_GET_LOCATION,
                     ordinal = 3))
     private Vec3 toroidal$foldIntersectionOtherFarEnd(TrackNodeLocation target, Operation<Vec3> original,
             TrackNode node1, TrackNode node2, TrackEdge other, TrackNode other1, TrackNode other2,

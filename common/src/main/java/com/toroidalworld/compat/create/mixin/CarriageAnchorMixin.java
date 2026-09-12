@@ -16,8 +16,9 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.graph.TrackNodeLocation;
+import com.toroidalworld.InjectionTargets;
 import com.toroidalworld.compat.create.CarriageEntityFrame;
-import com.toroidalworld.compat.create.CreateInvokeTargets;
+import com.toroidalworld.compat.create.CreateInjectionTargets;
 import com.toroidalworld.compat.create.CreateSeamFold;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.engine.seam.SeamSnap;
@@ -45,7 +46,8 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
     private @Nullable ResourceKey<Level> toroidal$dimension;
 
     @WrapOperation(method = "read",
-            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = CreateInvokeTargets.CARRIAGE_POSITION_ANCHOR))
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD,
+                    target = CreateInjectionTargets.CARRIAGE_POSITION_ANCHOR))
     private void toroidal$storeLoadedAnchorInWorldFrame(Carriage.DimensionalCarriageEntity dce, Vec3 anchor,
             Operation<Void> original) {
         original.call(dce,
@@ -55,7 +57,8 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
     // Ordinal 2 alone: the two earlier reads build the chunk lookahead, this one moves the carriage, and the riders
     // have to follow it.
     @ModifyExpressionValue(method = "alignEntity",
-            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = CreateInvokeTargets.CARRIAGE_POSITION_ANCHOR,
+            at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,
+                    target = CreateInjectionTargets.CARRIAGE_POSITION_ANCHOR,
                     ordinal = 2))
     private Vec3 toroidal$anchorForWrite(Vec3 anchor) {
         Vec3 written = toroidal$anchorInClientFrame(anchor);
@@ -114,7 +117,7 @@ public abstract class CarriageAnchorMixin implements CarriageEntityFrame {
 
     @ModifyExpressionValue(method = "updateCutoff",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/phys/Vec3;add(DDD)Lnet/minecraft/world/phys/Vec3;"))
+                    target = InjectionTargets.VEC3_ADD_SCALARS))
     private Vec3 toroidal$pivotInLeadingAnchorFrame(Vec3 pivotLoc, @Local(ordinal = 0) Vec3 leading) {
         return toroidal$inCutoffFrame(leading, pivotLoc);
     }
