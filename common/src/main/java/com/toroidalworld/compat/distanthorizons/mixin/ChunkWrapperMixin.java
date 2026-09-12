@@ -45,7 +45,7 @@ public class ChunkWrapperMixin {
         ChunkPos folded = this.toroidal$foldedPos;
         if (folded == null) {
             ChunkPos raw = original.call(chunk);
-            folded = DhKeys.foldChunk(DhShapes.of(this.wrappedLevel), raw);
+            folded = DhKeys.foldChunk(DhShapes.clientFrame(this.wrappedLevel), raw);
             this.toroidal$foldedPos = folded;
         }
 
