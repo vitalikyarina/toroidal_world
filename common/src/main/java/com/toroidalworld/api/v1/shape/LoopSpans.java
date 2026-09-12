@@ -1,8 +1,7 @@
 package com.toroidalworld.api.v1.shape;
 
-import java.util.Objects;
-
-import org.jspecify.annotations.Nullable;
+import com.toroidalworld.core.WorldLoopBounds;
+import com.toroidalworld.core.WorldLoopBounds.AxisBounds;
 
 import net.minecraft.core.Direction;
 
@@ -19,62 +18,45 @@ import net.minecraft.core.Direction;
  * gives a cylinder, neither gives an ordinary world. Immutable; every wither hands back a new instance.</p>
  */
 public final class LoopSpans {
-    private static final String NOT_A_HORIZONTAL_AXIS = "Not a horizontal axis: ";
+    private static final String ASCENDING_SPAN_REQUIRED = "A looping axis needs minChunk < maxChunk, got [";
     private static final String DOES_NOT_LOOP = " does not loop — check loops(axis) first";
-
-    private record Span(int minChunk, int maxChunk) {
-        private Span {
-            if (minChunk >= maxChunk) {
-                throw new IllegalArgumentException("A looping axis needs minChunk < maxChunk, got ["
-                        + minChunk + ", " + maxChunk + ")");
-            }
-        }
-
-        private int chunkWidth() {
-            return this.maxChunk - this.minChunk;
-        }
-
-        private static Span ofWidth(int chunkWidth) {
-            int minChunk = -(chunkWidth / 2);
-            return new Span(minChunk, chunkWidth + minChunk);
-        }
-    }
+    private static final String AXIS = "Axis ";
+    private static final String POSITIVE_SCALE_REQUIRED = "A scale is positive, got ";
 
     /** Neither axis loops — an ordinary world. */
-    public static final LoopSpans NONE = new LoopSpans(null, null);
+    public static final LoopSpans NONE = new LoopSpans(WorldLoopBounds.UNBOUNDED);
 
-    private final @Nullable Span x;
-    private final @Nullable Span z;
+    private final WorldLoopBounds bounds;
 
-    private LoopSpans(@Nullable Span x, @Nullable Span z) {
-        this.x = x;
-        this.z = z;
+    LoopSpans(WorldLoopBounds bounds) {
+        ascending(bounds.x());
+        ascending(bounds.z());
+        this.bounds = bounds;
     }
 
     /** Both axes looping over {@code chunkWidth} chunks, centred on the origin. */
     public static LoopSpans ofWidth(int chunkWidth) {
-        Span span = Span.ofWidth(chunkWidth);
-        return new LoopSpans(span, span);
+        return new LoopSpans(WorldLoopBounds.ofWidth(chunkWidth));
     }
 
     /** One axis looping over {@code chunkWidth} chunks, centred on the origin; the other stays unbounded. */
     public static LoopSpans ofWidth(Direction.Axis axis, int chunkWidth) {
-        return NONE.and(axis, Span.ofWidth(chunkWidth));
+        return new LoopSpans(WorldLoopBounds.ofWidth(axis, chunkWidth));
     }
 
     /** One axis looping over the half-open chunk span {@code [minChunk, maxChunk)}; the other stays unbounded. */
     public static LoopSpans of(Direction.Axis axis, int minChunk, int maxChunk) {
-        return NONE.and(axis, new Span(minChunk, maxChunk));
+        return NONE.and(axis, minChunk, maxChunk);
     }
 
     /** These spans with {@code axis} looping over {@code [minChunk, maxChunk)} as well. */
     public LoopSpans and(Direction.Axis axis, int minChunk, int maxChunk) {
-        return and(axis, new Span(minChunk, maxChunk));
+        return new LoopSpans(this.bounds.with(axis, new AxisBounds.Looped(minChunk, maxChunk)));
     }
 
     /** Whether this axis loops. {@link Direction.Axis#Y} always answers {@code false}. */
     public boolean loops(Direction.Axis axis) {
-        return axis != Direction.Axis.Y && spanOf(axis) != null;
+        return axis != Direction.Axis.Y && this.bounds.loops(axis);
     }
 
     /**
@@ -106,7 +88,7 @@ public final class LoopSpans {
 
     /** Whether both axes loop over the same number of chunks. */
     public boolean isSquare() {
-        return this.x != null && this.z != null && this.x.chunkWidth() == this.z.chunkWidth();
+        return this.bounds.isSquare();
     }
 
     /**
@@ -117,63 +99,43 @@ public final class LoopSpans {
      */
     public LoopSpans scaledDown(int scale) {
         if (scale <= 0) {
-            throw new IllegalArgumentException("A scale is positive, got " + scale);
+            throw new IllegalArgumentException(POSITIVE_SCALE_REQUIRED + scale);
         }
 
-        return new LoopSpans(scaledDown(this.x, scale), scaledDown(this.z, scale));
+        return new LoopSpans(this.bounds.scaledDown(scale));
     }
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof LoopSpans spans
-                && Objects.equals(this.x, spans.x)
-                && Objects.equals(this.z, spans.z);
+        return other instanceof LoopSpans spans && this.bounds.equals(spans.bounds);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.x, this.z);
+        return this.bounds.hashCode();
     }
 
     @Override
     public String toString() {
-        return "LoopSpans[x=" + text(this.x) + ", z=" + text(this.z) + "]";
+        return "LoopSpans[x=" + this.bounds.x().spanText() + ", z=" + this.bounds.z().spanText() + "]";
     }
 
-    private LoopSpans and(Direction.Axis axis, Span span) {
-        return switch (axis) {
-            case X -> new LoopSpans(span, this.z);
-            case Z -> new LoopSpans(this.x, span);
-            case Y -> throw new IllegalArgumentException(NOT_A_HORIZONTAL_AXIS + axis);
-        };
+    WorldLoopBounds bounds() {
+        return this.bounds;
     }
 
-    private @Nullable Span spanOf(Direction.Axis axis) {
-        return switch (axis) {
-            case X -> this.x;
-            case Z -> this.z;
-            case Y -> null;
-        };
-    }
-
-    private Span looping(Direction.Axis axis) {
-        if (axis == Direction.Axis.Y) {
-            throw new IllegalArgumentException(NOT_A_HORIZONTAL_AXIS + axis);
+    private AxisBounds.Looped looping(Direction.Axis axis) {
+        if (this.bounds.axis(axis) instanceof AxisBounds.Looped looped) {
+            return looped;
         }
 
-        Span span = spanOf(axis);
-        if (span == null) {
-            throw new IllegalArgumentException("Axis " + axis + DOES_NOT_LOOP);
+        throw new IllegalArgumentException(AXIS + axis + DOES_NOT_LOOP);
+    }
+
+    private static void ascending(AxisBounds axis) {
+        if (axis instanceof AxisBounds.Looped looped && looped.minChunk() >= looped.maxChunk()) {
+            throw new IllegalArgumentException(ASCENDING_SPAN_REQUIRED
+                    + looped.minChunk() + ", " + looped.maxChunk() + ")");
         }
-
-        return span;
-    }
-
-    private static @Nullable Span scaledDown(@Nullable Span span, int scale) {
-        return span == null ? null : Span.ofWidth(span.chunkWidth() / scale);
-    }
-
-    private static String text(@Nullable Span span) {
-        return span == null ? "unbounded" : "[" + span.minChunk() + ".." + span.maxChunk() + ")";
     }
 }

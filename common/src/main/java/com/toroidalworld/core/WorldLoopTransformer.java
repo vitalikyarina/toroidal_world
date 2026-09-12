@@ -305,14 +305,7 @@ final class WorldLoopTransformer implements WorldFold {
 
     @Override
     public String toString() {
-        return "WorldLoopTransformer[x " + axisString(bounds.x()) + ", z " + axisString(bounds.z()) + "]";
-    }
-
-    private static String axisString(AxisBounds axis) {
-        return switch (axis) {
-            case AxisBounds.Looped looped -> looped.minChunk() + ".." + looped.maxChunk() + " chunks";
-            case AxisBounds.Unbounded() -> "unbounded";
-        };
+        return "WorldLoopTransformer[x=" + bounds.x().spanText() + ", z=" + bounds.z().spanText() + "]";
     }
 
     @Override

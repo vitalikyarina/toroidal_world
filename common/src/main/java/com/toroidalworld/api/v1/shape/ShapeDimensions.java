@@ -4,12 +4,9 @@ import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.api.v1.option.GenerationOptions;
 import com.toroidalworld.core.CarriedShape;
-import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.FlatShape;
-import com.toroidalworld.core.WorldLoopBounds;
 import com.toroidalworld.engine.gen.ShapedDimensions;
 
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.WorldDimensions;
@@ -48,7 +45,7 @@ public final class ShapeDimensions {
      */
     public static @Nullable LoopSpans spansOf(WorldDimensions dimensions, ResourceKey<LevelStem> key) {
         FlatShape shape = ShapedDimensions.shapeOf(dimensions, key);
-        return shape == null || !shape.decomposesPerAxis() ? null : spans(shape.bounds());
+        return shape == null || !shape.decomposesPerAxis() ? null : new LoopSpans(shape.bounds());
     }
 
     /**
@@ -61,36 +58,7 @@ public final class ShapeDimensions {
     }
 
     private static CarriedShape carried(LoopSpans spans, GenerationOptions options) {
-        return new CarriedShape(new FlatShape(bounds(spans), FlatShape.NO_SKEW, null), options);
-    }
-
-    private static WorldLoopBounds bounds(LoopSpans spans) {
-        WorldLoopBounds bounds = WorldLoopBounds.UNBOUNDED;
-        for (Direction.Axis axis : CoordinateConstants.HORIZONTAL_AXES) {
-            if (spans.loops(axis)) {
-                bounds = withAxis(bounds, axis, spans.minChunk(axis), spans.maxChunk(axis));
-            }
-        }
-
-        return bounds;
-    }
-
-    private static WorldLoopBounds withAxis(WorldLoopBounds bounds, Direction.Axis axis, int minChunk, int maxChunk) {
-        WorldLoopBounds.AxisBounds looped = new WorldLoopBounds.AxisBounds.Looped(minChunk, maxChunk);
-        return axis == Direction.Axis.X
-                ? new WorldLoopBounds(looped, bounds.z())
-                : new WorldLoopBounds(bounds.x(), looped);
-    }
-
-    private static LoopSpans spans(WorldLoopBounds bounds) {
-        LoopSpans spans = LoopSpans.NONE;
-        for (Direction.Axis axis : CoordinateConstants.HORIZONTAL_AXES) {
-            if (bounds.axis(axis) instanceof WorldLoopBounds.AxisBounds.Looped looped) {
-                spans = spans.and(axis, looped.minChunk(), looped.maxChunk());
-            }
-        }
-
-        return spans;
+        return new CarriedShape(new FlatShape(spans.bounds(), FlatShape.NO_SKEW, null), options);
     }
 
     private ShapeDimensions() {

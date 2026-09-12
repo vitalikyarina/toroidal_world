@@ -20,6 +20,8 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
         String MIN_CHUNK_KEY = "min_chunk";
         String MAX_CHUNK_KEY = "max_chunk";
 
+        String UNBOUNDED_TEXT = "unbounded";
+
         record Looped(int minChunk, int maxChunk) implements AxisBounds {
             public static Looped ofWidth(int chunkWidth) {
                 int minChunk = -(chunkWidth / 2);
@@ -66,6 +68,11 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
             public int maxViewDistance() {
                 return Math.max(1, chunkWidth() / 2 - CoordinateConstants.VIEW_DISTANCE_MARGIN);
             }
+
+            @Override
+            public String spanText() {
+                return "[" + minChunk + ".." + maxChunk + ")";
+            }
         }
 
         record Unbounded() implements AxisBounds {
@@ -95,6 +102,11 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
             public int maxViewDistance() {
                 return Integer.MAX_VALUE;
             }
+
+            @Override
+            public String spanText() {
+                return UNBOUNDED_TEXT;
+            }
         }
 
         boolean isOver(double blockCoord);
@@ -106,6 +118,8 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
         boolean foldsOntoItself(int chunkCount);
 
         int maxViewDistance();
+
+        String spanText();
 
         StreamCodec<ByteBuf, AxisBounds> STREAM_CODEC = StreamCodec.of(
                 (buffer, axis) -> {
@@ -195,10 +209,13 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
     }
 
     public static WorldLoopBounds ofWidth(Direction.Axis axis, int chunkWidth) {
-        AxisBounds.Looped looped = AxisBounds.Looped.ofWidth(chunkWidth);
+        return UNBOUNDED.with(axis, AxisBounds.Looped.ofWidth(chunkWidth));
+    }
+
+    public WorldLoopBounds with(Direction.Axis axis, AxisBounds bounds) {
         return switch (axis) {
-            case X -> new WorldLoopBounds(looped, AxisBounds.Unbounded.INSTANCE);
-            case Z -> new WorldLoopBounds(AxisBounds.Unbounded.INSTANCE, looped);
+            case X -> new WorldLoopBounds(bounds, z);
+            case Z -> new WorldLoopBounds(x, bounds);
             case Y -> throw new IllegalArgumentException(NOT_A_HORIZONTAL_AXIS + axis);
         };
     }

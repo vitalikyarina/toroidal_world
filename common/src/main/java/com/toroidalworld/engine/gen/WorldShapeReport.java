@@ -81,7 +81,7 @@ public final class WorldShapeReport {
                 + " generator=" + generatorId(level.getChunkSource().getGenerator())
                 + " shape=" + shapeSource(level, override)
                 + " identification=" + shape.identification()
-                + " x=" + axisSpan(bounds.x()) + " z=" + axisSpan(bounds.z()) + " chunks"
+                + " x=" + bounds.x().spanText() + " z=" + bounds.z().spanText() + " chunks"
                 + ", " + widths(bounds)
                 + netherScale.text()
                 + endWidth.text()
@@ -147,13 +147,6 @@ public final class WorldShapeReport {
             case LoopedFlatChunkGenerator flat -> ToroidalWorld.MODID + ":" + WorldLoopGenerators.TOROIDAL_FLAT_ID;
             case LoopedChunkGenerator looped -> ToroidalWorld.MODID + ":" + WorldLoopGenerators.TOROIDAL_ID;
             default -> generator.getClass().getSimpleName();
-        };
-    }
-
-    private static String axisSpan(AxisBounds axis) {
-        return switch (axis) {
-            case AxisBounds.Looped looped -> "[" + looped.minChunk() + ".." + looped.maxChunk() + ")";
-            case AxisBounds.Unbounded() -> "unbounded";
         };
     }
 
