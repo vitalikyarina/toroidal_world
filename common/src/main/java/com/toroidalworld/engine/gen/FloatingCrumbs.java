@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 import java.util.function.IntConsumer;
+import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
 
@@ -16,18 +17,25 @@ import com.toroidalworld.core.CoordinateConstants;
 import com.toroidalworld.core.ShapedChunkGenerator;
 import com.toroidalworld.engine.noise.TerrainCeiling;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.StaticCache2D;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.status.ChunkPyramid;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
@@ -148,16 +156,18 @@ public final class FloatingCrumbs {
             }
         }
 
-        sweepWindow(chunk, window);
+        // The LIGHT step declares no write radius, so a region on it reports every read of a neighbour as unsafe.
+        sweepWindow(chunk, window, () -> new WorldGenRegion(level, chunks,
+                ChunkPyramid.GENERATION_PYRAMID.getStepTo(ChunkStatus.FEATURES), chunk));
         for (long key : keys) {
             masks.consumed(key);
         }
     }
 
-    static void sweepWindow(ChunkAccess chunk, TerrainMask[] window) {
+    static long[] sweepWindow(ChunkAccess chunk, TerrainMask[] window, Supplier<LevelReader> reader) {
         Cleared cleared = crumbCells(window);
         if (cleared == null || cleared.count == 0) {
-            return;
+            return NO_POSITIONS;
         }
 
         TerrainMask centre = window[CENTRE_INDEX];
@@ -169,7 +179,7 @@ public final class FloatingCrumbs {
                     centreLocalZ(grid, cell));
         }
 
-        clearInChunk(chunk, cells, cleared.count);
+        return clearInChunk(chunk, cells, cleared.count, reader.get());
     }
 
     public static @Nullable TerrainSnapshot snapshotOf(ChunkAccess chunk) {
@@ -177,11 +187,7 @@ public final class FloatingCrumbs {
     }
 
     public static long[] crumbPositions(TerrainSnapshot[] window) {
-        TerrainMask[] masks = new TerrainMask[window.length];
-        for (int i = 0; i < window.length; i++) {
-            masks[i] = window[i] instanceof TerrainMask mask ? mask : null;
-        }
-
+        TerrainMask[] masks = masksOf(window);
         Cleared cleared = crumbCells(masks);
         if (cleared == null) {
             return NO_POSITIONS;
@@ -198,6 +204,19 @@ public final class FloatingCrumbs {
         }
 
         return positions;
+    }
+
+    public static long[] clearBorderCrumbs(ChunkAccess chunk, TerrainSnapshot[] window, LevelReader reader) {
+        return sweepWindow(chunk, masksOf(window), () -> reader);
+    }
+
+    private static TerrainMask[] masksOf(TerrainSnapshot[] window) {
+        TerrainMask[] masks = new TerrainMask[window.length];
+        for (int i = 0; i < window.length; i++) {
+            masks[i] = window[i] instanceof TerrainMask mask ? mask : null;
+        }
+
+        return masks;
     }
 
     private static @Nullable Cleared crumbCells(TerrainMask[] window) {
@@ -307,7 +326,7 @@ public final class FloatingCrumbs {
         }
     }
 
-    private static void clearInChunk(ChunkAccess chunk, int[] cells, int count) {
+    private static long[] clearInChunk(ChunkAccess chunk, int[] cells, int count, LevelReader reader) {
         int minY = chunk.getMinY();
         CellGrid grid = new CellGrid(CHUNK_COLUMNS, chunk.getHeight());
         boolean[] solid = new boolean[grid.cells()];
@@ -318,16 +337,42 @@ public final class FloatingCrumbs {
         Arrays.sort(cells, 0, count);
         floodCleared(grid, fluid, cells, count);
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        LongArrayList written = new LongArrayList(count);
         for (int i = 0; i < count; i++) {
             write(chunk, grid, cursor, cells[i], minY, blockOf(fluids, fluid[cells[i]]));
+            written.add(cursor.asLong());
+        }
+
+        for (int i = 0; i < count; i++) {
+            clearColumn(chunk, reader, positionOf(chunk, grid, cursor, cells[i], minY), written);
+        }
+
+        return written.toLongArray();
+    }
+
+    private static void clearColumn(ChunkAccess chunk, LevelReader reader, BlockPos.MutableBlockPos cursor,
+            LongArrayList written) {
+        while (cursor.getY() < chunk.getMaxY()) {
+            BlockState state = chunk.getBlockState(cursor.move(Direction.UP));
+            if (state.isAir() || state.canSurvive(reader, cursor)) {
+                return;
+            }
+
+            FluidState carried = state.getFluidState();
+            chunk.setBlockState(cursor, carried.isEmpty() ? AIR : sourceBlockOf(carried));
+            written.add(cursor.asLong());
         }
     }
 
     private static void write(ChunkAccess chunk, CellGrid grid, BlockPos.MutableBlockPos cursor, int cell,
             int minY, BlockState state) {
-        chunk.setBlockState(cursor.set(chunk.getPos().getMinBlockX() + grid.localX(cell),
-                minY + grid.layer(cell),
-                chunk.getPos().getMinBlockZ() + grid.localZ(cell)), state);
+        chunk.setBlockState(positionOf(chunk, grid, cursor, cell, minY), state);
+    }
+
+    private static BlockPos.MutableBlockPos positionOf(ChunkAccess chunk, CellGrid grid,
+            BlockPos.MutableBlockPos cursor, int cell, int minY) {
+        return cursor.set(chunk.getPos().getMinBlockX() + grid.localX(cell), minY + grid.layer(cell),
+                chunk.getPos().getMinBlockZ() + grid.localZ(cell));
     }
 
     private static boolean windowSolid(TerrainMask[] window, CellGrid grid, int cell, int lowestY) {

@@ -10,6 +10,7 @@ import com.toroidalworld.engine.noise.TerrainCeiling;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
@@ -89,12 +90,33 @@ public final class GenerationProbe {
      * @throws IllegalArgumentException if the window does not hold nine snapshots
      */
     public static long[] borderCrumbs(TerrainSnapshot[] window) {
+        requireWindow(window);
+        return FloatingCrumbs.crumbPositions(window);
+    }
+
+    /**
+     * Writes into the centre chunk of a 3 x 3 window what the tail of the {@code LIGHT} step writes there: every
+     * position {@link #borderCrumbs} names takes the fluid around it or air, and then every block above one of them
+     * that can no longer stand, by its own survival check, takes the fluid it carried or air. A caller holding chunks
+     * outside the chunk map applies the pass with this and reads the world a player gets. A window with a snapshot
+     * missing writes nothing.
+     *
+     * @param chunk the centre chunk, written in place
+     * @param window the window's nine snapshots, row major from the lowest corner, the centre at index 4
+     * @param reader what the survival checks read: the centre chunk and the eight around it
+     * @return every position written, the positions {@link #borderCrumbs} names first
+     * @throws IllegalArgumentException if the window does not hold nine snapshots
+     */
+    public static long[] clearBorderCrumbs(ChunkAccess chunk, TerrainSnapshot[] window, LevelReader reader) {
+        requireWindow(window);
+        return FloatingCrumbs.clearBorderCrumbs(chunk, window, reader);
+    }
+
+    private static void requireWindow(TerrainSnapshot[] window) {
         if (window.length != WINDOW_SNAPSHOTS) {
             throw new IllegalArgumentException(
                     "A 3 x 3 window takes nine snapshots, not " + window.length);
         }
-
-        return FloatingCrumbs.crumbPositions(window);
     }
 
     private GenerationProbe() {
