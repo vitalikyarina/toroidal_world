@@ -4,7 +4,7 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.IdentityHashMap;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -20,13 +20,11 @@ import net.minecraft.world.level.levelgen.NoiseRouter;
 public final class TerrainCeiling {
     private static final String VANILLA_NAMESPACE = "minecraft";
 
-    private static final List<String> JAGGEDNESS_PATHS = List.of(
-            "overworld/jaggedness",
-            "overworld_large_biomes/jaggedness");
+    private static final Map<String, Double> LADDER_BASE_BLOCKS = Map.of(
+            "overworld/jaggedness", 40.0,
+            "overworld_large_biomes/jaggedness", 55.0);
 
     private static final double BLOCKS_PER_DENSITY_UNIT = 128.0;
-
-    private static final double BASE_BLOCKS = 40.0;
 
     private static final double RAMP_BLOCKS = 16.0;
 
@@ -62,6 +60,11 @@ public final class TerrainCeiling {
         }
 
         DensityFunction spline = jaggednessSpline(jaggedness);
+        Double base = baseOf(spline);
+        if (base == null) {
+            return null;
+        }
+
         DensityFunction noise = spline == jaggedness.argument1()
                 ? jaggedness.argument2()
                 : jaggedness.argument1();
@@ -76,7 +79,7 @@ public final class TerrainCeiling {
         DensityFunction headroom = DensityFunctions.mul(DensityFunctions.constant(lift), nonNegativeSpline);
         return DensityFunctions.add(
                 DensityFunctions.add(DensityFunctions.flatCache(source.preliminarySurfaceLevel()),
-                        DensityFunctions.constant(BASE_BLOCKS)),
+                        DensityFunctions.constant(base)),
                 headroom);
     }
 
@@ -156,14 +159,18 @@ public final class TerrainCeiling {
     }
 
     private static boolean isJaggedness(DensityFunction function) {
+        return baseOf(function) != null;
+    }
+
+    private static @Nullable Double baseOf(DensityFunction function) {
         if (!(function instanceof DensityFunctions.HolderHolder(Holder<DensityFunction> holder))) {
-            return false;
+            return null;
         }
 
         ResourceKey<DensityFunction> key = holder.unwrapKey().orElse(null);
-        return key != null
-                && key.identifier().getNamespace().equals(VANILLA_NAMESPACE)
-                && JAGGEDNESS_PATHS.contains(key.identifier().getPath());
+        return key != null && key.identifier().getNamespace().equals(VANILLA_NAMESPACE)
+                ? LADDER_BASE_BLOCKS.get(key.identifier().getPath())
+                : null;
     }
 
     private TerrainCeiling() {

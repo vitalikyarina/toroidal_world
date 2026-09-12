@@ -46,7 +46,7 @@ class PillarSiteScan {
 
     @Test
     void whatTheDensityFieldHoldsWhereThePillarStands() {
-        SuspendedLand.Site site = SuspendedLand.requireSite();
+        SuspendedLand.Site site = SuspendedLand.requireSites().get(0);
         WorldFold fold = torusOfWidth(WIDTH_BLOCKS);
         NoiseGeneratorSettings vanilla = settingsOf(site.type());
         DensityFunction rawCeiling = TerrainCeiling.ceiling(vanilla);

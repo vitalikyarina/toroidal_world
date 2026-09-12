@@ -238,7 +238,32 @@ class TerrainCeilingScan {
 
     @Test
     void theSuspendedIslandGoesAndNothingBelowTheCeilingMoves() {
-        SuspendedLand.Site site = SuspendedLand.requireSite();
+        List<SuspendedLand.Site> sites = SuspendedLand.requireSites();
+        List<String> report = new ArrayList<>();
+        report.add("what the search found on each world type that carries a ceiling:");
+        for (String outcome : SuspendedLand.outcomes()) {
+            report.add("  " + outcome);
+        }
+
+        report.add("");
+
+        List<String> stalled = new ArrayList<>();
+        for (SuspendedLand.Site site : sites) {
+            long deep = readSite(site, report);
+            if (deep < SuspendedLand.SITE_COLUMNS) {
+                stalled.add(deep + " columns lost " + SuspendedLand.SUSPENDED_BLOCKS
+                        + " blocks or more at " + site.describe());
+            }
+        }
+
+        ScanReports.write(ISLAND_REPORT, ScanReports.noPopulation(
+                "one site per world type carrying a ceiling, each the first island its own search finds"),
+                report);
+        assertTrue(stalled.isEmpty(), "the ceiling stopped cutting, floor " + SuspendedLand.SITE_COLUMNS
+                + " columns: " + String.join("; ", stalled));
+    }
+
+    private static long readSite(SuspendedLand.Site site, List<String> report) {
         WorldFold fold = torusOfWidth(WIDTH_BLOCKS);
         NoiseGeneratorSettings vanilla = settingsOf(site.type());
         DensityFunction rawCeiling = TerrainCeiling.ceiling(vanilla);
@@ -251,11 +276,9 @@ class TerrainCeilingScan {
         DensityFunction cutDensity = cutState.router().finalDensity();
         int seaLevel = vanilla.seaLevel();
 
-        List<String> report = new ArrayList<>();
         report.add("Suspended island the sweep settled on — " + site.describe());
         report.add("window " + SuspendedLand.WINDOW_BLOCKS + " blocks around x=" + site.blockX()
                 + " z=" + site.blockZ() + ", one column every " + SuspendedLand.STRIDE_BLOCKS + " blocks");
-        report.add("");
 
         int[] counts = new int[3];
         List<Double> drops = new ArrayList<>();
@@ -305,26 +328,27 @@ class TerrainCeilingScan {
         long unmoved = Arrays.stream(sorted).filter(drop -> drop == 0.0).count();
         double[] inside = insides.stream().mapToDouble(Double::doubleValue).sorted().toArray();
         long deep = Arrays.stream(sorted).filter(drop -> drop >= SuspendedLand.SUSPENDED_BLOCKS).count();
-        report.add("columns read: " + counts[0]);
-        report.add("columns standing below the ceiling, untouched: " + counts[1]);
-        report.add("columns standing above the ceiling: " + counts[2]);
-        report.add("of those, cut by at least " + SuspendedLand.SUSPENDED_BLOCKS + " blocks: " + deep);
-        report.add("of those, standing no more than " + GRAZING_BLOCKS + " blocks over the ceiling: " + grazing);
-        report.add("of those, the ceiling took nothing at all: " + unmoved + " (the penalty did not outweigh them)");
+        report.add("  columns read: " + counts[0]);
+        report.add("  columns standing below the ceiling, untouched: " + counts[1]);
+        report.add("  columns standing above the ceiling: " + counts[2]);
+        report.add("  of those, cut by at least " + SuspendedLand.SUSPENDED_BLOCKS + " blocks: " + deep);
+        report.add("  of those, standing no more than " + GRAZING_BLOCKS + " blocks over the ceiling: " + grazing);
+        report.add("  of those, the ceiling took nothing at all: " + unmoved
+                + " (the penalty did not outweigh them)");
         if (above.length > 0) {
-            report.add("how far over the ceiling they stood: min " + round(above[0]) + ", p50 "
+            report.add("  how far over the ceiling they stood: min " + round(above[0]) + ", p50 "
                     + round(percentile(above, 0.50)) + ", p99 " + round(percentile(above, 0.99))
                     + ", max " + round(above[above.length - 1]) + " blocks");
         }
 
         if (inside.length > 0) {
-            report.add("vanilla density halfway between the ceiling and the top: p50 "
+            report.add("  vanilla density halfway between the ceiling and the top: p50 "
                     + round(percentile(inside, 0.50)) + ", p99 " + round(percentile(inside, 0.99))
                     + ", max " + round(inside[inside.length - 1]) + " (what the penalty has to outweigh)");
         }
 
         if (sorted.length > 0) {
-            report.add("drop where the ceiling bit: min " + round(sorted[0]) + ", p50 "
+            report.add("  drop where the ceiling bit: min " + round(sorted[0]) + ", p50 "
                     + round(percentile(sorted, 0.50)) + ", max " + round(sorted[sorted.length - 1])
                     + " blocks");
         }
@@ -332,19 +356,15 @@ class TerrainCeilingScan {
         double[] ceilingHeights = ceilingsAtCut.stream().mapToDouble(Double::doubleValue).sorted().toArray();
         double[] cutHeights = topsAtCut.stream().mapToDouble(Double::doubleValue).sorted().toArray();
         if (cutHeights.length > 0) {
-            report.add("the ceiling itself, where it bit: min " + round(ceilingHeights[0]) + ", p50 "
+            report.add("  the ceiling itself, where it bit: min " + round(ceilingHeights[0]) + ", p50 "
                     + round(percentile(ceilingHeights, 0.50)) + ", max "
                     + round(ceilingHeights[ceilingHeights.length - 1]));
-            report.add("the cut top it left: min " + round(cutHeights[0]) + ", p50 "
+            report.add("  the cut top it left: min " + round(cutHeights[0]) + ", p50 "
                     + round(percentile(cutHeights, 0.50)) + ", max "
                     + round(cutHeights[cutHeights.length - 1]));
         }
 
-        ScanReports.write(ISLAND_REPORT, ScanReports.noPopulation(
-                "one site, taken from the suspended-land search, which stops at the first island it finds"),
-                report);
-        assertTrue(deep >= SuspendedLand.SITE_COLUMNS,
-                "the ceiling stopped cutting: " + deep + " columns lost " + SuspendedLand.SUSPENDED_BLOCKS
-                        + " blocks or more, floor " + SuspendedLand.SITE_COLUMNS + " — at " + site.describe());
+        report.add("");
+        return deep;
     }
 }
