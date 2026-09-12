@@ -16,7 +16,9 @@ import net.minecraft.world.phys.AABB;
 
 @Mixin(targets = "net.minecraft.world.entity.monster.Phantom$PhantomSweepAttackGoal")
 public class PhantomSweepAttackGoalMixin {
-    @Shadow(aliases = "this$0")
+    // Two spellings of the same synthetic field: the NeoForge build reads Mojmap, where it stays this$0, while the
+    // Fabric one runs on intermediary, which names every field — synthetic ones included — field_<n>.
+    @Shadow(aliases = {"this$0", "field_7333"})
     @Final
     private Phantom phantom;
 
