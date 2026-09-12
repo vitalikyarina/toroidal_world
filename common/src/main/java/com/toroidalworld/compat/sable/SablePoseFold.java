@@ -3,7 +3,6 @@ package com.toroidalworld.compat.sable;
 import java.util.List;
 
 import org.joml.Vector3d;
-import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.compat.sable.mixin.SubLevelAccessor;
@@ -57,32 +56,29 @@ public final class SablePoseFold {
             return;
         }
 
-        shiftGroup(system, members, lapOf(fold.foldTransformation(centre)), subLevel, readback);
+        shiftGroup(system, members, fold.foldTransformation(centre), subLevel, readback);
     }
 
-    static Vector3d lapOf(DeckTransformation seat) {
-        return new Vector3d(seat.blocks().xShift(), 0.0, seat.blocks().zShift());
-    }
-
-    static void shiftGroup(SubLevelPhysicsSystem system, List<SableMemberPose> members, Vector3dc lap,
+    static void shiftGroup(SubLevelPhysicsSystem system, List<SableMemberPose> members, DeckTransformation seat,
             @Nullable ServerSubLevel self, @Nullable Pose3d readback) {
+        SableRigidShift.requireTranslation(seat);
         PhysicsPipeline pipeline = system.getPipeline();
         for (SableMemberPose member : members) {
-            shift(system, pipeline, member, self, readback, lap);
+            shift(system, pipeline, member, self, readback, seat);
         }
 
-        SableBodyShift.fire(system.getLevel(), SableMemberPose.bodies(members), lap);
+        SableBodyShift.fire(system.getLevel(), SableMemberPose.bodies(members), seat);
     }
 
     private static void shift(SubLevelPhysicsSystem system, PhysicsPipeline pipeline, SableMemberPose member,
-            @Nullable ServerSubLevel self, @Nullable Pose3d readback, Vector3dc lap) {
+            @Nullable ServerSubLevel self, @Nullable Pose3d readback, DeckTransformation seat) {
         Pose3dc pose = member.pose();
         if (pose == null) {
             return;
         }
 
         PhysicsPipelineBody body = member.body();
-        Vector3d target = new Vector3d(pose.position()).add(lap);
+        Vector3d target = moved(seat, new Vector3d(pose.position()));
         Vector3d linearBefore = pipeline.getLinearVelocity(body, new Vector3d());
         Vector3d angularBefore = pipeline.getAngularVelocity(body, new Vector3d());
         pipeline.teleport(body, target, pose.orientation());
@@ -97,11 +93,15 @@ public final class SablePoseFold {
         }
 
         if (body instanceof ServerSubLevel subLevel) {
-            ((SubLevelAccessor) subLevel).toroidal$lastPose().position().add(lap);
-            subLevel.lastNetworkedPose().position().add(lap);
+            moved(seat, ((SubLevelAccessor) subLevel).toroidal$lastPose().position());
+            moved(seat, subLevel.lastNetworkedPose().position());
             subLevel.updateBoundingBox();
             uploadSections(system, pipeline, subLevel);
         }
+    }
+
+    private static Vector3d moved(DeckTransformation seat, Vector3d position) {
+        return JomlVectors.write(seat.apply(JomlVectors.read(position)), position);
     }
 
     private static void uploadSections(SubLevelPhysicsSystem system, PhysicsPipeline pipeline, ServerSubLevel subLevel) {

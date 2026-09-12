@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.joml.Vector3d;
-import org.joml.Vector3dc;
 import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.DeckTransformation;
@@ -56,7 +55,7 @@ public final class RopeSeamFrame {
         return JomlVectors.seat(fold, JomlVectors.read(ownEnd), point);
     }
 
-    public static void onGroupShifted(ServerLevel level, List<PhysicsPipelineBody> group, Vector3dc lap) {
+    public static void onGroupShifted(ServerLevel level, List<PhysicsPipelineBody> group, DeckTransformation seat) {
         ServerLevelRopeManager manager = ServerLevelRopeManager.getOrCreate(level);
         if (manager == null || manager.getAllStrands().isEmpty()) {
             return;

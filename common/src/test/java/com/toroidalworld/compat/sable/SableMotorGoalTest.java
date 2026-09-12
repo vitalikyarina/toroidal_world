@@ -1,11 +1,13 @@
 package com.toroidalworld.compat.sable;
 
+import static com.toroidalworld.compat.CompatFoldFixture.MIRRORED;
 import static com.toroidalworld.compat.CompatFoldFixture.PER_AXIS;
 import static com.toroidalworld.compat.CompatFoldFixture.WORLD_BLOCKS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.joml.Quaterniond;
@@ -198,6 +200,16 @@ class SableMotorGoalTest {
         body.drop();
 
         assertNull(goal.seatCorrection());
+    }
+
+    @Test
+    void aSeamThatMirrorsRefusesTheCorrection() {
+        SableMotorGoal goal = SableMotorGoal.of(MIRRORED, new LiveBox(BODY_ACROSS_THE_SEAM),
+                new FixedConstraintConfiguration(ORIGIN, ORIGIN, IDENTITY));
+        assertNotNull(goal);
+        aimAt(goal, GOAL_NEAR_THE_SEAM);
+
+        assertThrows(IllegalStateException.class, goal::seatCorrection);
     }
 
     @Test

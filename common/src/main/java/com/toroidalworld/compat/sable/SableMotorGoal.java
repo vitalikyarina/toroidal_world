@@ -130,7 +130,7 @@ public final class SableMotorGoal {
                 return null;
             }
 
-            return this.staticOrientation.transformInverse(SablePoseFold.lapOf(seat));
+            return this.staticOrientation.transformInverse(SableRigidShift.translationOf(seat));
         });
     }
 }

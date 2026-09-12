@@ -64,11 +64,13 @@ public final class SableConstraintJoin {
             return configuration;
         }
 
-        Vec3 seated = fold.nearestCopy(bodyAnchor, raw);
-        if (seated.x == raw.x && seated.z == raw.z) {
+        DeckTransformation seat = fold.nearestCopyTransformation(bodyAnchor, raw);
+        if (seat.isIdentity()) {
             return configuration;
         }
 
+        SableRigidShift.requireTranslation(seat);
+        Vec3 seated = seat.apply(raw);
         Vector3d anchor = new Vector3d(seated.x, seated.y, seated.z);
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null || container.inBounds(anchor)) {
@@ -107,8 +109,7 @@ public final class SableConstraintJoin {
         List<Vec3> positionsA = positionsOf(groupA);
         List<Vec3> positionsB = positionsOf(groupB);
         SableJoinDirection.Choice choice = SableJoinDirection.choose(fold, lapForB, positionsA, positionsB);
-        SablePoseFold.shiftGroup(system, choice.movingIsB() ? groupB : groupA,
-                SablePoseFold.lapOf(choice.lap()), null, null);
+        SablePoseFold.shiftGroup(system, choice.movingIsB() ? groupB : groupA, choice.lap(), null, null);
     }
 
     private static List<Vec3> positionsOf(List<SableMemberPose> group) {
