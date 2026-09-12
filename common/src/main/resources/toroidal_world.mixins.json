@@ -74,6 +74,7 @@
     "DualNoiseProviderMixin",
     "EnderDragonMixin",
     "EntityAccessor",
+    "EntityGetterMixin",
     "EntityMixin",
     "EntitySectionCallbackMixin",
     "EntitySectionManagerMixin",

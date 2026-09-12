@@ -30,6 +30,9 @@ public final class InjectionTargets {
     public static final String DISTANCE_PREDICATE_MATCHES =
             "Lnet/minecraft/advancements/predicates/DistancePredicate;matches(DDDDDD)Z";
 
+    public static final String ENTITY_GET_BOUNDING_BOX =
+            "Lnet/minecraft/world/entity/Entity;getBoundingBox()Lnet/minecraft/world/phys/AABB;";
+
     public static final String ENTITY_GET_EYE_POSITION =
             "Lnet/minecraft/world/entity/Entity;getEyePosition()Lnet/minecraft/world/phys/Vec3;";
 
