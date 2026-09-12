@@ -155,15 +155,9 @@ public class EntityMixin implements TransformerSource {
     }
 
     @Inject(method = "snapTo(DDDFF)V", at = @At("TAIL"))
-    private void toroidal$rebaseMirrorOnPlacement(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
+    private void toroidal$followPlayerPlacement(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
         if ((Object) this instanceof ServerPlayer player) {
             ClientPosition.rebase(player);
-        }
-    }
-
-    @Inject(method = "snapTo(DDDFF)V", at = @At("TAIL"))
-    private void toroidal$sampleTravelOnPlacement(double x, double y, double z, float yRot, float xRot, CallbackInfo ci) {
-        if ((Object) this instanceof ServerPlayer player) {
             CircumnavigationTracker.sample(player);
         }
     }

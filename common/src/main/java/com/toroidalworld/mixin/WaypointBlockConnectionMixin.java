@@ -1,6 +1,5 @@
 package com.toroidalworld.mixin;
 
-import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -23,19 +22,14 @@ public class WaypointBlockConnectionMixin {
     @Final
     private ServerPlayer receiver;
 
-    // Created on first use: a mixin's @Unique field initialisers never run.
     @Unique
-    private @Nullable WaypointLapGate toroidal$lapGate;
+    private final WaypointLapGate toroidal$lapGate = new WaypointLapGate();
 
     @WrapOperation(
             method = "update",
             at = @At(value = "INVOKE",
                     target = InjectionTargets.BLOCK_POS_DIST_MANHATTAN))
     private int toroidal$resendWhenTheReceiverLaps(BlockPos currentPosition, Vec3i lastPosition, Operation<Integer> original) {
-        if (this.toroidal$lapGate == null) {
-            this.toroidal$lapGate = new WaypointLapGate();
-        }
-
         return this.toroidal$lapGate.widen(original.call(currentPosition, lastPosition), this.receiver, currentPosition);
     }
 }
