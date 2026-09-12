@@ -56,6 +56,7 @@
     "ConnectionMixin",
     "CreakingMixin",
     "CrossbowItemAimMixin",
+    "DedicatedServerMixin",
     "DefaultRandomPosMixin",
     "DensityFunctionsEndIslandMixin",
     "DensityFunctionsNoiseMixin",
