@@ -34,7 +34,7 @@ class TranslationContextWarningTest {
     private static final double COORD_PAST_THE_REACH = 100.0;
     private static final Vec3 POSITION_PAST_THE_REACH = new Vec3(COORD_PAST_THE_REACH, 64.0, COORD_PAST_THE_REACH);
 
-    private static final String CHUNK_WARNING = "A chunk lands farther from the client anchor";
+    private static final String CHUNK_WARNING = "A mod_rewriter chunk lands farther from the client anchor";
     private static final String COORD_WARNING_X = "packet's x lands farther from the client anchor";
     private static final String COORD_WARNING_Z = "packet's z lands farther from the client anchor";
 
@@ -99,7 +99,7 @@ class TranslationContextWarningTest {
 
     private static TranslationContext contextAtTheOrigin() {
         ClientPosition clientPosition = new ClientPosition();
-        clientPosition.rebase(0.0, 0.0, Level.OVERWORLD, TORUS);
+        clientPosition.rebase(0.0, 0.0, Level.OVERWORLD, null, TORUS);
         return new TranslationContext(
                 TORUS,
                 clientPosition,
@@ -111,8 +111,10 @@ class TranslationContextWarningTest {
                 VIEW_DISTANCE,
                 entityId -> false,
                 entityId -> null,
+                entityId -> null,
                 () -> {
-                });
+                },
+                PacketTranslator.production());
     }
 
     private static org.apache.logging.log4j.core.Logger logger() {
