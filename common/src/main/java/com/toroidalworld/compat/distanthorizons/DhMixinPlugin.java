@@ -3,11 +3,11 @@ package com.toroidalworld.compat.distanthorizons;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
-import com.toroidalworld.MixinGatePlugin;
 import com.toroidalworld.compat.ModPresence;
+import com.toroidalworld.compat.ModPresenceGatePlugin;
 import com.toroidalworld.compat.ModSymbol;
 
-public class DhMixinPlugin extends MixinGatePlugin {
+public class DhMixinPlugin extends ModPresenceGatePlugin {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     static final ModSymbol LEVEL_CHUNK_HASH_REPO = new ModSymbol(
@@ -18,13 +18,7 @@ public class DhMixinPlugin extends MixinGatePlugin {
             "com/seibel/distanthorizons/core/api/internal/ClientApi.class",
             "[dh-compat] gate distanthorizons_present", LEVEL_CHUNK_HASH_REPO);
 
-    @Override
-    public void onLoad(String mixinPackage) {
-        DH.present();
-    }
-
-    @Override
-    public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        return DH.present();
+    public DhMixinPlugin() {
+        super(DH);
     }
 }

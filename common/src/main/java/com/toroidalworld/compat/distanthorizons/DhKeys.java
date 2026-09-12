@@ -38,35 +38,27 @@ public final class DhKeys {
     }
 
     public static DhChunkPos foldChunk(ToroidalShape shape, DhChunkPos pos) {
-        if (shape == null) {
-            return pos;
-        }
-
-        int x = DhFold.foldChunk(shape, Direction.Axis.X, LEAF, pos.getX());
-        int z = DhFold.foldChunk(shape, Direction.Axis.Z, LEAF, pos.getZ());
-        if (x == pos.getX() && z == pos.getZ()) {
-            DhProbes.keyKept(DhProbes.Key.CHUNK);
-            return pos;
-        }
-
-        DhProbes.chunkKeyFolded(pos.getX(), pos.getZ(), x, z);
-        return new DhChunkPos(x, z);
+        return foldChunk(shape, pos, pos.getX(), pos.getZ(), DhChunkPos::new);
     }
 
     public static ChunkPos foldChunk(ToroidalShape shape, ChunkPos pos) {
+        return foldChunk(shape, pos, pos.x(), pos.z(), ChunkPos::new);
+    }
+
+    private static <P> P foldChunk(ToroidalShape shape, P pos, int rawX, int rawZ, ChunkFactory<P> factory) {
         if (shape == null) {
             return pos;
         }
 
-        int x = DhFold.foldChunk(shape, Direction.Axis.X, LEAF, pos.x());
-        int z = DhFold.foldChunk(shape, Direction.Axis.Z, LEAF, pos.z());
-        if (x == pos.x() && z == pos.z()) {
+        int x = DhFold.foldChunk(shape, Direction.Axis.X, LEAF, rawX);
+        int z = DhFold.foldChunk(shape, Direction.Axis.Z, LEAF, rawZ);
+        if (x == rawX && z == rawZ) {
             DhProbes.keyKept(DhProbes.Key.CHUNK);
             return pos;
         }
 
-        DhProbes.chunkKeyFolded(pos.x(), pos.z(), x, z);
-        return new ChunkPos(x, z);
+        DhProbes.chunkKeyFolded(rawX, rawZ, x, z);
+        return factory.at(x, z);
     }
 
     public static DhBlockPos foldBlock(ToroidalShape shape, DhBlockPos pos) {
@@ -160,6 +152,10 @@ public final class DhKeys {
         } else if (dto instanceof BeaconBeamDTO beam && key instanceof DhBlockPos pos) {
             beam.blockPos = pos;
         }
+    }
+
+    private interface ChunkFactory<P> {
+        P at(int x, int z);
     }
 
     private DhKeys() {

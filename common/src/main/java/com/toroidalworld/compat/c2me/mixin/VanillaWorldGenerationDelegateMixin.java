@@ -39,10 +39,8 @@ public class VanillaWorldGenerationDelegateMixin {
             StaticCache2D.Initializer<GenerationChunkHolder> initializer,
             Operation<StaticCache2D<GenerationChunkHolder>> original,
             @Local(argsOnly = true) ChunkLoadingContext context) {
-        WorldFold transformer =
-                ((TransformerSource) context.theChunkSystem()).toroidal$wrappedTransformer();
         return original.call(centerX, centerZ, range,
-                C2meSeamFold.foldingInitializer(transformer, centerX, centerZ, initializer));
+                C2meSeamFold.foldingInitializer(context, centerX, centerZ, initializer));
     }
 
     @WrapMethod(method = "runTaskWithLockArea")
