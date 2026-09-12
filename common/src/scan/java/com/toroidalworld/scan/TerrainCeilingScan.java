@@ -34,6 +34,8 @@ class TerrainCeilingScan {
 
     private static final int GRID = 64;
 
+    private static final int QUART_BLOCKS = 4;
+
     private static final String SCAN = "terrain-ceiling";
 
     private static final int SEEDS = 10;
@@ -62,6 +64,12 @@ class TerrainCeilingScan {
         double headroom() {
             return this.ceiling - this.surface;
         }
+    }
+
+    private record QuartStep(double alongX, double alongZ) {
+    }
+
+    private record Sample(List<Column> columns, List<QuartStep> nearCeiling) {
     }
 
     private record Bucket(String name, int columns, double overshootShare, double overshootP99, double maxOvershoot) {
@@ -95,7 +103,8 @@ class TerrainCeilingScan {
                 continue;
             }
 
-            List<Column> columns = sample(type);
+            Sample sample = sample(type);
+            List<Column> columns = sample.columns();
             report.add("  columns sampled: " + columns.size());
             Bucket flat = bucket("flat", columns.stream()
                     .filter(column -> column.headroom() <= flatHeadroomCeiling(columns)).toList());
@@ -116,6 +125,12 @@ class TerrainCeilingScan {
                     + " blocks");
             report.add("  vanilla density one ramp above the ceiling: "
                     + spread(columns, Column::densityAboveCeiling) + " (the penalty has to outweigh it)");
+            List<QuartStep> nearCeiling = sample.nearCeiling();
+            report.add("  ceiling step between adjacent quarts where the cut is in play, within one ramp "
+                    + "of the ceiling, " + nearCeiling.size() + " columns: "
+                    + (nearCeiling.isEmpty() ? "none in play"
+                            : "along x " + spread(nearCeiling, QuartStep::alongX) + " blocks, along z "
+                                    + spread(nearCeiling, QuartStep::alongZ) + " blocks"));
             report.add(line(flat));
             report.add(line(jagged));
             report.add("");
@@ -139,8 +154,8 @@ class TerrainCeilingScan {
         }
     }
 
-    private static String spread(List<Column> columns, java.util.function.ToDoubleFunction<Column> reading) {
-        double[] sorted = columns.stream().mapToDouble(reading).sorted().toArray();
+    private static <T> String spread(List<T> rows, java.util.function.ToDoubleFunction<T> reading) {
+        double[] sorted = rows.stream().mapToDouble(reading).sorted().toArray();
         return "min " + round(sorted[0]) + ", p50 " + round(percentile(sorted, 0.50))
                 + ", p99 " + round(percentile(sorted, 0.99)) + ", max " + round(sorted[sorted.length - 1]);
     }
@@ -170,8 +185,9 @@ class TerrainCeilingScan {
                 + round(bucket.overshootP99()) + " blocks, worst " + round(bucket.maxOvershoot()) + " blocks";
     }
 
-    private static List<Column> sample(WorldType type) {
+    private static Sample sample(WorldType type) {
         List<Column> columns = new ArrayList<>();
+        List<QuartStep> nearCeiling = new ArrayList<>();
         WorldFold fold = torusOfWidth(WIDTH_BLOCKS);
         NoiseGeneratorSettings settings = settingsOf(type);
         DensityFunction rawCeiling = TerrainCeiling.ceiling(settings);
@@ -201,6 +217,11 @@ class TerrainCeilingScan {
                         int probeY = (int) Math.min(TOP_Y, Math.round(ceilingY + RAMP_BLOCKS));
                         columns.add(new Column(top, at(surface, blockX, blockZ), ceilingY,
                                 density.compute(new DensityFunction.SinglePointContext(blockX, probeY, blockZ))));
+                        if (Math.abs(top - ceilingY) <= RAMP_BLOCKS) {
+                            nearCeiling.add(new QuartStep(
+                                    Math.abs(at(ceiling, blockX + QUART_BLOCKS, blockZ) - ceilingY),
+                                    Math.abs(at(ceiling, blockX, blockZ + QUART_BLOCKS) - ceilingY)));
+                        }
                     }
                 }
             });
@@ -208,7 +229,7 @@ class TerrainCeilingScan {
                     + " seed=" + SuspendedLand.seed(s) + " columns=" + (columns.size() - before));
         }
 
-        return columns;
+        return new Sample(columns, nearCeiling);
     }
 
     private static String round(double value) {
