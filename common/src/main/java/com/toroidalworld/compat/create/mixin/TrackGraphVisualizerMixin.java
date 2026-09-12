@@ -1,6 +1,7 @@
 package com.toroidalworld.compat.create.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -9,7 +10,6 @@ import com.simibubi.create.content.trains.graph.TrackEdge;
 import com.simibubi.create.content.trains.graph.TrackGraph;
 import com.simibubi.create.content.trains.graph.TrackGraphVisualizer;
 import com.toroidalworld.InjectionTargets;
-import com.toroidalworld.compat.create.CatnipInjectionTargets;
 import com.toroidalworld.compat.create.CreateInjectionTargets;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
 
@@ -21,6 +21,12 @@ import net.minecraft.world.phys.Vec3;
 
 @Mixin(value = TrackGraphVisualizer.class, remap = false)
 public class TrackGraphVisualizerMixin {
+    @Unique
+    private static final String SHOW_LINE =
+            "Lnet/createmod/catnip/outliner/Outliner;showLine"
+                    + "(Ljava/lang/Object;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)"
+                    + "Lnet/createmod/catnip/outliner/Outline$OutlineParams;";
+
     @WrapOperation(method = {"visualiseSignalEdgeGroups", "debugViewGraph"},
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/phys/AABB;intersects(Lnet/minecraft/world/phys/AABB;)Z"))
@@ -46,8 +52,8 @@ public class TrackGraphVisualizerMixin {
 
     @WrapOperation(method = "debugViewGraph",
             at = {
-                @At(value = "INVOKE", target = CatnipInjectionTargets.OUTLINER_SHOW_LINE, ordinal = 0),
-                @At(value = "INVOKE", target = CatnipInjectionTargets.OUTLINER_SHOW_LINE, ordinal = 1)
+                @At(value = "INVOKE", target = SHOW_LINE, ordinal = 0),
+                @At(value = "INVOKE", target = SHOW_LINE, ordinal = 1)
             })
     private static Outline.OutlineParams toroidal$seatNodeMarker(Outliner outliner, Object slot, Vec3 start,
             Vec3 end, Operation<Outline.OutlineParams> original) {
