@@ -18,17 +18,19 @@ class FloatingCrumbsTest {
 
     private static final int HEIGHT = 8;
 
+    private static final CellGrid GRID = new CellGrid(SIDE, HEIGHT);
+
     private static final byte SEA = 1;
 
     private static final byte OTHER = 2;
 
     private static final class Grid {
-        private final boolean[] solid = new boolean[SIDE * SIDE * HEIGHT];
-        private final byte[] fluid = new byte[SIDE * SIDE * HEIGHT];
+        private final boolean[] solid = new boolean[GRID.cells()];
+        private final byte[] fluid = new byte[GRID.cells()];
         private int blocks;
 
         private static int cell(int x, int z, int y) {
-            return x + z * SIDE + y * SIDE * SIDE;
+            return GRID.cell(x, y, z);
         }
 
         Grid set(int x, int z, int y) {
@@ -61,7 +63,7 @@ class FloatingCrumbsTest {
 
         List<Integer> sweep() {
             List<Integer> cleared = new ArrayList<>();
-            this.result = FloatingCrumbs.clearCrumbs(this.solid, this.fluid, HEIGHT, this.blocks, cleared::add);
+            this.result = FloatingCrumbs.clearCrumbs(GRID, this.solid, this.fluid, this.blocks, cleared::add);
             return cleared;
         }
 
