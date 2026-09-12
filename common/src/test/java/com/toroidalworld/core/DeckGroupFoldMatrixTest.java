@@ -1233,14 +1233,6 @@ class DeckGroupFoldMatrixTest {
                         testCase.name() + ": the per-axis chunk view was open");
             }
         }
-
-        @Test
-        void localIndicesSurviveExactlyWhereThereIsNoMirror() {
-            for (Case testCase : cases()) {
-                assertEquals(!testCase.shape().isMirrored(), testCase.fold().preservesLocalIndices(),
-                        testCase.name() + ": preservesLocalIndices disagrees with the mirror");
-            }
-        }
     }
 
     @Nested

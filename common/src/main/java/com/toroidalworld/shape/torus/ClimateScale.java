@@ -50,10 +50,6 @@ public record ClimateScale(Mode mode, int factor) {
         return new ClimateScale(chosen, this.factor);
     }
 
-    public ClimateScale withFactor(int chosen) {
-        return new ClimateScale(this.mode, chosen);
-    }
-
     private Either<Boolean, ClimateScale> toEither() {
         return switch (this.mode) {
             case OFF -> Either.left(false);

@@ -160,10 +160,6 @@ public record FlatShape(WorldLoopBounds bounds, int skewChunks, @Nullable Mirror
         return mirror != null ? Identification.MOBIUS : Identification.CYLINDER;
     }
 
-    public boolean isMirrored() {
-        return mirror != null;
-    }
-
     public boolean decomposesPerAxis() {
         return mirror == null && skewChunks == 0;
     }

@@ -174,7 +174,6 @@ public record WorldLoopBounds(AxisBounds x, AxisBounds z) {
         }
     }
 
-    // The frozen literal the retired sentinel model wrote for a non-looping axis; legacy save files still carry it.
     private static final int LEGACY_DISABLED_AXIS_RADIUS =
             (int) (WorldBorder.MAX_CENTER_COORDINATE / CoordinateConstants.CHUNK_WIDTH) + 8192;
 
