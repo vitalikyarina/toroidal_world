@@ -333,7 +333,7 @@ public final class PacketTranslator {
         boolean relativeZ = relatives.contains(RelativeMovement.Z);
         Vec3 clientDestination = clientPosition.destinationOf(
                 context.transformer(), new Vec3(packet.getX(), packet.getY(), packet.getZ()), relatives);
-        clientPosition.set(clientDestination.x, clientDestination.z, MirrorWriter.POSITION_PACKET);
+        clientPosition.set(clientDestination, MirrorWriter.POSITION_PACKET);
 
         double sentX = relativeX
                 ? SeamDelta.foldX(context.transformer(), packet.getX())

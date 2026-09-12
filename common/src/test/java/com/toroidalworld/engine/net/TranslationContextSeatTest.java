@@ -28,7 +28,7 @@ class TranslationContextSeatTest {
 
     private static TranslationContext contextAnchoredAt(double x) {
         ClientPosition clientPosition = new ClientPosition();
-        clientPosition.rebase(x, 0.0, Level.OVERWORLD, TORUS);
+        clientPosition.rebase(x, 0.0, Level.OVERWORLD, null, TORUS);
         return new TranslationContext(
                 TORUS,
                 clientPosition,

@@ -84,7 +84,7 @@ final class PacketTranslatorFixture {
 
     static TranslationContext mirroredContext() {
         ClientPosition mirror = new ClientPosition();
-        mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, MIRRORED_TRANSFORMER);
+        mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, null, MIRRORED_TRANSFORMER);
         return new TranslationContext(MIRRORED_TRANSFORMER, mirror, BUFFERS, Level.OVERWORLD,
                 VIEW_DISTANCE, VIEW_DISTANCE, entityId -> false, entityId -> null, entityId -> null, () -> {},
                 REWRITERS);
@@ -106,7 +106,7 @@ final class PacketTranslatorFixture {
     static TranslationContext context(IntPredicate ownVehicle, IntFunction<Vec3> entityPosition,
             IntFunction<Class<?>> entityClass, PacketRewriters rewriters) {
         ClientPosition mirror = new ClientPosition();
-        mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, TRANSFORMER);
+        mirror.rebase(MIRROR_X, MIRROR_Z, Level.OVERWORLD, null, TRANSFORMER);
         return new TranslationContext(TRANSFORMER, mirror, BUFFERS, Level.OVERWORLD,
                 VIEW_DISTANCE, VIEW_DISTANCE, ownVehicle, entityPosition, entityClass, () -> {}, rewriters);
     }

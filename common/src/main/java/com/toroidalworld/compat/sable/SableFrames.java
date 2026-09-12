@@ -3,6 +3,7 @@ package com.toroidalworld.compat.sable;
 import java.util.Optional;
 
 import org.joml.Vector2i;
+import org.jspecify.annotations.Nullable;
 
 import com.toroidalworld.core.ForeignFrame;
 import com.toroidalworld.core.ForeignFrameSource;
@@ -31,7 +32,7 @@ final class SableFrames implements ForeignFrameSource {
     }
 
     @Override
-    public Vec3 seatInWorld(Level level, Vec3 stored) {
+    public Vec3 seatInWorld(@Nullable Level level, Vec3 stored) {
         return Sable.HELPER.projectOutOfSubLevel(level, stored);
     }
 
