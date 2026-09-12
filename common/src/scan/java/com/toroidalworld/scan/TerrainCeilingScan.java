@@ -262,6 +262,8 @@ class TerrainCeilingScan {
         List<Double> drops = new ArrayList<>();
         List<Double> aboves = new ArrayList<>();
         List<Double> insides = new ArrayList<>();
+        List<Double> ceilingsAtCut = new ArrayList<>();
+        List<Double> topsAtCut = new ArrayList<>();
         GenerationTransformerContext.runWithTransformer(fold, () -> {
             for (int dx = -SuspendedLand.WINDOW_BLOCKS / 2; dx <= SuspendedLand.WINDOW_BLOCKS / 2;
                     dx += SuspendedLand.STRIDE_BLOCKS) {
@@ -289,6 +291,8 @@ class TerrainCeilingScan {
                     counts[2]++;
                     drops.add((double) (vanillaTop - cutTop));
                     aboves.add(vanillaTop - ceilingY);
+                    ceilingsAtCut.add(ceilingY);
+                    topsAtCut.add((double) cutTop);
                     int midY = (int) Math.round((ceilingY + vanillaTop) / 2.0);
                     insides.add(vanillaDensity.compute(
                             new DensityFunction.SinglePointContext(blockX, midY, blockZ)));
@@ -324,6 +328,17 @@ class TerrainCeilingScan {
             report.add("drop where the ceiling bit: min " + round(sorted[0]) + ", p50 "
                     + round(percentile(sorted, 0.50)) + ", max " + round(sorted[sorted.length - 1])
                     + " blocks");
+        }
+
+        double[] ceilingHeights = ceilingsAtCut.stream().mapToDouble(Double::doubleValue).sorted().toArray();
+        double[] cutHeights = topsAtCut.stream().mapToDouble(Double::doubleValue).sorted().toArray();
+        if (cutHeights.length > 0) {
+            report.add("the ceiling itself, where it bit: min " + round(ceilingHeights[0]) + ", p50 "
+                    + round(percentile(ceilingHeights, 0.50)) + ", max "
+                    + round(ceilingHeights[ceilingHeights.length - 1]));
+            report.add("the cut top it left: min " + round(cutHeights[0]) + ", p50 "
+                    + round(percentile(cutHeights, 0.50)) + ", max "
+                    + round(cutHeights[cutHeights.length - 1]));
         }
 
         ScanReports.write(ISLAND_REPORT, ScanReports.noPopulation(
