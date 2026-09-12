@@ -29,22 +29,6 @@ class SableSeamDistanceTest {
     };
 
     @Test
-    void theSquaredDistanceIsMeasuredTheShortWayRoundOnBothLoopedAxes() {
-        assertEquals(12.0 * 12.0 + 30.0 * 30.0 + 56.0 * 56.0, SableSeamDistance.sqr(FOLD, FROM, TO, REFUSES), 0.0,
-                "x folds 500 to 12 over 512, z folds 200 to 56 over 256, y is never folded");
-    }
-
-    @Test
-    void anUnwrappedLevelLeavesTheSquaredDistanceToSable() {
-        Operation<Double> original = args -> {
-            assertArrayEquals(new Object[] {FROM, TO}, args);
-            return SENTINEL;
-        };
-
-        assertEquals(SENTINEL, SableSeamDistance.sqr((WorldFold) null, FROM, TO, original), 0.0);
-    }
-
-    @Test
     void theRectilinearDistanceIsTheWidestFoldedAxis() {
         assertEquals(56.0, SableSeamDistance.rectilinear(FOLD, FROM, TO, REFUSES), 0.0,
                 "z folds to 56, wider than the folded x of 12 and the y of 30");

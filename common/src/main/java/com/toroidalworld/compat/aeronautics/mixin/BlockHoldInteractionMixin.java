@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.toroidalworld.compat.aeronautics.HoldInteractionSeamDistance;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import dev.simulated_team.simulated.util.hold_interaction.BlockHoldInteraction;
 
@@ -22,6 +22,7 @@ public class BlockHoldInteractionMixin {
             at = @At(value = "INVOKE", target = "Lorg/joml/Vector3d;distanceSquared(DDD)D"))
     private static double toroidal$eyeDistanceThroughSeam(Vector3d target, double eyeX, double eyeY, double eyeZ,
             Operation<Double> original, @Local(argsOnly = true) Player player) {
-        return HoldInteractionSeamDistance.sqrToEye(target, eyeX, eyeY, eyeZ, player, original);
+        return WorldLoopAttachments.transformerOfReader(player.level())
+                .sqrDistance(eyeX, eyeY, eyeZ, target.x, target.y, target.z);
     }
 }

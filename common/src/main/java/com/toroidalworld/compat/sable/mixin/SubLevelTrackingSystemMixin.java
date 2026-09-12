@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.toroidalworld.compat.sable.SableTrackingRange;
+import com.toroidalworld.core.WorldLoopAttachments;
 
 import dev.ryanhcode.sable.sublevel.system.SubLevelTrackingSystem;
 
@@ -24,6 +24,6 @@ public class SubLevelTrackingSystemMixin {
             method = "shouldLoad",
             at = @At(value = "INVOKE", target = "Lorg/joml/Vector3dc;distanceSquared(DDD)D"))
     private double toroidal$distanceTheShortWayRound(Vector3dc pose, double x, double y, double z, Operation<Double> original) {
-        return SableTrackingRange.sqrDistance(this.level, pose, x, y, z, original);
+        return WorldLoopAttachments.transformerOf(this.level).sqrDistance(pose.x(), pose.y(), pose.z(), x, y, z);
     }
 }
