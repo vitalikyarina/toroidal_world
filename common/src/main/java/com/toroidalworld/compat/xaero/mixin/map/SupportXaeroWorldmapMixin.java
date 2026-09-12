@@ -1,5 +1,6 @@
 package com.toroidalworld.compat.xaero.mixin.map;
 
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -39,8 +40,8 @@ public abstract class SupportXaeroWorldmapMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/MapProcessor;getMinimapMapRegion(II)Lxaero/map/region/MapRegion;"))
-    private MapRegion toroidal$fetchMinimapRegion(MapProcessor processor, int regX, int regZ,
-            Operation<MapRegion> original) {
+    private @Nullable MapRegion toroidal$fetchMinimapRegion(MapProcessor processor, int regX, int regZ,
+            Operation<@Nullable MapRegion> original) {
         this.toroidal$fetchRegionX = regX;
         this.toroidal$fetchRegionZ = regZ;
         this.toroidal$fetchIsLeaf = false;
@@ -61,8 +62,8 @@ public abstract class SupportXaeroWorldmapMixin {
             at = @At(
                     value = "INVOKE",
                     target = XaeroInjectionTargets.MAP_PROCESSOR_GET_LEAF_MAP_REGION))
-    private MapRegion toroidal$fetchLeafRegion(MapProcessor processor, int caveLayer, int regX, int regZ,
-            boolean create, Operation<MapRegion> original) {
+    private @Nullable MapRegion toroidal$fetchLeafRegion(MapProcessor processor, int caveLayer, int regX, int regZ,
+            boolean create, Operation<@Nullable MapRegion> original) {
         this.toroidal$fetchRegionX = regX;
         this.toroidal$fetchRegionZ = regZ;
         this.toroidal$fetchIsLeaf = true;
@@ -85,7 +86,7 @@ public abstract class SupportXaeroWorldmapMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lxaero/map/region/MapRegion;getChunk(II)Lxaero/map/region/MapTileChunk;"))
-    private MapTileChunk toroidal$fetchCanonicalChunk(MapRegion region, int localX, int localZ,
+    private @Nullable MapTileChunk toroidal$fetchCanonicalChunk(MapRegion region, int localX, int localZ,
             Operation<MapTileChunk> original) {
         int mirrorTileX = XaeroWorldMapFold.firstTileChunkOfRegion(this.toroidal$fetchRegionX) + localX;
         int mirrorTileZ = XaeroWorldMapFold.firstTileChunkOfRegion(this.toroidal$fetchRegionZ) + localZ;

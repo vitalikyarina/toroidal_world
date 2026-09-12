@@ -2,6 +2,7 @@ package com.toroidalworld.compat.distanthorizons.mixin;
 
 import java.sql.PreparedStatement;
 
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 
 import com.toroidalworld.api.v1.ToroidalShape;
@@ -37,8 +38,8 @@ public class FullDataSourceV2RepoMixin {
     }
 
     @WrapMethod(method = "getAdjByPosAndDirection")
-    private FullDataSourceV2DTO toroidal$foldAdjacent(long pos, EDhDirection direction,
-            Operation<FullDataSourceV2DTO> original) {
+    private @Nullable FullDataSourceV2DTO toroidal$foldAdjacent(long pos, EDhDirection direction,
+            Operation<@Nullable FullDataSourceV2DTO> original) {
         FullDataSourceV2DTO dto = original.call(DhKeys.foldSection(DhRepoLevel.shapeOf(this), pos), direction);
         if (dto != null) {
             dto.pos = pos;

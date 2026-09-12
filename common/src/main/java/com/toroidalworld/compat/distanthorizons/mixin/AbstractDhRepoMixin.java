@@ -1,5 +1,6 @@
 package com.toroidalworld.compat.distanthorizons.mixin;
 
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
@@ -28,7 +29,7 @@ public class AbstractDhRepoMixin implements DhRepoLevel {
     }
 
     @Override
-    public ToroidalShape toroidal$shape() {
+    public @Nullable ToroidalShape toroidal$shape() {
         ToroidalShape shape = DhShapes.of(this.toroidal$level);
         boolean present = shape != null;
         if (this.toroidal$shapeSeen == null || this.toroidal$shapeSeen != present) {
@@ -40,7 +41,7 @@ public class AbstractDhRepoMixin implements DhRepoLevel {
     }
 
     @WrapMethod(method = "getByKey(Ljava/lang/Object;)Lcom/seibel/distanthorizons/core/sql/dto/IBaseDTO;")
-    private IBaseDTO<?> toroidal$answerTheAskedKey(Object key, Operation<IBaseDTO<?>> original) {
+    private @Nullable IBaseDTO<?> toroidal$answerTheAskedKey(Object key, Operation<@Nullable IBaseDTO<?>> original) {
         IBaseDTO<?> dto = original.call(key);
         if (dto != null && this.toroidal$shape() != null) {
             DhKeys.reseat(dto, key);
