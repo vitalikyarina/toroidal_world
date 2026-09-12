@@ -9,8 +9,12 @@ import com.simibubi.create.content.trains.graph.TrackEdge;
 import com.simibubi.create.content.trains.graph.TrackGraph;
 import com.simibubi.create.content.trains.graph.TrackGraphVisualizer;
 import com.toroidalworld.InjectionTargets;
+import com.toroidalworld.compat.create.CatnipInjectionTargets;
 import com.toroidalworld.compat.create.CreateInjectionTargets;
 import com.toroidalworld.compat.create.client.CreateClientFrame;
+
+import net.createmod.catnip.outliner.Outline;
+import net.createmod.catnip.outliner.Outliner;
 
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -38,5 +42,16 @@ public class TrackGraphVisualizerMixin {
             Operation<Vec3> original) {
         Vec3 anchor = edge.node1.getLocation().getLocation();
         return CreateClientFrame.inFrameOf(anchor, original.call(edge, graph, t));
+    }
+
+    @WrapOperation(method = "debugViewGraph",
+            at = {
+                @At(value = "INVOKE", target = CatnipInjectionTargets.OUTLINER_SHOW_LINE, ordinal = 0),
+                @At(value = "INVOKE", target = CatnipInjectionTargets.OUTLINER_SHOW_LINE, ordinal = 1)
+            })
+    private static Outline.OutlineParams toroidal$seatNodeMarker(Outliner outliner, Object slot, Vec3 start,
+            Vec3 end, Operation<Outline.OutlineParams> original) {
+        return original.call(outliner, slot, CreateClientFrame.inFrameOf(start, start),
+                CreateClientFrame.inFrameOf(start, end));
     }
 }
