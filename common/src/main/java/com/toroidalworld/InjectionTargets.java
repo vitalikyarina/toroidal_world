@@ -1,6 +1,9 @@
 package com.toroidalworld;
 
 public final class InjectionTargets {
+    public static final String AABB_INTERSECTS =
+            "Lnet/minecraft/world/phys/AABB;intersects(Lnet/minecraft/world/phys/AABB;)Z";
+
     public static final String BLOCK_POS_CLOSER_THAN =
             "Lnet/minecraft/core/BlockPos;closerThan(Lnet/minecraft/core/Vec3i;D)Z";
 
