@@ -101,6 +101,14 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class PacketTranslator {
+    private static final String SOUND_KIND = "sound";
+
+    private static final String PARTICLE_KIND = "particle";
+
+    private static final String FORCED_PARTICLE_KIND = "forced_particle";
+
+    private static final String EXPLOSION_KIND = "explosion";
+
     private static final StreamCodec<FriendlyByteBuf, BorderCenter> BORDER_CENTER_CODEC = StreamCodec.of(
             (buffer, center) -> {
                 buffer.writeDouble(center.x());
@@ -465,8 +473,8 @@ public final class PacketTranslator {
     }
 
     private static ClientboundSoundPacket sound(ClientboundSoundPacket packet, TranslationContext context) {
-        PacketReach reach = PacketReach.sound(packet.getSound().value().getRange(packet.getVolume()));
-        Vec3 clientPos = context.toClient(new Vec3(packet.getX(), packet.getY(), packet.getZ()), reach);
+        Vec3 clientPos = context.toClientMeasured(
+                new Vec3(packet.getX(), packet.getY(), packet.getZ()), SOUND_KIND);
         return new ClientboundSoundPacket(
                 packet.getSound(), packet.getSource(),
                 clientPos.x, clientPos.y, clientPos.z,
@@ -474,8 +482,9 @@ public final class PacketTranslator {
     }
 
     private static ClientboundLevelParticlesPacket levelParticles(ClientboundLevelParticlesPacket packet, TranslationContext context) {
-        PacketReach reach = packet.isOverrideLimiter() ? PacketReach.FORCED_PARTICLE : PacketReach.PARTICLE;
-        Vec3 clientOrigin = context.toClient(new Vec3(packet.getX(), packet.getY(), packet.getZ()), reach);
+        Vec3 clientOrigin = context.toClientMeasured(
+                new Vec3(packet.getX(), packet.getY(), packet.getZ()),
+                packet.isOverrideLimiter() ? FORCED_PARTICLE_KIND : PARTICLE_KIND);
         return new ClientboundLevelParticlesPacket(
                 toClientParticle(context, packet.getParticle(), clientOrigin),
                 packet.isOverrideLimiter(), packet.alwaysShow(),
@@ -484,7 +493,7 @@ public final class PacketTranslator {
     }
 
     private static ClientboundExplodePacket explode(ClientboundExplodePacket packet, TranslationContext context) {
-        Vec3 clientCenter = context.toClient(packet.center(), PacketReach.EXPLOSION);
+        Vec3 clientCenter = context.toClientMeasured(packet.center(), EXPLOSION_KIND);
         return new ClientboundExplodePacket(
                 clientCenter, packet.radius(), packet.blockCount(), packet.playerKnockback(),
                 toClientParticle(context, packet.explosionParticle(), clientCenter),

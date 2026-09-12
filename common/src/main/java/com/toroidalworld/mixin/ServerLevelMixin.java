@@ -16,7 +16,7 @@ import com.toroidalworld.accessors.TransformerHolder;
 import com.toroidalworld.core.DeckTransformation;
 import com.toroidalworld.core.WorldFold;
 import com.toroidalworld.core.WorldLoopAttachments;
-import com.toroidalworld.engine.net.PacketReach;
+import com.toroidalworld.engine.net.MeasuredReach;
 import com.toroidalworld.engine.noise.GenerationTransformerContext;
 import com.toroidalworld.engine.seam.SeamRange;
 import com.toroidalworld.engine.seam.SeamSnap;
@@ -30,6 +30,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelEventPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
@@ -41,10 +42,13 @@ import net.minecraft.world.phys.Vec3;
 @Mixin(ServerLevel.class)
 public class ServerLevelMixin {
     @Unique
-    private static final double PARTICLE_RANGE = PacketReach.PARTICLE.blocks();
+    private static final double PARTICLE_RANGE = 32.0;
 
     @Unique
-    private static final double OVERRIDDEN_PARTICLE_RANGE = PacketReach.FORCED_PARTICLE.blocks();
+    private static final double OVERRIDDEN_PARTICLE_RANGE = 512.0;
+
+    @Unique
+    private static final double EXPLOSION_RANGE = 64.0;
 
     @Unique
     private static final double GLOBAL_EVENT_RANGE = 32.0;
@@ -127,8 +131,24 @@ public class ServerLevelMixin {
             return false;
         }
 
-        player.connection.send(packet);
+        try (MeasuredReach ignored = MeasuredReach.measuring(range)) {
+            player.connection.send(packet);
+        }
+
         return true;
+    }
+
+    @WrapOperation(
+            method = "explode",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;"
+                            + "send(Lnet/minecraft/network/protocol/Packet;)V"))
+    private void toroidal$measureExplosionReach(ServerGamePacketListenerImpl connection, Packet<?> packet,
+            Operation<Void> original) {
+        try (MeasuredReach ignored = MeasuredReach.measuring(EXPLOSION_RANGE)) {
+            original.call(connection, packet);
+        }
     }
 
     @WrapMethod(method = "globalLevelEvent")
