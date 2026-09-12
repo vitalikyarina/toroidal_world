@@ -21,16 +21,14 @@ public class ShulkerBulletMixin {
             method = "selectNextMoveDirection",
             at = @At(value = "INVOKE", target = InjectionTargets.ENTITY_GET_X))
     private double toroidal$homeOnTargetX(Entity target, Operation<Double> original) {
-        return SeamAim.nearestTo((ShulkerBullet) (Object) this,
-                target.position().with(Direction.Axis.X, original.call(target))).x;
+        return SeamAim.nearestCoord((ShulkerBullet) (Object) this, target, Direction.Axis.X, original.call(target));
     }
 
     @WrapOperation(
             method = "selectNextMoveDirection",
             at = @At(value = "INVOKE", target = InjectionTargets.ENTITY_GET_Z))
     private double toroidal$homeOnTargetZ(Entity target, Operation<Double> original) {
-        return SeamAim.nearestTo((ShulkerBullet) (Object) this,
-                target.position().with(Direction.Axis.Z, original.call(target))).z;
+        return SeamAim.nearestCoord((ShulkerBullet) (Object) this, target, Direction.Axis.Z, original.call(target));
     }
 
     @ModifyExpressionValue(

@@ -21,7 +21,7 @@ public class GhastFacingAimMixin {
             at = @At(value = "INVOKE", target = InjectionTargets.LIVING_ENTITY_GET_X))
     private static double toroidal$aimTargetX(LivingEntity target, Operation<Double> original,
             @Local(argsOnly = true) Mob ghast) {
-        return SeamAim.nearestTo(ghast, target.position().with(Direction.Axis.X, original.call(target))).x;
+        return SeamAim.nearestCoord(ghast, target, Direction.Axis.X, original.call(target));
     }
 
     @WrapOperation(
@@ -29,6 +29,6 @@ public class GhastFacingAimMixin {
             at = @At(value = "INVOKE", target = InjectionTargets.LIVING_ENTITY_GET_Z))
     private static double toroidal$aimTargetZ(LivingEntity target, Operation<Double> original,
             @Local(argsOnly = true) Mob ghast) {
-        return SeamAim.nearestTo(ghast, target.position().with(Direction.Axis.Z, original.call(target))).z;
+        return SeamAim.nearestCoord(ghast, target, Direction.Axis.Z, original.call(target));
     }
 }

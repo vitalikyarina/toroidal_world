@@ -24,13 +24,13 @@ public class BlazeAimMixin {
             method = "tick",
             at = @At(value = "INVOKE", target = InjectionTargets.LIVING_ENTITY_GET_X))
     private double toroidal$aimTargetX(LivingEntity target, Operation<Double> original) {
-        return SeamAim.nearestTo(this.blaze, target.position().with(Direction.Axis.X, original.call(target))).x;
+        return SeamAim.nearestCoord(this.blaze, target, Direction.Axis.X, original.call(target));
     }
 
     @WrapOperation(
             method = "tick",
             at = @At(value = "INVOKE", target = InjectionTargets.LIVING_ENTITY_GET_Z))
     private double toroidal$aimTargetZ(LivingEntity target, Operation<Double> original) {
-        return SeamAim.nearestTo(this.blaze, target.position().with(Direction.Axis.Z, original.call(target))).z;
+        return SeamAim.nearestCoord(this.blaze, target, Direction.Axis.Z, original.call(target));
     }
 }
