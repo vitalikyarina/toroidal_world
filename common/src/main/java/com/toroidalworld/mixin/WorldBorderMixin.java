@@ -67,7 +67,7 @@ public class WorldBorderMixin implements TransformerHolder {
     @ModifyReturnValue(method = "isWithinBounds(DDD)Z", at = @At("RETURN"))
     private boolean toroidal$boundsThroughSeam(boolean original, double x, double z, double margin) {
         WorldFold transformer = this.toroidal$transformer;
-        if (!transformer.isWrapped()) {
+        if (!transformer.isWrapped() || toroidal$isForeign(transformer, x, z)) {
             return original;
         }
 
@@ -78,7 +78,7 @@ public class WorldBorderMixin implements TransformerHolder {
     @ModifyReturnValue(method = "getDistanceToBorder(DD)D", at = @At("RETURN"))
     private double toroidal$distanceThroughSeam(double original, double x, double z) {
         WorldFold transformer = this.toroidal$transformer;
-        if (!transformer.isWrapped()) {
+        if (!transformer.isWrapped() || toroidal$isForeign(transformer, x, z)) {
             return original;
         }
 
@@ -90,7 +90,7 @@ public class WorldBorderMixin implements TransformerHolder {
     @ModifyReturnValue(method = "clampToBounds(DDD)Lnet/minecraft/core/BlockPos;", at = @At("RETURN"))
     private BlockPos toroidal$clampThroughSeam(BlockPos original, double x, double y, double z) {
         WorldFold transformer = this.toroidal$transformer;
-        if (!transformer.isWrapped()) {
+        if (!transformer.isWrapped() || toroidal$isForeign(transformer, x, z)) {
             return original;
         }
 
@@ -140,6 +140,12 @@ public class WorldBorderMixin implements TransformerHolder {
         }
 
         return wall;
+    }
+
+    @Unique
+    private static boolean toroidal$isForeign(WorldFold transformer, double x, double z) {
+        return transformer.blockDomain(Direction.Axis.X).isForeign(x)
+                || transformer.blockDomain(Direction.Axis.Z).isForeign(z);
     }
 
     @Unique
